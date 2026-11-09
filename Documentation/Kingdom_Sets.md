@@ -20,7 +20,9 @@
 
 **Statisch geprüft für Spielbuild 3315.** Die Profilinitialisierung verwendet `profiles.xml`. Die XML-Serialisierungsdeskriptoren der EXE verbinden das Profilfeld `saveSets` mit den Set-Daten. Der über den Diagnosestring `DomSaveSetGet` identifizierte Pfad greift auf die Set-Liste des aktiven Profils zu. Beim Anlegen eines Sets vergleicht der Code die Anzahl mit `0x40` und nimmt den Eintrag nur bei weniger als 64 vorhandenen Sets an. Vor dem Schreiben des Profils berechnet der Code `expansionsBitset` aus der geparsten Kingdom-Auswahl. Der Dezimalwert `38` oben gehört zum konkreten Beispiel. [Quelle L01](Sources/Source_Register.md)
 
-**Offen.** Der Import eines extern ergänzten XML-Eintrags und dessen Verhalten bei möglicher Online-Synchronisierung sind bisher nicht im Spiel geprüft. Für einen allgemeinen Profilexport müssen die Maskenberechnung und die relevanten Setup-Optionen für die vom Generator unterstützten Karten bestätigt werden.
+**Reines Verdopplungsset, statisch geprüft für Spielbuild 3315.** Für einen `strKingdom` mit ausschließlich `-x start_double_pile(…)`-Einträgen ergibt sich `expansionsBitset = 0`. Der Parser speichert das Ziel im Effekteintrag (RVA `0x0E6148`). Die Maskenroutine (RVA `0x0E4560`) liest Hauptstapel, Landschaften, Zusatzkarten und gegebenenfalls Erweiterungsfilter aus der Kingdom-Auswahl. Diese Felder bleiben bei dieser Eingabe leer. Die Maske des später geladenen Königreichs wird aus dessen eigener Auswahl berechnet. [Quelle L01](Sources/Source_Register.md)
+
+**Prüfstand.** Manuell ergänzte Verdopplungssets wurden lokal im Spiel verwendet. Der Export aus dem HTML-Konverter wurde im Browser mit Testdaten geprüft. Die Übernahme eines vom Konverter ergänzten Eintrags in Dominion und die Online-Synchronisierung stehen noch aus. Für einen allgemeinen Profilexport müssen die Maskenberechnung und die relevanten Setup-Optionen für die vom Generator unterstützten Karten bestätigt werden.
 
 ## Zwischenablage
 

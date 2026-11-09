@@ -11,6 +11,7 @@ Ziel ist die Steam-Version von Dominion von Temple Gates Games. Die erste Unters
 | Kopierte Kartennamen von dominionrandomizer.com umwandeln | [Web-Namenslisten im Konverter](Kingdom_Sets.md#web-namenslisten-im-konverter) |
 | Ohne Mods spielen und eigene Varianten ausprobieren | [Steam-Spielanleitung](Steam_Spielanleitung.md) |
 | Kingdom-Syntax, Kampagneneffekte und Modding-Befunde nachschlagen | [Technische Referenz](Modding_Overview.md#kingdom-text-und-kampagneneffekte) |
+| Native Mod für doppelte Königreichstapel untersuchen | [Aufbau, lokale Abgrenzung und Offline-Testplan](Doppelte_Koenigreichstapel_Mod.md) |
 | Build, Prüfmethode oder Quelle nachschlagen | [Quellenregister](Sources/Source_Register.md) |
 
 ## Belegstatus

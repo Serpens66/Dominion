@@ -47,8 +47,8 @@
     padding: clamp(1rem, 3vw, 1.55rem);
   }
   .output-panel { border-top: .25rem solid var(--green); }
-  textarea, select, button { font: inherit; }
-  textarea, select {
+  textarea, select, button, input[type=text] { font: inherit; }
+  textarea, select, input[type=text] {
     width: 100%;
     color: var(--ink);
     background: #fff;
@@ -57,12 +57,13 @@
   }
   textarea { display: block; min-height: 9rem; padding: .75rem; resize: vertical; }
   textarea::placeholder { color: var(--muted); }
-  #output {
+  #output, #effects, #set-xml {
     background: #f1f6ef;
     font-family: ui-monospace, Consolas, monospace;
     overflow-wrap: anywhere;
   }
-  select { width: auto; max-width: 100%; padding: .38rem .55rem; }
+  select, input[type=text] { width: auto; max-width: 100%; padding: .38rem .55rem; }
+  #effects, #set-xml { min-height: 6rem; }
   button {
     cursor: pointer;
     border: 1px solid transparent;
@@ -161,6 +162,33 @@
       <p id="edition" class="warning" hidden></p>
     </section>
   </div>
+  <section class="cards-panel output-panel" aria-labelledby="effects-title">
+    <h2 id="effects-title">3. Stapel verdoppeln (optional)</h2>
+    <p>Der Code enthält je einen Effekt für die zehn Hauptstapel. Speichere ihn als eigenes Set in der Profildatei und speichere auch das normale Königreich aus Schritt 2 im Spiel. Lade dann das Verdopplungsset, klicke auf „Spielen“ und gib die Partie auf. Entlade das Set in der Kingdom-Auswahl, ohne die Zusatzregeln zu leeren. Lade jetzt das gespeicherte Königreich und starte die Partie.</p>
+    <label class="field" for="effects">Verdopplungscode</label>
+    <textarea id="effects" readonly spellcheck="false" placeholder="Hier erscheint die reine -x-Zeile."></textarea>
+    <div class="row">
+      <button id="copy-effects" class="secondary" type="button" disabled>Verdopplungscode kopieren</button>
+    </div>
+    <label class="field" for="set-name">Name des Verdopplungssets</label>
+    <input id="set-name" type="text" placeholder="Zum Beispiel Doppelte Stapel">
+    <label class="field" for="set-xml">XML-Eintrag zum manuellen Einfügen</label>
+    <p class="muted" id="set-xml-help">Füge den Eintrag in den Bereich <code>&lt;saveSets&gt;</code> deiner <code>profiles.xml</code> ein. Schließe Dominion vorher vollständig und sichere die Datei.</p>
+    <textarea id="set-xml" readonly spellcheck="false" aria-describedby="set-xml-help"></textarea>
+    <div class="row">
+      <button id="copy-set-xml" class="secondary" type="button" disabled>XML-Eintrag kopieren</button>
+    </div>
+    <p id="effects-status" role="status"></p>
+    <fieldset id="profile-controls" class="options" hidden>
+      <legend>Direkt in profiles.xml speichern</legend>
+      <p class="muted">Wähle unter Windows die Datei <code>%APPDATA%\TempleGates\Dominion\profiles.xml</code> aus. Der Konverter verarbeitet sie lokal und unterstützt hier Dateien mit genau einem Profil.</p>
+      <div class="row"><button id="profile-select" class="secondary" type="button">profiles.xml auswählen</button></div>
+      <label><input id="profile-consent" type="checkbox" disabled> Dominion ist geschlossen, die Datei ist gesichert und ich erlaube das Hinzufügen dieses Sets.</label>
+      <div class="row"><button id="profile-write" class="primary" type="button" disabled>Set in profiles.xml hinzufügen</button></div>
+    </fieldset>
+    <p class="muted" id="profile-fallback" hidden>In diesem Browser steht direktes Speichern nicht zur Verfügung. Du kannst den XML-Eintrag kopieren und selbst einfügen.</p>
+    <p id="profile-status" role="status"></p>
+  </section>
   <section id="cards-panel" class="cards-panel" aria-labelledby="cards-title" hidden>
     <h2 id="cards-title">Erkannte Karten</h2>
     <ul id="cards"></ul>
@@ -1771,6 +1799,98 @@ function formatKingdom(ids, colonies, shelters) {
   return "-k " + tokens.join(", ");
 }
 
+function formatDoublePiles(ids) {
+  return "-x " + ids.slice(0, kingdomSize).map(id => "start_double_pile(" + id + ")").join(", ");
+}
+
+function formatEffectSet(name, effects) {
+  const escapeText = value => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  return [
+    "<sets>",
+    "  <name>" + escapeText(name) + "</name>",
+    "  <strKingdom>" + escapeText(effects) + "</strKingdom>",
+    // Build 3315 does not count start_double_pile targets toward the expansion mask.
+    "  <expansionsBitset>0</expansionsBitset>",
+    "</sets>",
+  ].join("\n");
+}
+
+function readProfile(source) {
+  const xml = new DOMParser().parseFromString(source.replace(/^\uFEFF/, ""), "application/xml");
+  const root = xml.documentElement;
+  if (xml.doctype || xml.querySelector("parsererror") ||
+      root?.tagName !== "ProfileSettings_Save" || root.namespaceURI) {
+    throw new Error("Die Datei entspricht keinem unterstützten Dominion-Profilformat.");
+  }
+  const profiles = [...root.children].filter(node => node.tagName === "profiles");
+  if (profiles.length !== 1) {
+    throw new Error("Direktes Speichern unterstützt Dateien mit genau einem Profil.");
+  }
+  const containers = [...profiles[0].children].filter(node => node.tagName === "saveSets");
+  const container = containers[0];
+  const sets = container ? [...container.children] : [];
+  if (containers.length > 1 || (container && (container.namespaceURI || container.attributes.length)) ||
+      sets.some(node => node.tagName !== "sets" || node.namespaceURI)) {
+    throw new Error("Die gespeicherten Sets haben ein unbekanntes XML-Format.");
+  }
+  return { container, sets };
+}
+
+function appendEffectSet(source, name, effects) {
+  const { container, sets } = readProfile(source);
+  if (sets.length >= 64) throw new Error("Die Liste enthält bereits 64 Sets.");
+  if (sets.some(set => set.querySelector(":scope > name")?.textContent.trim().toLowerCase() === name.toLowerCase())) {
+    throw new Error("Ein Set mit diesem Namen ist bereits vorhanden.");
+  }
+
+  // Insert into the source so the bytes of existing entries and profile settings stay intact.
+  const slots = [...source.matchAll(container ? /<\/saveSets>|<saveSets\s*\/>/g : /<\/profiles>/g)];
+  if (slots.length !== 1) throw new Error("Der Einfügepunkt in der Profildatei ist nicht eindeutig.");
+  const { index: offset, 0: tag } = slots[0];
+  const newline = source.includes("\r\n") ? "\r\n" : "\n";
+  const before = source.slice(0, offset);
+  const indent = before.match(/(?:^|\n)([ \t]*)$/)?.[1];
+  const entry = formatEffectSet(name, effects).split("\n");
+  const addContainer = tag !== "</saveSets>";
+  const lines = entry.map(line => (container ? "  " : "    ") + line);
+  if (addContainer) {
+    const padding = container ? "" : "  ";
+    lines.unshift(padding + "<saveSets>");
+    lines.push(padding + "</saveSets>");
+  }
+  const insertion = indent === undefined ? lines.join(newline) : lines.join(newline + indent) + newline + indent;
+  const end = offset + (addContainer && container ? tag.length : 0);
+  const updated = before + insertion + source.slice(end);
+  const updatedSets = readProfile(updated).sets;
+  const added = updatedSets.at(-1);
+  if (updatedSets.length !== sets.length + 1 ||
+      added.querySelector(":scope > name")?.textContent !== name ||
+      added.querySelector(":scope > strKingdom")?.textContent !== effects ||
+      added.querySelector(":scope > expansionsBitset")?.textContent !== "0") {
+    throw new Error("Der neue Set-Eintrag konnte nicht eindeutig geprüft werden.");
+  }
+  return updated;
+}
+
+async function readProfileFile(handle) {
+  const file = await handle.getFile();
+  return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(await file.arrayBuffer());
+}
+
+async function writeProfileFile(handle, source, updated) {
+  const writer = await handle.createWritable({ mode: "exclusive" });
+  try {
+    await writer.write(new TextEncoder().encode(updated));
+    if (await readProfileFile(handle) !== source) {
+      throw new Error("Die Profildatei wurde zwischenzeitlich geändert. Wähle sie erneut aus.");
+    }
+    await writer.close();
+  } catch (error) {
+    await writer.abort().catch(() => {});
+    throw error;
+  }
+}
+
 const input = document.getElementById("input");
 const language = document.getElementById("language");
 const colonies = document.getElementById("colonies");
@@ -1782,6 +1902,41 @@ const copyStatus = document.getElementById("copy-status");
 const edition = document.getElementById("edition");
 const cardsPanel = document.getElementById("cards-panel");
 const cardsList = document.getElementById("cards");
+const effects = document.getElementById("effects");
+const copyEffects = document.getElementById("copy-effects");
+const setName = document.getElementById("set-name");
+const setXml = document.getElementById("set-xml");
+const copySetXml = document.getElementById("copy-set-xml");
+const effectsStatus = document.getElementById("effects-status");
+const profileSelect = document.getElementById("profile-select");
+const profileConsent = document.getElementById("profile-consent");
+const profileWrite = document.getElementById("profile-write");
+const profileStatus = document.getElementById("profile-status");
+const profileAccess = typeof window.showOpenFilePicker === "function";
+let profileHandle;
+let profileSource;
+let profileBusy = false;
+
+document.getElementById("profile-controls").hidden = !profileAccess;
+document.getElementById("profile-fallback").hidden = profileAccess;
+
+function updateProfileControls() {
+  profileSelect.disabled = profileBusy;
+  profileConsent.disabled = profileBusy || !profileHandle || !setXml.value;
+  profileWrite.disabled = profileConsent.disabled || !profileConsent.checked;
+}
+
+function updateEffectSet() {
+  const name = setName.value.trim();
+  const invalidName = /[^\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/u.test(name);
+  setName.setCustomValidity(invalidName ? "Der Name enthält ein ungültiges Zeichen." : "");
+  setXml.value = effects.value && name && !invalidName ? formatEffectSet(name, effects.value) : "";
+  copyEffects.disabled = !effects.value;
+  copySetXml.disabled = !setXml.value;
+  effectsStatus.textContent = invalidName ? setName.validationMessage : "";
+  profileConsent.checked = false;
+  updateProfileControls();
+}
 
 function showCards(ids) {
   for (const id of ids) {
@@ -1800,6 +1955,7 @@ function showCards(ids) {
 function update() {
   const source = input.value.trim();
   output.value = "";
+  effects.value = "";
   copy.disabled = true;
   status.textContent = "";
   status.className = "";
@@ -1807,7 +1963,10 @@ function update() {
   edition.hidden = true;
   cardsList.replaceChildren();
   cardsPanel.hidden = true;
-  if (!source) return;
+  if (!source) {
+    updateEffectSet();
+    return;
+  }
 
   try {
     const titles = source.split(",").map(title => title.trim());
@@ -1817,6 +1976,7 @@ function update() {
     const ids = resolveTitles(titles, language.value);
     showCards(ids);
     output.value = formatKingdom(ids, colonies.checked, shelters.checked);
+    effects.value = formatDoublePiles(ids);
     copy.disabled = false;
     status.textContent = ids.length > kingdomSize
       ? "10 Königreichstapel und " + (ids.length - kingdomSize) + " Landschaft(en) erkannt."
@@ -1832,6 +1992,7 @@ function update() {
     status.textContent = error.message;
     status.className = "error";
   }
+  updateEffectSet();
 }
 
 for (const field of [language, colonies, shelters]) field.addEventListener("change", update);
@@ -1845,17 +2006,82 @@ document.getElementById("example").addEventListener("click", () => {
   input.focus();
 });
 
-copy.addEventListener("click", async () => {
-  const value = output.value;
+async function copyText(field, message, confirmation) {
+  const value = field.value;
   if (!value) return;
   try {
     await navigator.clipboard.writeText(value);
-    if (output.value === value) copyStatus.textContent = "Kingdom-Code kopiert.";
+    if (field.value === value) message.textContent = confirmation;
   } catch {
-    if (output.value !== value) return;
-    output.focus();
-    output.select();
-    copyStatus.textContent = "Der Code ist markiert. Kopiere ihn mit Strg+C oder ⌘C.";
+    if (field.value !== value) return;
+    field.focus();
+    field.select();
+    message.textContent = "Der Text ist markiert. Kopiere ihn mit Strg+C oder ⌘C.";
+  }
+}
+
+copy.addEventListener("click", () => copyText(output, copyStatus, "Kingdom-Code kopiert."));
+copyEffects.addEventListener("click", () => copyText(effects, effectsStatus, "Verdopplungscode kopiert."));
+copySetXml.addEventListener("click", () => copyText(setXml, effectsStatus, "XML-Eintrag kopiert."));
+setName.addEventListener("input", updateEffectSet);
+profileConsent.addEventListener("change", updateProfileControls);
+
+profileSelect.addEventListener("click", async () => {
+  profileBusy = true;
+  profileConsent.checked = false;
+  profileStatus.textContent = "";
+  profileHandle = undefined;
+  profileSource = undefined;
+  updateProfileControls();
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      types: [{ description: "Dominion-Profildatei", accept: { "application/xml": [".xml"] } }],
+    });
+    if (handle.name.toLowerCase() !== "profiles.xml") throw new Error("Wähle die Datei profiles.xml aus.");
+    const source = await readProfileFile(handle);
+    readProfile(source);
+    profileHandle = handle;
+    profileSource = source;
+    profileStatus.textContent = "profiles.xml ausgewählt. Die Datei wurde bisher nur gelesen.";
+    profileStatus.className = "success";
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      profileStatus.textContent = error.message;
+      profileStatus.className = "error";
+    }
+  } finally {
+    profileBusy = false;
+    updateProfileControls();
+  }
+});
+
+profileWrite.addEventListener("click", async () => {
+  if (profileWrite.disabled) return;
+  const handle = profileHandle;
+  const source = profileSource;
+  const name = setName.value.trim();
+  const code = effects.value;
+  profileBusy = true;
+  profileConsent.checked = false;
+  updateProfileControls();
+  try {
+    const updated = appendEffectSet(source, name, code);
+    if (await handle.requestPermission({ mode: "readwrite" }) !== "granted") {
+      throw new Error("Der Browser hat keine Schreibfreigabe erteilt. Du kannst den XML-Eintrag kopieren.");
+    }
+    if (await readProfileFile(handle) !== source) {
+      throw new Error("Die Profildatei wurde zwischenzeitlich geändert. Wähle sie erneut aus.");
+    }
+    await writeProfileFile(handle, source, updated);
+    profileSource = updated;
+    profileStatus.textContent = "Set „" + name + "“ wurde hinzugefügt. Du kannst Dominion jetzt öffnen.";
+    profileStatus.className = "success";
+  } catch (error) {
+    profileStatus.textContent = error.message;
+    profileStatus.className = "error";
+  } finally {
+    profileBusy = false;
+    updateProfileControls();
   }
 });
 </script>

@@ -14,12 +14,20 @@ Die ausgegebene `-k`-Zeile ins Kartensuchfeld der Kingdom-Auswahl einfügen. Der
 
 Der Konverter verarbeitet zehn Hauptstapel und bis zu vier gewöhnliche Landschaften ohne zusätzliche Zuordnung. Mehrdeutige Titel, Duplikate und Zusatzsetup wie der Bane-Stapel führen zu einer Fehlermeldung. Der Namensabgleich und die Ausgabe wurden lokal geprüft. Die Landschaftsausgabe verwendet die im Profil beobachtete Syntax und steht als Spieltest noch aus. [Kartennamen und Herkunft](../Documentation/Kingdom_Sets.md#web-namenslisten-im-konverter)
 
+## HTML-Konverter mit doppelten Stapeln
+
+[Dominion-Konverter.html](Dominion-Konverter.html) lokal im Browser öffnen und die kopierte Namensliste einfügen. Die Seite gibt den normalen Kingdom-Code fürs Kartensuchfeld und separat eine reine `-x`-Zeile aus. Je einer der zehn Hauptstapel erhält einen `start_double_pile`-Effekt. Landschaften und zusätzliche Setup-Optionen gehören nur in den Kingdom-Code.
+
+Nach Eingabe eines Namens lässt sich der fertige `<sets>`-Eintrag kopieren. In einem Browser mit lokalem Dateizugriff kann der Konverter ihn auch direkt in `%APPDATA%\TempleGates\Dominion\profiles.xml` einfügen. Dafür Dominion vollständig schließen, die Datei sichern, auswählen und die Schreibfreigabe erteilen. Der direkte Export unterstützt Dateien mit genau einem Profil. Bei einem gleichnamigen Set oder 64 vorhandenen Sets bricht er ab.
+
+Das normale Königreich zuerst über das Kartensuchfeld in Dominion importieren und als Set speichern. Danach das Verdopplungsset laden und „Spielen“ wählen. Die Partie aufgeben, das Set in der Kingdom-Auswahl entladen und die Zusatzregeln stehen lassen. Dann das gespeicherte Königreich laden und die Partie starten. Die Übernahme in ein weiteres gespeichertes Set wurde in Build 3315 bestätigt. Für den HTML-Export steht der Spieltest noch aus. [Spielbefund](../Documentation/Modding_Overview.md#effektsets-und-zufallsauswahl), [Speicherformat](../Documentation/Kingdom_Sets.md#nativer-profilpfad)
+
 ## Entwurf
 
 - **Eingabe.** Ein Kartenpool mit Dominion-IDs, die verfügbaren Erweiterungen und die vom Nutzer gewählten Regeln. Kartenkatalog und Spielsprache im Zielbuild prüfen. Welche Eigenschaften und Kombinationen die Regeln berücksichtigen, wird beim gemeinsamen Entwurf festgelegt.
 - **Auswahl.** Die Ziehung liefert genau zehn unterschiedliche erlaubte Königreichkarten, die alle gewählten Regeln erfüllen. Sind die Regeln mit dem gewählten Pool nicht erfüllbar, meldet der Generator das ohne einen Export.
 - **Erste Ausgabe.** Die Auswahl in den getesteten Kingdom-Text umsetzen und für das Kartensuchfeld in die Zwischenablage kopieren. Die Auswahl funktioniert unabhängig vom jeweiligen Ausgabeweg.
-- **Optionale Ausgabe in das Profil.** Nach bestandenem Offline-Test einen benannten Eintrag im aktiven Profil ergänzen. Die Erweiterungsmaske aus der konkreten Auswahl ableiten und andere Profildaten sowie bestehende Sets erhalten. Bei laufendem Spiel, unbekanntem Profilformat oder voller Set-Liste abbrechen.
+- **Optionale Ausgabe des normalen Königreichs in das Profil.** Für diesen späteren Export die Erweiterungsmaske aus der konkreten Auswahl ableiten und die relevanten Setup-Optionen im Spiel prüfen. Der aktuelle HTML-Entwurf kann den separaten Verdopplungseintrag speichern.
 
 ## Karten nach Eigenschaften filtern
 
