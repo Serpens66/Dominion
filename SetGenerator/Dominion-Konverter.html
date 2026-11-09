@@ -1,0 +1,1863 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dominion-Konverter</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #1e2924;
+    --muted: #4e5c53;
+    --green: #205740;
+    --green-dark: #164331;
+    --paper: #fffdf7;
+    --line: #cbd3c8;
+    --error: #8b3029;
+    --amber: #6e470e;
+    font: 100%/1.55 system-ui, sans-serif;
+    color: var(--ink);
+    background: #f3f1e7;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  main { max-width: 70rem; margin: auto; padding: clamp(1rem, 4vw, 3rem); }
+  header { margin-bottom: 1.65rem; }
+  .eyebrow {
+    color: var(--green-dark);
+    font-size: .78rem;
+    font-weight: 750;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+  }
+  h1, h2 { font-family: Georgia, serif; line-height: 1.13; margin: 0; }
+  h1 { font-size: clamp(2.35rem, 6vw, 4rem); margin-top: .2rem; }
+  h2 { font-size: 1.62rem; }
+  p { margin: .55rem 0 0; }
+  .muted { color: var(--muted); }
+  .workspace {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  section {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: .9rem;
+    padding: clamp(1rem, 3vw, 1.55rem);
+  }
+  .output-panel { border-top: .25rem solid var(--green); }
+  textarea, select, button { font: inherit; }
+  textarea, select {
+    width: 100%;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid #a4b2a7;
+    border-radius: .5rem;
+  }
+  textarea { display: block; min-height: 9rem; padding: .75rem; resize: vertical; }
+  textarea::placeholder { color: var(--muted); }
+  #output {
+    background: #f1f6ef;
+    font-family: ui-monospace, Consolas, monospace;
+    overflow-wrap: anywhere;
+  }
+  select { width: auto; max-width: 100%; padding: .38rem .55rem; }
+  button {
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: .5rem;
+    padding: .55rem .8rem;
+    font-weight: 650;
+  }
+  button:disabled { cursor: default; color: #4f5a51; background: #e5e9e2; }
+  .primary { background: var(--green); color: white; }
+  .primary:hover:not(:disabled) { background: var(--green-dark); }
+  .secondary { color: var(--green-dark); background: #e8efe6; }
+  .secondary:hover { background: #dce8d9; }
+  .row { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; margin-top: .8rem; }
+  .field { display: block; font-weight: 700; margin: 1rem 0 .3rem; }
+  fieldset { margin: 1rem 0 0; border: 0; padding: 0; }
+  legend { font-weight: 700; padding: 0; }
+  .options label { display: flex; align-items: baseline; gap: .5rem; padding: .2rem 0; cursor: pointer; }
+  input[type=checkbox] { accent-color: var(--green); }
+  :focus-visible { outline: 3px solid #346e9f; outline-offset: 2px; }
+  #status, #copy-status { margin-top: .8rem; }
+  #copy-status:empty, #status:empty { margin-top: 0; }
+  .error { color: var(--error); font-weight: 650; overflow-wrap: anywhere; }
+  .success { color: var(--green-dark); font-weight: 650; }
+  .warning {
+    color: var(--amber);
+    background: #fcf1d9;
+    border-radius: .45rem;
+    padding: .55rem .65rem;
+    font-size: .92rem;
+  }
+  .cards-panel { margin-top: 1rem; }
+  #cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    gap: .55rem;
+    padding: 0;
+    margin: .85rem 0 0;
+    list-style: none;
+  }
+  #cards li { padding: .55rem .7rem; background: #f0f4eb; border-radius: .4rem; overflow-wrap: anywhere; }
+  #cards li span, #cards li code { display: block; }
+  #cards li span { font-weight: 650; }
+  #cards li code { color: var(--muted); }
+  footer { margin-top: 1.35rem; color: var(--muted); font-size: .85rem; }
+  a { color: var(--green-dark); }
+  @media (max-width: 45rem) {
+    .workspace { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Offline-Werkzeug · Dominion Steam</div>
+    <h1>Dominion-Konverter</h1>
+    <p class="muted">Ein Königreich von dominionrandomizer.com übernehmen und in Dominion spielen.</p>
+  </header>
+  <noscript><p class="error">Aktiviere JavaScript im Browser, um die Namensliste umzuwandeln.</p></noscript>
+  <div class="workspace">
+    <section aria-labelledby="input-title">
+      <h2 id="input-title">1. Namensliste einfügen</h2>
+      <p class="muted" id="input-help">Kopiere dein Set mit dem Copy-Button und füge den Text hier ein. <a href="https://dominionrandomizer.com/" target="_blank" rel="noopener">Dominion Randomizer öffnen</a></p>
+      <label class="field" for="input">Kopierte Kartennamen</label>
+      <textarea id="input" spellcheck="false" aria-describedby="input-help" placeholder="Keller, Jahrmarkt, Gärten, …"></textarea>
+      <div class="row">
+        <label for="language">Sprache</label>
+        <select id="language">
+          <option value="auto">Automatisch erkennen</option>
+          <option value="de">Deutsch</option>
+          <option value="en">Englisch</option>
+          <option value="fr">Französisch</option>
+          <option value="it">Italienisch</option>
+          <option value="nl">Niederländisch</option>
+          <option value="pl">Polnisch</option>
+          <option value="es">Spanisch</option>
+        </select>
+        <button id="example" class="secondary" type="button">Beispiel einsetzen</button>
+      </div>
+      <fieldset class="options">
+        <legend>Zusätzliches Setup</legend>
+        <label><input id="colonies" type="checkbox"> Platin und Kolonien</label>
+        <label><input id="shelters" type="checkbox"> Unterschlüpfe</label>
+        <p class="muted">Übernimm diese Optionen bei Bedarf aus dem Web-Set.</p>
+      </fieldset>
+    </section>
+    <section class="output-panel" aria-labelledby="output-title">
+      <h2 id="output-title">2. Für Dominion kopieren</h2>
+      <p class="muted" id="output-help">Füge die fertige Zeile ins Kartensuchfeld der Kingdom-Auswahl im Spiel ein.</p>
+      <label class="field" for="output">Kingdom-Code</label>
+      <textarea id="output" readonly spellcheck="false" aria-describedby="output-help" placeholder="Hier erscheint die fertige -k-Zeile."></textarea>
+      <div class="row">
+        <button id="copy" class="primary" type="button" disabled>Für Dominion kopieren</button>
+      </div>
+      <p id="status" role="status" aria-live="polite"></p>
+      <p id="copy-status" role="status" aria-live="polite"></p>
+      <p id="edition" class="warning" hidden></p>
+    </section>
+  </div>
+  <section id="cards-panel" class="cards-panel" aria-labelledby="cards-title" hidden>
+    <h2 id="cards-title">Erkannte Karten</h2>
+    <ul id="cards"></ul>
+  </section>
+  <footer>
+    <div>Spielkatalog für Dominion-Build 3315 · Namensdaten aus
+      <a href="https://github.com/blakevanlan/KingdomCreator/tree/d9a802db2e41d52786eaa02097279cbf1b64c778">KingdomCreator 7.0.7</a>
+    </div>
+    <div>
+      <a href="https://www.templegatesgames.com/press/sheet.php?p=Dominion" target="_blank" rel="noopener">Offizielle Dominion-Seite</a> ·
+      <a href="https://store.steampowered.com/app/1131620/Dominion/" target="_blank" rel="noopener">Steam</a> ·
+      <a href="https://play.google.com/store/apps/details?id=com.templegatesgames.DominionAndroid" target="_blank" rel="noopener">Google Play</a> ·
+      <a href="https://apps.apple.com/app/dominion/id1476461085" target="_blank" rel="noopener">App Store</a>
+    </div>
+  </footer>
+</main>
+<!-- KingdomCreator card name data
+
+The MIT License (MIT)
+
+Copyright (c) 2013 Blake VanLandingham
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-->
+<script type="application/json" id="catalog">
+{"languages":["en", "de", "es", "fr", "it", "nl", "pl"],
+"names":[
+{"id":"amulet","titles":{"de":"Amulett","en":"Amulet","es":"Amuleto","fr":"Amulette","it":"Amuleto"}},
+{"id":"artificer","titles":{"de":"Kunsthandwerker","en":"Artificer","es":"Vidriero","fr":"Maître artisan","it":"Artigiano","nl":"Kanonnengieter","pl":"Rzemieślnik"}},
+{"id":"bridge_troll","titles":{"de":"Brückentroll","en":"Bridge Troll","es":"Puente del Trol","fr":"Pont aux trolls","it":"Troll del Ponte","nl":"Brugtrol","pl":"Mostowy troll"}},
+{"id":"caravan_guard","titles":{"de":"Karawanenwächter","en":"Caravan Guard","es":"Escolta","fr":"Escorte","it":"Guardia della Carovana","nl":"Karavaanescorte","pl":"Strażnik karawany"}},
+{"id":"coin_of_the_realm","titles":{"de":"Königliche Münzen","en":"Coin of the Realm","es":"Moneda Real","fr":"Monnaie royale","it":"Moneta del Regno","nl":"Koninklijke munt","pl":"Moneta obiegowa"}},
+{"id":"distant_lands","titles":{"de":"Ferne Lande","en":"Distant Lands","es":"Tierras Lejanas","fr":"Terres lointaines","it":"Terre Lontane","nl":"Verre landen","pl":"Odległy ląd"}},
+{"id":"dungeon","titles":{"de":"Verlies","en":"Dungeon","es":"Mazmorra","fr":"Donjon","nl":"Kerker","pl":"Loch"}},
+{"id":"duplicate","titles":{"de":"Duplikat","en":"Duplicate","es":"Réplica","fr":"Copie","it":"Replica","nl":"Duplicaat","pl":"Duplikat"}},
+{"id":"alms","titles":{"de":"Almosen","en":"Alms","es":"Limosna","fr":"Aumône","it":"Elemosina","nl":"Aalmoes","pl":"Jałmużna"}},
+{"id":"ball","titles":{"en":"Ball","es":"Baile","fr":"Bal","it":"Ballo in Maschera","nl":"Bal","pl":"Bal"}},
+{"id":"bonfire","titles":{"de":"Freudenfeuer","en":"Bonfire","es":"Hoguera","fr":"Feu de joie","it":"Falò","nl":"Vreugdevuur","pl":"Ognisko"}},
+{"id":"borrow","titles":{"de":"Leihgabe","en":"Borrow","es":"Crédito","fr":"Emprunt","it":"Prestito","nl":"Lenen","pl":"Pożyczka"}},
+{"id":"expedition","titles":{"en":"Expedition","es":"Expedición","fr":"Expédition","it":"Spedizione","nl":"Expeditie","pl":"Ekspedycja"}},
+{"id":"ferry","titles":{"de":"Überfahrt","en":"Ferry","es":"Barca","fr":"Bac","it":"Traghetto","nl":"Veerboot","pl":"Prom"}},
+{"id":"inheritance","titles":{"de":"Erbschaft","en":"Inheritance","es":"Herencia","fr":"Héritage","it":"Eredità","nl":"Erfenis","pl":"Dziedzictwo"}},
+{"id":"lost_arts","titles":{"de":"Verlorene Kunst","en":"Lost Arts","es":"Artes Perdidas","fr":"Arts anciens","it":"Arti Perdute","nl":"Verloren Kunst","pl":"Zapomniane rzemiosło"}},
+{"id":"mission","titles":{"en":"Mission","es":"Misión","it":"Missione","nl":"Missie","pl":"Misja"}},
+{"id":"pathfinding","titles":{"de":"Wegsuche","en":"Pathfinding","es":"Rastreo","fr":"Reconnaissance","it":"Esplorazione","nl":"Woudlopen","pl":"Przecieranie szlaku"}},
+{"id":"pilgrimage","titles":{"de":"Pilgerfahrt","en":"Pilgrimage","es":"Peregrinaje","fr":"Pèlerinage","it":"Pellegrinaggio","nl":"Bedevaart","pl":"Pielgrzymka"}},
+{"id":"plan","titles":{"de":"Planung","en":"Plan","es":"Estrategia","fr":"Plan de bataille","it":"Pianificazione"}},
+{"id":"quest","titles":{"en":"Quest","es":"Búsqueda","fr":"Quête","it":"Ricerca","nl":"Queeste","pl":"Wyprawa"}},
+{"id":"raid","titles":{"de":"Überfall","en":"Raid","es":"Asalto","it":"Incursione","nl":"Overval","pl":"Najazd"}},
+{"id":"save","titles":{"de":"Zuflucht","en":"Save","es":"Reserva","fr":"Resserre","it":"Salvezza","nl":"Sparen","pl":"Na czarną godzinę"}},
+{"id":"scouting_party","titles":{"de":"Spähtrupp","en":"Scouting Party","es":"Avanzadilla","fr":"Pistage","it":"Unità di Ricognizione","nl":"Verkennerseenheid","pl":"Zwiady"}},
+{"id":"seaway","titles":{"de":"Seeweg","en":"Seaway","es":"Vía Marítima","fr":"Route maritime","it":"Canale Navigabile","nl":"Zeeroute","pl":"Cieśnina"}},
+{"id":"trade","titles":{"de":"Handel","en":"Trade","es":"Intercambio","fr":"Commerce","it":"Scambio","nl":"Handel","pl":"Wymiana"}},
+{"id":"training","titles":{"en":"Training","es":"Entrenamiento","fr":"Entraînement","it":"Addestramento","pl":"Szkolenie"}},
+{"id":"travelling_fair","titles":{"de":"Wanderzirkus","en":"Travelling Fair","es":"Feria Ambulante","fr":"Forains","it":"Fiera Itinerante","nl":"Kermis","pl":"Festyn obwoźny"}},
+{"id":"gear","titles":{"de":"Ausrüstung","en":"Gear","es":"Equipamiento","fr":"Équipement","it":"Attrezzi","nl":"Uitrusting","pl":"Narzędzia"}},
+{"id":"giant","titles":{"de":"Riese","en":"Giant","es":"Gigante","fr":"Géant","it":"Gigante","nl":"Reus","pl":"Olbrzym"}},
+{"id":"guide","titles":{"de":"Kundschafter","en":"Guide","es":"Guía","it":"Guida","nl":"Gids","pl":"Przewodnik"}},
+{"id":"haunted_woods","titles":{"de":"Geisterwald","en":"Haunted Woods","es":"Bosque Encantado","fr":"Bois hantés","it":"Foresta Infestata","nl":"Spookbos","pl":"Nawiedzony las"}},
+{"id":"hireling","titles":{"de":"Gefolgsmann","en":"Hireling","es":"Recluta","fr":"Recrue","it":"Bravo","nl":"Huursoldaat","pl":"Najemnik"}},
+{"id":"lost_city","titles":{"de":"Verlorene Stadt","en":"Lost City","es":"Ciudad Perdida","fr":"Cité perdue","it":"Città Perduta","nl":"Verloren stad","pl":"Zaginione miasto"}},
+{"id":"magpie","titles":{"de":"Elster","en":"Magpie","es":"Urraca","fr":"Pie voleuse","it":"Gazza Ladra","nl":"Ekster","pl":"Sroka"}},
+{"id":"messenger","titles":{"de":"Kurier","en":"Messenger","es":"Mensajero","fr":"Courrier","it":"Messaggiero","nl":"Koerier","pl":"Posłaniec"}},
+{"id":"miser","titles":{"de":"Geizhals","en":"Miser","es":"Avaro","fr":"Miséreux","it":"Spilorcio","nl":"Vrek","pl":"Skąpiec"}},
+{"id":"page","titles":{"en":"Page","es":"Paje","it":"Paggio","nl":"Wapenknecht","pl":"Paź"}},
+{"id":"peasant","titles":{"de":"Kleinbauer","en":"Peasant","es":"Campesino","fr":"Paysan","it":"Contadino","nl":"Boer","pl":"Chłop"}},
+{"id":"port","titles":{"de":"Hafenstadt","en":"Port","es":"Aldea Portuaria","fr":"Ville portuaire","it":"Porto","nl":"Zeehaven"}},
+{"id":"ranger","titles":{"de":"Wildhüter","en":"Ranger","es":"Guarda Forestal","fr":"Forestier","it":"Ricognitore","nl":"Woudloper","pl":"Łowczy"}},
+{"id":"ratcatcher","titles":{"de":"Rattenfänger","en":"Ratcatcher","es":"Cazador de Ratas","fr":"Chasseur de rats","it":"Cacciatore di Topi","nl":"Rattenvanger","pl":"Szczurołap"}},
+{"id":"raze","titles":{"de":"Zerstörung","en":"Raze","es":"Arrasar","fr":"Démolition","it":"Demolizione","nl":"Afbraak","pl":"Wyburzenie"}},
+{"id":"relic","titles":{"de":"Relikt","en":"Relic","es":"Reliquia","fr":"Relique","it":"Reliquia","nl":"Relikwie","pl":"Relikt"}},
+{"id":"royal_carriage","titles":{"de":"Königliche Kutsche","en":"Royal Carriage","es":"Carruaje Real","fr":"Cortège royal","it":"Carrozza Reale","nl":"Koninklijke koets","pl":"Karoca"}},
+{"id":"storyteller","titles":{"de":"Geschichtenerzähler","en":"Storyteller","es":"Cuentacuentos","fr":"Conteuse","it":"Cantastorie","nl":"Verteller","pl":"Bajarz"}},
+{"id":"swamp_hag","titles":{"de":"Sumpfhexe","en":"Swamp Hag","es":"Bruja del Pantano","fr":"Sorcière des marais","it":"Megera della Palude","nl":"Heks uit het moeras","pl":"Bagienna wiedźma"}},
+{"id":"transmogrify","titles":{"de":"Transformation","en":"Transmogrify","es":"Transfigurar","fr":"Transfiguration","it":"Transformazione","nl":"Metamorfose","pl":"Przemiana"}},
+{"id":"treasure_trove","titles":{"de":"Schatz","en":"Treasure Trove","es":"Piedras Preciosas","fr":"Pierres précieuses","it":"Raccolta di Tesori","nl":"Verborgen schat","pl":"Zaginiony skarb"}},
+{"id":"wine_merchant","titles":{"de":"Weinhändler","en":"Wine Merchant","es":"Comerciante de Vino","fr":"Marchand de vin","it":"Mercante di Vino","nl":"Wijnhandelaar","pl":"Sprzedawca wina"}},
+{"id":"alchemist","titles":{"en":"Alchemist","es":"Alquimista","fr":"Alchimiste","it":"Alchimista"}},
+{"id":"apothecary","titles":{"de":"Apotheker","en":"Apothecary","es":"Boticario","fr":"Apothicaire","it":"Farmacista","nl":"Apotheker"}},
+{"id":"apprentice","titles":{"de":"Lehrling","en":"Apprentice","es":"Aprendiz","fr":"Apprenti","it":"Apprendista","nl":"Leerling"}},
+{"id":"familiar","titles":{"de":"Vertrauter","en":"Familiar","fr":"Familier","it":"Famiglio","nl":"Oude bekende"}},
+{"id":"golem","titles":{"en":"Golem","es":"Gólem"}},
+{"id":"herbalist","titles":{"de":"Kräuterkundiger","en":"Herbalist","es":"Herbalista","fr":"Herboriste","it":"Erborista","nl":"Kruidenexpert"}},
+{"id":"philosophers_stone","titles":{"de":"Stein der Weisen","en":"Philosopher's Stone","es":"Piedra Filosofal","fr":"Pierre philosophale","it":"Pietra Filosofale","nl":"Steen der wijzen"}},
+{"id":"possession","titles":{"de":"Besessenheit","en":"Possession","es":"Posesión","it":"Possessione","nl":"Bezeten"}},
+{"id":"scrying_pool","titles":{"de":"Vision","en":"Scrying Pool","es":"Hidromancia","fr":"Bassin divinatoire","it":"Divinazione","nl":"Visioen"}},
+{"id":"transmute","titles":{"de":"Verwandlung","en":"Transmute","es":"Transmutar","fr":"Transmutation","it":"Trasmutazione","nl":"Transformatie"}},
+{"id":"university","titles":{"de":"Universität","en":"University","es":"Universidad","fr":"Université","it":"Università","nl":"Universiteit"}},
+{"id":"vineyard","titles":{"de":"Weinberg","en":"Vineyard","es":"Viñedo","fr":"Vignoble","it":"Vigna","nl":"Wijnberg"}},
+{"id":"architects_guild","titles":{"de":"Architektengilde","en":"Architects' Guild","fr":"Guilde des Architectes","nl":"Bouwmeestersgilde"}},
+{"id":"band_of_nomads","titles":{"de":"Nomadenstamm","en":"Band of Nomads","fr":"Bande de Nomades","nl":"Groep Nomaden"}},
+{"id":"cave_dwellers","titles":{"de":"Höhlenbewohner","en":"Cave Dwellers","fr":"Troglodytes","nl":"Holbewoners"}},
+{"id":"circle_of_witches","titles":{"de":"Hexenbund","en":"Circle of Witches","fr":"Cercle des Sorcières","nl":"Heksencirkel"}},
+{"id":"city_state","titles":{"de":"Stadtstaat","en":"City-state","fr":"Cité-État","nl":"Stadstaat"}},
+{"id":"coastal_haven","titles":{"de":"Höhlenhafen","en":"Coastal Haven","fr":"Havre-Côtier","nl":"Kusthaven"}},
+{"id":"crafters_guild","titles":{"de":"Handwerkergilde","en":"Crafters' Guild","fr":"Guilde des Artisans","nl":"Ambachtsgilde"}},
+{"id":"desert_guides","titles":{"de":"Wüstenführer","en":"Desert Guides","fr":"Guides du Déserrt","nl":"Woestijngidsen"}},
+{"id":"family_of_inventors","titles":{"de":"Erfinderfamilie","en":"Family of Inventors","fr":"Famille d'Inventeurs","nl":"Uitvindersgezin"}},
+{"id":"fellowship_of_scribes","titles":{"de":"Gefolgschaft der Schreiber","en":"Fellowship of Scribes","fr":"Confrérie des Scribes","nl":"Schrijversgenootschap"}},
+{"id":"forest_dwellers","titles":{"de":"Waldbewohner","en":"Forest Dwellers","fr":"Habitants des Forêts","nl":"Bosbewoners"}},
+{"id":"gang_of_pickpockets","titles":{"de":"Taschendiebe","en":"Gang of Pickpockets","fr":"Détrousseurs","nl":"Bende Zakkenrollers"}},
+{"id":"island_folk","titles":{"de":"Inselvolk","en":"Island Folk","fr":"Peuple des Îles","nl":"Eilandbewoners"}},
+{"id":"league_of_bankers","titles":{"de":"Bankiersverbund","en":"League of Bankers","fr":"Ligue des Banquiers","nl":"Bankiersverbond"}},
+{"id":"league_of_shopkeepers","titles":{"de":"Bund der Ladenbesitzer","en":"League of Shopkeepers","fr":"Ligue des Commerçants","nl":"Winkeliersverbond"}},
+{"id":"market_towns","titles":{"de":"Marktstädte","en":"Market Towns","fr":"Villes Commerçantes","nl":"Marktsteden"}},
+{"id":"mountain_folk","titles":{"de":"Bergvolk","en":"Mountain Folk","fr":"Montagnards","nl":"Bergbewoners"}},
+{"id":"order_of_astrologers","titles":{"de":"Sterndeuterorden","en":"Order of Astrologers","fr":"Ordre des Astrologues","nl":"Astrologenorde"}},
+{"id":"order_of_masons","titles":{"de":"Freimaurerloge","en":"Order of Masons","fr":"Ordre des Maçons","nl":"Metselaarsorde"}},
+{"id":"peaceful_cult","titles":{"de":"Friedlicher Kult","en":"Peaceful Cult","fr":"Culte Pacifiuqe","nl":"Vreemdzame Sekte"}},
+{"id":"plateau_shepherds","titles":{"de":"Schäfer der Hochebene","en":"Plateau Shepherds","fr":"Bergers du Plateau","nl":"Hooglandherders"}},
+{"id":"trappers_lodge","titles":{"de":"Hütte der Fallensteller","en":"Trappers' Lodge","fr":"Cabane de Trappeurs","nl":"Jagershut"}},
+{"id":"woodworkers_guild","titles":{"de":"Holzarbeitergilde","en":"Woodworkers' Guild","fr":"Guilde des Meunuisiers","nl":"Timmermansgilde"}},
+{"id":"augurs","titles":{"de":"Augurinnen","en":"Augurs","fr":"Augures","nl":"Voorspellers"}},
+{"id":"barbarian","titles":{"de":"Barbar","en":"Barbarian","fr":"Barbare","nl":"Barbaar"}},
+{"id":"bauble","titles":{"de":"Tand","en":"Bauble","fr":"Babiole","nl":"Kerstbal"}},
+{"id":"broker","titles":{"de":"Mittelsmann","en":"Broker","fr":"Courtier","nl":"Zaakwaarnemer"}},
+{"id":"capital_city","titles":{"de":"Hauptstadt","en":"Capital City","fr":"Capitale","nl":"Hoofdstad"}},
+{"id":"carpenter","titles":{"de":"Schreinerin","en":"Carpenter","fr":"Charpentière","nl":"Houtwerker"}},
+{"id":"clashes","titles":{"de":"Konflikte","en":"Clashes","fr":"Affrontements","nl":"Conflicten"}},
+{"id":"contract","titles":{"de":"Vertrag","en":"Contract","fr":"Contrat"}},
+{"id":"courier","titles":{"de":"Botin","en":"Courier","fr":"Courrier Rapide","nl":"Renbode"}},
+{"id":"emissary","titles":{"de":"Unterhändlerin","en":"Emissary","fr":"Émissaire","nl":"Afgezant"}},
+{"id":"forts","titles":{"de":"Bastionen","en":"Forts","fr":"Fortifications","nl":"Forten"}},
+{"id":"galleria","titles":{"de":"Markthalle","en":"Galleria","fr":"Marché Couvert","nl":"Kunstmuseum"}},
+{"id":"guildmaster","titles":{"de":"Gildemeisterin","en":"Guildmaster","fr":"Maître de Guilde","nl":"Gildenmeester"}},
+{"id":"highwayman","titles":{"de":"Wegelagerer","en":"Highwayman","fr":"Bandit de Grand Chemin","nl":"Struikrover"}},
+{"id":"hunter","titles":{"de":"Jägerin","en":"Hunter","fr":"Chasseuse","nl":"Jager"}},
+{"id":"importer","titles":{"de":"Importeurin","en":"Importer","fr":"Importateur","nl":"Importeur"}},
+{"id":"innkeeper","titles":{"de":"Wirtin","en":"Innkeeper","fr":"Aubergiste","nl":"Waard"}},
+{"id":"marquis","titles":{"en":"Marquis","nl":"Markies"}},
+{"id":"merchant_camp","titles":{"de":"Händlerlager","en":"Merchant Camp","fr":"Camp de Marchands","nl":"Handelaarskamp"}},
+{"id":"modify","titles":{"de":"Umgestaltung","en":"Modify","fr":"Modification","nl":"Bijwerken"}},
+{"id":"odysseys","titles":{"de":"Irrfahrten","en":"Odysseys","fr":"Odyssées","nl":"Zwerftochten"}},
+{"id":"royal_galley","titles":{"de":"Königliche Galeere","en":"Royal Galley","fr":"Galère Royale","nl":"Koninklijk Galeischip"}},
+{"id":"sentinel","titles":{"de":"Wächter","en":"Sentinel","fr":"Guetteur","nl":"Schildwacht"}},
+{"id":"skirmisher","titles":{"de":"Aufwiegler","en":"Skirmisher","fr":"Tirailleur","nl":"Tirailleur"}},
+{"id":"specialist","titles":{"de":"Spezialistin","en":"Specialist","fr":"Spécialiste"}},
+{"id":"swap","titles":{"de":"Tausch","en":"Swap","fr":"Troc","nl":"Ruilen"}},
+{"id":"sycophant","titles":{"de":"Schmeichler","en":"Sycophant","fr":"Sycophante","nl":"Hielenlikker"}},
+{"id":"town","titles":{"de":"Ortschaft","en":"Town","fr":"Bourg","nl":"Nederzetting"}},
+{"id":"townsfolk","titles":{"de":"Bürger","en":"Townsfolk","fr":"Citoyens","nl":"Stedelingen"}},
+{"id":"underling","titles":{"de":"Untergebener","en":"Underling","fr":"Subalterne","nl":"Ondergeschikte"}},
+{"id":"wizards","titles":{"de":"Zauberer","en":"Wizards","fr":"Magiciens","nl":"Tovenaars"}},
+{"id":"artisan","titles":{"de":"Töpferei","en":"Artisan","es":"Artesana","it":"Arti e Mestieri","nl":"Ambachtsman","pl":"Rękodzielnik"}},
+{"id":"bandit","titles":{"de":"Banditin","en":"Bandit","es":"Bandida","fr":"Brigand","it":"Bandito","nl":"Bandiet","pl":"Bandyta"}},
+{"id":"bureaucrat","titles":{"de":"Bürokrat","en":"Bureaucrat","es":"Burócrata","fr":"Bureaucrate","it":"Burocrate","nl":"Bureaucraat","pl":"Urzędnik"}},
+{"id":"cellar","titles":{"de":"Keller","en":"Cellar","es":"Sótano","fr":"Cave","it":"Sotterraneo","nl":"Kelder","pl":"Piwnica"}},
+{"id":"chapel","titles":{"de":"Kapelle","en":"Chapel","es":"Kaplica","fr":"Chapelle","it":"Cappella","nl":"Kapel","pl":"Kaplica"}},
+{"id":"council_room","titles":{"de":"Ratsversammlung","en":"Council Room","es":"Sala del Consejo","fr":"Chambre du conseil","it":"Sala del Consiglio","nl":"Raadszaal","pl":"Sala obrad"}},
+{"id":"festival","titles":{"de":"Jahrmarkt","en":"Festival","it":"Fiera","pl":"Festyn"}},
+{"id":"gardens","titles":{"de":"Gärten","en":"Gardens","es":"Jardines","fr":"Jardins","it":"Giardini","nl":"Tuinen","pl":"Ogrody"}},
+{"id":"harbinger","titles":{"de":"Vorbotin","en":"Harbinger","es":"Emisario","fr":"Présage","it":"Avanscoperta","nl":"Voorbode","pl":"Zwiastun"}},
+{"id":"laboratory","titles":{"de":"Laboratorium","en":"Laboratory","es":"Laboratorio","fr":"Laboratoire","it":"Laboratorio","nl":"Laboratorium","pl":"Laboratorium"}},
+{"id":"library","titles":{"de":"Bibliothek","en":"Library","es":"Biblioteca","fr":"Bibliothèque","it":"Biblioteca","nl":"Bibliotheek","pl":"Biblioteka"}},
+{"id":"market","titles":{"de":"Markt","en":"Market","es":"Mercado","fr":"Marché","it":"Mercato","nl":"Markt","pl":"Targowisko"}},
+{"id":"merchant","titles":{"de":"Händlerin","en":"Merchant","es":"Tendera","fr":"Marchand","it":"Banco del Mercato","nl":"Koopman","pl":"Kupiec"}},
+{"id":"militia","titles":{"de":"Miliz","en":"Militia","es":"Milicia","fr":"Milice","it":"Milizia","nl":"Militie","pl":"Milicja"}},
+{"id":"mine","titles":{"en":"Mine","es":"Mina","it":"Miniera","nl":"Mijn","pl":"Kopalnia"}},
+{"id":"moat","titles":{"de":"Burggraben","en":"Moat","es":"Foso","fr":"Douves","it":"Fossato","nl":"Slotgracht","pl":"Fosa"}},
+{"id":"moneylender","titles":{"de":"Geldverleiher","en":"Moneylender","es":"Prestamista","fr":"Prêteur sur gages","it":"Usuraio","nl":"Geldschieter","pl":"Lichwiarz"}},
+{"id":"poacher","titles":{"de":"Wilddiebin","en":"Poacher","es":"Cazadora","fr":"Braconnier","it":"Bracconiere","nl":"Wilddief","pl":"Kłusownik"}},
+{"id":"remodel","titles":{"de":"Umbau","en":"Remodel","es":"Remodelar","fr":"Rénovation","it":"Miglioria","nl":"Verbouwing","pl":"Przebudowa"}},
+{"id":"sentry","titles":{"de":"Torwächterin","en":"Sentry","es":"Protectora","fr":"Sentinelle","it":"Sentinella","nl":"Cipier","pl":"Wartownik"}},
+{"id":"smithy","titles":{"de":"Schmiede","en":"Smithy","es":"Herrería","fr":"Forgeron","it":"Fucina","nl":"Smidse","pl":"Kuźnia"}},
+{"id":"throne_room","titles":{"de":"Thronsaal","en":"Throne Room","es":"Salón del Trono","fr":"Salle du trône","it":"Sala del Trono","nl":"Troonzaal","pl":"Sala tronowa"}},
+{"id":"vassal","titles":{"de":"Vasall","en":"Vassal","es":"Vasallo","it":"Vassallo","nl":"Vazal","pl":"Wasal"}},
+{"id":"village","titles":{"de":"Dorf","en":"Village","es":"Aldea","it":"Villaggio","nl":"Dorp","pl":"Wioska"}},
+{"id":"witch","titles":{"de":"Hexe","en":"Witch","es":"Bruja","fr":"Sorcière","it":"Strega","nl":"Heks","pl":"Wiedźma"}},
+{"id":"workshop","titles":{"de":"Werkstatt","en":"Workshop","es":"Taller","fr":"Atelier","it":"Officina","nl":"Werkplaats","pl":"Warsztat"}},
+{"id":"artisan","titles":{"en":"Artisan"}},
+{"id":"bandit","titles":{"en":"Bandit"}},
+{"id":"harbinger","titles":{"en":"Harbinger"}},
+{"id":"merchant","titles":{"en":"Merchant"}},
+{"id":"poacher","titles":{"en":"Poacher"}},
+{"id":"sentry","titles":{"en":"Sentry"}},
+{"id":"vassal","titles":{"en":"Vassal"}},
+{"id":"adventurer","titles":{"de":"Abenteurer","en":"Adventurer","es":"Aventurero","fr":"Aventurier","it":"Avventuriero","nl":"Avonturier","pl":"Odkrywca"}},
+{"id":"chancellor","titles":{"de":"Kanzler","en":"Chancellor","es":"Canciller","fr":"Chancelier","it":"Cancelliere","nl":"Raadsheer","pl":"Kanclerz"}},
+{"id":"feast","titles":{"de":"Festmahl","en":"Feast","es":"Banquete","fr":"Festin","it":"Banchetto","nl":"Feest","pl":"Uczta"}},
+{"id":"spy","titles":{"de":"Spion","en":"Spy","es":"Espía","fr":"Espion","it":"Spia","nl":"Spion","pl":"Szpieg"}},
+{"id":"thief","titles":{"de":"Dieb","en":"Thief","es":"Ladrón","fr":"Voleur","it":"Ladro","nl":"Dief","pl":"Złodziej"}},
+{"id":"woodcutter","titles":{"de":"Holzfäller","en":"Woodcutter","es":"Leñadores","fr":"Bûcheron","it":"Taglialegna","nl":"Houthakker","pl":"Drwal"}},
+{"id":"fairgrounds","titles":{"de":"Festplatz","en":"Fairgrounds","es":"Recinto Ferial","fr":"Champ de foire","it":"Mercatino","nl":"Kermisterrein","pl":"Odpust"}},
+{"id":"farming_village","titles":{"de":"Bauerndorf","en":"Farming Village","es":"Poblado Agrícola","fr":"Village agricole","it":"Villaggio Agricolo","nl":"Boerendorp","pl":"Farma"}},
+{"id":"fortune_teller","titles":{"de":"Wahrsagerin","en":"Fortune Teller","es":"Adivinadora","fr":"Diseuse de bonne aventure","it":"Indovina","nl":"Waarzegster","pl":"Cyganka"}},
+{"id":"hamlet","titles":{"de":"Weiler","en":"Hamlet","es":"Caserío","fr":"Hameau","it":"Borgo","nl":"Gehucht","pl":"Folwark"}},
+{"id":"harvest","titles":{"de":"Ernte","en":"Harvest","es":"Cosecha","fr":"Récolte","it":"Mietitura","nl":"Oogst","pl":"Żniwa"}},
+{"id":"horn_of_plenty","titles":{"de":"Füllhorn","en":"Horn of Plenty","es":"Cornucopia","fr":"Corne d'abondance","it":"Cornucopia","nl":"Hoorn des overvloeds","pl":"Róg obfitości"}},
+{"id":"horse_traders","titles":{"de":"Pferdehändler","en":"Horse Traders","es":"Tratantes de Caballos","fr":"Maquignons","it":"Mercanti di Cavalli","nl":"Paardenhandelaars","pl":"Banda koniokradów"}},
+{"id":"hunting_party","titles":{"de":"Treibjagd","en":"Hunting Party","es":"Cacería","fr":"Chasseurs","it":"Battuta di Caccia","nl":"Jachtgezelschap","pl":"Polowanie"}},
+{"id":"jester","titles":{"de":"Harlekin","en":"Jester","es":"Bufón","fr":"Bouffon","it":"Giullare","nl":"Nar","pl":"Błazen"}},
+{"id":"menagerie","titles":{"en":"Menagerie","es":"Colección de Animales","fr":"Ménagerie","it":"Serraglio","pl":"Menażeria"}},
+{"id":"remake","titles":{"de":"Nachbau","en":"Remake","es":"Reconstrucción","fr":"Renouvellement","it":"Rifacimento","nl":"Nieuwe versie","pl":"Rozbiórka"}},
+{"id":"tournament","titles":{"de":"Turnier","en":"Tournament","es":"Torneo","fr":"Tournoi","it":"Torneo","nl":"Toernooi"}},
+{"id":"young_witch","titles":{"de":"Junge Hexe","en":"Young Witch","es":"Bruja Joven","fr":"Jeune sorcière","it":"Giovane Strega","nl":"Jonge heks","pl":"Młoda wiedźma"}},
+{"id":"altar","titles":{"en":"Altar","fr":"Autel","it":"Altare","nl":"Altaar"}},
+{"id":"armory","titles":{"de":"Waffenkammer","en":"Armory","es":"Armría","fr":"Armurerie","it":"Armeria","nl":"Wapenkamer"}},
+{"id":"bandit_camp","titles":{"de":"Banditenlager","en":"Bandit Camp","es":"Campamento de Bandidos","fr":"Camp de bandits","it":"Accampamento di Banditi","nl":"Bandietenkamp"}},
+{"id":"band_of_misfits","titles":{"de":"Vogelfreie","en":"Band of Misfits","es":"Banda de Rufianes","fr":"Malfaiteurs","it":"Banda di Reietti","nl":"Groep Mislukkelingen"}},
+{"id":"beggar","titles":{"de":"Bettler","en":"Beggar","es":"Mendigo","fr":"Mendiant","nl":"Bedelaar"}},
+{"id":"catacombs","titles":{"de":"Katakomben","en":"Catacombs","es":"Catacumbas","fr":"Catacombes","it":"Catacombe","nl":"Gewelven"}},
+{"id":"count","titles":{"de":"Graf","en":"Count","es":"Conde","fr":"Comte","it":"Conte","nl":"Graaf"}},
+{"id":"counterfeit","titles":{"de":"Falschgeld","en":"Counterfeit","es":"Falsificación","fr":"Contrefaçon","it":"Contraffazione","nl":"Vals Geld"}},
+{"id":"cultist","titles":{"de":"Kultist","en":"Cultist","es":"Sectario","fr":"Cultiste","it":"Cultista"}},
+{"id":"death_cart","titles":{"de":"Leichenkarren","en":"Death Cart","es":"Carro de los Muertos","fr":"Charrette de cadavres","it":"Carretto della Morte","nl":"Dodenkar"}},
+{"id":"feodum","titles":{"de":"Lehen","en":"Feodum","es":"Feudo","fr":"Fief","it":"Feudo"}},
+{"id":"forager","titles":{"de":"Mundraub","en":"Forager","es":"Merodeador","fr":"Cueilleur","it":"Raccoglitore","nl":"Jager-Verzamelaar"}},
+{"id":"fortress","titles":{"de":"Festung","en":"Fortress","es":"Fortaleza","fr":"Forteresse","it":"Fortezza","nl":"Vesting"}},
+{"id":"graverobber","titles":{"de":"Grabräuber","en":"Graverobber","es":"Ladrón de Tumbas","fr":"Pilleur de tombes","it":"Tombarolo","nl":"Grafrover"}},
+{"id":"hermit","titles":{"de":"Eremit","en":"Hermit","es":"Ermitaño","fr":"Ermite","it":"Eremita","nl":"Kluizenaar"}},
+{"id":"hunting_grounds","titles":{"de":"Jagdgründe","en":"Hunting Grounds","es":"Coto de Caza","fr":"Territoire de chasse","it":"Riserva di Caccia","nl":"Jachtvelden"}},
+{"id":"ironmonger","titles":{"de":"Eisenhändler","en":"Ironmonger","es":"Ferretero","fr":"Ferronnier","it":"Ferramenta","nl":"Metaalhandelaar"}},
+{"id":"junk_dealer","titles":{"de":"Schrotthändler","en":"Junk Dealer","es":"Chatarrero","fr":"Brocanteur","it":"Rigattieri","nl":"Opkoper"}},
+{"id":"knights","titles":{"de":"Ritter","en":"Knights","es":"Caballeros","fr":"Chevaliers","it":"Cavalieri","nl":"Ridders"}},
+{"id":"marauder","titles":{"de":"Marodeur","en":"Marauder","es":"Salteador","fr":"Maraudeur","it":"Predone","nl":"Stroper"}},
+{"id":"market_square","titles":{"de":"Marktplatz","en":"Market Square","es":"Plaza del Mercado","fr":"Place du marché","it":"Piazza del Mercato","nl":"Marktplein"}},
+{"id":"mystic","titles":{"de":"Medium","en":"Mystic","es":"Pitonisa","fr":"Mystique","it":"Mistica","nl":"Toverfeeks"}},
+{"id":"pillage","titles":{"de":"Raubzug","en":"Pillage","es":"Pillaje","it":"Saccheggio","nl":"Plundering"}},
+{"id":"poor_house","titles":{"de":"Armenhaus","en":"Poor House","es":"Hospicio","fr":"Hospice","it":"Tugurio","nl":"Armenhuis"}},
+{"id":"procession","titles":{"de":"Prozession","en":"Procession","es":"Procesión","it":"Processione","nl":"Optocht"}},
+{"id":"rats","titles":{"de":"Ratten","en":"Rats","es":"Ratas","it":"Ratti","nl":"Ratten"}},
+{"id":"rebuild","titles":{"de":"Neubau","en":"Rebuild","es":"Reconstruir","fr":"Reconstruction","it":"Ricostruzione","nl":"Wederopbouw"}},
+{"id":"rogue","titles":{"de":"Schurke","en":"Rogue","es":"Granuja","fr":"Bandit","it":"Furfante","nl":"Schurk"}},
+{"id":"sage","titles":{"de":"Weiser","en":"Sage","es":"Sabio","it":"Demolizione","nl":"Wijsgeer"}},
+{"id":"scavenger","titles":{"de":"Lumpensammler","en":"Scavenger","es":"Carroñero","fr":"Pilleur","it":"Spazzino","nl":"Scharrelaar"}},
+{"id":"squire","titles":{"de":"Knappe","en":"Squire","es":"Escudero","fr":"Écuyer","it":"Scudiero","nl":"Schildknaap"}},
+{"id":"storeroom","titles":{"de":"Lagerraum","en":"Storeroom","es":"Depósito","fr":"Salle d'entreposage","it":"Deposito","nl":"Berghok"}},
+{"id":"urchin","titles":{"de":"Gassenjunge","en":"Urchin","es":"Pillastre","fr":"Orphelin","it":"Monello","nl":"Straatjongen"}},
+{"id":"vagrant","titles":{"de":"Landstreicher","en":"Vagrant","es":"Vagabundo","fr":"Vagabond","it":"Vagabondo","nl":"Landloper"}},
+{"id":"wandering_minstrel","titles":{"de":"Barde","en":"Wandering Minstrel","es":"Juglar","fr":"Ménestrel errant","it":"Menestrello Girovago","nl":"Reizende Minstreel"}},
+{"id":"archive","titles":{"de":"Archiv","en":"Archive","es":"Archivo","fr":"Archives","nl":"Archief","pl":"Archiwum"}},
+{"id":"capital","titles":{"de":"Vermögen","en":"Capital","nl":"Kapitaal","pl":"Kapitał"}},
+{"id":"castles","titles":{"de":"Schlösser","en":"Castles","es":"Castillos","fr":"Châteaux","nl":"Kastelen","pl":"Zamki"}},
+{"id":"catapult","titles":{"de":"Katapult / Felsen","en":"Catapult / Rocks","es":"Catapulta / Rocas","fr":"Catapulte / Rocher","nl":"Katapult / Rotsblokken","pl":"Katapulta / Głazy"}},
+{"id":"chariot_race","titles":{"de":"Wagenrennen","en":"Chariot Race","es":"Carrera de Cuádrigas","fr":"Course de chars","nl":"Strijdwagenrace","pl":"Wyścig rydwanów"}},
+{"id":"charm","titles":{"de":"Zauber","en":"Charm","es":"Fetiche","fr":"Sort","nl":"Geluksbrenger","pl":"Klejnot"}},
+{"id":"city_quarter","titles":{"de":"Stadtviertel","en":"City Quarter","es":"Suburbios","fr":"Faubourg","nl":"Stadswijk","pl":"Dzielnica"}},
+{"id":"crown","titles":{"de":"Krone","en":"Crown","es":"Corona","fr":"Couronne","nl":"Kroon","pl":"Korona"}},
+{"id":"encampment","titles":{"de":"Feldlager / Diebesgut","en":"Encampment / Plunder","es":"Campamento / Saqueo","fr":"Camp / Saccage","nl":"Kampement / Plunderen","pl":"Obozowisko / Zdobycz"}},
+{"id":"enchantress","titles":{"de":"Zauberin","en":"Enchantress","es":"Hechicera","fr":"Magicienne","nl":"Tovenares","pl":"Czarodziejka"}},
+{"id":"engineer","titles":{"de":"Ingenieurin","en":"Engineer","es":"Ingeniero","fr":"Ingénieur","nl":"Ingenieur","pl":"Inżynier"}},
+{"id":"advance","titles":{"de":"Aufstieg","en":"Advance","es":"Promoción","fr":"Adoubement","nl":"Promotie","pl":"Awans"}},
+{"id":"annex","titles":{"de":"Schlacht","en":"Annex","es":"Anexión","fr":"Annexion","nl":"Overname","pl":"Aneksja"}},
+{"id":"banquet","titles":{"de":"Bankett","en":"Banquet","es":"Banquete","nl":"Banket","pl":"Bankiet"}},
+{"id":"conquest","titles":{"de":"Eroberung","en":"Conquest","es":"Conquista","fr":"Conquête","nl":"Verovering","pl":"Podbój"}},
+{"id":"delve","titles":{"de":"Erforschen","en":"Delve","es":"Excavación","fr":"Trouée","nl":"Delven","pl":"Zejście"}},
+{"id":"dominate","titles":{"de":"Beherrschen","en":"Dominate","es":"Dominación","fr":"Domination","nl":"Overheersing","pl":"Dominacja"}},
+{"id":"donate","titles":{"de":"Spende","en":"Donate","es":"Donación","fr":"Donation","nl":"Donatie","pl":"Datek"}},
+{"id":"ritual","titles":{"en":"Ritual","fr":"Rituel","nl":"Ritueel","pl":"Rytułał"}},
+{"id":"salt_the_earth","titles":{"de":"Versalztes Land","en":"Salt the Earth","es":"Salar la Tierra","fr":"Épandage de sel","nl":"Zout der aarde","pl":"Solna klątwa"}},
+{"id":"tax","titles":{"de":"Steuer","en":"Tax","es":"Impuesto","fr":"Taxe","nl":"Belasting","pl":"Podatek"}},
+{"id":"triumph","titles":{"de":"Siegeszug","en":"Triumph","es":"Triunfo","fr":"Triomphe","nl":"Triomf","pl":"Triumf"}},
+{"id":"wedding","titles":{"de":"Hochzeit","en":"Wedding","es":"Boda","fr":"Mariage","nl":"Bruiloft","pl":"Zaślubiny"}},
+{"id":"windfall","titles":{"de":"Glüksfall","en":"Windfall","es":"Golpe de Suerte","fr":"Manne","nl":"Meevaller","pl":"Gratka"}},
+{"id":"farmers_market","titles":{"de":"Bauernmarkt","en":"Farmers' Market","es":"Mercado Agrícola","fr":"Marché agricole","nl":"Boerenmarkt","pl":"Targ rolny"}},
+{"id":"forum","titles":{"en":"Forum","es":"Foro"}},
+{"id":"gladiator","titles":{"de":"Gladiator / Reichtum","en":"Gladiator / Fortune","es":"Gladiador / Fortuna","fr":"Gladiateur / Fortune","nl":"Gladiator / Fortuin","pl":"Gladiator / Fortuna"}},
+{"id":"groundskeeper","titles":{"de":"Gärtnerin","en":"Groundskeeper","es":"Jardinero","fr":"Jardinière","nl":"Kasteelhovenier","pl":"Ogrodnik"}},
+{"id":"aqueduct","titles":{"de":"Aquädukt","en":"Aqueduct","es":"Acueducto","fr":"Aqueduc","nl":"Aquaduct","pl":"Akwedukt"}},
+{"id":"arena","titles":{"en":"Arena","fr":"Arène"}},
+{"id":"bandit_fort","titles":{"de":"Räuberfestung","en":"Bandit Fort","es":"Fuerte Bandido","fr":"Fort des bandits","nl":"Bandietenfort","pl":"Fort rozbójników"}},
+{"id":"basilica","titles":{"de":"Basilika","en":"Basilica","es":"Basílica","fr":"Basilique","nl":"Basiliek","pl":"Bazylika"}},
+{"id":"baths","titles":{"de":"Badehaus","en":"Baths","es":"Baños","fr":"Bains","nl":"Baden","pl":"Łaźnia"}},
+{"id":"battlefield","titles":{"de":"Schlachtfeld","en":"Battlefield","es":"Campo de Batalla","fr":"Champ de bataille","nl":"Slagveld","pl":"Pole bitwy"}},
+{"id":"colonnade","titles":{"de":"Kolonnaden","en":"Colonnade","es":"Columnata","nl":"Zuilengalerij","pl":"Kolumnada"}},
+{"id":"defiled_shrine","titles":{"de":"Entweihter Schrein","en":"Defiled Shrine","es":"Santuario Profanado","fr":"Profanation","nl":"Geschonden altaar","pl":"Sprofanowane sanktuarium"}},
+{"id":"fountain","titles":{"de":"Brunnen","en":"Fountain","es":"Fuente","fr":"Fontaine","nl":"Fontein","pl":"Fontanna"}},
+{"id":"keep","titles":{"de":"Bollwerk","en":"Keep","es":"Fuerte","fr":"Fort","nl":"Hoofdtoren","pl":"Twierdza"}},
+{"id":"labyrinth","titles":{"en":"Labyrinth","es":"Laberinto","fr":"Labyrinthe","nl":"Labyrint","pl":"Labirynt"}},
+{"id":"mountain_pass","titles":{"de":"Gebirgspass","en":"Mountain Pass","es":"Desfiladero","fr":"Col","nl":"Bergpas","pl":"Przełęcz"}},
+{"id":"museum","titles":{"en":"Museum","es":"Museo","fr":"Musée","pl":"Muzeum"}},
+{"id":"obelisk","titles":{"en":"Obelisk","es":"Obelisco","fr":"Obélisque"}},
+{"id":"orchard","titles":{"de":"Obstgarten","en":"Orchard","es":"Vergel","fr":"Verger","nl":"Boomgaard","pl":"Sad"}},
+{"id":"palace","titles":{"de":"Palast","en":"Palace","es":"Palacio","fr":"Palais","nl":"Paleis","pl":"Pałac"}},
+{"id":"tomb","titles":{"de":"Grabmal","en":"Tomb","es":"Tumba","fr":"Tombe","nl":"Tombe","pl":"Grobowiec"}},
+{"id":"tower","titles":{"de":"Turm","en":"Tower","es":"Torre","fr":"Tour","nl":"Toren","pl":"Wieża"}},
+{"id":"triumphal_arch","titles":{"de":"Triumphbogen","en":"Triumphal Arch","es":"Arco del Triunfo","fr":"Arc de triomphe","nl":"Triomfboog","pl":"Łuk triumfalny"}},
+{"id":"wall","titles":{"de":"Mauer","en":"Wall","es":"Muro","fr":"Remparts","nl":"Muur","pl":"Mur"}},
+{"id":"wolf_den","titles":{"de":"Wolfsbau","en":"Wolf Den","es":"Guarida de Lobos","fr":"Tanière des loups","nl":"Wolvenhol","pl":"Wilcze leże"}},
+{"id":"legionary","titles":{"de":"Legionär","en":"Legionary","es":"Legionario","fr":"Légionnaire","nl":"Legioensoldaat","pl":"Legionista"}},
+{"id":"overlord","titles":{"de":"Lehnsherr","en":"Overlord","es":"Déspota","fr":"Seigneur","nl":"Despoot","pl":"Władca"}},
+{"id":"patrician","titles":{"de":"Patrizier / Handelsplatz","en":"Patrician / Emporium","es":"Patricio / Emporio","fr":"Patricien / Emporium","nl":"Patriciër / Emporium","pl":"Patrycjusz / Emporium"}},
+{"id":"royal_blacksmith","titles":{"de":"Königlicher Schmied","en":"Royal Blacksmith","es":"Herrero Real","fr":"Forgeron royal","nl":"Koninklijke smid","pl":"Królewski kowal"}},
+{"id":"sacrifice","titles":{"de":"Opfer","en":"Sacrifice","es":"Sacrificio","nl":"Offer","pl":"Ofiara"}},
+{"id":"settlers","titles":{"de":"Siedler / Emsiges Dorf","en":"Settlers / Bustling Village","es":"Colonos / Aldea Bulliciosa","fr":"Colons / Village en effervescence","nl":"Kolonisten / Levendig dorp","pl":"Osadnicy / Gwarna wioska"}},
+{"id":"temple","titles":{"de":"Tempel","en":"Temple","es":"Templo","nl":"Tempel","pl":"Świątynia"}},
+{"id":"villa","titles":{"en":"Villa","pl":"Willa"}},
+{"id":"wild_hunt","titles":{"de":"Wilde Jagd","en":"Wild Hunt","es":"Cacería Salvaje","fr":"Chasse fantastique","nl":"Wilde jacht","pl":"Dziki gon"}},
+{"id":"advisor","titles":{"de":"Berater","en":"Advisor","es":"Asesor","fr":"Conseiller","nl":"Adviseur"}},
+{"id":"baker","titles":{"de":"Bäcker","en":"Baker","es":"Panadero","fr":"Boulanger","nl":"Bakker"}},
+{"id":"butcher","titles":{"de":"Metzger","en":"Butcher","es":"Carnicero","fr":"Boucher","nl":"Slager"}},
+{"id":"candlestick_maker","titles":{"de":"Leuchtenmacher","en":"Candlestick Maker","es":"Fabricante de Velas","fr":"Cirier","nl":"Kandelaarmaker"}},
+{"id":"doctor","titles":{"de":"Arzt","en":"Doctor","fr":"Médecin","nl":"Arts"}},
+{"id":"herald","titles":{"de":"Herold","en":"Herald","es":"Heraldo","fr":"Héraut","nl":"Heraut"}},
+{"id":"journeyman","titles":{"de":"Wandergeselle","en":"Journeyman","es":"Oficial","fr":"Compagnon","nl":"Gezel"}},
+{"id":"masterpiece","titles":{"de":"Meisterstück","en":"Masterpiece","es":"Obra Maestra","fr":"Chef-d'œuvre","nl":"Meesterwerk"}},
+{"id":"merchant_guild","titles":{"de":"Kaufmannsgilde","en":"Merchant Guild","es":"Gremio Mercantil","fr":"Guilde des marchands","nl":"Koopmansgilde"}},
+{"id":"plaza","titles":{"de":"Platz","en":"Plaza","fr":"Place du village"}},
+{"id":"soothsayer","titles":{"de":"Hellseherin","en":"Soothsayer","es":"Vidente","fr":"Devin","nl":"Helderziende"}},
+{"id":"stonemason","titles":{"de":"Steinmetz","en":"Stonemason","es":"Cantero","fr":"Tailleur de pierre","nl":"Steenhouwer"}},
+{"id":"taxman","titles":{"de":"Steuereintreiber","en":"Taxman","es":"Recaudador","fr":"Percepteur","nl":"Belastinginner"}},
+{"id":"carnival","titles":{"en":"Carnival","fr":"Carnaval"}},
+{"id":"fairgrounds","titles":{"de":"Festplatz","en":"Fairgrounds","es":"Recinto Ferial","fr":"Champ de foire","nl":"Kermisterrein","pl":"Odpust"}},
+{"id":"farmhands","titles":{"en":"Farmhands","fr":"Glaneuses"}},
+{"id":"farrier","titles":{"en":"Farrier","fr":"Maréchal-ferrant"}},
+{"id":"ferryman","titles":{"en":"Ferryman","fr":"Passeur"}},
+{"id":"footpad","titles":{"en":"Footpad","fr":"Gredin"}},
+{"id":"hamlet","titles":{"de":"Weiler","en":"Hamlet","es":"Caserío","fr":"Hameau","nl":"Gehucht","pl":"Folwark"}},
+{"id":"horn_of_plenty","titles":{"de":"Füllhorn","en":"Horn of Plenty","es":"Cornucopia","fr":"Corne d'abondance","nl":"Hoorn des overvloeds","pl":"Róg obfitości"}},
+{"id":"hunting_party","titles":{"de":"Treibjagd","en":"Hunting Party","es":"Cacería","fr":"Chasseurs","nl":"Jachtgezelschap","pl":"Polowanie"}},
+{"id":"infirmary","titles":{"en":"Infirmary","fr":"Infirmerie"}},
+{"id":"jester","titles":{"de":"Harlekin","en":"Jester","es":"Bufón","fr":"Bouffon","nl":"Nar","pl":"Błazen"}},
+{"id":"joust","titles":{"en":"Joust","fr":"Joute"}},
+{"id":"menagerie","titles":{"en":"Menagerie","es":"Colección de Animales","fr":"Ménagerie","pl":"Menażeria"}},
+{"id":"remake","titles":{"de":"Nachbau","en":"Remake","es":"Reconstrucción","fr":"Renouvellement","nl":"Nieuwe versie","pl":"Rozbiórka"}},
+{"id":"shop","titles":{"en":"Shop","fr":"Échoppe"}},
+{"id":"young_witch","titles":{"de":"Junge Hexe","en":"Young Witch","es":"Bruja Joven","fr":"Jeune sorcière","nl":"Jonge heks","pl":"Młoda wiedźma"}},
+{"id":"carnival","titles":{"en":"Carnival"}},
+{"id":"farmhands","titles":{"en":"Farmhands"}},
+{"id":"farrier","titles":{"en":"Farrier"}},
+{"id":"ferryman","titles":{"en":"Ferryman"}},
+{"id":"footpad","titles":{"en":"Footpad"}},
+{"id":"infirmary","titles":{"en":"Infirmary"}},
+{"id":"joust","titles":{"en":"Joust"}},
+{"id":"shop","titles":{"en":"Shop"}},
+{"id":"farming_village","titles":{"de":"Bauerndorf","en":"Farming Village","es":"Poblado Agrícola","fr":"Village agricole","nl":"Boerendorp","pl":"Farma"}},
+{"id":"fortune_teller","titles":{"de":"Wahrsagerin","en":"Fortune Teller","es":"Adivinadora","fr":"Diseuse de bonne aventure","nl":"Waarzegster","pl":"Cyganka"}},
+{"id":"harvest","titles":{"de":"Ernte","en":"Harvest","es":"Cosecha","fr":"Récolte","nl":"Oogst","pl":"Żniwa"}},
+{"id":"horse_traders","titles":{"de":"Pferdehändler","en":"Horse Traders","es":"Tratantes de Caballos","fr":"Maquignons","nl":"Paardenhandelaars","pl":"Banda koniokradów"}},
+{"id":"tournament","titles":{"de":"Turnier","en":"Tournament","es":"Torneo","fr":"Tournoi","nl":"Toernooi"}},
+{"id":"berserker","titles":{"en":"Berserker","pl":"Berserk"}},
+{"id":"border_village","titles":{"de":"Grenzdorf","en":"Border Village","es":"Pueblo Fronterizo","fr":"Village frontalier","it":"Villaggio di Frontiera","nl":"Grensdorp","pl":"Pogranicze"}},
+{"id":"cartographer","titles":{"de":"Kartograph","en":"Cartographer","es":"Cartógrafo","fr":"Cartographe","it":"Cartografo","nl":"Cartograaf","pl":"Kartograf"}},
+{"id":"cauldron","titles":{"de":"Hexenkessel","en":"Cauldron","fr":"Chaudron","pl":"Kociołek"}},
+{"id":"crossroads","titles":{"de":"Wegkreuzung","en":"Crossroads","es":"Encrucijada","fr":"Carrefour","it":"Incrocio","nl":"Splitsing","pl":"Rozdroże"}},
+{"id":"develop","titles":{"de":"Aufbau","en":"Develop","es":"Desarrollo","fr":"Développement","it":"Sviluppo","nl":"Ontwikkelen","pl":"Rozwój"}},
+{"id":"farmland","titles":{"de":"Fruchtbares Land","en":"Farmland","es":"Tierra de Labranza","fr":"Terre agricole","it":"Terra Coltivata","nl":"Landbouwgrond","pl":"Pola uprawne"}},
+{"id":"fools_gold","titles":{"de":"Katzengold","en":"Fool's Gold","es":"Oro Falso","fr":"Or des fous","it":"Oro dello Stolto","nl":"Klatergoud","pl":"Złoto głupców"}},
+{"id":"guard_dog","titles":{"de":"Wachhund","en":"Guard Dog","fr":"Chien de garde","pl":"Pies stróżujący"}},
+{"id":"haggler","titles":{"de":"Feilscher","en":"Haggler","es":"Regateador","fr":"Marchandeur","it":"Contrattazione","nl":"Sjacheraar","pl":"Przekupień"}},
+{"id":"highway","titles":{"de":"Fernstrasse","en":"Highway","es":"Carretera","fr":"Route","it":"Strada Maestra","nl":"Hoofdweg","pl":"Gościniec"}},
+{"id":"inn","titles":{"de":"Gasthaus","en":"Inn","es":"Posada","fr":"Auberge","it":"Locanda","nl":"Herberg","pl":"Gospoda"}},
+{"id":"jack_of_all_trades","titles":{"de":"Lebenskünstler","en":"Jack of all Trades","es":"Chico para Todo","fr":"Touche-à-tout","it":"Tuttofare","nl":"Manusje-van-alles","pl":"Złota rączka"}},
+{"id":"margrave","titles":{"de":"Markgraf","en":"Margrave","it":"Margravio","nl":"Markgraaf","pl":"Murgrabia"}},
+{"id":"nomads","titles":{"de":"Nomaden","en":"Nomads","fr":"Nomades","pl":"Nomadzi"}},
+{"id":"oasis","titles":{"de":"Oase","en":"Oasis","it":"Oasi","nl":"Oase","pl":"Oaza"}},
+{"id":"scheme","titles":{"de":"Komplott","en":"Scheme","es":"Confabulación","fr":"Complot","it":"Macchinazione","nl":"Gekonkel","pl":"Zmowa"}},
+{"id":"souk","titles":{"en":"Souk","pl":"Suk"}},
+{"id":"spice_merchant","titles":{"de":"Gewürzhändler","en":"Spice Merchant","es":"Mercader de Especias","fr":"Marchand d'épices","it":"Mercante di Spezie","nl":"Specerijenkoopman","pl":"Zamorski kupiec"}},
+{"id":"stables","titles":{"de":"Stallungen","en":"Stables","es":"Caballerizas","fr":"Écuries","it":"Stalla","nl":"Stallen","pl":"Stadnina"}},
+{"id":"trader","titles":{"de":"Fahrender Händler","en":"Trader","es":"Comerciante","fr":"Troqueuse","it":"Commerciante","nl":"Handelaar","pl":"Handlarz"}},
+{"id":"trail","titles":{"de":"Pfad","en":"Trail","fr":"Sentier","pl":"Szlak"}},
+{"id":"tunnel","titles":{"en":"Tunnel","es":"Túnel","it":"Galleria","pl":"Tunel"}},
+{"id":"weaver","titles":{"de":"Weberin","en":"Weaver","fr":"Tisserande","pl":"Tkaczka"}},
+{"id":"wheelwright","titles":{"de":"Radmacherin","en":"Wheelwright","fr":"Charronne","pl":"Kołodziej"}},
+{"id":"witchs_hut","titles":{"de":"Hexenhütte","en":"Witch's Hut","fr":"Cabanne de sorcière","pl":"Chatka wiedźmy"}},
+{"id":"berserker","titles":{"en":"Berserker"}},
+{"id":"cauldron","titles":{"en":"Cauldron"}},
+{"id":"guard_dog","titles":{"en":"Guard Dog"}},
+{"id":"nomads","titles":{"en":"Nomads"}},
+{"id":"souk","titles":{"en":"Souk"}},
+{"id":"trail","titles":{"en":"Trail"}},
+{"id":"weaver","titles":{"en":"Weaver"}},
+{"id":"wheelwright","titles":{"en":"Wheelwright"}},
+{"id":"witchs_hut","titles":{"en":"Witch's Hut"}},
+{"id":"cache","titles":{"de":"Schatztruhe","en":"Cache","es":"Hallazgo","it":"Forziere","nl":"Bewaarplaats"}},
+{"id":"duchess","titles":{"de":"Herzogin","en":"Duchess","es":"Duquesa","fr":"Duchesse","it":"Duchessa","nl":"Hertogin"}},
+{"id":"embassy","titles":{"de":"Botschaft","en":"Embassy","es":"Embajada","fr":"Ambassade","it":"Diplomatico","nl":"Ambassade"}},
+{"id":"ill_gotten_gains","titles":{"de":"Blutzoll","en":"Ill-Gotten Gains","es":"Dinero Sucio","fr":"Argent noir","it":"Infame Profitto","nl":"Gestolen goed"}},
+{"id":"mandarin","titles":{"en":"Mandarin","es":"Mandarín","it":"Mandarino","nl":"Mandarijn"}},
+{"id":"noble_brigand","titles":{"de":"Edler Räuber","en":"Noble Brigand","es":"Bandido Honrado","fr":"Noble brigand","it":"Ladro Gentiluomo","nl":"Nobele bandiet"}},
+{"id":"nomad_camp","titles":{"de":"Nomadencamp","en":"Nomad Camp","es":"Campamento Nómada","fr":"Campement nomade","it":"Campo Nomadi","nl":"Nomadenkamp"}},
+{"id":"oracle","titles":{"de":"Orakel","en":"Oracle","es":"Oráculo","it":"Oracolo","nl":"Orakel"}},
+{"id":"silk_road","titles":{"de":"Seidenstrasse","en":"Silk Road","es":"Ruta de la Seda","fr":"Route de la soie","it":"Via della Seta","nl":"Zijderoute"}},
+{"id":"baron","titles":{"en":"Baron","es":"Barón","it":"Barone"}},
+{"id":"bridge","titles":{"de":"Brücke","en":"Bridge","es":"Puente","fr":"Pont","it":"Ponte","nl":"Brug","pl":"Most"}},
+{"id":"conspirator","titles":{"de":"Verschwörer","en":"Conspirator","es":"Conspirador","fr":"Conspirateur","it":"Cospiratore","nl":"Samenzweerder","pl":"Spiskowiec"}},
+{"id":"courtier","titles":{"de":"Höflinge","en":"Courtier","es":"Cortesano","fr":"Courtisan","it":"Cortigiano","nl":"Makelaar"}},
+{"id":"courtyard","titles":{"de":"Burghof","en":"Courtyard","es":"Patio","fr":"Cour","it":"Cortile di Campagna","nl":"Binnenplaats","pl":"Dziedziniec"}},
+{"id":"diplomat","titles":{"de":"Diplomatin","en":"Diplomat","es":"Diplomática","fr":"Diplomate","it":"Diplomatico","nl":"Diplomaat"}},
+{"id":"duke","titles":{"de":"Herzog","en":"Duke","es":"Duque","fr":"Duc","it":"Duca","nl":"Hertog","pl":"Starosta"}},
+{"id":"farm","titles":{"en":"Harem","es":"Harén"}},
+{"id":"ironworks","titles":{"de":"Eisenhütte","en":"Ironworks","es":"Fundición","fr":"Fonderie","it":"Fonderia","nl":"IJzergieterij","pl":"Huta żelaza"}},
+{"id":"lurker","titles":{"de":"Herumtreiberin","en":"Lurker","es":"Acechador","fr":"Rôdeur","it":"Osservatore","nl":"Voyeur"}},
+{"id":"masquerade","titles":{"de":"Maskerade","en":"Masquerade","es":"Mascarada","fr":"Mascarade","it":"Ballo in Maschera","nl":"Maskerade","pl":"Maskarada"}},
+{"id":"mill","titles":{"de":"Mühle","en":"Mill","es":"Molino","fr":"Moulin","it":"Mulino a Vento","nl":"Molen"}},
+{"id":"mining_village","titles":{"de":"Bergwerk","en":"Mining Village","es":"Aldea Minera","fr":"Village minier","it":"Villaggio Minerario","nl":"Mijndorp","pl":"Osada górnicza"}},
+{"id":"minion","titles":{"de":"Lakai","en":"Minion","es":"Esbirro","fr":"Larbin","it":"Tirapiedi","nl":"Dienaar","pl":"Sługus"}},
+{"id":"nobles","titles":{"de":"Adelige","en":"Nobles","it":"Nobili","nl":"Adel","pl":"Szlachta"}},
+{"id":"patrol","titles":{"de":"Patrouille","en":"Patrol","es":"Patrulla","fr":"Patrouille","it":"Pattuglia","nl":"Patrouille"}},
+{"id":"pawn","titles":{"de":"Handlanger","en":"Pawn","es":"Peón","fr":"Pion","it":"Pedina","nl":"Pion","pl":"Giermek"}},
+{"id":"replace","titles":{"de":"Austausch","en":"Replace","es":"Reemplazar","fr":"Remplacement","it":"Sostituzione","nl":"Vervanging"}},
+{"id":"secret_passage","titles":{"de":"Geheimgang","en":"Secret Passage","es":"Pasadizo Secreto","fr":"Passage secret","it":"Passaggio Segreto","nl":"Geheime Doorgang"}},
+{"id":"shanty_town","titles":{"de":"Armenviertel","en":"Shanty Town","es":"Chabolas","fr":"Taudis","it":"Baraccopoli","nl":"Sloppenwijk","pl":"Rudera"}},
+{"id":"steward","titles":{"de":"Verwalter","en":"Steward","es":"Mayordomo","fr":"Intendant","it":"Maggiordomo","nl":"Lakei","pl":"Zarządca"}},
+{"id":"swindler","titles":{"de":"Trickser","en":"Swindler","es":"Embaucador","fr":"Escroc","it":"Truffatore","nl":"Oplichter","pl":"Kanciarz"}},
+{"id":"torturer","titles":{"de":"Kerkermeister","en":"Torturer","es":"Torturador","fr":"Bourreau","it":"Carceriere","nl":"Folteraar","pl":"Oprawca"}},
+{"id":"trading_post","titles":{"de":"Handelsposten","en":"Trading Post","es":"Puesto Comercial","fr":"Comptoir","it":"Stazione Commerciale","nl":"Handelspost","pl":"Faktoria"}},
+{"id":"upgrade","titles":{"de":"Anbau","en":"Upgrade","es":"Mejora","fr":"Mise à niveau","it":"Potenziamento","nl":"Opwaardering","pl":"Rozbudowa"}},
+{"id":"wishing_well","titles":{"de":"Wunschbrunnen","en":"Wishing Well","es":"Pozo de los Deseos","fr":"Puits aux souhaits","it":"Pozzo dei Desideri","nl":"Wensput","pl":"Studnia życzeń"}},
+{"id":"courtier","titles":{"en":"Courtier"}},
+{"id":"diplomat","titles":{"en":"Diplomat"}},
+{"id":"lurker","titles":{"en":"Lurker"}},
+{"id":"mill","titles":{"en":"Mill"}},
+{"id":"patrol","titles":{"en":"Patrol"}},
+{"id":"replace","titles":{"en":"Replace"}},
+{"id":"secret_passage","titles":{"en":"Secret Passage"}},
+{"id":"coppersmith","titles":{"de":"Kupferschmied","en":"Coppersmith","es":"Artesano del Cobre","fr":"Chaudronnier","it":"Battirame","nl":"Kopersmid","pl":"Mennica"}},
+{"id":"great_hall","titles":{"de":"Grosse Halle","en":"Great Hall","es":"Gran Sala","fr":"Grand hall","it":"Grande Salone","nl":"Grote Zaal","pl":"Westybul"}},
+{"id":"saboteur","titles":{"en":"Saboteur","es":"Saboteador","it":"Sabotatore","pl":"Sabotażysta"}},
+{"id":"scout","titles":{"de":"Späher","en":"Scout","es":"Explorador","fr":"Éclaireur","nl":"Verkenner","pl":"Zwiadowca"}},
+{"id":"secret_chamber","titles":{"de":"Geheimkammer","en":"Secret Chamber","es":"Cámara Secreta","fr":"Chambre secrète","it":"Stanza Segreta","nl":"Geheime Kamer","pl":"Tajna komnata"}},
+{"id":"tribute","titles":{"de":"Tribut","en":"Tribute","es":"Tributo","fr":"Hommage","it":"Tributo","nl":"Tolheffing","pl":"Danina"}},
+{"id":"animal_fair","titles":{"de":"Viehmarkt","en":"Animal Fair","es":"Feria de Ganado","fr":"Foire aux bestiaux","nl":"Dierenmarkt"}},
+{"id":"barge","titles":{"de":"Lastkahn","en":"Barge","es":"Gabarra","fr":"Chaland","nl":"Aak"}},
+{"id":"black_cat","titles":{"de":"Schwarze Katze","en":"Black Cat","es":"Gato Negro","fr":"Chat noir","nl":"Zwarte kat"}},
+{"id":"bounty_hunter","titles":{"de":"Kopfgeldjägerin","en":"Bounty Hunter","es":"Cazarrecompensas","fr":"Chasseur de prime","nl":"Premiejager"}},
+{"id":"camel_train","titles":{"de":"Kamelzug","en":"Camel Train","es":"Recua de Camellos","fr":"Caravane de chameaux","nl":"Kamelenkaravaan"}},
+{"id":"cardinal","titles":{"de":"Kardinal","en":"Cardinal","es":"Cardenal","nl":"Kardinaal"}},
+{"id":"cavalry","titles":{"de":"Kavallerie","en":"Cavalry","es":"Caballería","fr":"Cavalière","nl":"Cavalerie"}},
+{"id":"coven","titles":{"de":"Hexenzirkel","en":"Coven","es":"Aquelarre","fr":"Clan de sorciers","nl":"Heksenkring"}},
+{"id":"destrier","titles":{"de":"Schlachtross","en":"Destrier","es":"Destrero","nl":"Krijgsros"}},
+{"id":"displace","titles":{"de":"Vertreibung","en":"Displace","es":"Migración","fr":"Déplacement","nl":"Verplaatsing"}},
+{"id":"alliance","titles":{"de":"Bündnis","en":"Alliance","es":"Alianza","nl":"Bondgenootschap"}},
+{"id":"banish","titles":{"de":"Verbannung","en":"Banish","es":"Destierro","fr":"Bannissement","nl":"Verbannen"}},
+{"id":"bargain","titles":{"de":"Gutes Geschäft","en":"Bargain","es":"Ganga","fr":"Affaire","nl":"Koopje"}},
+{"id":"commerce","titles":{"de":"Kommerz","en":"Commerce","es":"Comercio","fr":"Négoce","nl":"Commercie"}},
+{"id":"delay","titles":{"de":"Verzögerung","en":"Delay","es":"Retraso","fr":"Retard","nl":"Vertraging"}},
+{"id":"demand","titles":{"de":"Forderung","en":"Demand","es":"Exigencia","fr":"Demande","nl":"Vraag"}},
+{"id":"desperation","titles":{"de":"Verzweiflung","en":"Desperation","es":"Desesperación","fr":"Désespoir","nl":"Wanhoop"}},
+{"id":"enclave","titles":{"de":"Enklave","en":"Enclave"}},
+{"id":"enhance","titles":{"de":"Verbesserung","en":"Enhance","es":"Reforma","fr":"Réhaussement","nl":"Verhoging"}},
+{"id":"gamble","titles":{"de":"Wagnis","en":"Gamble","es":"Apuesta","fr":"Pari","nl":"Gokken"}},
+{"id":"invest","titles":{"de":"Investition","en":"Invest","es":"Inversión","fr":"Investissement","nl":"Investeren"}},
+{"id":"march","titles":{"de":"Fußmarsch","en":"March","es":"Marcha","fr":"Marche","nl":"Mars"}},
+{"id":"populate","titles":{"de":"Besiedlung","en":"Populate","es":"Repoblar","fr":"Peuplement","nl":"Bevolken"}},
+{"id":"pursue","titles":{"de":"Verfolgung","en":"Pursue","es":"Persecución","fr":"Poursuite","nl":"Nastreven"}},
+{"id":"reap","titles":{"de":"Reiche Ernte","en":"Reap","es":"Siega","fr":"Moisson","nl":"Maaien"}},
+{"id":"ride","titles":{"de":"Reiten","en":"Ride","es":"Paseo","fr":"Chevauchée","nl":"Rit"}},
+{"id":"seize_the_day","titles":{"de":"Nutze den Tag","en":"Seize the Day","es":"Aprovecha el Día","fr":"Carpe Diem","nl":"Pluk de Dag"}},
+{"id":"stampede","titles":{"en":"Stampede","es":"Estampida","fr":"Ruée","nl":"Stormloop"}},
+{"id":"toil","titles":{"de":"Plackerei","en":"Toil","es":"Labor","fr":"Labeur","nl":"Gezwoeg"}},
+{"id":"transport","titles":{"en":"Transport","es":"Transporte"}},
+{"id":"falconer","titles":{"de":"Falknerin","en":"Falconer","es":"Halconera","fr":"Fauconnière","nl":"Valkenier"}},
+{"id":"fisherman","titles":{"de":"Fischer","en":"Fisherman","es":"Pescador","fr":"Pêcheur","nl":"Visser"}},
+{"id":"gatekeeper","titles":{"de":"Wache","en":"Gatekeeper","es":"Centinela","fr":"Garde","nl":"Poortwachter"}},
+{"id":"goatherd","titles":{"de":"Ziegenhirtin","en":"Goatherd","es":"Cabrera","fr":"Chevrière","nl":"Geitenhoeder"}},
+{"id":"groom","titles":{"de":"Stallbursche","en":"Groom","es":"Caballerizo","fr":"Palefrenier","nl":"Rijknecht"}},
+{"id":"hostelry","titles":{"de":"Herberge","en":"Hostelry","es":"Hostal","fr":"Hôtel","nl":"Pension"}},
+{"id":"hunting_lodge","titles":{"de":"Jagdhütte","en":"Hunting Lodge","es":"Refugio de Caza","fr":"Pavillon de chasse","nl":"Jachthuis"}},
+{"id":"kiln","titles":{"de":"Brennofen","en":"Kiln","es":"Horno","fr":"Four","nl":"Oven"}},
+{"id":"livery","titles":{"de":"Pferdestall","en":"Livery","es":"Librea","fr":"Pension","nl":"Stalhouderij"}},
+{"id":"mastermind","titles":{"de":"Drahtzieher","en":"Mastermind","es":"Cerebro","fr":"Génie","nl":"Meesterbrein"}},
+{"id":"paddock","titles":{"de":"Koppel","en":"Paddock","es":"Establo","fr":"Enclos","nl":"Omheind veld"}},
+{"id":"sanctuary","titles":{"de":"Zufluchtsort","en":"Sanctuary","es":"Santuario","fr":"Sanctuaire","nl":"Gewijde plek"}},
+{"id":"scrap","titles":{"de":"Schrott","en":"Scrap","es":"Chatarra","fr":"Ferraille","nl":"Schroot"}},
+{"id":"sheepdog","titles":{"de":"Hirtenhund","en":"Sheepdog","es":"Perro Pastor","fr":"Chien de berger","nl":"Herdershond"}},
+{"id":"sleigh","titles":{"de":"Schlitten","en":"Sleigh","es":"Trineo","fr":"Traîneau","nl":"Slede"}},
+{"id":"snowy_village","titles":{"de":"Verschneites Dorf","en":"Snowy Village","es":"Aldea Nevada","fr":"Village enneigé","nl":"Besneeuwd dorp"}},
+{"id":"stockpile","titles":{"de":"Depot","en":"Stockpile","es":"Reservas","fr":"Stocks","nl":"Reserve"}},
+{"id":"supplies","titles":{"de":"Nachschub","en":"Supplies","es":"Suministros","fr":"Réserves","nl":"Voorraden"}},
+{"id":"village_green","titles":{"de":"Dorfanger","en":"Village Green","es":"Prado del Pueblo","fr":"Espace vert","nl":"Dorpsweide"}},
+{"id":"way_of_the_butterfly","titles":{"de":"Weg des Schmetterlings","en":"Way of the Butterfly","es":"Senda de la Mariposa","fr":"Voie du papillon","nl":"Spoor van de Vlinder"}},
+{"id":"way_of_the_camel","titles":{"de":"Weg des Kamels","en":"Way of the Camel","es":"Senda del Camello","fr":"Voie du chameau","nl":"Spoor van de Kameel"}},
+{"id":"way_of_the_chameleon","titles":{"de":"Weg des Chamäleons","en":"Way of the Chameleon","es":"Senda del Camaleón","fr":"Voie du caméléon","nl":"Spoor van de Kameleon"}},
+{"id":"way_of_the_frog","titles":{"de":"Weg des Frosches","en":"Way of the Frog","es":"Senda de la Rana","fr":"Voie de la grenouille","nl":"Spoor van de Kikker"}},
+{"id":"way_of_the_goat","titles":{"de":"Weg der Ziege","en":"Way of the Goat","es":"Senda de la Cabra","fr":"Voie de la chèvre","nl":"Spoor van de Geit"}},
+{"id":"way_of_the_horse","titles":{"de":"Weg des Pferdes","en":"Way of the Horse","es":"Senda del Caballo","fr":"Voie du cheval","nl":"Spoor van het Paard"}},
+{"id":"way_of_the_mole","titles":{"de":"Weg des Maulwurfs","en":"Way of the Mole","es":"Senda del Topo","fr":"Voie de la taupe","nl":"Spoor van de Mol"}},
+{"id":"way_of_the_monkey","titles":{"de":"Weg des Affen","en":"Way of the Monkey","es":"Senda del Mono","fr":"Voie du singe","nl":"Spoor van de Aap"}},
+{"id":"way_of_the_mouse","titles":{"de":"Weg der Maus","en":"Way of the Mouse","es":"Senda del Ratón","fr":"Voie de la souirs","nl":"Spoor van de Muis"}},
+{"id":"way_of_the_mule","titles":{"de":"Weg des Maultiers","en":"Way of the Mule","es":"Senda de la Mula","fr":"Voie de la mule","nl":"Spoor van de Ezel"}},
+{"id":"way_of_the_otter","titles":{"de":"Weg des Otters","en":"Way of the Otter","es":"Senda de la Nutria","fr":"Voie de la loutre","nl":"Spoor van de Otter"}},
+{"id":"way_of_the_owl","titles":{"de":"Weg der Eule","en":"Way of the Owl","es":"Senda del Búho","fr":"Voie du hibou","nl":"Spoor van de Uil"}},
+{"id":"way_of_the_ox","titles":{"de":"Weg des Ochsen","en":"Way of the Ox","es":"Senda del Buey","fr":"Voie du bœuf","nl":"Spoor van de Os"}},
+{"id":"way_of_the_pig","titles":{"de":"Weg des Schweins","en":"Way of the Pig","es":"Senda del Cerdo","fr":"Voie du porc","nl":"Spoor van het Varken"}},
+{"id":"way_of_the_rat","titles":{"de":"Weg der Ratte","en":"Way of the Rat","es":"Senda de la Rata","fr":"Voie du rat","nl":"Spoor van de Rat"}},
+{"id":"way_of_the_seal","titles":{"de":"Weg der Robbe","en":"Way of the Seal","es":"Senda de la Foca","fr":"Voie du phoque","nl":"Spoor van de Zeehond"}},
+{"id":"way_of_the_sheep","titles":{"de":"Weg des Schafes","en":"Way of the Sheep","es":"Senda de la Oveja","fr":"Voie du mouton","nl":"Spoor van het Schaap"}},
+{"id":"way_of_the_squirrel","titles":{"de":"Weg des Eichhörnchens","en":"Way of the Squirrel","es":"Senda de la Ardilla","fr":"Voie de l'écureuil","nl":"Spoor van de Eekhoorn"}},
+{"id":"way_of_the_turtle","titles":{"de":"Weg der Schildkröte","en":"Way of the Turtle","es":"Senda de la Tortuga","fr":"Voie de la tortue","nl":"Spoor van de Schildpad"}},
+{"id":"way_of_the_worm","titles":{"de":"Weg des Wurms","en":"Way of the Worm","es":"Senda del Gusano","fr":"Voie du ver","nl":"Spoor van de Worm"}},
+{"id":"wayfarer","titles":{"de":"Wanderin","en":"Wayfarer","es":"Caminante","fr":"Voyageuse","nl":"Voetreiziger"}},
+{"id":"bard","titles":{"de":"Minnesängerin","en":"Bard","es":"Bardo","fr":"Barde"}},
+{"id":"blessed_village","titles":{"de":"Seliges Dorf","en":"Blessed Village","es":"Aldea Bendita","fr":"Village béni","nl":"Gezegend dorp","pl":"Błogosławiona wioska"}},
+{"id":"the_earths_gift","titles":{"de":"Geschenk der Erde","en":"The Earth's Gift","es":"Don de la Tierra","fr":"Don de la terre","nl":"Gift van de aarde","pl":"Dar ziemi"}},
+{"id":"the_fields_gift","titles":{"de":"Geschenk des Feldes","en":"The Field's Gift","es":"Don del Campo","fr":"Don des champs","nl":"Gift van de akker","pl":"Dar pól"}},
+{"id":"the_flames_gift","titles":{"de":"Geschenk des Feuers","en":"The Flame's Gift","es":"Don de la Llama","fr":"Don des flammes","nl":"Gift van het vuur","pl":"Dar płomieni"}},
+{"id":"the_forests_gift","titles":{"de":"Geschenk des Waldes","en":"The Forest's Gift","es":"Don del Bosque","fr":"Don des forêts","nl":"Gift van het bos","pl":"Dar lasu"}},
+{"id":"the_moons_gift","titles":{"de":"Geschenk des Mondes","en":"The Moon's Gift","es":"Don de la Luna","fr":"Don de la lune","nl":"Gift van de maan","pl":"Dar księżyca"}},
+{"id":"the_mountains_gift","titles":{"de":"Geschenk des Berges","en":"The Mountain's Gift","es":"Don de la Montaña","fr":"Don des montagnes","nl":"Gift van de bergen","pl":"Dar gór"}},
+{"id":"the_rivers_gift","titles":{"de":"Geschenk des Flusses","en":"The River's Gift","es":"Don del Río","fr":"Don de la rivière","nl":"Gift van de rivier","pl":"Dar rzeki"}},
+{"id":"the_seas_gift","titles":{"de":"Geschenk des Meeres","en":"The Sea's Gift","es":"Don del Mar","fr":"Don de la mer","nl":"Gift van de zee","pl":"Dar morza"}},
+{"id":"the_skys_gift","titles":{"de":"Geschenk des Himmels","en":"The Sky's Gift","es":"Don del Cielo","fr":"Don du ciel","nl":"Gift van de hemel","pl":"Dar nieba"}},
+{"id":"the_suns_gift","titles":{"de":"Geschenk der Sonne","en":"The Sun's Gift","es":"Don del Sol","fr":"Don du soleil","nl":"Gift van de zon","pl":"Dar słońca"}},
+{"id":"the_swamps_gift","titles":{"de":"Geschenk des Sumpfes","en":"The Swamp's Gift","es":"Don del Pantano","fr":"Don des marais","nl":"Gift van het moeras","pl":"Dar mokradeł"}},
+{"id":"the_winds_gift","titles":{"de":"Geschenk des Windes","en":"The Wind's Gift","es":"Don del Viento","fr":"Don du vent","nl":"Gift van de wind","pl":"Dar wiatru"}},
+{"id":"cemetery","titles":{"de":"Friedhof","en":"Cemetery","es":"Cementerio","fr":"Cimetière","nl":"Kerkhof","pl":"Cmentarz"}},
+{"id":"changeling","titles":{"de":"Wechselbalg","en":"Changeling","es":"Intercambio","fr":"Changelin","nl":"Wisselkind","pl":"Odmieniec"}},
+{"id":"cobbler","titles":{"de":"Schuster","en":"Cobbler","es":"Zapatero","fr":"Cordonnier","nl":"Schoenmaker","pl":"Szewc"}},
+{"id":"conclave","titles":{"de":"Konklave","en":"Conclave","es":"Cónclave","nl":"Conclaaf","pl":"Tajne zebranie"}},
+{"id":"crypt","titles":{"de":"Krypta","en":"Crypt","es":"Cripta","fr":"Crypte","nl":"Crypte","pl":"Krypta"}},
+{"id":"cursed_village","titles":{"de":"Verfluchtes Dorf","en":"Cursed Village","es":"Aldea Maldita","fr":"Village maudit","nl":"Vervloekt dorp","pl":"Przeklęta wioska"}},
+{"id":"den_of_sin","titles":{"de":"Sündenpfuhl","en":"Den of Sin","es":"Casa del Pecado","fr":"Antre du péché","nl":"Huis der zonden","pl":"Grzeszny przybytek"}},
+{"id":"devils_workshop","titles":{"de":"Teufelswerkstatt","en":"Devil's Workshop","es":"Taller del Diablo","fr":"Atelier du diable","nl":"Atelier van de duivel","pl":"Diabelski warsztat"}},
+{"id":"druid","titles":{"de":"Druidin","en":"Druid","es":"Druida","fr":"Druide","nl":"Druïde"}},
+{"id":"exorcist","titles":{"de":"Exorzistin","en":"Exorcist","es":"Exorcista","fr":"Exorciste","pl":"Egzorcysta"}},
+{"id":"faithful_hound","titles":{"de":"Getreuer Hund","en":"Faithful Hound","es":"Perro Leal","fr":"Chien fidèle","nl":"Trouwe hond","pl":"Wierny Pies"}},
+{"id":"fool","titles":{"de":"Narr","en":"Fool","es":"Necio","fr":"Benêt","nl":"Dwaas","pl":"Głupiec"}},
+{"id":"ghost_town","titles":{"de":"Geisterstadt","en":"Ghost Town","es":"Pueblo Fantasma","fr":"Ville fantôme","nl":"Spookstad","pl":"Miasto duchów"}},
+{"id":"guardian","titles":{"de":"Wächterin","en":"Guardian","es":"Guardián","fr":"Gardienne","nl":"Beschermer","pl":"Obrońca"}},
+{"id":"idol","titles":{"de":"Götze","en":"Idol","es":"Ídolo","fr":"Idole","nl":"Idool","pl":"Bożek"}},
+{"id":"leprechaun","titles":{"de":"Kobold","en":"Leprechaun","es":"Duende"}},
+{"id":"monastery","titles":{"de":"Kloster","en":"Monastery","es":"Monasterio","fr":"Monastère","nl":"Klooster","pl":"Klasztor"}},
+{"id":"necromancer","titles":{"de":"Totenbeschwörer","en":"Necromancer","es":"Nigromante","fr":"Nécromancien","nl":"Dodenbezweerder","pl":"Nekromanta"}},
+{"id":"night_watchman","titles":{"de":"Nachtwache","en":"Night Watchman","es":"Vigilante","fr":"Veilleur de nuit","nl":"Nachtwaker","pl":"Nocny stróż"}},
+{"id":"pixie","titles":{"de":"Fee","en":"Pixie","es":"Hada","nl":"Elfje","pl":"Wróżka"}},
+{"id":"pooka","titles":{"de":"Puka","en":"Pooka","pl":"Puk"}},
+{"id":"raider","titles":{"de":"Plünderer","en":"Raider","es":"Saqueador","fr":"Razzia","nl":"Plunderaar","pl":"Najeźdzca"}},
+{"id":"sacred_grove","titles":{"de":"Heiliger Hain","en":"Sacred Grove","es":"Bosque Sagrado","fr":"Bois sacré","nl":"Heilig kreupelbos","pl":"Święty gaj"}},
+{"id":"secret_cave","titles":{"de":"Geheime Höhle","en":"Secret Cave","es":"Cueva Secreta","fr":"Grotte secrète","nl":"Geheime grot","pl":"Sekretna jaskinia"}},
+{"id":"shepherd","titles":{"de":"Schäferin","en":"Shepherd","es":"Pastor","fr":"Berger","nl":"Schaapsherder","pl":"Pasterz"}},
+{"id":"skulk","titles":{"de":"Attentäter","en":"Skulk","es":"Ladrón Sigiloso","fr":"Malandrin","pl":"Zasadzka"}},
+{"id":"tormentor","titles":{"de":"Folterknecht","en":"Tormentor","es":"Verdugo","fr":"Persécuteur","nl":"Kwelgeest","pl":"Gnębiciel"}},
+{"id":"tracker","titles":{"de":"Fährtensucher","en":"Tracker","es":"Rastreador","fr":"Traqueur","nl":"Spoorzoeker","pl":"Tropiciel"}},
+{"id":"tragic_hero","titles":{"de":"Tragischer Held","en":"Tragic Hero","es":"Héroe Trágico","fr":"Héros de tragédie","nl":"Tragische held","pl":"Tragiczny bohater"}},
+{"id":"vampire","titles":{"de":"Vampirin","en":"Vampire","es":"Vampiro","nl":"Vampier","pl":"Wampir"}},
+{"id":"werewolf","titles":{"de":"Werwolf","en":"Werewolf","es":"Hombre Lobo","fr":"Loup-garou","nl":"Weerwolf","pl":"Wilkołak"}},
+{"id":"abundance","titles":{"de":"Überfluss","en":"Abundance","fr":"Abondance","nl":"Overvloed","pl":"Urodzaj"}},
+{"id":"buried_treasure","titles":{"de":"Vergrabener Schatz","en":"Buried Treasure","fr":"Trésor enfoui","nl":"Begraven schat","pl":"Zakopany skarb"}},
+{"id":"cabin_boy","titles":{"de":"Schiffsjunge","en":"Cabin Boy","fr":"Mousse","nl":"Scheepsjongen","pl":"Majtek"}},
+{"id":"cage","titles":{"de":"Käfig","en":"Cage","nl":"Kooi","pl":"Klatka"}},
+{"id":"crew","titles":{"de":"Mannschaft","en":"Crew","fr":"Équipage","nl":"Bemanning","pl":"Załoga"}},
+{"id":"crucible","titles":{"de":"Schmelztiegel","en":"Crucible","fr":"Creuset","nl":"Smeltkroes","pl":"Tygiel"}},
+{"id":"cutthroat","titles":{"de":"Meuchlerin","en":"Cutthroat","fr":"Coupe-gorge","nl":"Moordenares","pl":"Rzezimieszek"}},
+{"id":"enlarge","titles":{"de":"Vergrößerung[ß]","en":"Enlarge","fr":"Élargissement","nl":"Vergroten","pl":"Powiększenie"}},
+{"id":"avoid","titles":{"de":"Ausweichen","en":"Avoid","fr":"Évitement","nl":"Vermijden","pl":"Unik"}},
+{"id":"bury","titles":{"de":"Vergraben","en":"Bury","fr":"Enterrement","nl":"Begraven","pl":"Zakopywanie"}},
+{"id":"deliver","titles":{"de":"Zustellung","en":"Deliver","fr":"Livraison","nl":"Bezorgen","pl":"Doręczenie"}},
+{"id":"foray","titles":{"de":"Brandschatzung","en":"Foray","fr":"Incursion","nl":"Binnenvallen","pl":"Napaść"}},
+{"id":"invasion","titles":{"en":"Invasion","nl":"Invasie","pl":"Inwazja"}},
+{"id":"journey","titles":{"de":"Reise","en":"Journey","fr":"Traversée","nl":"Reizen","pl":"Wędrówka"}},
+{"id":"launch","titles":{"de":"In See stechen","en":"Launch","fr":"Embarquement","nl":"Lanceren","pl":"Wyjście w morze"}},
+{"id":"looting","titles":{"de":"Plünderung","en":"Looting","fr":"Chasse aux trophées","nl":"Leegroven","pl":"Plądrowanie"}},
+{"id":"maelstrom","titles":{"de":"Mahlstrom","en":"Maelstrom","nl":"Draaikolk","pl":"Wir"}},
+{"id":"mirror","titles":{"de":"Spiegeln","en":"Mirror","fr":"Imitation","nl":"Spiegelen","pl":"Lustrzana kopia"}},
+{"id":"peril","titles":{"de":"Riskieren","en":"Peril","fr":"Péril","nl":"Bedreigen","pl":"Zagrożenie"}},
+{"id":"prepare","titles":{"de":"Vorbereitung","en":"Prepare","fr":"Préparation","nl":"Voorbereiden","pl":"Przygotowania"}},
+{"id":"prosper","titles":{"de":"Aufblühen","en":"Prosper","fr":"Prospérité","nl":"Floreren","pl":"Rozkwit"}},
+{"id":"rush","titles":{"de":"Beeilung","en":"Rush","fr":"Précipitation","nl":"Haasten","pl":"Pośpiech"}},
+{"id":"scrounge","titles":{"de":"Herumsuchen","en":"Scrounge","fr":"Maraude","nl":"Klaplopen","pl":"Szabrowanie"}},
+{"id":"figurine","titles":{"en":"Figurine","nl":"Beeldje","pl":"Figurka"}},
+{"id":"first_mate","titles":{"de":"Erste Maatin","en":"First Mate","fr":"Seconde","nl":"Eerste stuurman","pl":"Starszy oficer"}},
+{"id":"flagship","titles":{"de":"Flaggschiff","en":"Flagship","fr":"Navire Amiral","nl":"Vlaggenschip","pl":"Okręt flagowy"}},
+{"id":"fortune_hunter","titles":{"de":"Abenteurerin","en":"Fortune Hunter","fr":"Aventurière","nl":"Fortuinzoeker","pl":"Łowca skarbów"}},
+{"id":"frigate","titles":{"de":"Fregatte","en":"Frigate","fr":"Frégate","nl":"Fregat","pl":"Fregata"}},
+{"id":"gondola","titles":{"de":"Gondel","en":"Gondola","fr":"Gondole","nl":"Gondel"}},
+{"id":"grotto","titles":{"de":"Grotte","en":"Grotto","fr":"Grotte","nl":"Spelonk","pl":"Grota"}},
+{"id":"harbor_village","titles":{"de":"Hafendorf","en":"Harbor Village","fr":"Village Portuaire","nl":"Havendorp","pl":"Wioska portowa"}},
+{"id":"jewelled_egg","titles":{"de":"Juwelen-Ei","en":"Jewelled Egg","fr":"Œuf précieux","nl":"Gedecoreerd ei","pl":"Zdobione jajo"}},
+{"id":"kings_cache","titles":{"de":"Königstruhe","en":"King's Cache","fr":"Cache du roi","nl":"Koninklijke schatkamer","pl":"Królewska kasa"}},
+{"id":"landing_party","titles":{"de":"Landungstrupp","en":"Landing Party","fr":"Débarquement","nl":"Landingstroepen","pl":"Zejście na ląd"}},
+{"id":"longship","titles":{"de":"Langschiff","en":"Longship","fr":"Drakkar","nl":"Langschip","pl":"Drakkar"}},
+{"id":"mapmaker","titles":{"de":"Kartenzeichnerin","en":"Mapmaker","fr":"Cartographe Marine","nl":"Kaartenmaker","pl":"Rysownik map"}},
+{"id":"maroon","titles":{"de":"Ausgesetzter","en":"Maroon","fr":"Abandon","nl":"Gestrand","pl":"Rozbitek"}},
+{"id":"mining_road","titles":{"de":"Bergbaustraße[ß]","en":"Mining Road","fr":"Chemin minier","nl":"Mijnweg","pl":"Szlak górniczy"}},
+{"id":"pendant","titles":{"de":"Anhänger","en":"Pendant","fr":"Pendentif","pl":"Wisior"}},
+{"id":"pickaxe","titles":{"de":"Spitzhacke","en":"Pickaxe","fr":"Pioche","nl":"Houweel","pl":"Kilof"}},
+{"id":"pilgrim","titles":{"de":"Pilger","en":"Pilgrim","fr":"Pèlerin","nl":"Pelgrim","pl":"Pielgrzym"}},
+{"id":"quartermaster","titles":{"de":"Quartiermeister","en":"Quartermaster","fr":"Quartier-maître","nl":"Kwartiermeester","pl":"Kwatermistrz"}},
+{"id":"rope","titles":{"de":"Seil","en":"Rope","fr":"Corde","nl":"Touw","pl":"Sznur"}},
+{"id":"sack_of_loot","titles":{"de":"Sack voll Kostbarkeiten","en":"Sack of Loot","fr":"Sac à trophées","nl":"Zak met buit","pl":"Worek łupów"}},
+{"id":"search","titles":{"de":"Suche","en":"Search","fr":"Chasse au trésor","nl":"Zoektocht","pl":"Poszukiwania"}},
+{"id":"secluded_shrine","titles":{"de":"Einsamer Schrein","en":"Secluded Shrine","fr":"Sanctuaire Isolé","nl":"Verlaten tempel","pl":"Ustronna kapliczka"}},
+{"id":"shaman","titles":{"de":"Schamanin","en":"Shaman","fr":"Chamane","nl":"Sjamaan","pl":"Szamanka"}},
+{"id":"silver_mine","titles":{"de":"Silbermine","en":"Silver Mine","fr":"Mine d'argent","nl":"Zilvermijn","pl":"Kopalnia srebra"}},
+{"id":"siren","titles":{"de":"Sirene","en":"Siren","fr":"Sirène","nl":"Sirene","pl":"Syrena"}},
+{"id":"stowaway","titles":{"de":"Blinder Passagier","en":"Stowaway","fr":"Clandestine","nl":"Bergruimte","pl":"Pasażer na gapę"}},
+{"id":"swamp_shacks","titles":{"de":"Sumpfhütten","en":"Swamp Shacks","fr":"Cabane des marais","nl":"Moerashutten","pl":"Bagienne chaty"}},
+{"id":"taskmaster","titles":{"de":"Vorarbeiter","en":"Taskmaster","fr":"Surveillant","nl":"Opziener","pl":"Nadzorca"}},
+{"id":"tools","titles":{"de":"Werkzeug","en":"Tools","fr":"Outils","nl":"Gereedschappen","pl":"Stół warsztatowy"}},
+{"id":"cheap","titles":{"de":"Billig","en":"Cheap","fr":"Abordable","nl":"Goedkoop","pl":"Tani"}},
+{"id":"cursed","titles":{"de":"Verflucht","en":"Cursed","fr":"Maudit","nl":"Vervloekt","pl":"Przeklęty"}},
+{"id":"fated","titles":{"de":"Vorherbestimmt","en":"Fated","fr":"Destiné","nl":"Gedoemd","pl":"Przeznaczony"}},
+{"id":"fawning","titles":{"de":"Anbiedernd","en":"Fawning","fr":"Servile","nl":"Vleiend","pl":"Przymilny"}},
+{"id":"friendly","titles":{"de":"Freundlich","en":"Friendly","fr":"Amical","nl":"Vriendelijk","pl":"Przyjazny"}},
+{"id":"hasty","titles":{"de":"Eilig","en":"Hasty","fr":"Impatient","nl":"Haastig","pl":"Pośpieszny"}},
+{"id":"inherited","titles":{"de":"Geerbt","en":"Inherited","fr":"Hérité","nl":"Geërfd","pl":"Odziedziczony"}},
+{"id":"inspiring","titles":{"de":"Inspirierend","en":"Inspiring","fr":"Exaltant","nl":"Inspirerend","pl":"Inspirujący"}},
+{"id":"nearby","titles":{"de":"Benachbart","en":"Nearby","fr":"Proche","nl":"Nabijgelegen","pl":"Pobliski"}},
+{"id":"patient","titles":{"de":"Geduldig","en":"Patient","nl":"Geduldig","pl":"Cierpliwy"}},
+{"id":"pious","titles":{"de":"Fromm","en":"Pious","fr":"Pieux","nl":"Vroom","pl":"Pobożny"}},
+{"id":"reckless","titles":{"de":"Waghalsig","en":"Reckless","fr":"Téméraire","nl":"Roekeloos","pl":"Nierozważny"}},
+{"id":"rich","titles":{"de":"Reich","en":"Rich","fr":"Riche","nl":"Rijk","pl":"Bogaty"}},
+{"id":"shy","titles":{"de":"Scheu","en":"Shy","fr":"Timide","nl":"Verlegen","pl":"Nieśmiały"}},
+{"id":"tireless","titles":{"de":"Unermüdlich","en":"Tireless","fr":"Infatigable","nl":"Onvermoeibaar","pl":"Niestrudzony"}},
+{"id":"trickster","titles":{"de":"Gauner","en":"Trickster","fr":"Bonneteur","nl":"Bedrieger","pl":"Oszust"}},
+{"id":"wealthy_village","titles":{"de":"Wohlhabendes Dorf","en":"Wealthy Village","fr":"Village prospère","nl":"Welvarend dorp","pl":"Bogata wioska"}},
+{"id":"black_market","titles":{"de":"Schwarzmarkt","en":"Black Market","es":"Mercado Negro","fr":"Marché noir","nl":"Zwarte Markt","pl":"Czarny rynek"}},
+{"id":"captain","titles":{"de":"Kapitän Tobias","en":"Captain","fr":"Capitaine","pl":"Kapitan"}},
+{"id":"church","titles":{"de":"Schweriner Dom","en":"Church","fr":"Église"}},
+{"id":"dismantle","titles":{"de":"Abbruch","en":"Dismantle","fr":"Démantelement","nl":"Ontmantelen"}},
+{"id":"envoy","titles":{"de":"Gesandter","en":"Envoy","es":"Enviado","fr":"Délégué","nl":"Gezant","pl":"Poseł"}},
+{"id":"summon","titles":{"de":"Einladung","en":"Summon","fr":"Convocation"}},
+{"id":"governor","titles":{"de":"Gouverneur","en":"Governor","es":"Gobernador","fr":"Gouverneur","nl":"Gouverneur","pl":"Gubernator"}},
+{"id":"marchland","titles":{"en":"Marchland"}},
+{"id":"prince","titles":{"de":"Prinz","en":"Prince","es":"Príncipe","nl":"Prins","pl":"Książę"}},
+{"id":"sauna","titles":{"en":"Sauna / Avanto","pl":"Sauna / Przerębel"}},
+{"id":"stash","titles":{"de":"Geldversteck","en":"Stash","es":"Alijo","fr":"Cachette","nl":"Geldbuidel","pl":"Zaskórniak"}},
+{"id":"walled_village","titles":{"de":"Befestigtes Dorf","en":"Walled Village","es":"Aldea Amurallada","fr":"Ville fortifiée","nl":"Ommuurd Dorp","pl":"Kasztel"}},
+{"id":"anvil","titles":{"de":"Amboss","en":"Anvil","fr":"Enclume","pl":"Kowadło"}},
+{"id":"bank","titles":{"en":"Bank","es":"Banco","fr":"Banque","it":"Banca"}},
+{"id":"bishop","titles":{"de":"Bischof","en":"Bishop","es":"Obispo","fr":"Évêque","it":"Vescovo","nl":"Bisschop","pl":"Biskup"}},
+{"id":"charlatan","titles":{"de":"Wunderheilerin","en":"Charlatan","fr":"Charlatane","pl":"Szachrajka"}},
+{"id":"city","titles":{"de":"Stadt","en":"City","es":"Ciudad","fr":"Ville","it":"Città","nl":"Stad","pl":"Miasto"}},
+{"id":"clerk","titles":{"de":"Buchhalterin","en":"Clerk","fr":"Compatble","pl":"Kancelista"}},
+{"id":"collection","titles":{"de":"Sammelsurium","en":"Collection","pl":"Kolekcja"}},
+{"id":"crystal_ball","titles":{"de":"Kristallkugel","en":"Crystal Ball","fr":"Boule de cristal","pl":"Kryształowa kula"}},
+{"id":"expand","titles":{"de":"Ausbau","en":"Expand","es":"Expansión","fr":"Agrandissement","it":"Ampliamento","nl":"Uitbreiden","pl":"Modernizacja"}},
+{"id":"forge","titles":{"de":"Kunstschmiede","en":"Forge","es":"Forja","it":"Incastonare","nl":"Vervalsen","pl":"Płatnerz"}},
+{"id":"grand_market","titles":{"de":"Grosser Markt","en":"Grand Market","es":"Gran Mercado","fr":"Grand marché","it":"Mercato di Lusso","nl":"Grote markt","pl":"Wielki targ"}},
+{"id":"hoard","titles":{"de":"Hort","en":"Hoard","es":"Tesoro Escondido","fr":"Magot","it":"Mucchio","nl":"Spaargeld","pl":"Krocie"}},
+{"id":"investment","titles":{"de":"Geldanlage","en":"Investment","fr":"Placement","pl":"Inwestycja"}},
+{"id":"kings_court","titles":{"de":"Königshof","en":"King's Court","es":"Corte Real","fr":"Cour du roi","it":"Corte","nl":"Koningshof","pl":"Rada królewska"}},
+{"id":"magnate","titles":{"de":"Magnatin","en":"Magnate","fr":"Magnat","pl":"Magnat"}},
+{"id":"mint","titles":{"de":"Münzer","en":"Mint","es":"Acuñador","fr":"Hôtel de la monnaie","it":"Zecca","nl":"Aanmunten","pl":"Mincerz"}},
+{"id":"monument","titles":{"de":"Denkmal","en":"Monument","es":"Monumento","it":"Monumento"}},
+{"id":"peddler","titles":{"de":"Hausierer","en":"Peddler","es":"Buhonero","fr":"Colporteur","it":"Ambulante","nl":"Venter","pl":"Domokrążca"}},
+{"id":"quarry","titles":{"de":"Steinbruch","en":"Quarry","es":"Cantera","fr":"Carrière","it":"Cava","nl":"Steengroeve","pl":"Kamieniołom"}},
+{"id":"rabble","titles":{"de":"Gesindel","en":"Rabble","es":"Chusma","fr":"Foule","it":"Tumulto","nl":"Gespuis","pl":"Motłoch"}},
+{"id":"tiara","titles":{"de":"Brautkrone","en":"Tiara","fr":"Couronne de mariée"}},
+{"id":"vault","titles":{"de":"Gewölbe","en":"Vault","es":"Bóveda","fr":"Chambre forte","it":"Nascondiglio","nl":"Schatkelder","pl":"Składnica"}},
+{"id":"war_chest","titles":{"de":"Waffenkiste","en":"War Chest","fr":"Trésor de guerre","pl":"Zasoby wojenne"}},
+{"id":"watchtower","titles":{"de":"Wachturm","en":"Watchtower","es":"Atalaya","fr":"Mirador","it":"Torre di Guardia","nl":"Uitkijktoren","pl":"Strażnica"}},
+{"id":"workers_village","titles":{"de":"Arbeiterdorf","en":"Worker's Village","es":"Pueblo de Trabajadores","fr":"Village ouvrier","it":"Cantiere","nl":"Arbeidersdorp","pl":"Wioska robotnicza"}},
+{"id":"anvil","titles":{"en":"Anvil"}},
+{"id":"charlatan","titles":{"en":"Charlatan"}},
+{"id":"clerk","titles":{"en":"Clerk"}},
+{"id":"collection","titles":{"en":"Collection"}},
+{"id":"crystal_ball","titles":{"en":"Crystal Ball"}},
+{"id":"investment","titles":{"en":"Investment"}},
+{"id":"magnate","titles":{"en":"Magnate"}},
+{"id":"tiara","titles":{"en":"Tiara"}},
+{"id":"war_chest","titles":{"en":"War Chest"}},
+{"id":"contraband","titles":{"de":"Schmuggelware","en":"Contraband","es":"Contrabando","fr":"Contrebande","it":"Contrabbando","nl":"Smokkelwaar","pl":"Kontrabanda"}},
+{"id":"counting_house","titles":{"de":"Leihhaus","en":"Counting House","es":"Casa de Cuentas","fr":"Bureau de comptabilité","it":"Contabilità","nl":"Boekhouding","pl":"Rachuba"}},
+{"id":"goons","titles":{"de":"Halsabschneider","en":"Goons","es":"Matones","fr":"Fiers-à-bras","it":"Scagnozzi","nl":"Domkoppen","pl":"Naciągacze"}},
+{"id":"loan","titles":{"de":"Lohn","en":"Loan","es":"Préstamo","fr":"Prêt","it":"Prestito","nl":"Lening","pl":"Kredyt"}},
+{"id":"mountebank","titles":{"de":"Quacksalber","en":"Mountebank","es":"Charlatán","fr":"Charlatan","it":"Ciarlatano","nl":"Charlatan","pl":"Szarlatan"}},
+{"id":"royal_seal","titles":{"de":"Königliches Siegel","en":"Royal Seal","es":"Sello Real","fr":"Sceau royal","it":"Sigillo Reale","nl":"Koninklijk zegel","pl":"Królewska Pieczęć"}},
+{"id":"talisman","titles":{"en":"Talisman","es":"Talismán","it":"Talismano","pl":"Talizman"}},
+{"id":"trade_route","titles":{"de":"Handelsroute","en":"Trade Route","es":"Ruta Comercial","fr":"Route commerciale","it":"Mercante","nl":"Handelsroute","pl":"Szlak Handlowy"}},
+{"id":"venture","titles":{"de":"Abenteuer","en":"Venture","es":"Especulación","fr":"Entreprise risquée","it":"Soldo","nl":"Waagstuk","pl":"Złoty interes"}},
+{"id":"acting_troupe","titles":{"de":"Schauspieltruppe","en":"Acting Troupe","es":"Compañía de Teatro","fr":"Troupe de théâtre","nl":"Toneelgezelschap","pl":"Trupa aktorów"}},
+{"id":"border_guard","titles":{"de":"Grenzposten","en":"Border Guard","es":"Guarda Fronterizo","fr":"Garde-frontière","nl":"Grenswacht","pl":"Straż graniczna"}},
+{"id":"cargo_ship","titles":{"de":"Frachtschiff","en":"Cargo Ship","es":"Buque de Carga","fr":"Cargo","nl":"Vrachtschip","pl":"Frachtowiec"}},
+{"id":"ducat","titles":{"de":"Goldmünze","en":"Ducat","es":"Florín","nl":"Dukaat","pl":"Dukat"}},
+{"id":"experiment","titles":{"en":"Experiment","es":"Experimento","fr":"Expérience","pl":"Eksperyment"}},
+{"id":"flag_bearer","titles":{"de":"Fahnenträger","en":"Flag Bearer","es":"Abanderado","fr":"Porte-drapeau","nl":"Vaandeldrager","pl":"Chorąży"}},
+{"id":"hideout","titles":{"de":"Versteck","en":"Hideout","es":"Guarida","fr":"Planque","nl":"Schuilplaats","pl":"Kryjówka"}},
+{"id":"improve","titles":{"de":"Fortschritt","en":"Improve","es":"Perfeccionar","fr":"Amélioration","nl":"Verbetering","pl":"Ulepszenie"}},
+{"id":"inventor","titles":{"de":"Erfinder","en":"Inventor","fr":"Inventeur","nl":"Uitvinder","pl":"Wynalazca"}},
+{"id":"lackeys","titles":{"de":"Diener","en":"Lackeys","es":"Lacayos","fr":"Laquais","nl":"Kamerbedienden","pl":"Służba"}},
+{"id":"mountain_village","titles":{"de":"Bergdorf","en":"Mountain Village","es":"Aldea de Montaña","fr":"Village de montagne","nl":"Bergdorp","pl":"Górska wioska"}},
+{"id":"old_witch","titles":{"de":"Alte Hexe","en":"Old Witch","es":"Bruja Anciana","fr":"Vieille sorcière","nl":"Oude heks","pl":"Stara wiedźma"}},
+{"id":"patron","titles":{"en":"Patron","es":"Mecenas","fr":"Mécène","nl":"Beschermheer"}},
+{"id":"priest","titles":{"de":"Priester","en":"Priest","es":"Sacerdote","fr":"Prêtre","nl":"Priester","pl":"Kapłan"}},
+{"id":"academy","titles":{"de":"Akademie","en":"Academy","es":"Academia","fr":"Académie","nl":"Academie","pl":"Akademia"}},
+{"id":"barracks","titles":{"de":"Kaserne","en":"Barracks","es":"Cuartel","fr":"Caserne","nl":"Kazerne","pl":"Koszary"}},
+{"id":"canal","titles":{"de":"Kanal","en":"Canal","nl":"Kanaal","pl":"Kanał"}},
+{"id":"capitalism","titles":{"de":"Kapitalismus","en":"Capitalism","es":"Capitalismo","fr":"Capitalisme","nl":"Kapitalisme","pl":"Kapitalizm"}},
+{"id":"cathedral","titles":{"de":"Kathedrale","en":"Cathedral","es":"Catedral","fr":"Cathédrale","nl":"Kathedraal","pl":"Katedra"}},
+{"id":"citadel","titles":{"de":"Zitdelle","en":"Citadel","es":"Ciudadela","fr":"Citadelle","nl":"Burcht","pl":"Cytadela"}},
+{"id":"city_gate","titles":{"de":"Stadttor","en":"City Gate","es":"Portón","fr":"Porte","nl":"Stadspoort","pl":"Brama miejska"}},
+{"id":"crop_rotation","titles":{"de":"Fruchtwechsel","en":"Crop Rotation","es":"Barbecho","fr":"Assolement","nl":"Wisselbouw","pl":"Płodozmian"}},
+{"id":"exploration","titles":{"de":"Erkundung","en":"Exploration","es":"Exploración","nl":"Ontdekkingsreis","pl":"Eksploracja"}},
+{"id":"fair","titles":{"de":"Kleiner Markt","en":"Fair","es":"Feria","fr":"Foire","nl":"Braderie","pl":"Jarmark"}},
+{"id":"fleet","titles":{"de":"Flotte","en":"Fleet","es":"Flota","fr":"Flotte","nl":"Vloot","pl":"Flota"}},
+{"id":"guildhall","titles":{"de":"Gildenhaus","en":"Guildhall","es":"Ayuntamiento","fr":"Hôtel de ville","nl":"Gildehuis","pl":"Ratusz"}},
+{"id":"innovation","titles":{"en":"Innovation","es":"Innovación","nl":"Vernieuwing","pl":"Innowacja"}},
+{"id":"pageant","titles":{"de":"Festzug","en":"Pageant","es":"Espectáculo","fr":"Spectacle","nl":"Spektakel","pl":"Przedstawienie"}},
+{"id":"piazza","titles":{"en":"Piazza","es":"Pórtico","nl":"Plein","pl":"Plac miejski"}},
+{"id":"road_network","titles":{"de":"Strassennetz","en":"Road Network","es":"Red de Caminos","fr":"Réseau routier","nl":"Wegennet","pl":"Sieć dróg"}},
+{"id":"sewers","titles":{"de":"Abwasserkanal","en":"Sewers","es":"Alcantarillas","fr":"Égouts","nl":"Riolen","pl":"Ścieki"}},
+{"id":"silos","titles":{"de":"Speicher","en":"Silos","nl":"Silo's","pl":"Silosy"}},
+{"id":"sinister_plot","titles":{"de":"Finsterer Plan","en":"Sinister Plot","es":"Confabulación","fr":"Machination","nl":"Duistere samenzwering","pl":"Złowieszczy plan"}},
+{"id":"star_chart","titles":{"de":"Sternenkarte","en":"Star Chart","es":"Carta Estelar","fr":"Carte céleste","nl":"Sterrenkaart","pl":"Mapa nieba"}},
+{"id":"recruiter","titles":{"de":"Anwerber","en":"Recruiter","es":"Reclutador","fr":"Recruteur","nl":"Ronselaar","pl":"Oficer werbunkowy"}},
+{"id":"research","titles":{"de":"Forscherin","en":"Research","es":"Investigación","fr":"Recherche","nl":"Onderzoek","pl":"Badania"}},
+{"id":"scepter","titles":{"de":"Zepter","en":"Scepter","es":"Cetro","fr":"Sceptre","pl":"Berło"}},
+{"id":"scholar","titles":{"de":"Gelehrte","en":"Scholar","es":"Erudita","fr":"Érudite","nl":"Geleerde","pl":"Uczony"}},
+{"id":"sculptor","titles":{"de":"Bildhauerin","en":"Sculptor","es":"Escultora","fr":"Sculptrice","nl":"Beeldhouwer","pl":"Rzeźbiarz"}},
+{"id":"seer","titles":{"de":"Seher","en":"Seer","es":"Profeta","fr":"Prophète","nl":"Ziener","pl":"Jasnowidz"}},
+{"id":"silk_merchant","titles":{"de":"Seidenhändlerin","en":"Silk Merchant","es":"Vendedor de Seda","fr":"Marchande de soie","nl":"Zijdekoopman","pl":"Kupiec jedwabny"}},
+{"id":"spices","titles":{"de":"Gewürze","en":"Spices","es":"Especias","fr":"Épices","nl":"Specerijen","pl":"Przyprawy"}},
+{"id":"swashbuckler","titles":{"de":"Freibeuterin","en":"Swashbuckler","es":"Espadachina","fr":"Bretteuse","nl":"Ijzervreter","pl":"Awanturniczka"}},
+{"id":"treasurer","titles":{"de":"Schatzmeisterin","en":"Treasurer","es":"Tesorera","fr":"Trésorière","nl":"Schatbewaarder","pl":"Skarbniczka"}},
+{"id":"villain","titles":{"de":"Schwarzer Meister","en":"Villain","es":"Villano","fr":"Scélérat","nl":"Slechterik","pl":"Złoczyńca"}},
+{"id":"alley","titles":{"en":"Alley","fr":"Ruelle"}},
+{"id":"aristocrat","titles":{"en":"Aristocrat","fr":"Aristocrate"}},
+{"id":"artist","titles":{"en":"Artist","fr":"Artiste"}},
+{"id":"change","titles":{"en":"Change","fr":"Changement"}},
+{"id":"craftsman","titles":{"en":"Craftsman","fr":"Ouvrier"}},
+{"id":"daimyo","titles":{"en":"Daimyo"}},
+{"id":"amass","titles":{"en":"Amass","fr":"Amassement"}},
+{"id":"asceticism","titles":{"en":"Asceticism"}},
+{"id":"continue","titles":{"en":"Continue"}},
+{"id":"credit","titles":{"en":"Credit"}},
+{"id":"foresight","titles":{"en":"Foresight"}},
+{"id":"gather","titles":{"en":"Gather"}},
+{"id":"kintsugi","titles":{"en":"Kintsugi"}},
+{"id":"practice","titles":{"en":"Practice"}},
+{"id":"receive_tribute","titles":{"en":"Receive Tribute","fr":"Hommage rendu"}},
+{"id":"sea_trade","titles":{"en":"Sea Trade","fr":"Commerce maritime"}},
+{"id":"fishmonger","titles":{"en":"Fishmonger","fr":"Poissonnière"}},
+{"id":"gold_mine","titles":{"en":"Gold Mine","fr":"Mine d'or"}},
+{"id":"imperial_envoy","titles":{"en":"Imperial Envoy","fr":"Délégué impérial"}},
+{"id":"kitsune","titles":{"en":"Kitsune"}},
+{"id":"litter","titles":{"en":"Litter","fr":"Chaise à porteurs"}},
+{"id":"mountain_shrine","titles":{"en":"Mountain Shrine","fr":"Sanctuaire de la montagne"}},
+{"id":"ninja","titles":{"en":"Ninja"}},
+{"id":"poet","titles":{"en":"Poet","fr":"Poétesse"}},
+{"id":"approaching_army","titles":{"en":"Approaching Army","fr":"Armée en approche"}},
+{"id":"biding_time","titles":{"en":"Biding Time","fr":"Attendre son heure"}},
+{"id":"bureaucracy","titles":{"en":"Bureaucracy","fr":"Bureaucratie"}},
+{"id":"divine_wind","titles":{"en":"Divine Wind","fr":"Vent divin"}},
+{"id":"enlightenment","titles":{"en":"Enlightenment","fr":"Illumination"}},
+{"id":"flourishing_trade","titles":{"en":"Flourishing Trade","fr":"Commerce florissant"}},
+{"id":"good_harvest","titles":{"en":"Good Harvest","fr":"Bonne récolte"}},
+{"id":"great_leader","titles":{"en":"Great Leader","fr":"Grand dirigeant"}},
+{"id":"growth","titles":{"en":"Growth","fr":"Croissance"}},
+{"id":"harsh_winter","titles":{"en":"Harsh Winter","fr":"Hiver rude"}},
+{"id":"kind_emperor","titles":{"en":"Kind Emperor","fr":"Bon empereur"}},
+{"id":"panic","titles":{"en":"Panic","fr":"Panique"}},
+{"id":"progress","titles":{"en":"Progress","fr":"Progrès"}},
+{"id":"rapid_expansion","titles":{"en":"Rapid Expansion","fr":"Expansion rapide"}},
+{"id":"sickness","titles":{"en":"Sickness","fr":"Maladie"}},
+{"id":"rice","titles":{"en":"Rice","fr":"Riz"}},
+{"id":"rice_broker","titles":{"en":"Rice Broker","fr":"Courtier en riz"}},
+{"id":"riverboat","titles":{"en":"Riverboat","fr":"Bateau fluvial"}},
+{"id":"river_shrine","titles":{"en":"River Shrine","fr":"Sanctuaire de la rivière"}},
+{"id":"ronin","titles":{"en":"Ronin"}},
+{"id":"root_cellar","titles":{"en":"Root Cellar","fr":"Cellier à légumes"}},
+{"id":"rustic_village","titles":{"en":"Rustic Village","fr":"Village rustique"}},
+{"id":"samurai","titles":{"en":"Samurai","fr":"Samouraï"}},
+{"id":"snake_witch","titles":{"en":"Snake Witch","fr":"Sorcière aux serpents"}},
+{"id":"tanuki","titles":{"en":"Tanuki"}},
+{"id":"tea_house","titles":{"en":"Tea House","fr":"Salon de thé"}},
+{"id":"astrolabe","titles":{"de":"Astrolabium","en":"Astrolabe","nl":"Sextant","pl":"Astrolabium"}},
+{"id":"bazaar","titles":{"de":"Bazar","en":"Bazaar","es":"Bazar","fr":"Bazar","it":"Bazar","pl":"Bazar"}},
+{"id":"blockade","titles":{"en":"Blockade","fr":"Blocus","nl":"Blokkade","pl":"Blokada"}},
+{"id":"caravan","titles":{"de":"Karawane","en":"Caravan","es":"Caravana","fr":"Caravane","it":"Caravana","nl":"Karavaan","pl":"Karawana"}},
+{"id":"corsair","titles":{"de":"Korsarenschiff","en":"Corsair","fr":"Corsaire","nl":"Zeerover","pl":"Korsarz"}},
+{"id":"cutpurse","titles":{"de":"Beutelschneider","en":"Cutpurse","es":"Ratero","fr":"Coupeur de bourse","it":"Borseggiatore","nl":"Beurzensnijder","pl":"Kieszonkowiec"}},
+{"id":"fishing_village","titles":{"de":"Fischerdorf","en":"Fishing Village","es":"Pueblo de Pescadores","fr":"Village de pêcheurs","it":"Villaggio dei Pescatori","nl":"Vissersdorp","pl":"Wioska rybacka"}},
+{"id":"haven","titles":{"de":"Hafen","en":"Haven","es":"Puerto","fr":"Havre","it":"Rada","pl":"Przystań"}},
+{"id":"island","titles":{"de":"Insel","en":"Island","es":"Isla","fr":"Île","it":"Isola","nl":"Eiland","pl":"Wyspa"}},
+{"id":"lighthouse","titles":{"de":"Leuchtturm","en":"Lighthouse","es":"Faro","fr":"Phare","it":"Faro","nl":"Vuurtoren","pl":"Latarnia morska"}},
+{"id":"lookout","titles":{"de":"Ausguck","en":"Lookout","es":"Vigía","fr":"Vigie","it":"Vedetta","nl":"Uitkijk","pl":"Bocianie gniazdo"}},
+{"id":"merchant_ship","titles":{"de":"Handelsschiff","en":"Merchant Ship","es":"Barco Mercante","fr":"Navire marchand","it":"Nave Mercantile","nl":"Handelsschip","pl":"Okręt kupiecki"}},
+{"id":"monkey","titles":{"de":"Affe","en":"Monkey","fr":"Singe","nl":"Aap","pl":"Małpa"}},
+{"id":"native_village","titles":{"de":"Eingeborenendorf","en":"Native Village","es":"Poblado Indígena","fr":"Village indigène","it":"Villaggio Indigeno","nl":"Inheems Dorp","pl":"Wioska tubylców"}},
+{"id":"outpost","titles":{"de":"Aussenposten","en":"Outpost","es":"Puesto Avanzado","fr":"Avant-poste","it":"Avamposto","nl":"Voorpost","pl":"Przyczółek"}},
+{"id":"pirate","titles":{"de":"Piratin","en":"Pirate","nl":"Piraat","pl":"Pirat"}},
+{"id":"sailor","titles":{"de":"Seefahrerin","en":"Sailor","fr":"Navigatrice","nl":"Matroos","pl":"Żeglarz"}},
+{"id":"salvager","titles":{"de":"Müllverwerter","en":"Salvager","es":"Rescatador","fr":"Sauveteur","it":"Recupero","nl":"Afvalverwerker","pl":"Wyławiacz"}},
+{"id":"sea_chart","titles":{"de":"Seekarte","en":"Sea Chart","fr":"Carte Maritime","nl":"Zeekaart","pl":"Mapa morska"}},
+{"id":"sea_witch","titles":{"de":"Meerhexe","en":"Sea Witch","fr":"Sorcière Marine","nl":"Zeekol","pl":"Morska czarownica"}},
+{"id":"smugglers","titles":{"de":"Schmuggler","en":"Smugglers","es":"Contrabandistas","fr":"Contrebandiers","it":"Contrabbandieri","nl":"Smokkelaar","pl":"Przemytnicy"}},
+{"id":"tactician","titles":{"de":"Taktiker","en":"Tactician","es":"Estratega","fr":"Tacticien","it":"Stratega","nl":"Strateeg","pl":"Strateg"}},
+{"id":"tide_pools","titles":{"de":"Gezeitenbecken","en":"Tide Pools","fr":"Marée","nl":"Getijdenpoelen","pl":"Baseny pływowe"}},
+{"id":"treasure_map","titles":{"de":"Schatzkarte","en":"Treasure Map","es":"Mapa del Tesoro","fr":"Carte aux trésors","it":"Mappa del Tesoro","nl":"Schatkaart","pl":"Mapa skarbu"}},
+{"id":"treasury","titles":{"de":"Schatzkammer","en":"Treasury","es":"Tesorería","fr":"Trésorerie","it":"Tesoro","nl":"Schatkamer","pl":"Skarbiec"}},
+{"id":"warehouse","titles":{"de":"Lagerhaus","en":"Warehouse","es":"Almacén","fr":"Entrepôt","it":"Magazzino","nl":"Pakhuis","pl":"Magazyn"}},
+{"id":"wharf","titles":{"de":"Werft","en":"Wharf","es":"Muelle","fr":"Quai","it":"Molo","nl":"Scheepswerf","pl":"Nabrzeże"}},
+{"id":"astrolabe","titles":{"en":"Astrolabe"}},
+{"id":"blockade","titles":{"en":"Blockade"}},
+{"id":"corsair","titles":{"en":"Corsair"}},
+{"id":"monkey","titles":{"en":"Monkey"}},
+{"id":"pirate","titles":{"en":"Pirate"}},
+{"id":"sailor","titles":{"en":"Sailor"}},
+{"id":"sea_chart","titles":{"en":"Sea Chart"}},
+{"id":"sea_witch","titles":{"en":"Sea Witch"}},
+{"id":"tide_pools","titles":{"en":"Tide Pools"}},
+{"id":"ambassador","titles":{"de":"Botschafter","en":"Ambassador","es":"Embajador","fr":"Ambassadeur","it":"Ambasciatore","nl":"Boodschapper","pl":"Ambasador"}},
+{"id":"embargo","titles":{"en":"Embargo"}},
+{"id":"explorer","titles":{"de":"Entdecker","en":"Explorer","es":"Explordora","fr":"Explorateur","it":"Avventuriero","nl":"Ontdekkingsreiziger","pl":"Zdobywca"}},
+{"id":"ghost_ship","titles":{"de":"Geisterschiff","en":"Ghost Ship","es":"Barco Fantasma","fr":"Vaisseau fantôme","it":"Nave Fantasma","nl":"De Vliegende Hollander","pl":"Okręt widmo"}},
+{"id":"navigator","titles":{"en":"Navigator","es":"Navegante","fr":"Navigateur","it":"Navigatore","pl":"Nawigator"}},
+{"id":"pearl_diver","titles":{"de":"Perlentaucher","en":"Pearl Diver","es":"Pescador de Perlas","fr":"Plongeur de perles","it":"Pescatore di Perle","nl":"Parelduiker","pl":"Poławiacz pereł"}},
+{"id":"pirate_ship","titles":{"de":"Piratenschiff","en":"Pirate Ship","es":"Barco Pirata","fr":"Bateau pirate","it":"Nave Pirata","nl":"Piratenschip","pl":"Okręt piracki"}},
+{"id":"sea_hag","titles":{"de":"Seehexe","en":"Sea Hag","es":"Bruja del Mar","fr":"Sorcière de mer","it":"Megera dei Mari","nl":"Zeeheks","pl":"Morska wiedźma"}}
+],
+"cards":{
+"abundance":{"title":"Überfluss","kingdom":true,"landscape":false,"firstEdition":false},
+"academy":{"title":"Akademie","kingdom":false,"landscape":true,"firstEdition":false},
+"acting_troupe":{"title":"Schauspieltruppe","kingdom":true,"landscape":false,"firstEdition":false},
+"advance":{"title":"Aufstieg","kingdom":false,"landscape":true,"firstEdition":false},
+"adventurer":{"title":"Abenteurer","kingdom":true,"landscape":false,"firstEdition":true},
+"advisor":{"title":"Berater","kingdom":true,"landscape":false,"firstEdition":false},
+"alchemist":{"title":"Alchemist","kingdom":true,"landscape":false,"firstEdition":false},
+"alley":{"title":"Gasse","kingdom":true,"landscape":false,"firstEdition":false},
+"alliance":{"title":"Bündnis","kingdom":false,"landscape":true,"firstEdition":false},
+"alms":{"title":"Almosen","kingdom":false,"landscape":true,"firstEdition":false},
+"altar":{"title":"Altar","kingdom":true,"landscape":false,"firstEdition":false},
+"amass":{"title":"Anhäufen","kingdom":false,"landscape":true,"firstEdition":false},
+"ambassador":{"title":"Botschafter","kingdom":true,"landscape":false,"firstEdition":true},
+"amulet":{"title":"Amulett","kingdom":true,"landscape":false,"firstEdition":false},
+"animal_fair":{"title":"Viehmarkt","kingdom":true,"landscape":false,"firstEdition":false},
+"annex":{"title":"Schlacht","kingdom":false,"landscape":true,"firstEdition":false},
+"anvil":{"title":"Amboss","kingdom":true,"landscape":false,"firstEdition":false},
+"apothecary":{"title":"Apotheker","kingdom":true,"landscape":false,"firstEdition":false},
+"apprentice":{"title":"Lehrling","kingdom":true,"landscape":false,"firstEdition":false},
+"approaching_army":{"title":"Herannahende Armee","kingdom":false,"landscape":false,"firstEdition":false},
+"aqueduct":{"title":"Aquädukt","kingdom":false,"landscape":true,"firstEdition":false},
+"architects_guild":{"title":"Architektengilde","kingdom":false,"landscape":false,"firstEdition":false},
+"archive":{"title":"Archiv","kingdom":true,"landscape":false,"firstEdition":false},
+"arena":{"title":"Arena","kingdom":false,"landscape":true,"firstEdition":false},
+"aristocrat":{"title":"Aristokratin","kingdom":true,"landscape":false,"firstEdition":false},
+"armory":{"title":"Waffenkammer","kingdom":true,"landscape":false,"firstEdition":false},
+"artificer":{"title":"Kunsthandwerker","kingdom":true,"landscape":false,"firstEdition":false},
+"artisan":{"title":"Töpferei","kingdom":true,"landscape":false,"firstEdition":false},
+"artist":{"title":"Künstlerin","kingdom":true,"landscape":false,"firstEdition":false},
+"asceticism":{"title":"Askese","kingdom":false,"landscape":true,"firstEdition":false},
+"astrolabe":{"title":"Astrolabium","kingdom":true,"landscape":false,"firstEdition":false},
+"augurs":{"title":"Augurinnen","kingdom":true,"landscape":false,"firstEdition":false},
+"avoid":{"title":"Ausweichen","kingdom":false,"landscape":true,"firstEdition":false},
+"baker":{"title":"Bäcker","kingdom":true,"landscape":false,"firstEdition":false},
+"ball":{"title":"Ball","kingdom":false,"landscape":true,"firstEdition":false},
+"band_of_misfits":{"title":"Vogelfreie","kingdom":true,"landscape":false,"firstEdition":false},
+"band_of_nomads":{"title":"Nomadenstamm","kingdom":false,"landscape":false,"firstEdition":false},
+"bandit":{"title":"Banditin","kingdom":true,"landscape":false,"firstEdition":false},
+"bandit_camp":{"title":"Banditenlager","kingdom":true,"landscape":false,"firstEdition":false},
+"bandit_fort":{"title":"Räuberfestung","kingdom":false,"landscape":true,"firstEdition":false},
+"banish":{"title":"Verbannung","kingdom":false,"landscape":true,"firstEdition":false},
+"bank":{"title":"Bank","kingdom":true,"landscape":false,"firstEdition":false},
+"banquet":{"title":"Bankett","kingdom":false,"landscape":true,"firstEdition":false},
+"barbarian":{"title":"Barbar","kingdom":true,"landscape":false,"firstEdition":false},
+"bard":{"title":"Minnesängerin","kingdom":true,"landscape":false,"firstEdition":false},
+"bargain":{"title":"Gutes Geschäft","kingdom":false,"landscape":true,"firstEdition":false},
+"barge":{"title":"Lastkahn","kingdom":true,"landscape":false,"firstEdition":false},
+"baron":{"title":"Baron","kingdom":true,"landscape":false,"firstEdition":false},
+"barracks":{"title":"Kaserne","kingdom":false,"landscape":true,"firstEdition":false},
+"basilica":{"title":"Basilika","kingdom":false,"landscape":true,"firstEdition":false},
+"baths":{"title":"Badehaus","kingdom":false,"landscape":true,"firstEdition":false},
+"battlefield":{"title":"Schlachtfeld","kingdom":false,"landscape":true,"firstEdition":false},
+"bauble":{"title":"Tand","kingdom":true,"landscape":false,"firstEdition":false},
+"bazaar":{"title":"Bazar","kingdom":true,"landscape":false,"firstEdition":false},
+"beggar":{"title":"Bettler","kingdom":true,"landscape":false,"firstEdition":false},
+"berserker":{"title":"Berserker","kingdom":true,"landscape":false,"firstEdition":false},
+"biding_time":{"title":"Wartezeit","kingdom":false,"landscape":false,"firstEdition":false},
+"bishop":{"title":"Bischof","kingdom":true,"landscape":false,"firstEdition":false},
+"black_cat":{"title":"Schwarze Katze","kingdom":true,"landscape":false,"firstEdition":false},
+"black_market":{"title":"Schwarzmarkt","kingdom":true,"landscape":false,"firstEdition":true},
+"blessed_village":{"title":"Seliges Dorf","kingdom":true,"landscape":false,"firstEdition":false},
+"blockade":{"title":"Blockade","kingdom":true,"landscape":false,"firstEdition":false},
+"bonfire":{"title":"Freudenfeuer","kingdom":false,"landscape":true,"firstEdition":false},
+"border_guard":{"title":"Grenzposten","kingdom":true,"landscape":false,"firstEdition":false},
+"border_village":{"title":"Grenzdorf","kingdom":true,"landscape":false,"firstEdition":false},
+"borrow":{"title":"Leihgabe","kingdom":false,"landscape":true,"firstEdition":false},
+"bounty_hunter":{"title":"Kopfgeldjägerin","kingdom":true,"landscape":false,"firstEdition":false},
+"bridge":{"title":"Brücke","kingdom":true,"landscape":false,"firstEdition":false},
+"bridge_troll":{"title":"Brückentroll","kingdom":true,"landscape":false,"firstEdition":false},
+"broker":{"title":"Mittelsmann","kingdom":true,"landscape":false,"firstEdition":false},
+"bureaucracy":{"title":"Bürokratie","kingdom":false,"landscape":false,"firstEdition":false},
+"bureaucrat":{"title":"Bürokrat","kingdom":true,"landscape":false,"firstEdition":false},
+"buried_treasure":{"title":"Vergrabener Schatz","kingdom":true,"landscape":false,"firstEdition":false},
+"bury":{"title":"Vergraben","kingdom":false,"landscape":true,"firstEdition":false},
+"butcher":{"title":"Metzger","kingdom":true,"landscape":false,"firstEdition":false},
+"cabin_boy":{"title":"Schiffsjunge","kingdom":true,"landscape":false,"firstEdition":false},
+"cache":{"title":"Schatztruhe","kingdom":true,"landscape":false,"firstEdition":true},
+"cage":{"title":"Käfig","kingdom":true,"landscape":false,"firstEdition":false},
+"camel_train":{"title":"Kamelzug","kingdom":true,"landscape":false,"firstEdition":false},
+"canal":{"title":"Kanal","kingdom":false,"landscape":true,"firstEdition":false},
+"candlestick_maker":{"title":"Leuchtenmacher","kingdom":true,"landscape":false,"firstEdition":false},
+"capital":{"title":"Vermögen","kingdom":true,"landscape":false,"firstEdition":false},
+"capital_city":{"title":"Hauptstadt","kingdom":true,"landscape":false,"firstEdition":false},
+"capitalism":{"title":"Kapitalismus","kingdom":false,"landscape":true,"firstEdition":false},
+"captain":{"title":"Kapitän Tobias","kingdom":true,"landscape":false,"firstEdition":false},
+"caravan":{"title":"Karawane","kingdom":true,"landscape":false,"firstEdition":false},
+"caravan_guard":{"title":"Karawanenwächter","kingdom":true,"landscape":false,"firstEdition":false},
+"cardinal":{"title":"Kardinal","kingdom":true,"landscape":false,"firstEdition":false},
+"cargo_ship":{"title":"Frachtschiff","kingdom":true,"landscape":false,"firstEdition":false},
+"carnival":{"title":"Karneval","kingdom":true,"landscape":false,"firstEdition":false},
+"carpenter":{"title":"Schreinerin","kingdom":true,"landscape":false,"firstEdition":false},
+"cartographer":{"title":"Kartograph","kingdom":true,"landscape":false,"firstEdition":false},
+"castles":{"title":"Schlösser","kingdom":true,"landscape":false,"firstEdition":false},
+"catacombs":{"title":"Katakomben","kingdom":true,"landscape":false,"firstEdition":false},
+"catapult":{"title":"Katapult","kingdom":true,"landscape":false,"firstEdition":false},
+"cathedral":{"title":"Kathedrale","kingdom":false,"landscape":true,"firstEdition":false},
+"cauldron":{"title":"Hexenkessel","kingdom":true,"landscape":false,"firstEdition":false},
+"cavalry":{"title":"Kavallerie","kingdom":true,"landscape":false,"firstEdition":false},
+"cave_dwellers":{"title":"Höhlenbewohner","kingdom":false,"landscape":false,"firstEdition":false},
+"cellar":{"title":"Keller","kingdom":true,"landscape":false,"firstEdition":false},
+"cemetery":{"title":"Friedhof","kingdom":true,"landscape":false,"firstEdition":false},
+"chancellor":{"title":"Kanzler","kingdom":true,"landscape":false,"firstEdition":true},
+"change":{"title":"Wandel","kingdom":true,"landscape":false,"firstEdition":false},
+"changeling":{"title":"Wechselbalg","kingdom":true,"landscape":false,"firstEdition":false},
+"chapel":{"title":"Kapelle","kingdom":true,"landscape":false,"firstEdition":false},
+"chariot_race":{"title":"Wagenrennen","kingdom":true,"landscape":false,"firstEdition":false},
+"charlatan":{"title":"Wunderheilerin","kingdom":true,"landscape":false,"firstEdition":false},
+"charm":{"title":"Zauber","kingdom":true,"landscape":false,"firstEdition":false},
+"cheap":{"title":"Billig","kingdom":false,"landscape":false,"firstEdition":false},
+"church":{"title":"Schweriner Dom","kingdom":true,"landscape":false,"firstEdition":false},
+"circle_of_witches":{"title":"Hexenbund","kingdom":false,"landscape":false,"firstEdition":false},
+"citadel":{"title":"Zitadelle","kingdom":false,"landscape":true,"firstEdition":false},
+"city":{"title":"Stadt","kingdom":true,"landscape":false,"firstEdition":false},
+"city_gate":{"title":"Stadttor","kingdom":false,"landscape":true,"firstEdition":false},
+"city_quarter":{"title":"Stadtviertel","kingdom":true,"landscape":false,"firstEdition":false},
+"city_state":{"title":"Stadtstaat","kingdom":false,"landscape":false,"firstEdition":false},
+"clashes":{"title":"Konflikte","kingdom":true,"landscape":false,"firstEdition":false},
+"clerk":{"title":"Buchhalterin","kingdom":true,"landscape":false,"firstEdition":false},
+"coastal_haven":{"title":"Höhlenhafen","kingdom":false,"landscape":false,"firstEdition":false},
+"cobbler":{"title":"Schuster","kingdom":true,"landscape":false,"firstEdition":false},
+"coin_of_the_realm":{"title":"Königliche Münzen","kingdom":true,"landscape":false,"firstEdition":false},
+"collection":{"title":"Sammelsurium","kingdom":true,"landscape":false,"firstEdition":false},
+"colonnade":{"title":"Kolonnaden","kingdom":false,"landscape":true,"firstEdition":false},
+"commerce":{"title":"Kommerz","kingdom":false,"landscape":true,"firstEdition":false},
+"conclave":{"title":"Konklave","kingdom":true,"landscape":false,"firstEdition":false},
+"conquest":{"title":"Eroberung","kingdom":false,"landscape":true,"firstEdition":false},
+"conspirator":{"title":"Verschwörer","kingdom":true,"landscape":false,"firstEdition":false},
+"continue":{"title":"Fortsetzen","kingdom":false,"landscape":true,"firstEdition":false},
+"contraband":{"title":"Schmuggelware","kingdom":true,"landscape":false,"firstEdition":true},
+"contract":{"title":"Vertrag","kingdom":true,"landscape":false,"firstEdition":false},
+"coppersmith":{"title":"Kuperschmied","kingdom":true,"landscape":false,"firstEdition":true},
+"corsair":{"title":"Korsarenschiff","kingdom":true,"landscape":false,"firstEdition":false},
+"council_room":{"title":"Ratsversammlung","kingdom":true,"landscape":false,"firstEdition":false},
+"count":{"title":"Graf","kingdom":true,"landscape":false,"firstEdition":false},
+"counterfeit":{"title":"Falschgeld","kingdom":true,"landscape":false,"firstEdition":false},
+"counting_house":{"title":"Leihhaus","kingdom":true,"landscape":false,"firstEdition":true},
+"courier":{"title":"Botin","kingdom":true,"landscape":false,"firstEdition":false},
+"courtier":{"title":"Höflinge","kingdom":true,"landscape":false,"firstEdition":false},
+"courtyard":{"title":"Burghof","kingdom":true,"landscape":false,"firstEdition":false},
+"coven":{"title":"Hexenzirkel","kingdom":true,"landscape":false,"firstEdition":false},
+"crafters_guild":{"title":"Handwerkergilde","kingdom":false,"landscape":false,"firstEdition":false},
+"craftsman":{"title":"Handwerker","kingdom":true,"landscape":false,"firstEdition":false},
+"credit":{"title":"Kredit","kingdom":false,"landscape":true,"firstEdition":false},
+"crew":{"title":"Mannschaft","kingdom":true,"landscape":false,"firstEdition":false},
+"crop_rotation":{"title":"Fruchtwechsel","kingdom":false,"landscape":true,"firstEdition":false},
+"crossroads":{"title":"Wegkreuzung","kingdom":true,"landscape":false,"firstEdition":false},
+"crown":{"title":"Krone","kingdom":true,"landscape":false,"firstEdition":false},
+"crucible":{"title":"Schmelztiegel","kingdom":true,"landscape":false,"firstEdition":false},
+"crypt":{"title":"Krypta","kingdom":true,"landscape":false,"firstEdition":false},
+"crystal_ball":{"title":"Kristallkugel","kingdom":true,"landscape":false,"firstEdition":false},
+"cultist":{"title":"Kultist","kingdom":true,"landscape":false,"firstEdition":false},
+"cursed":{"title":"Verflucht","kingdom":false,"landscape":false,"firstEdition":false},
+"cursed_village":{"title":"Verfluchtes Dorf","kingdom":true,"landscape":false,"firstEdition":false},
+"cutpurse":{"title":"Beutelschneider","kingdom":true,"landscape":false,"firstEdition":false},
+"cutthroat":{"title":"Meuchlerin","kingdom":true,"landscape":false,"firstEdition":false},
+"daimyo":{"title":"Daimyo","kingdom":true,"landscape":false,"firstEdition":false},
+"death_cart":{"title":"Leichenkarren","kingdom":true,"landscape":false,"firstEdition":false},
+"defiled_shrine":{"title":"Entweihter Schrein","kingdom":false,"landscape":true,"firstEdition":false},
+"delay":{"title":"Verzögerung","kingdom":false,"landscape":true,"firstEdition":false},
+"deliver":{"title":"Zustellung","kingdom":false,"landscape":true,"firstEdition":false},
+"delve":{"title":"Erforschen","kingdom":false,"landscape":true,"firstEdition":false},
+"demand":{"title":"Forderung","kingdom":false,"landscape":true,"firstEdition":false},
+"den_of_sin":{"title":"Sündenpfuhl","kingdom":true,"landscape":false,"firstEdition":false},
+"desert_guides":{"title":"Wüstenführer","kingdom":false,"landscape":false,"firstEdition":false},
+"desperation":{"title":"Verzweiflung","kingdom":false,"landscape":true,"firstEdition":false},
+"destrier":{"title":"Schlachtross","kingdom":true,"landscape":false,"firstEdition":false},
+"develop":{"title":"Aufbau","kingdom":true,"landscape":false,"firstEdition":false},
+"devils_workshop":{"title":"Teufelswerkstatt","kingdom":true,"landscape":false,"firstEdition":false},
+"diplomat":{"title":"Diplomatin","kingdom":true,"landscape":false,"firstEdition":false},
+"dismantle":{"title":"Abbruch","kingdom":true,"landscape":false,"firstEdition":false},
+"displace":{"title":"Vertreibung","kingdom":true,"landscape":false,"firstEdition":false},
+"distant_lands":{"title":"Ferne Lande","kingdom":true,"landscape":false,"firstEdition":false},
+"divine_wind":{"title":"Göttlicher Wind","kingdom":false,"landscape":false,"firstEdition":false},
+"doctor":{"title":"Arzt","kingdom":true,"landscape":false,"firstEdition":true},
+"dominate":{"title":"Beherrschen","kingdom":false,"landscape":true,"firstEdition":false},
+"donate":{"title":"Spende","kingdom":false,"landscape":true,"firstEdition":false},
+"druid":{"title":"Druidin","kingdom":true,"landscape":false,"firstEdition":false},
+"ducat":{"title":"Goldmünze","kingdom":true,"landscape":false,"firstEdition":false},
+"duchess":{"title":"Herzogin","kingdom":true,"landscape":false,"firstEdition":true},
+"duke":{"title":"Herzog","kingdom":true,"landscape":false,"firstEdition":false},
+"dungeon":{"title":"Verlies","kingdom":true,"landscape":false,"firstEdition":false},
+"duplicate":{"title":"Duplikat","kingdom":true,"landscape":false,"firstEdition":false},
+"embargo":{"title":"Embargo","kingdom":true,"landscape":false,"firstEdition":true},
+"embassy":{"title":"Botschaft","kingdom":true,"landscape":false,"firstEdition":true},
+"emissary":{"title":"Unterhändlerin","kingdom":true,"landscape":false,"firstEdition":false},
+"encampment":{"title":"Feldlager","kingdom":true,"landscape":false,"firstEdition":false},
+"enchantress":{"title":"Zauberin","kingdom":true,"landscape":false,"firstEdition":false},
+"enclave":{"title":"Enklave","kingdom":false,"landscape":true,"firstEdition":false},
+"engineer":{"title":"Ingenieurin","kingdom":true,"landscape":false,"firstEdition":false},
+"enhance":{"title":"Verbesserung","kingdom":false,"landscape":true,"firstEdition":false},
+"enlarge":{"title":"Vergrößerung","kingdom":true,"landscape":false,"firstEdition":false},
+"enlightenment":{"title":"Erleuchtung","kingdom":false,"landscape":false,"firstEdition":false},
+"envoy":{"title":"Gesandter","kingdom":true,"landscape":false,"firstEdition":false},
+"exorcist":{"title":"Exorzistin","kingdom":true,"landscape":false,"firstEdition":false},
+"expand":{"title":"Ausbau","kingdom":true,"landscape":false,"firstEdition":false},
+"expedition":{"title":"Expedition","kingdom":false,"landscape":true,"firstEdition":false},
+"experiment":{"title":"Experiment","kingdom":true,"landscape":false,"firstEdition":false},
+"exploration":{"title":"Erkundung","kingdom":false,"landscape":true,"firstEdition":false},
+"explorer":{"title":"Erkunder","kingdom":true,"landscape":false,"firstEdition":true},
+"fair":{"title":"Kleiner Markt","kingdom":false,"landscape":true,"firstEdition":false},
+"fairgrounds":{"title":"Festplatz","kingdom":true,"landscape":false,"firstEdition":false},
+"faithful_hound":{"title":"Getreuer Hund","kingdom":true,"landscape":false,"firstEdition":false},
+"falconer":{"title":"Falknerin","kingdom":true,"landscape":false,"firstEdition":false},
+"familiar":{"title":"Vertrauter","kingdom":true,"landscape":false,"firstEdition":false},
+"family_of_inventors":{"title":"Erfinderfamilie","kingdom":false,"landscape":false,"firstEdition":false},
+"farm":{"title":"Farm","kingdom":true,"landscape":false,"firstEdition":false},
+"farmers_market":{"title":"Bauernmarkt","kingdom":true,"landscape":false,"firstEdition":false},
+"farmhands":{"title":"Landarbeiterinnen","kingdom":true,"landscape":false,"firstEdition":false},
+"farming_village":{"title":"Bauerndorf","kingdom":true,"landscape":false,"firstEdition":true},
+"farmland":{"title":"Fruchtbares Land","kingdom":true,"landscape":false,"firstEdition":false},
+"farrier":{"title":"Hufschmied","kingdom":true,"landscape":false,"firstEdition":false},
+"fated":{"title":"Vorherbestimmt","kingdom":false,"landscape":false,"firstEdition":false},
+"fawning":{"title":"Aufdringlich","kingdom":false,"landscape":false,"firstEdition":false},
+"feast":{"title":"Festmahl","kingdom":true,"landscape":false,"firstEdition":true},
+"fellowship_of_scribes":{"title":"Gefolgschaft der Schreiber","kingdom":false,"landscape":false,"firstEdition":false},
+"feodum":{"title":"Lehen","kingdom":true,"landscape":false,"firstEdition":false},
+"ferry":{"title":"Überfahrt","kingdom":false,"landscape":true,"firstEdition":false},
+"ferryman":{"title":"Fährmann","kingdom":true,"landscape":false,"firstEdition":false},
+"festival":{"title":"Jahrmarkt","kingdom":true,"landscape":false,"firstEdition":false},
+"figurine":{"title":"Figurine","kingdom":true,"landscape":false,"firstEdition":false},
+"first_mate":{"title":"Erste Maatin","kingdom":true,"landscape":false,"firstEdition":false},
+"fisherman":{"title":"Fischer","kingdom":true,"landscape":false,"firstEdition":false},
+"fishing_village":{"title":"Fischerdorf","kingdom":true,"landscape":false,"firstEdition":false},
+"fishmonger":{"title":"Fischhändlerin","kingdom":true,"landscape":false,"firstEdition":false},
+"flag_bearer":{"title":"Fahnenträger","kingdom":true,"landscape":false,"firstEdition":false},
+"flagship":{"title":"Flaggschiff","kingdom":true,"landscape":false,"firstEdition":false},
+"fleet":{"title":"Flotte","kingdom":false,"landscape":true,"firstEdition":false},
+"flourishing_trade":{"title":"Florierender Handel","kingdom":false,"landscape":false,"firstEdition":false},
+"fool":{"title":"Narr","kingdom":true,"landscape":false,"firstEdition":false},
+"fools_gold":{"title":"Katzengold","kingdom":true,"landscape":false,"firstEdition":false},
+"footpad":{"title":"Straßenräuber","kingdom":true,"landscape":false,"firstEdition":false},
+"forager":{"title":"Mundraub","kingdom":true,"landscape":false,"firstEdition":false},
+"foray":{"title":"Brandschatzung","kingdom":false,"landscape":true,"firstEdition":false},
+"foresight":{"title":"Voraussicht","kingdom":false,"landscape":true,"firstEdition":false},
+"forest_dwellers":{"title":"Waldbewohner","kingdom":false,"landscape":false,"firstEdition":false},
+"forge":{"title":"Kunstschmiede","kingdom":true,"landscape":false,"firstEdition":false},
+"fortress":{"title":"Festung","kingdom":true,"landscape":false,"firstEdition":false},
+"forts":{"title":"Bastionen","kingdom":true,"landscape":false,"firstEdition":false},
+"fortune_hunter":{"title":"Abenteurerin","kingdom":true,"landscape":false,"firstEdition":false},
+"fortune_teller":{"title":"Wahrsagerin","kingdom":true,"landscape":false,"firstEdition":true},
+"forum":{"title":"Forum","kingdom":true,"landscape":false,"firstEdition":false},
+"fountain":{"title":"Brunnen","kingdom":false,"landscape":true,"firstEdition":false},
+"friendly":{"title":"Freundlich","kingdom":false,"landscape":false,"firstEdition":false},
+"frigate":{"title":"Fregatte","kingdom":true,"landscape":false,"firstEdition":false},
+"galleria":{"title":"Markthalle","kingdom":true,"landscape":false,"firstEdition":false},
+"gamble":{"title":"Wagnis","kingdom":false,"landscape":true,"firstEdition":false},
+"gang_of_pickpockets":{"title":"Taschendiebe","kingdom":false,"landscape":false,"firstEdition":false},
+"gardens":{"title":"Gärten","kingdom":true,"landscape":false,"firstEdition":false},
+"gatekeeper":{"title":"Wache","kingdom":true,"landscape":false,"firstEdition":false},
+"gather":{"title":"Sammeln","kingdom":false,"landscape":true,"firstEdition":false},
+"gear":{"title":"Ausrüstung","kingdom":true,"landscape":false,"firstEdition":false},
+"ghost_ship":{"title":"Geisterschiff","kingdom":true,"landscape":false,"firstEdition":true},
+"ghost_town":{"title":"Geisterstadt","kingdom":true,"landscape":false,"firstEdition":false},
+"giant":{"title":"Riese","kingdom":true,"landscape":false,"firstEdition":false},
+"gladiator":{"title":"Gladiator","kingdom":true,"landscape":false,"firstEdition":false},
+"goatherd":{"title":"Ziegenhirtin","kingdom":true,"landscape":false,"firstEdition":false},
+"gold_mine":{"title":"Goldmine","kingdom":true,"landscape":false,"firstEdition":false},
+"golem":{"title":"Golem","kingdom":true,"landscape":false,"firstEdition":false},
+"gondola":{"title":"Gondel","kingdom":true,"landscape":false,"firstEdition":false},
+"good_harvest":{"title":"Gute Ernte","kingdom":false,"landscape":false,"firstEdition":false},
+"goons":{"title":"Halsabschneider","kingdom":true,"landscape":false,"firstEdition":true},
+"governor":{"title":"Gouverneur","kingdom":true,"landscape":false,"firstEdition":false},
+"grand_market":{"title":"Großer Markt","kingdom":true,"landscape":false,"firstEdition":false},
+"graverobber":{"title":"Grabräuber","kingdom":true,"landscape":false,"firstEdition":false},
+"great_hall":{"title":"Große Halle","kingdom":true,"landscape":false,"firstEdition":true},
+"great_leader":{"title":"Großer Anführer","kingdom":false,"landscape":false,"firstEdition":false},
+"groom":{"title":"Stallbursche","kingdom":true,"landscape":false,"firstEdition":false},
+"grotto":{"title":"Grotte","kingdom":true,"landscape":false,"firstEdition":false},
+"groundskeeper":{"title":"Gärtnerin","kingdom":true,"landscape":false,"firstEdition":false},
+"growth":{"title":"Wachstum","kingdom":false,"landscape":false,"firstEdition":false},
+"guard_dog":{"title":"Wachhund","kingdom":true,"landscape":false,"firstEdition":false},
+"guardian":{"title":"Wächterin","kingdom":true,"landscape":false,"firstEdition":false},
+"guide":{"title":"Kundschafter","kingdom":true,"landscape":false,"firstEdition":false},
+"guildhall":{"title":"Gildenhaus","kingdom":false,"landscape":true,"firstEdition":false},
+"guildmaster":{"title":"Gildemeisterin","kingdom":true,"landscape":false,"firstEdition":false},
+"haggler":{"title":"Feilscher","kingdom":true,"landscape":false,"firstEdition":false},
+"hamlet":{"title":"Weiler","kingdom":true,"landscape":false,"firstEdition":false},
+"harbinger":{"title":"Vorbotin","kingdom":true,"landscape":false,"firstEdition":false},
+"harbor_village":{"title":"Hafendorf","kingdom":true,"landscape":false,"firstEdition":false},
+"harsh_winter":{"title":"Strenger Winter","kingdom":false,"landscape":false,"firstEdition":false},
+"harvest":{"title":"Ernte","kingdom":true,"landscape":false,"firstEdition":true},
+"hasty":{"title":"Eilig","kingdom":false,"landscape":false,"firstEdition":false},
+"haunted_woods":{"title":"Geisterwald","kingdom":true,"landscape":false,"firstEdition":false},
+"haven":{"title":"Hafen","kingdom":true,"landscape":false,"firstEdition":false},
+"herald":{"title":"Herold","kingdom":true,"landscape":false,"firstEdition":false},
+"herbalist":{"title":"Kräuterkundiger","kingdom":true,"landscape":false,"firstEdition":false},
+"hermit":{"title":"Eremit","kingdom":true,"landscape":false,"firstEdition":false},
+"hideout":{"title":"Versteck","kingdom":true,"landscape":false,"firstEdition":false},
+"highway":{"title":"Fernstraße","kingdom":true,"landscape":false,"firstEdition":false},
+"highwayman":{"title":"Wegelagerer","kingdom":true,"landscape":false,"firstEdition":false},
+"hireling":{"title":"Gefolgsmann","kingdom":true,"landscape":false,"firstEdition":false},
+"hoard":{"title":"Hort","kingdom":true,"landscape":false,"firstEdition":false},
+"horn_of_plenty":{"title":"Füllhorn","kingdom":true,"landscape":false,"firstEdition":false},
+"horse_traders":{"title":"Pferdehändler","kingdom":true,"landscape":false,"firstEdition":true},
+"hostelry":{"title":"Herberge","kingdom":true,"landscape":false,"firstEdition":false},
+"hunter":{"title":"Jägerin","kingdom":true,"landscape":false,"firstEdition":false},
+"hunting_grounds":{"title":"Jagdgründe","kingdom":true,"landscape":false,"firstEdition":false},
+"hunting_lodge":{"title":"Jagdhütte","kingdom":true,"landscape":false,"firstEdition":false},
+"hunting_party":{"title":"Treibjagd","kingdom":true,"landscape":false,"firstEdition":false},
+"idol":{"title":"Götze","kingdom":true,"landscape":false,"firstEdition":false},
+"ill_gotten_gains":{"title":"Blutzoll","kingdom":true,"landscape":false,"firstEdition":true},
+"imperial_envoy":{"title":"Kaiserlicher Gesandter","kingdom":true,"landscape":false,"firstEdition":false},
+"importer":{"title":"Importeurin","kingdom":true,"landscape":false,"firstEdition":false},
+"improve":{"title":"Fortschritt","kingdom":true,"landscape":false,"firstEdition":false},
+"infirmary":{"title":"Krankenhaus","kingdom":true,"landscape":false,"firstEdition":false},
+"inheritance":{"title":"Erbschaft","kingdom":false,"landscape":true,"firstEdition":false},
+"inherited":{"title":"Geerbt","kingdom":false,"landscape":false,"firstEdition":false},
+"inn":{"title":"Gasthaus","kingdom":true,"landscape":false,"firstEdition":false},
+"innkeeper":{"title":"Wirtin","kingdom":true,"landscape":false,"firstEdition":false},
+"innovation":{"title":"Innovation","kingdom":false,"landscape":true,"firstEdition":false},
+"inspiring":{"title":"Inspirierend","kingdom":false,"landscape":false,"firstEdition":false},
+"invasion":{"title":"Invasion","kingdom":false,"landscape":true,"firstEdition":false},
+"inventor":{"title":"Erfinder","kingdom":true,"landscape":false,"firstEdition":false},
+"invest":{"title":"Investition","kingdom":false,"landscape":true,"firstEdition":false},
+"investment":{"title":"Geldanlage","kingdom":true,"landscape":false,"firstEdition":false},
+"ironmonger":{"title":"Eisenhändler","kingdom":true,"landscape":false,"firstEdition":false},
+"ironworks":{"title":"Eisenhütte","kingdom":true,"landscape":false,"firstEdition":false},
+"island":{"title":"Insel","kingdom":true,"landscape":false,"firstEdition":false},
+"island_folk":{"title":"Inselvolk","kingdom":false,"landscape":false,"firstEdition":false},
+"jack_of_all_trades":{"title":"Lebenskünstler","kingdom":true,"landscape":false,"firstEdition":false},
+"jester":{"title":"Harlekin","kingdom":true,"landscape":false,"firstEdition":false},
+"jewelled_egg":{"title":"Juwelen-Ei","kingdom":true,"landscape":false,"firstEdition":false},
+"journey":{"title":"Reise","kingdom":false,"landscape":true,"firstEdition":false},
+"journeyman":{"title":"Wandergeselle","kingdom":true,"landscape":false,"firstEdition":false},
+"joust":{"title":"Ritterkampf","kingdom":true,"landscape":false,"firstEdition":false},
+"junk_dealer":{"title":"Schrotthändler","kingdom":true,"landscape":false,"firstEdition":false},
+"keep":{"title":"Bollwerk","kingdom":false,"landscape":true,"firstEdition":false},
+"kiln":{"title":"Brennofen","kingdom":true,"landscape":false,"firstEdition":false},
+"kind_emperor":{"title":"Gütiger Kaiser","kingdom":false,"landscape":false,"firstEdition":false},
+"kings_cache":{"title":"Königstruhe","kingdom":true,"landscape":false,"firstEdition":false},
+"kings_court":{"title":"Königshof","kingdom":true,"landscape":false,"firstEdition":false},
+"kintsugi":{"title":"Kintsugi","kingdom":false,"landscape":true,"firstEdition":false},
+"kitsune":{"title":"Kitsune","kingdom":true,"landscape":false,"firstEdition":false},
+"knights":{"title":"Ritter","kingdom":true,"landscape":false,"firstEdition":false},
+"laboratory":{"title":"Laboratorium","kingdom":true,"landscape":false,"firstEdition":false},
+"labyrinth":{"title":"Labyrinth","kingdom":false,"landscape":true,"firstEdition":false},
+"lackeys":{"title":"Diener","kingdom":true,"landscape":false,"firstEdition":false},
+"landing_party":{"title":"Landungstrupp","kingdom":true,"landscape":false,"firstEdition":false},
+"launch":{"title":"In See stechen","kingdom":false,"landscape":true,"firstEdition":false},
+"league_of_bankers":{"title":"Bankiersverbund","kingdom":false,"landscape":false,"firstEdition":false},
+"league_of_shopkeepers":{"title":"Bund der Ladenbesitzer","kingdom":false,"landscape":false,"firstEdition":false},
+"legionary":{"title":"Legionär","kingdom":true,"landscape":false,"firstEdition":false},
+"leprechaun":{"title":"Kobold","kingdom":true,"landscape":false,"firstEdition":false},
+"library":{"title":"Bibliothek","kingdom":true,"landscape":false,"firstEdition":false},
+"lighthouse":{"title":"Leuchtturm","kingdom":true,"landscape":false,"firstEdition":false},
+"litter":{"title":"Sänfte","kingdom":true,"landscape":false,"firstEdition":false},
+"livery":{"title":"Pferdestall","kingdom":true,"landscape":false,"firstEdition":false},
+"loan":{"title":"Lohn","kingdom":true,"landscape":false,"firstEdition":true},
+"longship":{"title":"Langschiff","kingdom":true,"landscape":false,"firstEdition":false},
+"lookout":{"title":"Ausguck","kingdom":true,"landscape":false,"firstEdition":false},
+"looting":{"title":"Plünderung","kingdom":false,"landscape":true,"firstEdition":false},
+"lost_arts":{"title":"Verlorene Kunst","kingdom":false,"landscape":true,"firstEdition":false},
+"lost_city":{"title":"Verlorene Stadt","kingdom":true,"landscape":false,"firstEdition":false},
+"lurker":{"title":"Herumtreiberin","kingdom":true,"landscape":false,"firstEdition":false},
+"maelstrom":{"title":"Mahlstrom","kingdom":false,"landscape":true,"firstEdition":false},
+"magnate":{"title":"Magnatin","kingdom":true,"landscape":false,"firstEdition":false},
+"magpie":{"title":"Elster","kingdom":true,"landscape":false,"firstEdition":false},
+"mandarin":{"title":"Mandarin","kingdom":true,"landscape":false,"firstEdition":true},
+"mapmaker":{"title":"Kartenzeichnerin","kingdom":true,"landscape":false,"firstEdition":false},
+"marauder":{"title":"Marodeur","kingdom":true,"landscape":false,"firstEdition":false},
+"march":{"title":"Fußmarsch","kingdom":false,"landscape":true,"firstEdition":false},
+"marchland":{"title":"Grenzregion","kingdom":true,"landscape":false,"firstEdition":false},
+"margrave":{"title":"Markgraf","kingdom":true,"landscape":false,"firstEdition":false},
+"market":{"title":"Markt","kingdom":true,"landscape":false,"firstEdition":false},
+"market_square":{"title":"Marktplatz","kingdom":true,"landscape":false,"firstEdition":false},
+"market_towns":{"title":"Marktstädte","kingdom":false,"landscape":false,"firstEdition":false},
+"maroon":{"title":"Ausgesetzter","kingdom":true,"landscape":false,"firstEdition":false},
+"marquis":{"title":"Marquis","kingdom":true,"landscape":false,"firstEdition":false},
+"masquerade":{"title":"Maskerade","kingdom":true,"landscape":false,"firstEdition":false},
+"mastermind":{"title":"Drahtzieher","kingdom":true,"landscape":false,"firstEdition":false},
+"masterpiece":{"title":"Meisterstück","kingdom":true,"landscape":false,"firstEdition":true},
+"menagerie":{"title":"Menagerie","kingdom":true,"landscape":false,"firstEdition":false},
+"merchant":{"title":"Händlerin","kingdom":true,"landscape":false,"firstEdition":false},
+"merchant_camp":{"title":"Händlerlager","kingdom":true,"landscape":false,"firstEdition":false},
+"merchant_guild":{"title":"Kaufmannsgilde","kingdom":true,"landscape":false,"firstEdition":false},
+"merchant_ship":{"title":"Handelsschiff","kingdom":true,"landscape":false,"firstEdition":false},
+"messenger":{"title":"Kurier","kingdom":true,"landscape":false,"firstEdition":false},
+"militia":{"title":"Miliz","kingdom":true,"landscape":false,"firstEdition":false},
+"mill":{"title":"Mühle","kingdom":true,"landscape":false,"firstEdition":false},
+"mine":{"title":"Mine","kingdom":true,"landscape":false,"firstEdition":false},
+"mining_road":{"title":"Bergbaustraße","kingdom":true,"landscape":false,"firstEdition":false},
+"mining_village":{"title":"Bergwerk","kingdom":true,"landscape":false,"firstEdition":false},
+"minion":{"title":"Lakai","kingdom":true,"landscape":false,"firstEdition":false},
+"mint":{"title":"Münzer","kingdom":true,"landscape":false,"firstEdition":false},
+"mirror":{"title":"Spiegeln","kingdom":false,"landscape":true,"firstEdition":false},
+"miser":{"title":"Geizhals","kingdom":true,"landscape":false,"firstEdition":false},
+"mission":{"title":"Mission","kingdom":false,"landscape":true,"firstEdition":false},
+"moat":{"title":"Burggraben","kingdom":true,"landscape":false,"firstEdition":false},
+"modify":{"title":"Umgestaltung","kingdom":true,"landscape":false,"firstEdition":false},
+"monastery":{"title":"Kloster","kingdom":true,"landscape":false,"firstEdition":false},
+"moneylender":{"title":"Geldverleiher","kingdom":true,"landscape":false,"firstEdition":false},
+"monkey":{"title":"Affe","kingdom":true,"landscape":false,"firstEdition":false},
+"monument":{"title":"Denkmal","kingdom":true,"landscape":false,"firstEdition":false},
+"mountain_folk":{"title":"Bergvolk","kingdom":false,"landscape":false,"firstEdition":false},
+"mountain_pass":{"title":"Gebirgspass","kingdom":false,"landscape":true,"firstEdition":false},
+"mountain_shrine":{"title":"Bergschrein","kingdom":true,"landscape":false,"firstEdition":false},
+"mountain_village":{"title":"Bergdorf","kingdom":true,"landscape":false,"firstEdition":false},
+"mountebank":{"title":"Quacksalber","kingdom":true,"landscape":false,"firstEdition":true},
+"museum":{"title":"Museum","kingdom":false,"landscape":true,"firstEdition":false},
+"mystic":{"title":"Medium","kingdom":true,"landscape":false,"firstEdition":false},
+"native_village":{"title":"Eingeborenendorf","kingdom":true,"landscape":false,"firstEdition":false},
+"navigator":{"title":"Navigator","kingdom":true,"landscape":false,"firstEdition":true},
+"nearby":{"title":"Benachbart","kingdom":false,"landscape":false,"firstEdition":false},
+"necromancer":{"title":"Totenbeschwörer","kingdom":true,"landscape":false,"firstEdition":false},
+"night_watchman":{"title":"Nachtwache","kingdom":true,"landscape":false,"firstEdition":false},
+"ninja":{"title":"Ninja","kingdom":true,"landscape":false,"firstEdition":false},
+"noble_brigand":{"title":"Edler Räuber","kingdom":true,"landscape":false,"firstEdition":true},
+"nobles":{"title":"Adlige","kingdom":true,"landscape":false,"firstEdition":false},
+"nomad_camp":{"title":"Nomadencamp","kingdom":true,"landscape":false,"firstEdition":true},
+"nomads":{"title":"Nomaden","kingdom":true,"landscape":false,"firstEdition":false},
+"oasis":{"title":"Oase","kingdom":true,"landscape":false,"firstEdition":false},
+"obelisk":{"title":"Obelisk","kingdom":false,"landscape":true,"firstEdition":false},
+"odysseys":{"title":"Irrfahrten","kingdom":true,"landscape":false,"firstEdition":false},
+"old_witch":{"title":"Alte Hexe","kingdom":true,"landscape":false,"firstEdition":false},
+"oracle":{"title":"Orakel","kingdom":true,"landscape":false,"firstEdition":true},
+"orchard":{"title":"Obstgarten","kingdom":false,"landscape":true,"firstEdition":false},
+"order_of_astrologers":{"title":"Sterndeuterorden","kingdom":false,"landscape":false,"firstEdition":false},
+"order_of_masons":{"title":"Freimaurerloge","kingdom":false,"landscape":false,"firstEdition":false},
+"outpost":{"title":"Außenposten","kingdom":true,"landscape":false,"firstEdition":false},
+"overlord":{"title":"Lehnsherr","kingdom":true,"landscape":false,"firstEdition":false},
+"paddock":{"title":"Koppel","kingdom":true,"landscape":false,"firstEdition":false},
+"page":{"title":"Page","kingdom":true,"landscape":false,"firstEdition":false},
+"pageant":{"title":"Festzug","kingdom":false,"landscape":true,"firstEdition":false},
+"palace":{"title":"Palast","kingdom":false,"landscape":true,"firstEdition":false},
+"panic":{"title":"Panik","kingdom":false,"landscape":false,"firstEdition":false},
+"pathfinding":{"title":"Wegsuche","kingdom":false,"landscape":true,"firstEdition":false},
+"patient":{"title":"Geduldig","kingdom":false,"landscape":false,"firstEdition":false},
+"patrician":{"title":"Patrizier","kingdom":true,"landscape":false,"firstEdition":false},
+"patrol":{"title":"Patrouille","kingdom":true,"landscape":false,"firstEdition":false},
+"patron":{"title":"Patron","kingdom":true,"landscape":false,"firstEdition":false},
+"pawn":{"title":"Handlanger","kingdom":true,"landscape":false,"firstEdition":false},
+"peaceful_cult":{"title":"Friedlicher Kult","kingdom":false,"landscape":false,"firstEdition":false},
+"pearl_diver":{"title":"Perlentaucher","kingdom":true,"landscape":false,"firstEdition":true},
+"peasant":{"title":"Kleinbauer","kingdom":true,"landscape":false,"firstEdition":false},
+"peddler":{"title":"Hausiererin","kingdom":true,"landscape":false,"firstEdition":false},
+"pendant":{"title":"Anhänger","kingdom":true,"landscape":false,"firstEdition":false},
+"peril":{"title":"Riskieren","kingdom":false,"landscape":true,"firstEdition":false},
+"philosophers_stone":{"title":"Stein der Weisen","kingdom":true,"landscape":false,"firstEdition":false},
+"piazza":{"title":"Piazza","kingdom":false,"landscape":true,"firstEdition":false},
+"pickaxe":{"title":"Spitzhacke","kingdom":true,"landscape":false,"firstEdition":false},
+"pilgrim":{"title":"Pilger","kingdom":true,"landscape":false,"firstEdition":false},
+"pilgrimage":{"title":"Pilgerfahrt","kingdom":false,"landscape":true,"firstEdition":false},
+"pillage":{"title":"Raubzug","kingdom":true,"landscape":false,"firstEdition":false},
+"pious":{"title":"Fromm","kingdom":false,"landscape":false,"firstEdition":false},
+"pirate":{"title":"Piratin","kingdom":true,"landscape":false,"firstEdition":false},
+"pirate_ship":{"title":"Piratenschiff","kingdom":true,"landscape":false,"firstEdition":true},
+"pixie":{"title":"Fee","kingdom":true,"landscape":false,"firstEdition":false},
+"plan":{"title":"Plan","kingdom":false,"landscape":true,"firstEdition":false},
+"plateau_shepherds":{"title":"Schäfer der Hochebene","kingdom":false,"landscape":false,"firstEdition":false},
+"plaza":{"title":"Platz","kingdom":true,"landscape":false,"firstEdition":false},
+"poacher":{"title":"Wilddiebin","kingdom":true,"landscape":false,"firstEdition":false},
+"poet":{"title":"Dichterin","kingdom":true,"landscape":false,"firstEdition":false},
+"pooka":{"title":"Puka","kingdom":true,"landscape":false,"firstEdition":false},
+"poor_house":{"title":"Armenhaus","kingdom":true,"landscape":false,"firstEdition":false},
+"populate":{"title":"Besiedlung","kingdom":false,"landscape":true,"firstEdition":false},
+"port":{"title":"Hafenstadt","kingdom":true,"landscape":false,"firstEdition":false},
+"possession":{"title":"Besessenheit","kingdom":true,"landscape":false,"firstEdition":false},
+"practice":{"title":"Kampfübung","kingdom":false,"landscape":true,"firstEdition":false},
+"prepare":{"title":"Vorbereitung","kingdom":false,"landscape":true,"firstEdition":false},
+"priest":{"title":"Priester","kingdom":true,"landscape":false,"firstEdition":false},
+"prince":{"title":"Prinz","kingdom":true,"landscape":false,"firstEdition":false},
+"procession":{"title":"Prozession","kingdom":true,"landscape":false,"firstEdition":false},
+"progress":{"title":"Entwicklung","kingdom":false,"landscape":false,"firstEdition":false},
+"prosper":{"title":"Aufblühen","kingdom":false,"landscape":true,"firstEdition":false},
+"pursue":{"title":"Verfolgung","kingdom":false,"landscape":true,"firstEdition":false},
+"quarry":{"title":"Steinbruch","kingdom":true,"landscape":false,"firstEdition":false},
+"quartermaster":{"title":"Quartiermeister","kingdom":true,"landscape":false,"firstEdition":false},
+"quest":{"title":"Quest","kingdom":false,"landscape":true,"firstEdition":false},
+"rabble":{"title":"Gesindel","kingdom":true,"landscape":false,"firstEdition":false},
+"raid":{"title":"Überfall","kingdom":false,"landscape":true,"firstEdition":false},
+"raider":{"title":"Plünderer","kingdom":true,"landscape":false,"firstEdition":false},
+"ranger":{"title":"Wildhüter","kingdom":true,"landscape":false,"firstEdition":false},
+"rapid_expansion":{"title":"Schnelle Expansion","kingdom":false,"landscape":false,"firstEdition":false},
+"ratcatcher":{"title":"Rattenfänger","kingdom":true,"landscape":false,"firstEdition":false},
+"rats":{"title":"Ratten","kingdom":true,"landscape":false,"firstEdition":false},
+"raze":{"title":"Zerstörung","kingdom":true,"landscape":false,"firstEdition":false},
+"reap":{"title":"Reiche Ernte","kingdom":false,"landscape":true,"firstEdition":false},
+"rebuild":{"title":"Neubau","kingdom":true,"landscape":false,"firstEdition":false},
+"receive_tribute":{"title":"Tribut Empfangen","kingdom":false,"landscape":true,"firstEdition":false},
+"reckless":{"title":"Waghalsig","kingdom":false,"landscape":false,"firstEdition":false},
+"recruiter":{"title":"Anwerber","kingdom":true,"landscape":false,"firstEdition":false},
+"relic":{"title":"Relikt","kingdom":true,"landscape":false,"firstEdition":false},
+"remake":{"title":"Nachbau","kingdom":true,"landscape":false,"firstEdition":false},
+"remodel":{"title":"Umbau","kingdom":true,"landscape":false,"firstEdition":false},
+"replace":{"title":"Austausch","kingdom":true,"landscape":false,"firstEdition":false},
+"research":{"title":"Forscherin","kingdom":true,"landscape":false,"firstEdition":false},
+"rice":{"title":"Reis","kingdom":true,"landscape":false,"firstEdition":false},
+"rice_broker":{"title":"Reismakler","kingdom":true,"landscape":false,"firstEdition":false},
+"rich":{"title":"Reich","kingdom":false,"landscape":false,"firstEdition":false},
+"ride":{"title":"Ausritt","kingdom":false,"landscape":true,"firstEdition":false},
+"ritual":{"title":"Ritual","kingdom":false,"landscape":true,"firstEdition":false},
+"river_shrine":{"title":"Flussschrein","kingdom":true,"landscape":false,"firstEdition":false},
+"riverboat":{"title":"Flussboot","kingdom":true,"landscape":false,"firstEdition":false},
+"road_network":{"title":"Straßennetz","kingdom":false,"landscape":true,"firstEdition":false},
+"rogue":{"title":"Schurke","kingdom":true,"landscape":false,"firstEdition":false},
+"ronin":{"title":"Ronin","kingdom":true,"landscape":false,"firstEdition":false},
+"root_cellar":{"title":"Erdkeller","kingdom":true,"landscape":false,"firstEdition":false},
+"rope":{"title":"Seil","kingdom":true,"landscape":false,"firstEdition":false},
+"royal_blacksmith":{"title":"Königlicher Schmied","kingdom":true,"landscape":false,"firstEdition":false},
+"royal_carriage":{"title":"Königliche Kutsche","kingdom":true,"landscape":false,"firstEdition":false},
+"royal_galley":{"title":"Königliche Galeere","kingdom":true,"landscape":false,"firstEdition":false},
+"royal_seal":{"title":"Königliches Siegel","kingdom":true,"landscape":false,"firstEdition":true},
+"rush":{"title":"Beeilung","kingdom":false,"landscape":true,"firstEdition":false},
+"rustic_village":{"title":"Rustikales Dorf","kingdom":true,"landscape":false,"firstEdition":false},
+"saboteur":{"title":"Saboteur","kingdom":true,"landscape":false,"firstEdition":true},
+"sack_of_loot":{"title":"Sack voll Kostbarkeiten","kingdom":true,"landscape":false,"firstEdition":false},
+"sacred_grove":{"title":"Heiliger Hain","kingdom":true,"landscape":false,"firstEdition":false},
+"sacrifice":{"title":"Opfer","kingdom":true,"landscape":false,"firstEdition":false},
+"sage":{"title":"Weiser","kingdom":true,"landscape":false,"firstEdition":false},
+"sailor":{"title":"Seefahrerin","kingdom":true,"landscape":false,"firstEdition":false},
+"salt_the_earth":{"title":"Versalztes Land","kingdom":false,"landscape":true,"firstEdition":false},
+"salvager":{"title":"Müllverwerter","kingdom":true,"landscape":false,"firstEdition":false},
+"samurai":{"title":"Samurai","kingdom":true,"landscape":false,"firstEdition":false},
+"sanctuary":{"title":"Zufluchtsort","kingdom":true,"landscape":false,"firstEdition":false},
+"sauna":{"title":"Sauna","kingdom":true,"landscape":false,"firstEdition":false},
+"save":{"title":"Zuflucht","kingdom":false,"landscape":true,"firstEdition":false},
+"scavenger":{"title":"Lumpensammler","kingdom":true,"landscape":false,"firstEdition":false},
+"scepter":{"title":"Zepter","kingdom":true,"landscape":false,"firstEdition":false},
+"scheme":{"title":"Komplott","kingdom":true,"landscape":false,"firstEdition":false},
+"scholar":{"title":"Gelehrte","kingdom":true,"landscape":false,"firstEdition":false},
+"scout":{"title":"Späher","kingdom":true,"landscape":false,"firstEdition":true},
+"scouting_party":{"title":"Spähtrupp","kingdom":false,"landscape":true,"firstEdition":false},
+"scrap":{"title":"Schrott","kingdom":true,"landscape":false,"firstEdition":false},
+"scrounge":{"title":"Herumsuchen","kingdom":false,"landscape":true,"firstEdition":false},
+"scrying_pool":{"title":"Vision","kingdom":true,"landscape":false,"firstEdition":false},
+"sculptor":{"title":"Bildhauerin","kingdom":true,"landscape":false,"firstEdition":false},
+"sea_chart":{"title":"Seekarte","kingdom":true,"landscape":false,"firstEdition":false},
+"sea_hag":{"title":"Seehexe","kingdom":true,"landscape":false,"firstEdition":true},
+"sea_trade":{"title":"Seehandel","kingdom":false,"landscape":true,"firstEdition":false},
+"sea_witch":{"title":"Meerhexe","kingdom":true,"landscape":false,"firstEdition":false},
+"search":{"title":"Suche","kingdom":true,"landscape":false,"firstEdition":false},
+"seaway":{"title":"Seeweg","kingdom":false,"landscape":true,"firstEdition":false},
+"secluded_shrine":{"title":"Einsamer Schrein","kingdom":true,"landscape":false,"firstEdition":false},
+"secret_cave":{"title":"Geheime Höhle","kingdom":true,"landscape":false,"firstEdition":false},
+"secret_chamber":{"title":"Geheimkammer","kingdom":true,"landscape":false,"firstEdition":true},
+"secret_passage":{"title":"Geheimgang","kingdom":true,"landscape":false,"firstEdition":false},
+"seer":{"title":"Seher","kingdom":true,"landscape":false,"firstEdition":false},
+"seize_the_day":{"title":"Nutze den Tag","kingdom":false,"landscape":true,"firstEdition":false},
+"sentinel":{"title":"Wächter","kingdom":true,"landscape":false,"firstEdition":false},
+"sentry":{"title":"Torwächterin","kingdom":true,"landscape":false,"firstEdition":false},
+"settlers":{"title":"Siedler","kingdom":true,"landscape":false,"firstEdition":false},
+"sewers":{"title":"Abwassertunnel","kingdom":false,"landscape":true,"firstEdition":false},
+"shaman":{"title":"Schamanin","kingdom":true,"landscape":false,"firstEdition":false},
+"shanty_town":{"title":"Armenviertel","kingdom":true,"landscape":false,"firstEdition":false},
+"sheepdog":{"title":"Hirtenhund","kingdom":true,"landscape":false,"firstEdition":false},
+"shepherd":{"title":"Schäferin","kingdom":true,"landscape":false,"firstEdition":false},
+"shop":{"title":"Geschäft","kingdom":true,"landscape":false,"firstEdition":false},
+"shy":{"title":"Scheu","kingdom":false,"landscape":false,"firstEdition":false},
+"sickness":{"title":"Krankheit","kingdom":false,"landscape":false,"firstEdition":false},
+"silk_merchant":{"title":"Seidenhändlerin","kingdom":true,"landscape":false,"firstEdition":false},
+"silk_road":{"title":"Seidenstraße","kingdom":true,"landscape":false,"firstEdition":true},
+"silos":{"title":"Speicher","kingdom":false,"landscape":true,"firstEdition":false},
+"silver_mine":{"title":"Silbermine","kingdom":true,"landscape":false,"firstEdition":false},
+"sinister_plot":{"title":"Finsterer Plan","kingdom":false,"landscape":true,"firstEdition":false},
+"siren":{"title":"Sirene","kingdom":true,"landscape":false,"firstEdition":false},
+"skirmisher":{"title":"Aufwiegler","kingdom":true,"landscape":false,"firstEdition":false},
+"skulk":{"title":"Attentäter","kingdom":true,"landscape":false,"firstEdition":false},
+"sleigh":{"title":"Schlitten","kingdom":true,"landscape":false,"firstEdition":false},
+"smithy":{"title":"Schmiede","kingdom":true,"landscape":false,"firstEdition":false},
+"smugglers":{"title":"Schmuggler","kingdom":true,"landscape":false,"firstEdition":false},
+"snake_witch":{"title":"Schlangenhexe","kingdom":true,"landscape":false,"firstEdition":false},
+"snowy_village":{"title":"Verschneites Dorf","kingdom":true,"landscape":false,"firstEdition":false},
+"soothsayer":{"title":"Hellseherin","kingdom":true,"landscape":false,"firstEdition":false},
+"souk":{"title":"Souk","kingdom":true,"landscape":false,"firstEdition":false},
+"specialist":{"title":"Spezialistin","kingdom":true,"landscape":false,"firstEdition":false},
+"spice_merchant":{"title":"Gewürzhändler","kingdom":true,"landscape":false,"firstEdition":false},
+"spices":{"title":"Gewürze","kingdom":true,"landscape":false,"firstEdition":false},
+"spy":{"title":"Spion","kingdom":true,"landscape":false,"firstEdition":true},
+"squire":{"title":"Knappe","kingdom":true,"landscape":false,"firstEdition":false},
+"stables":{"title":"Stallungen","kingdom":true,"landscape":false,"firstEdition":false},
+"stampede":{"title":"Stampede","kingdom":false,"landscape":true,"firstEdition":false},
+"star_chart":{"title":"Sternenkarte","kingdom":false,"landscape":true,"firstEdition":false},
+"stash":{"title":"Geldversteck","kingdom":true,"landscape":false,"firstEdition":false},
+"steward":{"title":"Verwalter","kingdom":true,"landscape":false,"firstEdition":false},
+"stockpile":{"title":"Depot","kingdom":true,"landscape":false,"firstEdition":false},
+"stonemason":{"title":"Steinmetz","kingdom":true,"landscape":false,"firstEdition":false},
+"storeroom":{"title":"Lagerraum","kingdom":true,"landscape":false,"firstEdition":false},
+"storyteller":{"title":"Geschichtenerzähler","kingdom":true,"landscape":false,"firstEdition":false},
+"stowaway":{"title":"Blinder Passagier","kingdom":true,"landscape":false,"firstEdition":false},
+"summon":{"title":"Einladung","kingdom":false,"landscape":true,"firstEdition":false},
+"supplies":{"title":"Nachschub","kingdom":true,"landscape":false,"firstEdition":false},
+"swamp_hag":{"title":"Sumpfhexe","kingdom":true,"landscape":false,"firstEdition":false},
+"swamp_shacks":{"title":"Sumpfhütten","kingdom":true,"landscape":false,"firstEdition":false},
+"swap":{"title":"Tausch","kingdom":true,"landscape":false,"firstEdition":false},
+"swashbuckler":{"title":"Freibeuterin","kingdom":true,"landscape":false,"firstEdition":false},
+"swindler":{"title":"Trickser","kingdom":true,"landscape":false,"firstEdition":false},
+"sycophant":{"title":"Schmeichler","kingdom":true,"landscape":false,"firstEdition":false},
+"tactician":{"title":"Taktiker","kingdom":true,"landscape":false,"firstEdition":false},
+"talisman":{"title":"Talisman","kingdom":true,"landscape":false,"firstEdition":true},
+"tanuki":{"title":"Tanuki","kingdom":true,"landscape":false,"firstEdition":false},
+"taskmaster":{"title":"Vorarbeiter","kingdom":true,"landscape":false,"firstEdition":false},
+"tax":{"title":"Steuer","kingdom":false,"landscape":true,"firstEdition":false},
+"taxman":{"title":"Steuereintreiber","kingdom":true,"landscape":false,"firstEdition":true},
+"tea_house":{"title":"Teehaus","kingdom":true,"landscape":false,"firstEdition":false},
+"temple":{"title":"Tempel","kingdom":true,"landscape":false,"firstEdition":false},
+"the_earths_gift":{"title":"Geschenk der Erde","kingdom":false,"landscape":false,"firstEdition":false},
+"the_fields_gift":{"title":"Geschenk des Feldes","kingdom":false,"landscape":false,"firstEdition":false},
+"the_flames_gift":{"title":"Geschenk des Feuers","kingdom":false,"landscape":false,"firstEdition":false},
+"the_forests_gift":{"title":"Geschenk des Waldes","kingdom":false,"landscape":false,"firstEdition":false},
+"the_moons_gift":{"title":"Geschenk des Mondes","kingdom":false,"landscape":false,"firstEdition":false},
+"the_mountains_gift":{"title":"Geschenk des Berges","kingdom":false,"landscape":false,"firstEdition":false},
+"the_rivers_gift":{"title":"Geschenk des Flusses","kingdom":false,"landscape":false,"firstEdition":false},
+"the_seas_gift":{"title":"Geschenk des Meeres","kingdom":false,"landscape":false,"firstEdition":false},
+"the_skys_gift":{"title":"Geschenk des Himmels","kingdom":false,"landscape":false,"firstEdition":false},
+"the_suns_gift":{"title":"Geschenk der Sonne","kingdom":false,"landscape":false,"firstEdition":false},
+"the_swamps_gift":{"title":"Geschenk des Sumpfes","kingdom":false,"landscape":false,"firstEdition":false},
+"the_winds_gift":{"title":"Geschenk des Windes","kingdom":false,"landscape":false,"firstEdition":false},
+"thief":{"title":"Dieb","kingdom":true,"landscape":false,"firstEdition":true},
+"throne_room":{"title":"Thronsaal","kingdom":true,"landscape":false,"firstEdition":false},
+"tiara":{"title":"Brautkrone","kingdom":true,"landscape":false,"firstEdition":false},
+"tide_pools":{"title":"Gezeitenbecken","kingdom":true,"landscape":false,"firstEdition":false},
+"tireless":{"title":"Unermüdlich","kingdom":false,"landscape":false,"firstEdition":false},
+"toil":{"title":"Plackerei","kingdom":false,"landscape":true,"firstEdition":false},
+"tomb":{"title":"Grabmal","kingdom":false,"landscape":true,"firstEdition":false},
+"tools":{"title":"Werkzeug","kingdom":true,"landscape":false,"firstEdition":false},
+"tormentor":{"title":"Folterknecht","kingdom":true,"landscape":false,"firstEdition":false},
+"torturer":{"title":"Kerkermeister","kingdom":true,"landscape":false,"firstEdition":false},
+"tournament":{"title":"Turnier","kingdom":true,"landscape":false,"firstEdition":true},
+"tower":{"title":"Turm","kingdom":false,"landscape":true,"firstEdition":false},
+"town":{"title":"Ortschaft","kingdom":true,"landscape":false,"firstEdition":false},
+"townsfolk":{"title":"Bürger","kingdom":true,"landscape":false,"firstEdition":false},
+"tracker":{"title":"Fährtensucher","kingdom":true,"landscape":false,"firstEdition":false},
+"trade":{"title":"Handel","kingdom":false,"landscape":true,"firstEdition":false},
+"trade_route":{"title":"Handelsroute","kingdom":true,"landscape":false,"firstEdition":true},
+"trader":{"title":"Fahrende Händlerin","kingdom":true,"landscape":false,"firstEdition":false},
+"trading_post":{"title":"Handelsposten","kingdom":true,"landscape":false,"firstEdition":false},
+"tragic_hero":{"title":"Tragischer Held","kingdom":true,"landscape":false,"firstEdition":false},
+"trail":{"title":"Pfad","kingdom":true,"landscape":false,"firstEdition":false},
+"training":{"title":"Training","kingdom":false,"landscape":true,"firstEdition":false},
+"transmogrify":{"title":"Transformation","kingdom":true,"landscape":false,"firstEdition":false},
+"transmute":{"title":"Verwandlung","kingdom":true,"landscape":false,"firstEdition":false},
+"transport":{"title":"Transport","kingdom":false,"landscape":true,"firstEdition":false},
+"trappers_lodge":{"title":"Hütte der Fallensteller","kingdom":false,"landscape":false,"firstEdition":false},
+"travelling_fair":{"title":"Wanderzirkus","kingdom":false,"landscape":true,"firstEdition":false},
+"treasure_map":{"title":"Schatzkarte","kingdom":true,"landscape":false,"firstEdition":false},
+"treasure_trove":{"title":"Schatz","kingdom":true,"landscape":false,"firstEdition":false},
+"treasurer":{"title":"Schatzmeisterin","kingdom":true,"landscape":false,"firstEdition":false},
+"treasury":{"title":"Schatzkammer","kingdom":true,"landscape":false,"firstEdition":false},
+"tribute":{"title":"Tribut","kingdom":true,"landscape":false,"firstEdition":true},
+"trickster":{"title":"Gauner","kingdom":true,"landscape":false,"firstEdition":false},
+"triumph":{"title":"Siegeszug","kingdom":false,"landscape":true,"firstEdition":false},
+"triumphal_arch":{"title":"Triumphbogen","kingdom":false,"landscape":true,"firstEdition":false},
+"tunnel":{"title":"Tunnel","kingdom":true,"landscape":false,"firstEdition":false},
+"underling":{"title":"Untergebener","kingdom":true,"landscape":false,"firstEdition":false},
+"university":{"title":"Universität","kingdom":true,"landscape":false,"firstEdition":false},
+"upgrade":{"title":"Anbau","kingdom":true,"landscape":false,"firstEdition":false},
+"urchin":{"title":"Gassenjunge","kingdom":true,"landscape":false,"firstEdition":false},
+"vagrant":{"title":"Landstreicher","kingdom":true,"landscape":false,"firstEdition":false},
+"vampire":{"title":"Vampirin","kingdom":true,"landscape":false,"firstEdition":false},
+"vassal":{"title":"Vasall","kingdom":true,"landscape":false,"firstEdition":false},
+"vault":{"title":"Gewölbe","kingdom":true,"landscape":false,"firstEdition":false},
+"venture":{"title":"Abenteuer","kingdom":true,"landscape":false,"firstEdition":true},
+"villa":{"title":"Villa","kingdom":true,"landscape":false,"firstEdition":false},
+"village":{"title":"Dorf","kingdom":true,"landscape":false,"firstEdition":false},
+"village_green":{"title":"Dorfanger","kingdom":true,"landscape":false,"firstEdition":false},
+"villain":{"title":"Schwarzer Meister","kingdom":true,"landscape":false,"firstEdition":false},
+"vineyard":{"title":"Weinberg","kingdom":true,"landscape":false,"firstEdition":false},
+"wall":{"title":"Mauer","kingdom":false,"landscape":true,"firstEdition":false},
+"walled_village":{"title":"Befestigtes Dorf","kingdom":true,"landscape":false,"firstEdition":false},
+"wandering_minstrel":{"title":"Barde","kingdom":true,"landscape":false,"firstEdition":false},
+"war_chest":{"title":"Waffenkiste","kingdom":true,"landscape":false,"firstEdition":false},
+"warehouse":{"title":"Lagerhaus","kingdom":true,"landscape":false,"firstEdition":false},
+"watchtower":{"title":"Wachturm","kingdom":true,"landscape":false,"firstEdition":false},
+"way_of_the_butterfly":{"title":"Weg des Schmetterlings","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_camel":{"title":"Weg des Kamels","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_chameleon":{"title":"Weg des Chamäleons","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_frog":{"title":"Weg des Frosches","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_goat":{"title":"Weg der Ziege","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_horse":{"title":"Weg des Pferdes","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_mole":{"title":"Weg des Maulwurfs","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_monkey":{"title":"Weg des Affen","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_mouse":{"title":"Weg der Maus","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_mule":{"title":"Weg des Maultiers","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_otter":{"title":"Weg des Otters","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_owl":{"title":"Weg der Eule","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_ox":{"title":"Weg des Ochsen","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_pig":{"title":"Weg des Schweins","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_rat":{"title":"Weg der Ratte","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_seal":{"title":"Weg der Robbe","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_sheep":{"title":"Weg des Schafs","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_squirrel":{"title":"Weg des Eichhörnchens","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_turtle":{"title":"Weg der Schildkröte","kingdom":false,"landscape":true,"firstEdition":false},
+"way_of_the_worm":{"title":"Weg des Wurms","kingdom":false,"landscape":true,"firstEdition":false},
+"wayfarer":{"title":"Wanderin","kingdom":true,"landscape":false,"firstEdition":false},
+"wealthy_village":{"title":"Wohlhabendes Dorf","kingdom":true,"landscape":false,"firstEdition":false},
+"weaver":{"title":"Weberin","kingdom":true,"landscape":false,"firstEdition":false},
+"wedding":{"title":"Hochzeit","kingdom":false,"landscape":true,"firstEdition":false},
+"werewolf":{"title":"Werwolf","kingdom":true,"landscape":false,"firstEdition":false},
+"wharf":{"title":"Werft","kingdom":true,"landscape":false,"firstEdition":false},
+"wheelwright":{"title":"Radmacherin","kingdom":true,"landscape":false,"firstEdition":false},
+"wild_hunt":{"title":"Wilde Jagd","kingdom":true,"landscape":false,"firstEdition":false},
+"windfall":{"title":"Glücksfall","kingdom":false,"landscape":true,"firstEdition":false},
+"wine_merchant":{"title":"Weinhändler","kingdom":true,"landscape":false,"firstEdition":false},
+"wishing_well":{"title":"Wunschbrunnen","kingdom":true,"landscape":false,"firstEdition":false},
+"witch":{"title":"Hexe","kingdom":true,"landscape":false,"firstEdition":false},
+"witchs_hut":{"title":"Hexenhütte","kingdom":true,"landscape":false,"firstEdition":false},
+"wizards":{"title":"Zauberer","kingdom":true,"landscape":false,"firstEdition":false},
+"wolf_den":{"title":"Wolfsbau","kingdom":false,"landscape":true,"firstEdition":false},
+"woodcutter":{"title":"Holzfäller","kingdom":true,"landscape":false,"firstEdition":true},
+"woodworkers_guild":{"title":"Holzarbeitergilde","kingdom":false,"landscape":false,"firstEdition":false},
+"workers_village":{"title":"Arbeiterdorf","kingdom":true,"landscape":false,"firstEdition":false},
+"workshop":{"title":"Werkstatt","kingdom":true,"landscape":false,"firstEdition":false},
+"young_witch":{"title":"Junge Hexe","kingdom":true,"landscape":false,"firstEdition":false}
+}}
+</script>
+<script>
+"use strict";
+
+const catalog = JSON.parse(document.getElementById("catalog").textContent);
+const kingdomSize = 10;
+const maximumLandscapes = 4;
+const dependencies = {
+  young_witch: "Bane-Stapel",
+  ferryman: "Zusatzstapel",
+  riverboat: "beiseitegelegte Aktionskarte",
+  way_of_the_mouse: "beiseitegelegte Aktionskarte",
+  obelisk: "zugeordneter Aktionsstapel",
+  druid: "zugeordnete Gaben",
+  approaching_army: "zusätzlicher Angriffsstapel",
+};
+
+function normalizeTitle(title) {
+  return title.normalize("NFC").replaceAll("’", "'").toLowerCase()
+    .replaceAll("ß", "ss").trim().replace(/\s+/gu, " ");
+}
+
+function titleKey(title, isKingdom) {
+  return (isKingdom ? "kingdom:" : "extra:") + normalizeTitle(title);
+}
+
+function makeLookups() {
+  const lookups = new Map();
+  for (const language of catalog.languages) {
+    const lookup = new Map();
+    for (const row of catalog.names) {
+      const name = row.titles[language] ?? row.titles.en;
+      const key = titleKey(name, catalog.cards[row.id].kingdom);
+      if (!lookup.has(key)) lookup.set(key, new Set());
+      lookup.get(key).add(row.id);
+    }
+    lookups.set(language, lookup);
+  }
+  return lookups;
+}
+
+const lookups = makeLookups();
+
+function resolveTitles(titles, language) {
+  const languages = language === "auto" ? catalog.languages : [language];
+  const keys = titles.map((title, index) => titleKey(title, index < kingdomSize));
+  const attempts = languages.map(code => {
+    const matches = keys.map(key => lookups.get(code).get(key));
+    return { code, matches, known: matches.filter(Boolean).length };
+  });
+  const complete = attempts.filter(attempt => attempt.known === titles.length);
+  if (complete.length === 0) {
+    const closest = attempts.reduce((best, attempt) => attempt.known > best.known ? attempt : best);
+    const unknown = titles.filter((_, index) => !closest.matches[index]);
+    throw new Error("Unbekannte Titel oder falsche Position (" + closest.code + ") · " + unknown.join(", "));
+  }
+  return titles.map((title, index) => {
+    const ids = new Set(complete.flatMap(attempt => [...attempt.matches[index]]));
+    if (ids.size !== 1) {
+      const candidates = [...ids].map(id => catalog.cards[id].title + " (" + id + ")");
+      throw new Error("„" + title + "“ ist mehrdeutig · " + candidates.join(", ") +
+        ". Prüfe den Kartentitel oder wähle die Sprache der Website.");
+    }
+    return ids.values().next().value;
+  });
+}
+
+function formatKingdom(ids, colonies, shelters) {
+  if (new Set(ids).size !== ids.length) {
+    throw new Error("Die Namensliste enthält denselben Stapel oder dieselbe Zusatzkarte mehrfach.");
+  }
+  const extras = ids.slice(kingdomSize);
+  const special = [];
+  for (const id of ids) {
+    if (Object.hasOwn(dependencies, id)) {
+      special.push(catalog.cards[id].title + " (" + dependencies[id] + ")");
+    }
+  }
+  for (const id of extras) {
+    if (!catalog.cards[id].landscape && !Object.hasOwn(dependencies, id)) {
+      special.push(catalog.cards[id].title);
+    }
+  }
+  if (special.length) {
+    throw new Error("Das Zusatzsetup für diese Auswahl braucht weitere Angaben oder ein anderes Importformat · " +
+      special.join(", "));
+  }
+  if (extras.length > maximumLandscapes) {
+    throw new Error("Der Konverter unterstützt höchstens vier Landschaften.");
+  }
+  const tokens = [...ids];
+  if (colonies) tokens.push("colonies");
+  if (shelters) tokens.push("shelters");
+  if (extras.length) tokens.push("-m Landscapes(0," + extras.length + ")");
+  return "-k " + tokens.join(", ");
+}
+
+const input = document.getElementById("input");
+const language = document.getElementById("language");
+const colonies = document.getElementById("colonies");
+const shelters = document.getElementById("shelters");
+const output = document.getElementById("output");
+const copy = document.getElementById("copy");
+const status = document.getElementById("status");
+const copyStatus = document.getElementById("copy-status");
+const edition = document.getElementById("edition");
+const cardsPanel = document.getElementById("cards-panel");
+const cardsList = document.getElementById("cards");
+
+function showCards(ids) {
+  for (const id of ids) {
+    const card = catalog.cards[id];
+    const item = document.createElement("li");
+    const title = document.createElement("span");
+    const key = document.createElement("code");
+    title.textContent = card.title;
+    key.textContent = id;
+    item.append(title, key);
+    cardsList.append(item);
+  }
+  cardsPanel.hidden = false;
+}
+
+function update() {
+  const source = input.value.trim();
+  output.value = "";
+  copy.disabled = true;
+  status.textContent = "";
+  status.className = "";
+  copyStatus.textContent = "";
+  edition.hidden = true;
+  cardsList.replaceChildren();
+  cardsPanel.hidden = true;
+  if (!source) return;
+
+  try {
+    const titles = source.split(",").map(title => title.trim());
+    if (titles.length < kingdomSize || titles.some(title => !title)) {
+      throw new Error("Füge zehn kommagetrennte Kartennamen und gegebenenfalls die Zusatzkarten danach ein.");
+    }
+    const ids = resolveTitles(titles, language.value);
+    showCards(ids);
+    output.value = formatKingdom(ids, colonies.checked, shelters.checked);
+    copy.disabled = false;
+    status.textContent = ids.length > kingdomSize
+      ? "10 Königreichstapel und " + (ids.length - kingdomSize) + " Landschaft(en) erkannt."
+      : "10 Königreichstapel erkannt.";
+    status.className = "success";
+    const firstEdition = ids.filter(id => catalog.cards[id].firstEdition);
+    if (firstEdition.length) {
+      edition.textContent = "Erste Edition im Spiel prüfen · " +
+        firstEdition.map(id => catalog.cards[id].title).join(", ");
+      edition.hidden = false;
+    }
+  } catch (error) {
+    status.textContent = error.message;
+    status.className = "error";
+  }
+}
+
+for (const field of [language, colonies, shelters]) field.addEventListener("change", update);
+input.addEventListener("input", update);
+document.getElementById("example").addEventListener("click", () => {
+  input.value = "Keller, Jahrmarkt, Gärten, Markt, Burggraben, Umbau, Dorf, Schmiede, Werkstatt, Kapelle";
+  language.value = "auto";
+  colonies.checked = false;
+  shelters.checked = false;
+  update();
+  input.focus();
+});
+
+copy.addEventListener("click", async () => {
+  const value = output.value;
+  if (!value) return;
+  try {
+    await navigator.clipboard.writeText(value);
+    if (output.value === value) copyStatus.textContent = "Kingdom-Code kopiert.";
+  } catch {
+    if (output.value !== value) return;
+    output.focus();
+    output.select();
+    copyStatus.textContent = "Der Code ist markiert. Kopiere ihn mit Strg+C oder ⌘C.";
+  }
+});
+</script>
+</body>
+</html>
