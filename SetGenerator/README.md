@@ -1,6 +1,6 @@
 # SetGenerator
 
-Der geplante Generator erstellt aus einer konfigurierbaren Kartenauswahl zehn verschiedene zulässige Königreichkarten und macht sie in Dominion von Temple Gates Games spielbar. Die regelbasierte Ziehung ist bisher ein Entwurf. Speicherformat, Prüfnachweise und der nächste Spieltest stehen in [Documentation/Kingdom_Sets.md](../Documentation/Kingdom_Sets.md).
+Der HTML-Generator zieht zehn Königreichstapel für Dominion von Temple Gates Games. Der separate Konverter übernimmt Namenslisten eines bestehenden Königreichs. Speicherformat und Prüfnachweise stehen in [Documentation/Kingdom_Sets.md](../Documentation/Kingdom_Sets.md).
 
 ## Web-Namenslisten umwandeln
 
@@ -16,18 +16,19 @@ Der Konverter verarbeitet zehn Hauptstapel und bis zu vier gewöhnliche Landscha
 
 ## HTML-Konverter mit doppelten Stapeln
 
-[Dominion-Konverter.html](Dominion-Konverter.html) lokal im Browser öffnen und die kopierte Namensliste einfügen. Die Seite gibt den normalen Kingdom-Code fürs Kartensuchfeld und separat eine reine `-x`-Zeile aus. Je einer der zehn Hauptstapel erhält einen `start_double_pile`-Effekt. Landschaften und zusätzliche Setup-Optionen gehören nur in den Kingdom-Code.
+[Dominion-Konverter.html](Dominion-Konverter.html) lokal im Browser öffnen. Einen bis zehn Königreichstapel durch Kommas getrennt eingeben oder die kopierte Namensliste einfügen. Landschaften stehen am Ende der Liste. Nach Klick auf **Kartenliste bestätigen** gibt die Seite den normalen Kingdom-Code fürs Kartensuchfeld und separat eine reine `-x`-Zeile aus. Dominion füllt freie Königreichplätze zufällig auf. Der Verdopplungscode enthält je einen `start_double_pile`-Effekt für die festgelegten Stapel.
 
-Nach Eingabe eines Namens lässt sich der fertige `<sets>`-Eintrag kopieren. In einem Browser mit lokalem Dateizugriff kann der Konverter ihn auch direkt in `%APPDATA%\TempleGates\Dominion\profiles.xml` einfügen. Dafür Dominion vollständig schließen, die Datei sichern, auswählen und die Schreibfreigabe erteilen. Der direkte Export unterstützt Dateien mit genau einem Profil. Bei einem gleichnamigen Set oder 64 vorhandenen Sets bricht er ab.
+Nach Bestätigung der Kartenliste erscheint der fertige `<sets>`-Eintrag. Der Name „Doppelte Stapel“ ist vorausgefüllt und lässt sich ändern. In einem Browser mit lokalem Dateizugriff kann der Konverter den Eintrag auch direkt in `%APPDATA%\TempleGates\Dominion\profiles.xml` einfügen. Dafür Dominion vollständig schließen, die Datei sichern, auswählen und die Schreibfreigabe erteilen. Der direkte Export unterstützt Dateien mit genau einem Profil. Bei einem gleichnamigen Set oder 64 vorhandenen Sets bricht er ab.
 
 Das normale Königreich zuerst über das Kartensuchfeld in Dominion importieren und als Set speichern. Danach das Verdopplungsset laden und „Spielen“ wählen. Die Partie aufgeben, das Set in der Kingdom-Auswahl entladen und die Zusatzregeln stehen lassen. Dann das gespeicherte Königreich laden und die Partie starten. Die Übernahme in ein weiteres gespeichertes Set wurde in Build 3315 bestätigt. Für den HTML-Export steht der Spieltest noch aus. [Spielbefund](../Documentation/Modding_Overview.md#effektsets-und-zufallsauswahl), [Speicherformat](../Documentation/Kingdom_Sets.md#nativer-profilpfad)
 
-## Entwurf
+## HTML-Generator für das Basisspiel
 
-- **Eingabe.** Ein Kartenpool mit Dominion-IDs, die verfügbaren Erweiterungen und die vom Nutzer gewählten Regeln. Kartenkatalog und Spielsprache im Zielbuild prüfen. Welche Eigenschaften und Kombinationen die Regeln berücksichtigen, wird beim gemeinsamen Entwurf festgelegt.
-- **Auswahl.** Die Ziehung liefert genau zehn unterschiedliche erlaubte Königreichkarten, die alle gewählten Regeln erfüllen. Sind die Regeln mit dem gewählten Pool nicht erfüllbar, meldet der Generator das ohne einen Export.
-- **Erste Ausgabe.** Die Auswahl in den getesteten Kingdom-Text umsetzen und für das Kartensuchfeld in die Zwischenablage kopieren. Die Auswahl funktioniert unabhängig vom jeweiligen Ausgabeweg.
-- **Optionale Ausgabe des normalen Königreichs in das Profil.** Für diesen späteren Export die Erweiterungsmaske aus der konkreten Auswahl ableiten und die relevanten Setup-Optionen im Spiel prüfen. Der aktuelle HTML-Entwurf kann den separaten Verdopplungseintrag speichern.
+[Dominion-Generator.html](Dominion-Generator.html) lokal im Browser öffnen und auf **Königreich ziehen** klicken. Zur Wahl stehen die 26 Königreichstapel der zweiten Edition mit den deutschen Titeln aus Spielbuild 3315. Unter **Karten festhalten oder ausschließen** lässt sich jeder Stapel festlegen, sperren oder für die Zufallsauswahl freigeben. Einen gezogenen Stapel kannst du direkt im Ergebnis für die nächste Ziehung festhalten.
+
+Die Regeln lassen sich kombinieren. +2 Aktionen, Mehrfachzug und Entsorgung verwenden die entsprechenden Spielfilter aus dem Kartenkatalog. Der Extrakauf prüft den sofortigen Kaufbonus. Das Angriffslimit nimmt eine Zahl von 0 bis 10 an. Die Abwehrregel verlangt Burggraben, sobald mindestens ein Angriffsstapel dabei ist. Die Kostenregel verlangt drei bis fünf Stapel für mindestens 5 Münzen. Jedes Königreich, das alle Regeln erfüllt, hat dieselbe Chance. Bei einem Konflikt bleiben die Exportfelder leer.
+
+Der Generator erzeugt den `-k`-Code und separat zehn `start_double_pile`-Effekte für dieselbe Ziehung. Der XML-Eintrag für die Effekte funktioniert wie beim Konverter, einschließlich optionaler Schreibfreigabe und `expansionsBitset = 0`. Der Spieltest mit dem neuen Generator steht noch aus. [Ablauf in Dominion](#html-konverter-mit-doppelten-stapeln)
 
 ## Karten nach Eigenschaften filtern
 

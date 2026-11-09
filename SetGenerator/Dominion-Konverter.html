@@ -125,8 +125,8 @@
   <div class="workspace">
     <section aria-labelledby="input-title">
       <h2 id="input-title">1. Namensliste einfügen</h2>
-      <p class="muted" id="input-help">Kopiere dein Set mit dem Copy-Button und füge den Text hier ein. <a href="https://dominionrandomizer.com/" target="_blank" rel="noopener">Dominion Randomizer öffnen</a></p>
-      <label class="field" for="input">Kopierte Kartennamen</label>
+      <p class="muted" id="input-help">Gib einen bis zehn Königreichstapel durch Kommas getrennt ein. Hänge Landschaften bei Bedarf hinten an. Dominion füllt freie Königreichplätze zufällig auf. Du kannst auch eine Liste kopieren. <a href="https://dominionrandomizer.com/" target="_blank" rel="noopener">Dominion Randomizer öffnen</a></p>
+      <label class="field" for="input">Kartennamen</label>
       <textarea id="input" spellcheck="false" aria-describedby="input-help" placeholder="Keller, Jahrmarkt, Gärten, …"></textarea>
       <div class="row">
         <label for="language">Sprache</label>
@@ -148,6 +148,9 @@
         <label><input id="shelters" type="checkbox"> Unterschlüpfe</label>
         <p class="muted">Übernimm diese Optionen bei Bedarf aus dem Web-Set.</p>
       </fieldset>
+      <div class="row">
+        <button id="confirm-list" class="primary" type="button" disabled>Kartenliste bestätigen</button>
+      </div>
     </section>
     <section class="output-panel" aria-labelledby="output-title">
       <h2 id="output-title">2. Für Dominion kopieren</h2>
@@ -164,17 +167,17 @@
   </div>
   <section class="cards-panel output-panel" aria-labelledby="effects-title">
     <h2 id="effects-title">3. Stapel verdoppeln (optional)</h2>
-    <p>Der Code enthält je einen Effekt für die zehn Hauptstapel. Speichere ihn als eigenes Set in der Profildatei und speichere auch das normale Königreich aus Schritt 2 im Spiel. Lade dann das Verdopplungsset, klicke auf „Spielen“ und gib die Partie auf. Entlade das Set in der Kingdom-Auswahl, ohne die Zusatzregeln zu leeren. Lade jetzt das gespeicherte Königreich und starte die Partie.</p>
+    <p>Der Code verdoppelt die Stapel, die du in der Liste festgelegt hast. Zufällig ergänzte Stapel haben ihre normale Größe. Speichere den Code als eigenes Set in der Profildatei und speichere auch das normale Königreich aus Schritt 2 im Spiel. Lade dann das Verdopplungsset, klicke auf „Spielen“ und gib die Partie auf. Entlade das Set in der Kingdom-Auswahl, ohne die Zusatzregeln zu leeren. Lade jetzt das gespeicherte Königreich und starte die Partie.</p>
     <label class="field" for="effects">Verdopplungscode</label>
     <textarea id="effects" readonly spellcheck="false" placeholder="Hier erscheint die reine -x-Zeile."></textarea>
     <div class="row">
       <button id="copy-effects" class="secondary" type="button" disabled>Verdopplungscode kopieren</button>
     </div>
     <label class="field" for="set-name">Name des Verdopplungssets</label>
-    <input id="set-name" type="text" placeholder="Zum Beispiel Doppelte Stapel">
+    <input id="set-name" type="text" value="Doppelte Stapel">
     <label class="field" for="set-xml">XML-Eintrag zum manuellen Einfügen</label>
     <p class="muted" id="set-xml-help">Füge den Eintrag in den Bereich <code>&lt;saveSets&gt;</code> deiner <code>profiles.xml</code> ein. Schließe Dominion vorher vollständig und sichere die Datei.</p>
-    <textarea id="set-xml" readonly spellcheck="false" aria-describedby="set-xml-help"></textarea>
+    <textarea id="set-xml" readonly spellcheck="false" aria-describedby="set-xml-help" placeholder="Bestätige zuerst die Kartenliste."></textarea>
     <div class="row">
       <button id="copy-set-xml" class="secondary" type="button" disabled>XML-Eintrag kopieren</button>
     </div>
@@ -1747,12 +1750,18 @@ const lookups = makeLookups();
 
 function resolveTitles(titles, language) {
   const languages = language === "auto" ? catalog.languages : [language];
-  const keys = titles.map((title, index) => titleKey(title, index < kingdomSize));
-  const attempts = languages.map(code => {
-    const matches = keys.map(key => lookups.get(code).get(key));
-    return { code, matches, known: matches.filter(Boolean).length };
-  });
-  const complete = attempts.filter(attempt => attempt.known === titles.length);
+  const keys = titles.map(title => [titleKey(title, true), titleKey(title, false)]);
+  const attempts = [];
+  for (let count = Math.min(titles.length, kingdomSize); count >= 1; count--) {
+    for (const code of languages) {
+      const lookup = lookups.get(code);
+      const matches = keys.map(([pileKey, extraKey], index) => lookup.get(index < count ? pileKey : extraKey));
+      attempts.push({ code, count, matches, known: matches.filter(Boolean).length });
+    }
+  }
+  const fullMatch = attempts.some(attempt => attempt.count === kingdomSize && attempt.known === titles.length);
+  const complete = attempts.filter(attempt => attempt.known === titles.length &&
+    (!fullMatch || attempt.count === kingdomSize));
   if (complete.length === 0) {
     const closest = attempts.reduce((best, attempt) => attempt.known > best.known ? attempt : best);
     const unknown = titles.filter((_, index) => !closest.matches[index]);
@@ -1773,7 +1782,7 @@ function formatKingdom(ids, colonies, shelters) {
   if (new Set(ids).size !== ids.length) {
     throw new Error("Die Namensliste enthält denselben Stapel oder dieselbe Zusatzkarte mehrfach.");
   }
-  const extras = ids.slice(kingdomSize);
+  const extras = ids.filter(id => !catalog.cards[id].kingdom);
   const special = [];
   for (const id of ids) {
     if (Object.hasOwn(dependencies, id)) {
@@ -1799,8 +1808,8 @@ function formatKingdom(ids, colonies, shelters) {
   return "-k " + tokens.join(", ");
 }
 
-function formatDoublePiles(ids) {
-  return "-x " + ids.slice(0, kingdomSize).map(id => "start_double_pile(" + id + ")").join(", ");
+function formatDoublePiles(pileIds) {
+  return "-x " + pileIds.map(id => "start_double_pile(" + id + ")").join(", ");
 }
 
 function formatEffectSet(name, effects) {
@@ -1898,6 +1907,7 @@ const shelters = document.getElementById("shelters");
 const output = document.getElementById("output");
 const copy = document.getElementById("copy");
 const status = document.getElementById("status");
+const confirmList = document.getElementById("confirm-list");
 const copyStatus = document.getElementById("copy-status");
 const edition = document.getElementById("edition");
 const cardsPanel = document.getElementById("cards-panel");
@@ -1931,6 +1941,7 @@ function updateEffectSet() {
   const invalidName = /[^\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/u.test(name);
   setName.setCustomValidity(invalidName ? "Der Name enthält ein ungültiges Zeichen." : "");
   setXml.value = effects.value && name && !invalidName ? formatEffectSet(name, effects.value) : "";
+  setXml.placeholder = effects.value ? "Gib einen Namen für das Verdopplungsset ein." : "Bestätige zuerst die Kartenliste.";
   copyEffects.disabled = !effects.value;
   copySetXml.disabled = !setXml.value;
   effectsStatus.textContent = invalidName ? setName.validationMessage : "";
@@ -1952,8 +1963,7 @@ function showCards(ids) {
   cardsPanel.hidden = false;
 }
 
-function update() {
-  const source = input.value.trim();
+function clearOutputs() {
   output.value = "";
   effects.value = "";
   copy.disabled = true;
@@ -1963,24 +1973,34 @@ function update() {
   edition.hidden = true;
   cardsList.replaceChildren();
   cardsPanel.hidden = true;
-  if (!source) {
-    updateEffectSet();
-    return;
-  }
+}
 
+function markListChanged() {
+  clearOutputs();
+  confirmList.disabled = !input.value.trim();
+  if (!confirmList.disabled) status.textContent = "Bestätige die Kartenliste, um die Codes zu erzeugen.";
+  updateEffectSet();
+}
+
+function update() {
+  clearOutputs();
   try {
-    const titles = source.split(",").map(title => title.trim());
-    if (titles.length < kingdomSize || titles.some(title => !title)) {
-      throw new Error("Füge zehn kommagetrennte Kartennamen und gegebenenfalls die Zusatzkarten danach ein.");
+    const titles = input.value.split(",").map(title => title.trim());
+    if (titles.length > kingdomSize + maximumLandscapes || titles.some(title => !title)) {
+      throw new Error("Gib einen bis zehn Königreichstapel und gegebenenfalls bis zu vier Landschaften durch Kommas getrennt ein.");
     }
     const ids = resolveTitles(titles, language.value);
-    showCards(ids);
+    const pileIds = ids.filter(id => catalog.cards[id].kingdom);
     output.value = formatKingdom(ids, colonies.checked, shelters.checked);
-    effects.value = formatDoublePiles(ids);
+    effects.value = formatDoublePiles(pileIds);
     copy.disabled = false;
-    status.textContent = ids.length > kingdomSize
-      ? "10 Königreichstapel und " + (ids.length - kingdomSize) + " Landschaft(en) erkannt."
-      : "10 Königreichstapel erkannt.";
+    showCards(ids);
+    const landscapeCount = ids.length - pileIds.length;
+    const freeSlots = kingdomSize - pileIds.length;
+    const summary = [pileIds.length + " Königreichstapel festgelegt."];
+    if (landscapeCount) summary.push(landscapeCount === 1 ? "1 Landschaft erkannt." : landscapeCount + " Landschaften erkannt.");
+    if (freeSlots) summary.push("Dominion füllt die übrigen Plätze zufällig auf (" + freeSlots + ").");
+    status.textContent = summary.join(" ");
     status.className = "success";
     const firstEdition = ids.filter(id => catalog.cards[id].firstEdition);
     if (firstEdition.length) {
@@ -1995,13 +2015,15 @@ function update() {
   updateEffectSet();
 }
 
-for (const field of [language, colonies, shelters]) field.addEventListener("change", update);
-input.addEventListener("input", update);
+for (const field of [language, colonies, shelters]) field.addEventListener("change", markListChanged);
+input.addEventListener("input", markListChanged);
+confirmList.addEventListener("click", update);
 document.getElementById("example").addEventListener("click", () => {
   input.value = "Keller, Jahrmarkt, Gärten, Markt, Burggraben, Umbau, Dorf, Schmiede, Werkstatt, Kapelle";
   language.value = "auto";
   colonies.checked = false;
   shelters.checked = false;
+  confirmList.disabled = false;
   update();
   input.focus();
 });

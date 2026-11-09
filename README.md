@@ -8,7 +8,9 @@ Dieses Projekt entwickelt unabhängige Werkzeuge für das digitale Kartenspiel D
 2. Lade `Dominion-Konverter.html` aus dem Release herunter, öffne die Datei im Browser und füge die Namensliste ein. Der Konverter läuft lokal und erkennt alle sieben Sprachen des Randomizers. [Aktueller Release](https://github.com/Serpens66/Dominion/releases/latest)
 3. Kopiere die fertige `-k`-Zeile und füge sie in der Königreich-Auswahl von Dominion in das Kartensuchfeld ein.
 
-Der Konverter verwendet den Kartenkatalog aus Dominion-Spielbuild 3315. Die Anleitung beschreibt auch die Python-Variante und die Grenzen bei besonderem Karten-Setup. Die regelbasierte Ziehung ist bisher ein Entwurf. [SetGenerator](SetGenerator/README.md)
+Der Konverter verwendet den Kartenkatalog aus Dominion-Spielbuild 3315. Die Anleitung beschreibt auch die Python-Variante und die Grenzen bei besonderem Karten-Setup. [SetGenerator](SetGenerator/README.md)
+
+Der separate [Dominion-Generator](SetGenerator/Dominion-Generator.html) zieht offline Königreiche aus dem Basisspiel. Er unterstützt feste Karten, Ausschlüsse, Ziehregeln und den Export für doppelte Stapel. [Anleitung](SetGenerator/README.md#html-generator-für-das-basisspiel)
 
 ## Dokumentation
 

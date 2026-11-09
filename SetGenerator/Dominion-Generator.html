@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dominion-Generator</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #1e2924;
+    --muted: #4e5c53;
+    --green: #205740;
+    --green-dark: #164331;
+    --paper: #fffdf7;
+    --line: #cbd3c8;
+    --error: #8b3029;
+    font: 100%/1.55 system-ui, sans-serif;
+    color: var(--ink);
+    background: #f3f1e7;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  main { max-width: 70rem; margin: auto; padding: clamp(1rem, 4vw, 3rem); }
+  header { margin-bottom: 1.65rem; }
+  .eyebrow {
+    color: var(--green-dark);
+    font-size: .78rem;
+    font-weight: 750;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+  }
+  h1, h2 { font-family: Georgia, serif; line-height: 1.13; margin: 0; }
+  h1 { font-size: clamp(2.35rem, 6vw, 4rem); margin-top: .2rem; }
+  h2 { font-size: 1.62rem; }
+  p { margin: .55rem 0 0; }
+  .muted { color: var(--muted); }
+  .workspace {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  section {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: .9rem;
+    padding: clamp(1rem, 3vw, 1.55rem);
+  }
+  .output-panel { border-top: .25rem solid var(--green); }
+  textarea, select, button, input { font: inherit; }
+  textarea, select, input[type=text], input[type=number] {
+    width: 100%;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid #a4b2a7;
+    border-radius: .5rem;
+  }
+  textarea { display: block; min-height: 9rem; padding: .75rem; resize: vertical; }
+  textarea::placeholder { color: var(--muted); }
+  #output, #effects, #set-xml {
+    background: #f1f6ef;
+    font-family: ui-monospace, Consolas, monospace;
+    overflow-wrap: anywhere;
+  }
+  select, input[type=text], input[type=number] { width: auto; max-width: 100%; padding: .38rem .55rem; }
+  #effects, #set-xml { min-height: 6rem; }
+  button {
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: .5rem;
+    padding: .55rem .8rem;
+    font-weight: 650;
+  }
+  button:disabled { cursor: default; color: #4f5a51; background: #e5e9e2; }
+  .primary { background: var(--green); color: white; }
+  .primary:hover:not(:disabled) { background: var(--green-dark); }
+  .secondary { color: var(--green-dark); background: #e8efe6; }
+  .secondary:hover { background: #dce8d9; }
+  .row { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; margin-top: .8rem; }
+  .field { display: block; font-weight: 700; margin: 1rem 0 .3rem; }
+  fieldset { margin: 1rem 0 0; border: 0; padding: 0; }
+  legend { font-weight: 700; padding: 0; }
+  .options label { display: flex; align-items: baseline; gap: .5rem; padding: .2rem 0; cursor: pointer; }
+  input[type=checkbox] { accent-color: var(--green); }
+  :focus-visible { outline: 3px solid #346e9f; outline-offset: 2px; }
+  #status, #copy-status { margin-top: .8rem; }
+  #copy-status:empty, #status:empty { margin-top: 0; }
+  .error { color: var(--error); font-weight: 650; overflow-wrap: anywhere; }
+  .success { color: var(--green-dark); font-weight: 650; }
+  .cards-panel { margin-top: 1rem; }
+  details { margin-top: 1rem; }
+  summary { font-weight: 700; cursor: pointer; }
+  #pool { list-style: none; padding: 0; margin: .55rem 0 0; }
+  #pool li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .4rem;
+    padding: .35rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  #cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    gap: .55rem;
+    padding: 0;
+    margin: .85rem 0 0;
+    list-style: none;
+  }
+  #cards li { padding: .55rem .7rem; background: #f0f4eb; border-radius: .4rem; overflow-wrap: anywhere; }
+  #cards strong { display: block; }
+  #cards label { display: block; font-size: .9rem; }
+  footer { margin-top: 1.35rem; color: var(--muted); font-size: .85rem; }
+  a { color: var(--green-dark); }
+  @media (max-width: 45rem) {
+    .workspace { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Offline-Werkzeug · Dominion Steam</div>
+    <h1>Dominion-Generator</h1>
+    <p class="muted">Ziehe zehn Königreichstapel aus den 26 Karten des Basisspiels (2. Edition).</p>
+  </header>
+  <noscript><p class="error">Aktiviere JavaScript im Browser, um ein Königreich zu ziehen.</p></noscript>
+  <div class="workspace">
+    <section aria-labelledby="input-title">
+      <h2 id="input-title">1. Königreich zusammenstellen</h2>
+      <fieldset class="options" id="draw-rules">
+        <legend>Regeln für die Ziehung</legend>
+        <label><input id="require-actions" type="checkbox"> Mindestens eine Karte mit +2 Aktionen</label>
+        <label><input id="require-draw" type="checkbox"> Mindestens eine Karte für Mehrfachzug</label>
+        <label><input id="require-buy" type="checkbox"> Mindestens eine Karte mit sofortigem Extrakauf</label>
+        <label><input id="require-trash" type="checkbox"> Mindestens eine Karte zur Entsorgung</label>
+        <label><input id="require-defense" type="checkbox"> Burggraben, wenn ein Angriff dabei ist</label>
+        <label><input id="spread-costs" type="checkbox"> Drei bis fünf Stapel für mindestens 5 Münzen</label>
+        <div class="row">
+          <label for="max-attacks">Höchstens so viele Angriffsstapel</label>
+          <input id="max-attacks" type="number" value="10" min="0" max="10" step="1">
+        </div>
+      </fieldset>
+      <div class="row">
+        <button id="draw" class="primary" type="button">Königreich ziehen</button>
+      </div>
+      <details>
+        <summary>Karten festhalten oder ausschließen</summary>
+        <p class="muted">Festgehaltene Karten kommen in jede Ziehung. Ausgeschlossene Karten bleiben aus dem Vorrat.</p>
+        <ul id="pool"></ul>
+      </details>
+    </section>
+    <section class="output-panel" aria-labelledby="output-title">
+      <h2 id="output-title">2. Für Dominion kopieren</h2>
+      <p id="status" role="status"></p>
+      <ul id="cards" aria-label="Gezogene Königreichstapel"></ul>
+      <p class="muted" id="output-help">Füge die fertige Zeile ins Kartensuchfeld der Kingdom-Auswahl im Spiel ein.</p>
+      <label class="field" for="output">Kingdom-Code</label>
+      <textarea id="output" readonly spellcheck="false" aria-describedby="output-help" placeholder="Hier erscheint die fertige -k-Zeile."></textarea>
+      <div class="row">
+        <button id="copy" class="primary" type="button" disabled>Für Dominion kopieren</button>
+      </div>
+      <p id="copy-status" role="status" aria-live="polite"></p>
+    </section>
+  </div>
+  <section class="cards-panel output-panel" aria-labelledby="effects-title">
+    <h2 id="effects-title">3. Stapel verdoppeln (optional)</h2>
+    <p>Der Code verdoppelt alle zehn gezogenen Königreichstapel. Speichere den Code als eigenes Set in der Profildatei und speichere auch das normale Königreich aus Schritt 2 im Spiel. Lade dann das Verdopplungsset, klicke auf „Spielen“ und gib die Partie auf. Entlade das Set in der Kingdom-Auswahl, ohne die Zusatzregeln zu leeren. Lade jetzt das gespeicherte Königreich und starte die Partie.</p>
+    <label class="field" for="effects">Verdopplungscode</label>
+    <textarea id="effects" readonly spellcheck="false" placeholder="Hier erscheint die reine -x-Zeile."></textarea>
+    <div class="row">
+      <button id="copy-effects" class="secondary" type="button" disabled>Verdopplungscode kopieren</button>
+    </div>
+    <label class="field" for="set-name">Name des Verdopplungssets</label>
+    <input id="set-name" type="text" value="Doppelte Stapel">
+    <label class="field" for="set-xml">XML-Eintrag zum manuellen Einfügen</label>
+    <p class="muted" id="set-xml-help">Füge den Eintrag in den Bereich <code>&lt;saveSets&gt;</code> deiner <code>profiles.xml</code> ein. Schließe Dominion vorher vollständig und sichere die Datei.</p>
+    <textarea id="set-xml" readonly spellcheck="false" aria-describedby="set-xml-help" placeholder="Ziehe zuerst ein Königreich."></textarea>
+    <div class="row">
+      <button id="copy-set-xml" class="secondary" type="button" disabled>XML-Eintrag kopieren</button>
+    </div>
+    <p id="effects-status" role="status"></p>
+    <fieldset id="profile-controls" class="options" hidden>
+      <legend>Direkt in profiles.xml speichern</legend>
+      <p class="muted">Wähle unter Windows die Datei <code>%APPDATA%\TempleGates\Dominion\profiles.xml</code> aus. Der Generator verarbeitet sie lokal und unterstützt hier Dateien mit genau einem Profil.</p>
+      <div class="row"><button id="profile-select" class="secondary" type="button">profiles.xml auswählen</button></div>
+      <label><input id="profile-consent" type="checkbox" disabled> Dominion ist geschlossen, die Datei ist gesichert und ich erlaube das Hinzufügen dieses Sets.</label>
+      <div class="row"><button id="profile-write" class="primary" type="button" disabled>Set in profiles.xml hinzufügen</button></div>
+    </fieldset>
+    <p class="muted" id="profile-fallback" hidden>In diesem Browser steht direktes Speichern nicht zur Verfügung. Du kannst den XML-Eintrag kopieren und selbst einfügen.</p>
+    <p id="profile-status" role="status"></p>
+  </section>
+  <footer>
+    Kartendaten aus Dominion-Build 3315 · <a href="Dominion-Konverter.html">Zum Konverter für vorhandene Kartennamen</a>
+  </footer>
+</main>
+<script type="application/json" id="catalog">
+[
+  {"id": "artisan", "title": "Töpferei", "coins": 6, "attack": false, "filters": [], "immediateBuys": 0},
+  {"id": "bandit", "title": "Banditin", "coins": 5, "attack": true, "filters": [], "immediateBuys": 0},
+  {"id": "bureaucrat", "title": "Bürokrat", "coins": 4, "attack": true, "filters": [], "immediateBuys": 0},
+  {"id": "cellar", "title": "Keller", "coins": 2, "attack": false, "filters": [], "immediateBuys": 0},
+  {"id": "chapel", "title": "Kapelle", "coins": 2, "attack": false, "filters": ["Trashing"], "immediateBuys": 0},
+  {"id": "council_room", "title": "Ratsversammlung", "coins": 5, "attack": false, "filters": ["ExtraCards", "ExtraBuys"], "immediateBuys": 1},
+  {"id": "festival", "title": "Jahrmarkt", "coins": 5, "attack": false, "filters": ["ExtraActions", "ExtraBuys"], "immediateBuys": 1},
+  {"id": "gardens", "title": "Gärten", "coins": 4, "attack": false, "filters": [], "immediateBuys": 0},
+  {"id": "harbinger", "title": "Vorbotin", "coins": 3, "attack": false, "filters": [], "immediateBuys": 0},
+  {"id": "laboratory", "title": "Laboratorium", "coins": 5, "attack": false, "filters": ["ExtraCards"], "immediateBuys": 0},
+  {"id": "library", "title": "Bibliothek", "coins": 5, "attack": false, "filters": ["ExtraCards"], "immediateBuys": 0},
+  {"id": "market", "title": "Markt", "coins": 5, "attack": false, "filters": ["ExtraBuys"], "immediateBuys": 1},
+  {"id": "merchant", "title": "Händlerin", "coins": 3, "attack": false, "filters": [], "immediateBuys": 0},
+  {"id": "militia", "title": "Miliz", "coins": 4, "attack": true, "filters": [], "immediateBuys": 0},
+  {"id": "mine", "title": "Mine", "coins": 5, "attack": false, "filters": ["Trashing"], "immediateBuys": 0},
+  {"id": "moat", "title": "Burggraben", "coins": 2, "attack": false, "filters": ["ExtraCards"], "immediateBuys": 0},
+  {"id": "moneylender", "title": "Geldverleiher", "coins": 4, "attack": false, "filters": ["Trashing"], "immediateBuys": 0},
+  {"id": "poacher", "title": "Wilddiebin", "coins": 4, "attack": false, "filters": [], "immediateBuys": 0},
+  {"id": "remodel", "title": "Umbau", "coins": 4, "attack": false, "filters": ["Trashing"], "immediateBuys": 0},
+  {"id": "sentry", "title": "Torwächterin", "coins": 5, "attack": false, "filters": ["Trashing"], "immediateBuys": 0},
+  {"id": "smithy", "title": "Schmiede", "coins": 4, "attack": false, "filters": ["ExtraCards"], "immediateBuys": 0},
+  {"id": "throne_room", "title": "Thronsaal", "coins": 4, "attack": false, "filters": [], "immediateBuys": 0},
+  {"id": "vassal", "title": "Vasall", "coins": 3, "attack": false, "filters": [], "immediateBuys": 0},
+  {"id": "village", "title": "Dorf", "coins": 3, "attack": false, "filters": ["ExtraActions"], "immediateBuys": 0},
+  {"id": "witch", "title": "Hexe", "coins": 5, "attack": true, "filters": ["ExtraCards"], "immediateBuys": 0},
+  {"id": "workshop", "title": "Werkstatt", "coins": 3, "attack": false, "filters": [], "immediateBuys": 0}
+]
+</script>
+<script>
+"use strict";
+
+const cards = JSON.parse(document.getElementById("catalog").textContent);
+const kingdomSize = 10;
+const minimumRules = [
+  ["require-actions", card => card.filters.includes("ExtraActions")],
+  ["require-draw", card => card.filters.includes("ExtraCards")],
+  ["require-buy", card => card.immediateBuys > 0],
+  ["require-trash", card => card.filters.includes("Trashing")],
+];
+const defenseBit = 1 << minimumRules.length;
+
+function drawKingdom(pinned, available, rules) {
+  if (pinned.length > kingdomSize) throw new Error("Halte höchstens zehn Stapel fest.");
+  if (pinned.length + available.length < kingdomSize) {
+    throw new Error("Es sind weniger als zehn Stapel verfügbar. Hebe mindestens einen Ausschluss auf.");
+  }
+
+  const requiredMask = rules.required.reduce((mask, rule) => mask | rule.bit, 0);
+  const maskFor = card => rules.required.reduce(
+    (mask, rule) => rule.matches(card) ? mask | rule.bit : mask,
+    card.id === "moat" && rules.requireDefense ? defenseBit : 0,
+  );
+  const candidates = available.map(card => ({ card, mask: maskFor(card) }));
+  const initialMask = pinned.reduce((mask, card) => mask | maskFor(card), 0);
+  const pinnedAttacks = pinned.filter(card => card.attack).length;
+  const pinnedExpensive = pinned.filter(card => card.coins >= 5).length;
+  if (pinnedAttacks > rules.maxAttacks) {
+    throw new Error("Die festgehaltenen Stapel überschreiten bereits das Angriffslimit.");
+  }
+
+  // Count valid completions, then choose each branch in proportion to its count.
+  // This gives each kingdom that meets the active rules the same chance.
+  const memo = new Map();
+  function count(index, slots, mask, attacks, expensive) {
+    if (slots > candidates.length - index || attacks > rules.maxAttacks ||
+        expensive > rules.maxExpensive || expensive + slots < rules.minExpensive) return 0;
+    if (!slots) {
+      const hasRequiredCards = (mask & requiredMask) === requiredMask;
+      const hasDefense = !rules.requireDefense || !attacks || (mask & defenseBit) !== 0;
+      return hasRequiredCards && hasDefense ? 1 : 0;
+    }
+    const key = [index, slots, mask, attacks, expensive].join(",");
+    if (!memo.has(key)) {
+      const { card, mask: cardMask } = candidates[index];
+      const without = count(index + 1, slots, mask, attacks, expensive);
+      const withCard = count(index + 1, slots - 1, mask | cardMask,
+        attacks + Number(card.attack), expensive + Number(card.coins >= 5));
+      memo.set(key, without + withCard);
+    }
+    return memo.get(key);
+  }
+
+  const result = [...pinned];
+  let slots = kingdomSize - pinned.length;
+  let mask = initialMask;
+  let attacks = pinnedAttacks;
+  let expensive = pinnedExpensive;
+  let total = count(0, slots, mask, attacks, expensive);
+  if (!total) {
+    throw new Error("Kein Königreich erfüllt alle aktiven Regeln. Prüfe die festgehaltenen und ausgeschlossenen Karten sowie die Filter.");
+  }
+  for (let index = 0; slots; index++) {
+    const { card, mask: cardMask } = candidates[index];
+    const nextAttacks = attacks + Number(card.attack);
+    const nextExpensive = expensive + Number(card.coins >= 5);
+    const withCard = count(index + 1, slots - 1, mask | cardMask, nextAttacks, nextExpensive);
+    if (Math.random() * total < withCard) {
+      result.push(card);
+      slots--;
+      mask |= cardMask;
+      attacks = nextAttacks;
+      expensive = nextExpensive;
+      total = withCard;
+    } else {
+      total -= withCard;
+    }
+  }
+  return result.sort((left, right) => left.title.localeCompare(right.title, "de"));
+}
+
+function formatDoublePiles(pileIds) {
+  return "-x " + pileIds.map(id => "start_double_pile(" + id + ")").join(", ");
+}
+
+function formatEffectSet(name, effects) {
+  const escapeText = value => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  return [
+    "<sets>",
+    "  <name>" + escapeText(name) + "</name>",
+    "  <strKingdom>" + escapeText(effects) + "</strKingdom>",
+    // Build 3315 does not count start_double_pile targets toward the expansion mask.
+    "  <expansionsBitset>0</expansionsBitset>",
+    "</sets>",
+  ].join("\n");
+}
+
+function readProfile(source) {
+  const xml = new DOMParser().parseFromString(source.replace(/^\uFEFF/, ""), "application/xml");
+  const root = xml.documentElement;
+  if (xml.doctype || xml.querySelector("parsererror") ||
+      root?.tagName !== "ProfileSettings_Save" || root.namespaceURI) {
+    throw new Error("Die Datei entspricht keinem unterstützten Dominion-Profilformat.");
+  }
+  const profiles = [...root.children].filter(node => node.tagName === "profiles");
+  if (profiles.length !== 1) {
+    throw new Error("Direktes Speichern unterstützt Dateien mit genau einem Profil.");
+  }
+  const containers = [...profiles[0].children].filter(node => node.tagName === "saveSets");
+  const container = containers[0];
+  const sets = container ? [...container.children] : [];
+  if (containers.length > 1 || (container && (container.namespaceURI || container.attributes.length)) ||
+      sets.some(node => node.tagName !== "sets" || node.namespaceURI)) {
+    throw new Error("Die gespeicherten Sets haben ein unbekanntes XML-Format.");
+  }
+  return { container, sets };
+}
+
+function appendEffectSet(source, name, effects) {
+  const { container, sets } = readProfile(source);
+  if (sets.length >= 64) throw new Error("Die Liste enthält bereits 64 Sets.");
+  if (sets.some(set => set.querySelector(":scope > name")?.textContent.trim().toLowerCase() === name.toLowerCase())) {
+    throw new Error("Ein Set mit diesem Namen ist bereits vorhanden.");
+  }
+
+  // Insert into the source so the bytes of existing entries and profile settings stay intact.
+  const slots = [...source.matchAll(container ? /<\/saveSets>|<saveSets\s*\/>/g : /<\/profiles>/g)];
+  if (slots.length !== 1) throw new Error("Der Einfügepunkt in der Profildatei ist nicht eindeutig.");
+  const { index: offset, 0: tag } = slots[0];
+  const newline = source.includes("\r\n") ? "\r\n" : "\n";
+  const before = source.slice(0, offset);
+  const indent = before.match(/(?:^|\n)([ \t]*)$/)?.[1];
+  const entry = formatEffectSet(name, effects).split("\n");
+  const addContainer = tag !== "</saveSets>";
+  const lines = entry.map(line => (container ? "  " : "    ") + line);
+  if (addContainer) {
+    const padding = container ? "" : "  ";
+    lines.unshift(padding + "<saveSets>");
+    lines.push(padding + "</saveSets>");
+  }
+  const insertion = indent === undefined ? lines.join(newline) : lines.join(newline + indent) + newline + indent;
+  const end = offset + (addContainer && container ? tag.length : 0);
+  const updated = before + insertion + source.slice(end);
+  const updatedSets = readProfile(updated).sets;
+  const added = updatedSets.at(-1);
+  if (updatedSets.length !== sets.length + 1 ||
+      added.querySelector(":scope > name")?.textContent !== name ||
+      added.querySelector(":scope > strKingdom")?.textContent !== effects ||
+      added.querySelector(":scope > expansionsBitset")?.textContent !== "0") {
+    throw new Error("Der neue Set-Eintrag konnte nicht eindeutig geprüft werden.");
+  }
+  return updated;
+}
+
+async function readProfileFile(handle) {
+  const file = await handle.getFile();
+  return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(await file.arrayBuffer());
+}
+
+async function writeProfileFile(handle, source, updated) {
+  const writer = await handle.createWritable({ mode: "exclusive" });
+  try {
+    await writer.write(new TextEncoder().encode(updated));
+    if (await readProfileFile(handle) !== source) {
+      throw new Error("Die Profildatei wurde zwischenzeitlich geändert. Wähle sie erneut aus.");
+    }
+    await writer.close();
+  } catch (error) {
+    await writer.abort().catch(() => {});
+    throw error;
+  }
+}
+
+const output = document.getElementById("output");
+const copy = document.getElementById("copy");
+const status = document.getElementById("status");
+const copyStatus = document.getElementById("copy-status");
+const cardsList = document.getElementById("cards");
+const pool = document.getElementById("pool");
+const poolChoices = new Map();
+const effects = document.getElementById("effects");
+const copyEffects = document.getElementById("copy-effects");
+const setName = document.getElementById("set-name");
+const setXml = document.getElementById("set-xml");
+const copySetXml = document.getElementById("copy-set-xml");
+const effectsStatus = document.getElementById("effects-status");
+const profileSelect = document.getElementById("profile-select");
+const profileConsent = document.getElementById("profile-consent");
+const profileWrite = document.getElementById("profile-write");
+const profileStatus = document.getElementById("profile-status");
+const profileAccess = typeof window.showOpenFilePicker === "function";
+let profileHandle;
+let profileSource;
+let profileBusy = false;
+
+document.getElementById("profile-controls").hidden = !profileAccess;
+document.getElementById("profile-fallback").hidden = profileAccess;
+
+function updateProfileControls() {
+  profileSelect.disabled = profileBusy;
+  profileConsent.disabled = profileBusy || !profileHandle || !setXml.value;
+  profileWrite.disabled = profileConsent.disabled || !profileConsent.checked;
+}
+
+function updateEffectSet() {
+  const name = setName.value.trim();
+  const invalidName = /[^\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/u.test(name);
+  setName.setCustomValidity(invalidName ? "Der Name enthält ein ungültiges Zeichen." : "");
+  setXml.value = effects.value && name && !invalidName ? formatEffectSet(name, effects.value) : "";
+  setXml.placeholder = effects.value ? "Gib einen Namen für das Verdopplungsset ein." : "Ziehe zuerst ein Königreich.";
+  copyEffects.disabled = !effects.value;
+  copySetXml.disabled = !setXml.value;
+  effectsStatus.textContent = invalidName ? setName.validationMessage : "";
+  profileConsent.checked = false;
+  updateProfileControls();
+}
+
+function showCards(result) {
+  for (const card of result) {
+    const item = document.createElement("li");
+    const title = document.createElement("strong");
+    const pin = document.createElement("input");
+    const label = document.createElement("label");
+    const choice = poolChoices.get(card.id);
+    title.textContent = card.title;
+    pin.type = "checkbox";
+    pin.checked = choice.value === "pinned";
+    pin.setAttribute("aria-label", card.title + " festhalten");
+    pin.addEventListener("change", () => { choice.value = pin.checked ? "pinned" : "random"; });
+    label.append(pin, " Festhalten");
+    item.append(title, label);
+    cardsList.append(item);
+  }
+}
+
+function clearOutputs() {
+  output.value = "";
+  effects.value = "";
+  copy.disabled = true;
+  status.textContent = "";
+  status.className = "";
+  copyStatus.textContent = "";
+  cardsList.replaceChildren();
+}
+
+function markRulesChanged() {
+  clearOutputs();
+  status.textContent = "Die Auswahl wurde geändert. Ziehe ein Königreich mit den neuen Regeln.";
+  updateEffectSet();
+}
+
+function generate() {
+  clearOutputs();
+  try {
+    const maxAttacks = document.getElementById("max-attacks").valueAsNumber;
+    if (!Number.isInteger(maxAttacks) || maxAttacks < 0 || maxAttacks > kingdomSize) {
+      throw new Error("Gib für das Angriffslimit eine ganze Zahl von 0 bis 10 ein.");
+    }
+    const spreadCosts = document.getElementById("spread-costs").checked;
+    const rules = {
+      maxAttacks,
+      minExpensive: spreadCosts ? 3 : 0,
+      maxExpensive: spreadCosts ? 5 : kingdomSize,
+      requireDefense: document.getElementById("require-defense").checked,
+      required: minimumRules.map(([id, matches], index) => ({ id, matches, bit: 1 << index }))
+        .filter(rule => document.getElementById(rule.id).checked),
+    };
+    const pinned = cards.filter(card => poolChoices.get(card.id).value === "pinned");
+    const available = cards.filter(card => poolChoices.get(card.id).value === "random");
+    const result = drawKingdom(pinned, available, rules);
+    const ids = result.map(card => card.id);
+    output.value = "-k " + ids.join(", ");
+    effects.value = formatDoublePiles(ids);
+    copy.disabled = false;
+    showCards(result);
+    const attacks = result.filter(card => card.attack).length;
+    const expensive = result.filter(card => card.coins >= 5).length;
+    status.textContent = "10 Stapel gezogen · Angriffe: " + attacks + " · Kosten ab 5 Münzen: " + expensive;
+    status.className = "success";
+  } catch (error) {
+    status.textContent = error.message;
+    status.className = "error";
+  }
+  updateEffectSet();
+}
+
+for (const card of [...cards].sort((left, right) => left.title.localeCompare(right.title, "de"))) {
+  const item = document.createElement("li");
+  const label = document.createElement("label");
+  const choice = document.createElement("select");
+  choice.id = "pool-" + card.id;
+  label.htmlFor = choice.id;
+  label.textContent = card.title + " · " + card.coins + " Münzen";
+  choice.add(new Option("Zufall", "random"));
+  choice.add(new Option("Festhalten", "pinned"));
+  choice.add(new Option("Ausschließen", "excluded"));
+  choice.addEventListener("change", markRulesChanged);
+  poolChoices.set(card.id, choice);
+  item.append(label, choice);
+  pool.append(item);
+}
+
+document.getElementById("draw-rules").addEventListener("input", markRulesChanged);
+document.getElementById("draw").addEventListener("click", generate);
+
+async function copyText(field, message, confirmation) {
+  const value = field.value;
+  if (!value) return;
+  try {
+    await navigator.clipboard.writeText(value);
+    if (field.value === value) message.textContent = confirmation;
+  } catch {
+    if (field.value !== value) return;
+    field.focus();
+    field.select();
+    message.textContent = "Der Text ist markiert. Kopiere ihn mit Strg+C oder ⌘C.";
+  }
+}
+
+copy.addEventListener("click", () => copyText(output, copyStatus, "Kingdom-Code kopiert."));
+copyEffects.addEventListener("click", () => copyText(effects, effectsStatus, "Verdopplungscode kopiert."));
+copySetXml.addEventListener("click", () => copyText(setXml, effectsStatus, "XML-Eintrag kopiert."));
+setName.addEventListener("input", updateEffectSet);
+profileConsent.addEventListener("change", updateProfileControls);
+
+profileSelect.addEventListener("click", async () => {
+  profileBusy = true;
+  profileConsent.checked = false;
+  profileStatus.textContent = "";
+  profileHandle = undefined;
+  profileSource = undefined;
+  updateProfileControls();
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      types: [{ description: "Dominion-Profildatei", accept: { "application/xml": [".xml"] } }],
+    });
+    if (handle.name.toLowerCase() !== "profiles.xml") throw new Error("Wähle die Datei profiles.xml aus.");
+    const source = await readProfileFile(handle);
+    readProfile(source);
+    profileHandle = handle;
+    profileSource = source;
+    profileStatus.textContent = "profiles.xml ausgewählt. Die Datei wurde bisher nur gelesen.";
+    profileStatus.className = "success";
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      profileStatus.textContent = error.message;
+      profileStatus.className = "error";
+    }
+  } finally {
+    profileBusy = false;
+    updateProfileControls();
+  }
+});
+
+profileWrite.addEventListener("click", async () => {
+  if (profileWrite.disabled) return;
+  const handle = profileHandle;
+  const source = profileSource;
+  const name = setName.value.trim();
+  const code = effects.value;
+  profileBusy = true;
+  profileConsent.checked = false;
+  updateProfileControls();
+  try {
+    const updated = appendEffectSet(source, name, code);
+    if (await handle.requestPermission({ mode: "readwrite" }) !== "granted") {
+      throw new Error("Der Browser hat keine Schreibfreigabe erteilt. Du kannst den XML-Eintrag kopieren.");
+    }
+    if (await readProfileFile(handle) !== source) {
+      throw new Error("Die Profildatei wurde zwischenzeitlich geändert. Wähle sie erneut aus.");
+    }
+    await writeProfileFile(handle, source, updated);
+    profileSource = updated;
+    profileStatus.textContent = "Set „" + name + "“ wurde hinzugefügt. Du kannst Dominion jetzt öffnen.";
+    profileStatus.className = "success";
+  } catch (error) {
+    profileStatus.textContent = error.message;
+    profileStatus.className = "error";
+  } finally {
+    profileBusy = false;
+    updateProfileControls();
+  }
+});
+</script>
+</body>
+</html>
