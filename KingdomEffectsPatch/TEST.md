@@ -159,9 +159,23 @@ Der Runner benötigt unter Windows das Recht, einen separaten Desktop zu erzeuge
 | `twist_double_up` | Eigenes Silber nach `delve` | 1 | 2 | 3 | 4 |
 | `twist_incoming` | Silber auf dem Nachziehstapel nach `delve` | 0 | 1 | 1 | 1 |
 | `stamp_with_villager(silver)` | Dorfbewohner nach dem Silber durch `delve` | 0 | 1 | 2 | 3 |
+| `stamp_with_horse(silver)` | Eigene Pferde nach dem Silber durch `delve` | 0 | 1 | 2 | 3 |
+| `stamp_with_spoils(silver)` | Eigene Beutekarten (`spoils`) nach dem Silber durch `delve` | 0 | 1 | 2 | 3 |
+| `stamp_two_for_one(silver)` | Eigenes Silber nach `delve` | 1 | 2 | 3 | 4 |
+| `stamp_fawning_service(travelling_fair)` | Käufe nach der Provinz durch `dominate` | 1 | 3 | 3 | 3 |
+| `stamp_perks_of_wealth(travelling_fair)` | Käufe nach dem Gold durch `wedding` | 1 | 3 | 3 | 3 |
+| `start_double_vp_tokens(arena)` | Siegpunktmarker auf Arena | 12 | 24 | 36 | 48 |
+| `start_plus_8_vp_tokens(aqueduct)` | Siegpunktmarker auf dem Silberstapel | 8 | 16 | 24 | 32 |
+| `start_plus_2_vp_tokens(defiled_shrine)` | Siegpunktmarker auf dem Dorfstapel | 2 | 4 | 6 | 8 |
+| `start_with_cube(pageant)` | Projektsteine auf Festzug | 0 | 1 | Abbruch | Abbruch |
+| `twist_mirror_loot` | Verschiedene Karten im 30 Karten großen Kostbarkeiten-Stapel | 15 | 1 | 1 | 1 |
 
 Bei den vier Austauschvarianten wurde das erhaltene Silber gezählt. Herkunft des Silbers und Entnahme der ursprünglichen Startkarte waren keine separaten Prüfwerte. **Platz für mehr** hat einen gemeinsamen Zielslot. Der F8-Editor lässt eine Auswahl dieses Effekts zu.
 
 Für die Kaufboni bleibt `stamp_got_it_already(travelling_fair)` in allen Vergleichsfällen aktiv. Die zwei zusätzlichen Käufe belegen den ausgelösten Ereigniskauf. Für die Erhaltensregeln liefern der Silberbonus der Wanderkirmes, das Silber aus dem Vorrat durch `delve` und das Anwesen durch `triumph` gezielte Auslöser. Der Runner prüft, ob der erste Spieler die jeweilige Karte erhalten hat. Bei der Wanderkirmes mit Silberbonus blieben `twist_rebates` und `twist_double_up` in einer Erkundungsreihe ohne messbare Wirkung. Bei `delve` griffen beide.
+
+Für Huldigung und Gold mit Vorzügen lösen kostenlose Käufe von `dominate` und `wedding` den jeweiligen Kartenerhalt aus. Die zwei zusätzlichen Käufe zeigen, dass die Wanderkirmes einmal ausgeführt wurde. Bei `stamp_two_for_one(silver)` wurde der Kartenbonus gemessen. Die Preisänderung bleibt offen.
+
+Zwei und drei gleiche `start_with_cube(pageant)`-Einträge brachen vor dem ersten Zug mit der nativen Assertion `id != DATAID_NULL` ab. Beide Fälle erzeugten einen Minidump. Die reguläre Testreihe prüft für diesen Effekt den Ausgangswert und eine Kopie. Ob `start_allow_second_cube` die Kombination zulässt, ist offen.
 
 **Noch offen.** Zwei lokale Erkundungsreihen mit Taifun erreichten den ersten Zug mit aktivem Effekt, aber ohne Kapelle im Vorrat. Ob ein Stapel später wechselt, bleibt offen. Für weitere Effekte braucht der Runner konkrete Spielzüge oder längere Partien, etwa um Karten auszuspielen, zu entsorgen oder die Endwertung zu erreichen.

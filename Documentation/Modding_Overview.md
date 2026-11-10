@@ -53,13 +53,13 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `stamp_discounted(Karte)` | Senkt die Münzkosten um eins. | Offen | Offen |
 | `stamp_double_vp(Landmarke)` | Verdoppelt die von der Landmarke vergebenen Siegpunkte. | Offen | Offen |
 | `stamp_durationified(Karte)` | Macht sie zusätzlich zur Dauerkarte. Im nächsten Zug gibt sie zu Beginn eine Karte und eine Aktion. | Offen | Offen |
-| `stamp_fawning_service(Ereignis)` | Beim Erhalten einer Provinz wird das Ereignis kostenlos gekauft. | Offen | Offen |
+| `stamp_fawning_service(Ereignis)` | Beim Erhalten einer Provinz wird das Ereignis kostenlos gekauft. | Ja | Gleiche Wirkung |
 | `stamp_got_it_already(Ereignis)` | Das Ereignis wird im ersten Zug kostenlos gekauft. | Ja | Bis 3× |
 | `stamp_motivational(Ereignis)` | Nach dem Kauf werden am Zugende zwei Karten gezogen. | Offen | Offen |
 | `stamp_offers_insight(Karte)` | Wer sie erhält, zieht am Zugende eine Karte. | Offen | Offen |
 | `stamp_one_track_mind(Ereignis)` | Das Ereignis wird zu Beginn der Kaufphase kostenlos gekauft. | Offen | Offen |
 | `stamp_pay_later(Karte)` | Wandelt Münzkosten in Schulden um. | Offen | Offen |
-| `stamp_perks_of_wealth(Ereignis)` | Beim Erhalten von Gold wird das Ereignis ausgeführt. | Offen | Offen |
+| `stamp_perks_of_wealth(Ereignis)` | Beim Erhalten von Gold wird das Ereignis ausgeführt. | Ja | Gleiche Wirkung |
 | `stamp_plus_action(Karte)` | Beim Ausspielen gibt sie eine zusätzliche Aktion. | Offen | Offen |
 | `stamp_plus_buy(Karte)` | Beim Ausspielen gibt sie einen zusätzlichen Kauf. | Offen | Offen |
 | `stamp_plus_card(Karte)` | Beim Ausspielen wird eine zusätzliche Karte gezogen. | Offen | Offen |
@@ -67,10 +67,10 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `stamp_reactionified(Karte)` | Macht sie zur Reaktion, die beim Erhalten, Entsorgen oder Ablegen außerhalb des Aufräumens ausgespielt werden kann. | Offen | Offen |
 | `stamp_shadowified(Karte)` | Macht sie zum Schatten mit den zugehörigen Regeln fürs Ausspielen aus dem Nachziehstapel. | Offen | Offen |
 | `stamp_treasurified(Karte)` | Gibt ihr zusätzlich den Typ Geld. | Offen | Offen |
-| `stamp_two_for_one(Karte)` | Erhöht den Preis um eine Münze. Beim Erhalten kommt eine zusätzliche Kopie von außerhalb des Vorrats dazu. | Offen | Offen |
+| `stamp_two_for_one(Karte)` | Erhöht den Preis um eine Münze. Beim Erhalten kommt eine zusätzliche Kopie von außerhalb des Vorrats dazu. | Ja | Bis 3× |
 | `stamp_victorified(Karte)` | Gibt ihr zusätzlich den Typ Sieg und den Wert von einem Siegpunkt. | Offen | Offen |
-| `stamp_with_horse(Karte)` | Beim Erhalten bekommt der Spieler zusätzlich ein Pferd. | Offen | Offen |
-| `stamp_with_spoils(Karte)` | Beim Erhalten bekommt der Spieler zusätzlich Beute aus Dark Ages (`spoils`). | Offen | Offen |
+| `stamp_with_horse(Karte)` | Beim Erhalten bekommt der Spieler zusätzlich ein Pferd. | Ja | Bis 3× |
+| `stamp_with_spoils(Karte)` | Beim Erhalten bekommt der Spieler zusätzlich Beute aus Dark Ages (`spoils`). | Ja | Bis 3× |
 | `stamp_with_villager(Karte)` | Beim Erhalten bekommt der Spieler zusätzlich einen Dorfbewohner. | Ja | Bis 3× |
 
 #### Spielvariationen für die Partie
@@ -93,7 +93,7 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `twist_head_start` | In der Kampagne erhält der Mensch zwei frühe Extrazüge und die KI zehn Siegpunktmarker. | Offen | Offen |
 | `twist_incoming` | Erhaltene Aktions- und Geldkarten kommen auf den Nachziehstapel. | Ja | Gleiche Wirkung |
 | `twist_landfill` | Beim Entsorgen einer eigenen Karte wird eine Karte gezogen. | Offen | Offen |
-| `twist_mirror_loot` | Alle Karten des Loot-Stapels sind gleich. | Offen | Offen |
+| `twist_mirror_loot` | Alle Karten des Loot-Stapels sind gleich. | Ja | Gleiche Wirkung |
 | `twist_pennies_saved` | Übrige Münzen werden am Ende der Kaufphase in Taler umgewandelt. | Offen | Offen |
 | `twist_penny_party` | Zu Zugbeginn ein Kupfer erhalten. | Ja | Bis 3× |
 | `twist_real_estate_barons` | Siegpunktmarker können wie Taler ausgegeben werden. | Offen | Offen |
@@ -119,13 +119,13 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `start_double_deck` | Verdoppelt das Startdeck. | Ja | Bis 3× |
 | `start_double_heirloom(Karte)` | Für eine Königreichkarte mit Erbstück ersetzen zwei Exemplare des Erbstücks Startkupfer. | Ja | Bis 3× |
 | `start_double_pile(Stapel)` | Verdoppelt den gewählten Vorratsstapel. Der Codepfad und ein einzelner Import sind geprüft. | Ja | Bis 3× |
-| `start_double_vp_tokens(Landmarke)` | Verdoppelt die Startmenge an Siegpunktmarkern der gewählten Landmarke. | Offen | Offen |
+| `start_double_vp_tokens(Landmarke)` | Verdoppelt die Startmenge an Siegpunktmarkern der gewählten Landmarke. | Ja | Bis 3× |
 | `start_in_play(Dauerkarte)` | Die gewählte Dauerkarte liegt bei Spielbeginn bereits im Spiel. Die Community nennt nur bestimmte geeignete Ziele. | Ja | Bis 3× |
 | `start_journey_facedown` | Der Reisemarker beginnt verdeckt. | Ja | Wechselt pro Kopie |
 | `start_make_split_pile(Stapel, Karte)` | Ersetzt die untersten fünf Karten des ersten Stapels durch fünf der zweiten Karte. | Ja | Gleiche Wirkung |
 | `start_native_village(Karte)` | Legt eine Kopie auf das Tableau von Eingeborenendorf. Die EXE enthält ein Beispiel mit `silver`. | Ja | Bis 3× |
-| `start_plus_2_vp_tokens(Landmarke)` | Legt beim Setup zusätzliche Siegpunktmarker auf Aktionsstapel, etwa mit `defiled_shrine`. | Offen | Offen |
-| `start_plus_8_vp_tokens(Landmarke)` | Legt beim Setup zusätzliche Siegpunktmarker auf Geldstapel, etwa mit `aqueduct`. | Offen | Offen |
+| `start_plus_2_vp_tokens(Landmarke)` | Legt beim Setup zusätzliche Siegpunktmarker auf Aktionsstapel, etwa mit `defiled_shrine`. | Ja | Bis 3× |
+| `start_plus_8_vp_tokens(Landmarke)` | Legt beim Setup zusätzliche Siegpunktmarker auf Geldstapel, etwa mit `aqueduct`. | Ja | Bis 3× |
 | `start_replace_copper(Karte)` | Ersetzt ein Startkupfer durch die gewählte Karte. | Ja | Bis 3× |
 | `start_replace_copper_from_pile(Karte)` | Registrierter Gegenpart zu `start_replace_estate_from_pile`. Die Ausführung und zulässigen Ziele sind offen. | Ja | Bis 3× |
 | `start_replace_estate(Karte)` | Ersetzt ein Startanwesen durch die gewählte Karte. | Ja | Bis 3× |
@@ -136,7 +136,7 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `start_trash_curses` | Legt beim Aufbau Flüche in den Müll. | Ja | Bis 3× |
 | `start_trash_pile(Karte)` | Legt beim Aufbau einen Stapel der gewählten Karte in den Müll. | Ja | Bis 3× |
 | `start_triple_pile(Stapel)` | Verdreifacht den gewählten Vorratsstapel. | Ja | Bis 3× |
-| `start_with_cube(Projekt)` | Jeder Spieler startet mit einem Marker auf dem gewählten Projekt. | Offen | Offen |
+| `start_with_cube(Projekt)` | Jeder Spieler startet mit einem Marker auf dem gewählten Projekt. | Ja | Spielstart bricht bei 2× und 3× ab |
 
 Die Community-Liste nennt außerdem `stamp_allow_second_cube`, `stamp_free`, `start_native_village_mat` und `start_multitrait`. Im Namensregister von Build 3315 stehen für die ersten drei Wirkungen `start_allow_second_cube`, `stamp_cost_zero` und `start_native_village`. Für Multitrait gibt es Hinweise auf `landmod_trait*`-Einträge. Eine passende Importform ist offen. [Community-Liste](https://www.reddit.com/r/dominion/comments/1pnmsph/custom_campaign_features_in_your_kingdoms_tgg/)
 
@@ -229,4 +229,4 @@ Für eine Mod mit unveränderter Zufallsauswahl über alle Erweiterungen ist der
 
 ### Native Effektmessung ohne Fensterfokus
 
-**Im Spiel gemessen am 10. November 2026, Build 3315, Steam-Build 17683350.** Die geprüfte Arbeitskopie lässt sich mit einem temporären Profil auf einem separaten Windows-Desktop starten. Der Runner legt die lokale Partie über Dominions Startlogik an und misst den ersten Zug aus dem nativen Spielzustand. In 146 lokalen Partien mit zwei menschlichen Spielerplätzen wurde die Wirkung von 37 Effekten bestätigt. Automatische Ereigniskäufe machen auch einige Kauf- und Erhaltensregeln im ersten Zug messbar. Die Tabellen geben den Stand für einfache und mehrfache Wirkung an. [Testergebnisse und Aufruf](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
+**Im Spiel gemessen am 10. November 2026, Build 3315, Steam-Build 17683350.** Die geprüfte Arbeitskopie lässt sich mit einem temporären Profil auf einem separaten Windows-Desktop starten. Der Runner legt die lokale Partie über Dominions Startlogik an und misst den ersten Zug aus dem nativen Spielzustand. In 184 lokalen Vergleichspartien mit zwei menschlichen Spielerplätzen wurde die Wirkung von 47 Effekten bestätigt. Zwei zusätzliche Fälle mit mehrfachen Projektsteinen brachen beim Start ab. Automatische Ereigniskäufe machen auch einige Kauf- und Erhaltensregeln im ersten Zug messbar. Die Tabellen geben den Stand für einfache und mehrfache Wirkung an. [Testergebnisse und Aufruf](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)

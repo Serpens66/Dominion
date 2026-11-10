@@ -53,113 +53,113 @@ Die Tabellen erfassen 89 Befehle und sechs Varianten der Kampagnenerzeugung in S
 
 +![1 Geld](Spielzeichen/geld-1.png) erhöht dein Kaufbudget für diesen Zug um 1. Einen Taler kannst du auch in einem späteren Zug ausgeben.
 
-Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Partien in Build 3315. **Bis 3×** heißt, dass jede Kopie bis zur dritten eine zusätzliche Wirkung zeigte. **Gleiche Wirkung** heißt, dass zwei und drei Kopien denselben Messwert wie eine Kopie lieferten. **Offen** steht für eine ausstehende oder unvollständige Prüfung. [Messwerte](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
+Die Angaben **Einmal** und **Mehrfach** in der Wirkungszelle beziehen sich auf gemessene lokale Partien in Build 3315. **Bis 3×** heißt, dass jede Kopie bis zur dritten eine zusätzliche Wirkung zeigte. **Gleiche Wirkung** heißt, dass zwei und drei Kopien denselben Messwert wie eine Kopie lieferten. **Offen** steht für eine ausstehende oder unvollständige Prüfung. [Messwerte](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
 
 #### Alle 27 Spielvariationen mit `twist_`
 
 Eine **Nicht-Vorrats-Kopie** ist ein zusätzliches Exemplar der Karte, das du von außerhalb des Vorrats nimmst.
 
-| Name im Spiel | Befehl | Wirkung | Einmal | Mehrfach |
-| --- | --- | --- | --- | --- |
-| Große Ideen | `twist_big_ideas` | Zu Beginn deines Zuges **+1 Karte**. | Ja | Bis 3× |
-| Gut beschäftigt | `twist_busy_busy` | Zu Beginn deines Zuges **+1 Aktion**. | Ja | Bis 3× |
-| Das gewisse Etwas | `twist_extra_oomph` | Zu Beginn deines Zuges +![1 Geld](Spielzeichen/geld-1.png). | Ja | Bis 3× |
-| Für immer Verbündet | `twist_forever_favored` | Zu Beginn deines Zuges **+1 Gefallen**. | Ja | Bis 3× |
-| Müllhaufen | `twist_garbage_heap` | Zu Beginn deines Zuges darfst du eine Handkarte entsorgen. | Offen | Offen |
-| Penny-Party | `twist_penny_party` | Nimm zu Beginn deines Zuges ein Kupfer. | Ja | Bis 3× |
-| Kauflaune | `twist_shoppers` | Zu Beginn deines Zuges **+1 Kauf**. | Ja | Bis 3× |
-| Eingepfercht | `twist_cramped` | Du ziehst deine normale Hand mit 4 statt 5 Karten. | Ja | Bis 3× |
-| Vom Thron | `twist_from_the_throne` | Die erste Aktionskarte, die du pro Zug spielst, wird automatisch zweimal gespielt. | Offen | Offen |
-| Deponie | `twist_landfill` | Wenn du eine deiner Karten entsorgst, **+1 Karte**. Das gilt auch für Karten, die du von einem anderen Ort als deiner Hand entsorgst. | Offen | Offen |
-| So viel Zeugs | `twist_so_much_stuff` | Wenn du deine erste Karte in einem Zug spielst, nimm eine Nicht-Vorrats-Kopie dieser Karte. | Offen | Offen |
-| Verdopplung | `twist_double_up` | Wenn du in einem Zug zum ersten Mal eine Aktions- oder Geldkarte nimmst, nimm zusätzlich eine Nicht-Vorrats-Kopie dieser Karte. | Ja | Bis 3× |
-| Überholspur | `twist_fast_track` | Wenn du eine Dauer- oder Reservekarte nimmst, lege sie zur Seite und spiele sie zu Beginn der kommenden Aufräumphase. | Offen | Offen |
-| Grundbesitzer Verbündet | `twist_favored_landlords` | Wenn du eine Punktekarte nimmst, **+1 Gefallen**. | Ja | Bis 3× |
-| Reich Verbündet | `twist_favored_wealthy` | Wenn du eine Geldkarte nimmst, **+1 Gefallen**. | Ja | Bis 3× |
-| Auf dem Weg | `twist_incoming` | Wenn du eine Aktions- oder Geldkarte nimmst, kommt sie sofort oben auf deinen Nachziehstapel statt auf den Ablagestapel. | Ja | Gleiche Wirkung |
-| Bonusauszahlung | `twist_rebates` | Wenn du eine Karte nimmst, +![1 Geld](Spielzeichen/geld-1.png). | Ja | Bis 3× |
-| Bechergläser | `twist_beakers` | Ungenutztes Trank-Guthaben bleibt erhalten, bis du es ausgibst. Du kannst es wie Taler in späteren Zügen zum Bezahlen verwenden. | Offen | Offen |
-| Verzögertes Glück | `twist_delayed_joy` | Du darfst jede Gabe aufbewahren und erst im nächsten Zug ausführen. | Offen | Offen |
-| Gesparte Pennys | `twist_pennies_saved` | Am Ende deiner Kaufphase wird übriges Geld zu Talern. | Offen | Offen |
-| Großeigentümer | `twist_real_estate_barons` | Du kannst Siegpunktmarker als Taler ausgeben. | Offen | Offen |
-| Alles muss raus | `twist_sale` | Karten kosten ![1 Geld](Spielzeichen/geld-1.png) weniger. | Offen | Offen |
-| Vorsprung | `twist_head_start` | In der Kampagne erhältst du zu Beginn 2 Extrazüge. Die KI erhält 10 Siegpunktmarker. | Offen | Offen |
-| Gespiegelte Kostbarkeiten | `twist_mirror_loot` | Der Kostbarkeiten-Stapel besteht aus Exemplaren derselben Kostbarkeit. | Offen | Offen |
-| Platz für Mehr | `twist_room_for_more(Stapel-ID)` | Legt beim Spielaufbau den gewählten Königreichkarten-Stapel in den Vorrat. Die [Übernahme aus einem eigenen Set](#zwölf-oder-mehr-königreichstapel) ist offen. | Ja | Einmal im F8-Editor |
-| Rotationskoller | `twist_turn_turn_turn` | Zu Beginn jedes menschlichen Zuges nach dem ersten wandert bei jedem rotierbaren Vorratsstapel die oberste Gruppe gleicher Karten unter den Stapel. | Offen | Offen |
-| Taifun | `twist_typhoon(Stapel-ID,Stapel-ID,…)` | Zu Beginn der menschlichen Züge wird ein Königreichkarten-Stapel im Vorrat durch einen anderen ersetzt. Die Liste in Klammern legt die möglichen Ersatzstapel fest und fasst bis zu 20 Stapel-IDs. | Offen | Offen |
+| Name im Spiel | Befehl | Wirkung |
+| --- | --- | --- |
+| Große Ideen | `twist_big_ideas` | Zu Beginn deines Zuges **+1 Karte**. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Gut beschäftigt | `twist_busy_busy` | Zu Beginn deines Zuges **+1 Aktion**. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Das gewisse Etwas | `twist_extra_oomph` | Zu Beginn deines Zuges +![1 Geld](Spielzeichen/geld-1.png). *Einmal – Ja · Mehrfach – Bis 3×* |
+| Für immer Verbündet | `twist_forever_favored` | Zu Beginn deines Zuges **+1 Gefallen**. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Müllhaufen | `twist_garbage_heap` | Zu Beginn deines Zuges darfst du eine Handkarte entsorgen. *Einmal – Offen · Mehrfach – Offen* |
+| Penny-Party | `twist_penny_party` | Nimm zu Beginn deines Zuges ein Kupfer. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Kauflaune | `twist_shoppers` | Zu Beginn deines Zuges **+1 Kauf**. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Eingepfercht | `twist_cramped` | Du ziehst deine normale Hand mit 4 statt 5 Karten. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Vom Thron | `twist_from_the_throne` | Die erste Aktionskarte, die du pro Zug spielst, wird automatisch zweimal gespielt. *Einmal – Offen · Mehrfach – Offen* |
+| Deponie | `twist_landfill` | Wenn du eine deiner Karten entsorgst, **+1 Karte**. Das gilt auch für Karten, die du von einem anderen Ort als deiner Hand entsorgst. *Einmal – Offen · Mehrfach – Offen* |
+| So viel Zeugs | `twist_so_much_stuff` | Wenn du deine erste Karte in einem Zug spielst, nimm eine Nicht-Vorrats-Kopie dieser Karte. *Einmal – Offen · Mehrfach – Offen* |
+| Verdopplung | `twist_double_up` | Wenn du in einem Zug zum ersten Mal eine Aktions- oder Geldkarte nimmst, nimm zusätzlich eine Nicht-Vorrats-Kopie dieser Karte. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Überholspur | `twist_fast_track` | Wenn du eine Dauer- oder Reservekarte nimmst, lege sie zur Seite und spiele sie zu Beginn der kommenden Aufräumphase. *Einmal – Offen · Mehrfach – Offen* |
+| Grundbesitzer Verbündet | `twist_favored_landlords` | Wenn du eine Punktekarte nimmst, **+1 Gefallen**. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Reich Verbündet | `twist_favored_wealthy` | Wenn du eine Geldkarte nimmst, **+1 Gefallen**. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Auf dem Weg | `twist_incoming` | Wenn du eine Aktions- oder Geldkarte nimmst, kommt sie sofort oben auf deinen Nachziehstapel statt auf den Ablagestapel. *Einmal – Ja · Mehrfach – Gleiche Wirkung* |
+| Bonusauszahlung | `twist_rebates` | Wenn du eine Karte nimmst, +![1 Geld](Spielzeichen/geld-1.png). *Einmal – Ja · Mehrfach – Bis 3×* |
+| Bechergläser | `twist_beakers` | Ungenutztes Trank-Guthaben bleibt erhalten, bis du es ausgibst. Du kannst es wie Taler in späteren Zügen zum Bezahlen verwenden. *Einmal – Offen · Mehrfach – Offen* |
+| Verzögertes Glück | `twist_delayed_joy` | Du darfst jede Gabe aufbewahren und erst im nächsten Zug ausführen. *Einmal – Offen · Mehrfach – Offen* |
+| Gesparte Pennys | `twist_pennies_saved` | Am Ende deiner Kaufphase wird übriges Geld zu Talern. *Einmal – Offen · Mehrfach – Offen* |
+| Großeigentümer | `twist_real_estate_barons` | Du kannst Siegpunktmarker als Taler ausgeben. *Einmal – Offen · Mehrfach – Offen* |
+| Alles muss raus | `twist_sale` | Karten kosten ![1 Geld](Spielzeichen/geld-1.png) weniger. *Einmal – Offen · Mehrfach – Offen* |
+| Vorsprung | `twist_head_start` | In der Kampagne erhältst du zu Beginn 2 Extrazüge. Die KI erhält 10 Siegpunktmarker. *Einmal – Offen · Mehrfach – Offen* |
+| Gespiegelte Kostbarkeiten | `twist_mirror_loot` | Der Kostbarkeiten-Stapel besteht aus Exemplaren derselben Kostbarkeit. *Einmal – Ja · Mehrfach – Gleiche Wirkung* |
+| Platz für Mehr | `twist_room_for_more(Stapel-ID)` | Legt beim Spielaufbau den gewählten Königreichkarten-Stapel in den Vorrat. Die [Übernahme aus einem eigenen Set](#zwölf-oder-mehr-königreichstapel) ist offen. *Einmal – Ja · Mehrfach – Einmal im F8-Editor* |
+| Rotationskoller | `twist_turn_turn_turn` | Zu Beginn jedes menschlichen Zuges nach dem ersten wandert bei jedem rotierbaren Vorratsstapel die oberste Gruppe gleicher Karten unter den Stapel. *Einmal – Offen · Mehrfach – Offen* |
+| Taifun | `twist_typhoon(Stapel-ID,Stapel-ID,…)` | Zu Beginn der menschlichen Züge wird ein Königreichkarten-Stapel im Vorrat durch einen anderen ersetzt. Die Liste in Klammern legt die möglichen Ersatzstapel fest und fasst bis zu 20 Stapel-IDs. *Einmal – Offen · Mehrfach – Offen* |
 
 #### Alle 34 Stempel mit `stamp_`
 
-| Name im Spiel | Befehl | Wirkung | Einmal | Mehrfach |
-| --- | --- | --- | --- | --- |
-| Plus Aktion | `stamp_plus_action(Karten-ID)` | Wenn du eine Karte von diesem Stapel spielst, **+1 Aktion**. | Offen | Offen |
-| Plus Karte | `stamp_plus_card(Karten-ID)` | Wenn du eine Karte von diesem Stapel spielst, **+1 Karte**. | Offen | Offen |
-| Plus Kauf | `stamp_plus_buy(Karten-ID)` | Wenn du eine Karte von diesem Stapel spielst, **+1 Kauf**. | Offen | Offen |
-| Plus Geld | `stamp_plus_coin(Karten-ID)` | Wenn du eine Karte von diesem Stapel spielst, +![1 Geld](Spielzeichen/geld-1.png). | Offen | Offen |
-| Chamäleon | `stamp_chameleonize(Karten-ID)` | Beim Ausspielen werden **+Karten** und Geldboni in gleicher Höhe getauscht. Aus **+2 Karten** wird zum Beispiel +![2 Geld](Spielzeichen/geld-2.png) und umgekehrt. | Offen | Offen |
-| Vergünstigt | `stamp_discounted(Karten-ID)` | Die Karte kostet ![1 Geld](Spielzeichen/geld-1.png) weniger. | Offen | Offen |
-| Später Zahlbar | `stamp_pay_later(Karten-ID)` | Der Geldpreis der Karte wird in gleich viele Schulden umgewandelt. | Offen | Offen |
-| 2 zum Preis von 1 | `stamp_two_for_one(Karten-ID)` | Die Karte kostet ![1 Geld](Spielzeichen/geld-1.png) mehr. Wenn du sie nimmst, nimm zusätzlich eine Nicht-Vorrats-Kopie. | Offen | Offen |
-| Einblick Bietend | `stamp_offers_insight(Karten-ID)` | Wenn du diese Karte nimmst, **+1 Karte** am Ende des Zuges. | Offen | Offen |
-| Pferd Dazu | `stamp_with_horse(Karten-ID)` | Wenn du diese Karte nimmst, nimm ein Pferd. | Offen | Offen |
-| Beute Dazu | `stamp_with_spoils(Karten-ID)` | Wenn du diese Karte nimmst, nimm eine Beute (`spoils`). | Offen | Offen |
-| Dorfbewohner Dazu | `stamp_with_villager(Karten-ID)` | Wenn du diese Karte nimmst, **+1 Dorfbewohner**. | Ja | Bis 3× |
-| Zusatztyp Dauerkarte | `stamp_durationified(Karten-ID)` | Die Karte wird zusätzlich zur Dauerkarte. Wenn du sie spielst, gibt sie dir zu Beginn deines nächsten Zuges **+1 Karte** und **+1 Aktion**. | Offen | Offen |
-| Zusatztyp Geldkarte | `stamp_treasurified(Karten-ID)` | Die Karte hat zusätzlich den Typ Geld. Du kannst sie dadurch auch als Geldkarte in der Kaufphase spielen. | Offen | Offen |
-| Zusatztyp Punktekarte | `stamp_victorified(Karten-ID)` | Die Karte wird zusätzlich zur Punktekarte und ist ![1 Siegpunkt](Spielzeichen/siegpunkt-1.png) wert. | Offen | Offen |
-| Zusatztyp Reaktion | `stamp_reactionified(Karten-ID)` | Die Karte wird zusätzlich zur Reaktion. Du darfst sie spielen, wenn du sie außerhalb der Aufräumphase nimmst, entsorgst oder ablegst. | Offen | Offen |
-| Zusatztyp Schatten | `stamp_shadowified(Karten-ID)` | Die Karte wird zusätzlich zur Schattenkarte. Du kannst sie aus deinem Nachziehstapel spielen, als wäre sie in deiner Hand. Wenn sie eingemischt wird, kommt sie unter den Nachziehstapel. | Offen | Offen |
-| −2 Kosten | `stamp_cost_2_less(Ereignis-ID)` | Das Ereignis kostet ![2 Geld](Spielzeichen/geld-2.png) weniger. | Offen | Offen |
-| −2 Schuldenkosten | `stamp_cost_2D_less(Ereignis-ID)` | Das Ereignis kostet 2 Schulden weniger. | Offen | Offen |
-| Kostenlos | `stamp_cost_zero(Ereignis-ID)` | Das Ereignis kostet ![0 Geld](Spielzeichen/geld-0.png). | Offen | Offen |
-| Extrageld | `stamp_bonus_money(Ereignis-ID)` | Wenn du das Ereignis kaufst, +![1 Geld](Spielzeichen/geld-1.png). | Ja | Bis 3× |
-| Silber Dazu | `stamp_also_silver(Ereignis-ID)` | Wenn du das Ereignis kaufst, nimm ein Silber. | Ja | Gleiche Wirkung |
-| Neue Impulse | `stamp_motivational(Ereignis-ID)` | Wenn du das Ereignis kaufst, **+2 Karten** am Ende des Zuges. | Offen | Offen |
-| Hab's Bereits | `stamp_got_it_already(Ereignis-ID)` | Das Ereignis wird in deinem ersten Zug automatisch und kostenlos gekauft. | Ja | Bis 3× |
-| Tunnelblick | `stamp_one_track_mind(Ereignis-ID)` | Das Ereignis wird zu Beginn jeder Kaufphase automatisch und kostenlos gekauft. | Offen | Offen |
-| Huldigung | `stamp_fawning_service(Ereignis-ID)` | Wenn du eine Provinz nimmst, wird das Ereignis automatisch und kostenlos gekauft. | Offen | Offen |
-| Gold mit Vorzügen | `stamp_perks_of_wealth(Ereignis-ID)` | Wenn du ein Gold nimmst, führe das Ereignis aus. | Offen | Offen |
-| 2x SP | `stamp_double_vp(Landmarken-ID)` | Die Landmarke vergibt doppelt so viele Siegpunkte. | Offen | Offen |
-| Plus Aktion | `stamp_action_way(Weg-ID)` | Wenn du eine Karte nach den Anweisungen dieses Wegs spielst, **+1 Aktion**. | Offen | Offen |
-| Plus Geld | `stamp_coin_way(Weg-ID)` | Wenn du eine Karte nach den Anweisungen dieses Wegs spielst, +![1 Geld](Spielzeichen/geld-1.png). | Offen | Offen |
-| Platzregen | `stamp_also_debt(Prophezeiungs-ID)` | Wenn die Prophezeiung eintritt, erhält jeder Spieler 5 Schulden. | Offen | Offen |
-| Geldregen | `stamp_also_gold(Prophezeiungs-ID)` | Wenn die Prophezeiung eintritt, nimmt jeder Spieler 3 Gold außerhalb des Vorrats. | Offen | Offen |
-| Wie eine Plage | `stamp_also_plague(Prophezeiungs-ID)` | Wenn die Prophezeiung eintritt, nimmt jeder Spieler 3 Flüche außerhalb des Vorrats. | Offen | Offen |
-| Punktebonus | `stamp_also_respect(Prophezeiungs-ID)` | Wenn die Prophezeiung eintritt, erhält jeder Spieler mit positivem Punktestand so viele Siegpunktmarker, wie er zu diesem Zeitpunkt Siegpunkte hat. | Offen | Offen |
+| Name im Spiel | Befehl | Wirkung |
+| --- | --- | --- |
+| Plus Aktion | `stamp_plus_action(Karten-ID)` | Wenn du eine Karte von diesem Stapel spielst, **+1 Aktion**. *Einmal – Offen · Mehrfach – Offen* |
+| Plus Karte | `stamp_plus_card(Karten-ID)` | Wenn du eine Karte von diesem Stapel spielst, **+1 Karte**. *Einmal – Offen · Mehrfach – Offen* |
+| Plus Kauf | `stamp_plus_buy(Karten-ID)` | Wenn du eine Karte von diesem Stapel spielst, **+1 Kauf**. *Einmal – Offen · Mehrfach – Offen* |
+| Plus Geld | `stamp_plus_coin(Karten-ID)` | Wenn du eine Karte von diesem Stapel spielst, +![1 Geld](Spielzeichen/geld-1.png). *Einmal – Offen · Mehrfach – Offen* |
+| Chamäleon | `stamp_chameleonize(Karten-ID)` | Beim Ausspielen werden **+Karten** und Geldboni in gleicher Höhe getauscht. Aus **+2 Karten** wird zum Beispiel +![2 Geld](Spielzeichen/geld-2.png) und umgekehrt. *Einmal – Offen · Mehrfach – Offen* |
+| Vergünstigt | `stamp_discounted(Karten-ID)` | Die Karte kostet ![1 Geld](Spielzeichen/geld-1.png) weniger. *Einmal – Offen · Mehrfach – Offen* |
+| Später Zahlbar | `stamp_pay_later(Karten-ID)` | Der Geldpreis der Karte wird in gleich viele Schulden umgewandelt. *Einmal – Offen · Mehrfach – Offen* |
+| 2 zum Preis von 1 | `stamp_two_for_one(Karten-ID)` | Die Karte kostet ![1 Geld](Spielzeichen/geld-1.png) mehr. Wenn du sie nimmst, nimm zusätzlich eine Nicht-Vorrats-Kopie. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Einblick Bietend | `stamp_offers_insight(Karten-ID)` | Wenn du diese Karte nimmst, **+1 Karte** am Ende des Zuges. *Einmal – Offen · Mehrfach – Offen* |
+| Pferd Dazu | `stamp_with_horse(Karten-ID)` | Wenn du diese Karte nimmst, nimm ein Pferd. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Beute Dazu | `stamp_with_spoils(Karten-ID)` | Wenn du diese Karte nimmst, nimm eine Beute (`spoils`). *Einmal – Ja · Mehrfach – Bis 3×* |
+| Dorfbewohner Dazu | `stamp_with_villager(Karten-ID)` | Wenn du diese Karte nimmst, **+1 Dorfbewohner**. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Zusatztyp Dauerkarte | `stamp_durationified(Karten-ID)` | Die Karte wird zusätzlich zur Dauerkarte. Wenn du sie spielst, gibt sie dir zu Beginn deines nächsten Zuges **+1 Karte** und **+1 Aktion**. *Einmal – Offen · Mehrfach – Offen* |
+| Zusatztyp Geldkarte | `stamp_treasurified(Karten-ID)` | Die Karte hat zusätzlich den Typ Geld. Du kannst sie dadurch auch als Geldkarte in der Kaufphase spielen. *Einmal – Offen · Mehrfach – Offen* |
+| Zusatztyp Punktekarte | `stamp_victorified(Karten-ID)` | Die Karte wird zusätzlich zur Punktekarte und ist ![1 Siegpunkt](Spielzeichen/siegpunkt-1.png) wert. *Einmal – Offen · Mehrfach – Offen* |
+| Zusatztyp Reaktion | `stamp_reactionified(Karten-ID)` | Die Karte wird zusätzlich zur Reaktion. Du darfst sie spielen, wenn du sie außerhalb der Aufräumphase nimmst, entsorgst oder ablegst. *Einmal – Offen · Mehrfach – Offen* |
+| Zusatztyp Schatten | `stamp_shadowified(Karten-ID)` | Die Karte wird zusätzlich zur Schattenkarte. Du kannst sie aus deinem Nachziehstapel spielen, als wäre sie in deiner Hand. Wenn sie eingemischt wird, kommt sie unter den Nachziehstapel. *Einmal – Offen · Mehrfach – Offen* |
+| −2 Kosten | `stamp_cost_2_less(Ereignis-ID)` | Das Ereignis kostet ![2 Geld](Spielzeichen/geld-2.png) weniger. *Einmal – Offen · Mehrfach – Offen* |
+| −2 Schuldenkosten | `stamp_cost_2D_less(Ereignis-ID)` | Das Ereignis kostet 2 Schulden weniger. *Einmal – Offen · Mehrfach – Offen* |
+| Kostenlos | `stamp_cost_zero(Ereignis-ID)` | Das Ereignis kostet ![0 Geld](Spielzeichen/geld-0.png). *Einmal – Offen · Mehrfach – Offen* |
+| Extrageld | `stamp_bonus_money(Ereignis-ID)` | Wenn du das Ereignis kaufst, +![1 Geld](Spielzeichen/geld-1.png). *Einmal – Ja · Mehrfach – Bis 3×* |
+| Silber Dazu | `stamp_also_silver(Ereignis-ID)` | Wenn du das Ereignis kaufst, nimm ein Silber. *Einmal – Ja · Mehrfach – Gleiche Wirkung* |
+| Neue Impulse | `stamp_motivational(Ereignis-ID)` | Wenn du das Ereignis kaufst, **+2 Karten** am Ende des Zuges. *Einmal – Offen · Mehrfach – Offen* |
+| Hab's Bereits | `stamp_got_it_already(Ereignis-ID)` | Das Ereignis wird in deinem ersten Zug automatisch und kostenlos gekauft. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Tunnelblick | `stamp_one_track_mind(Ereignis-ID)` | Das Ereignis wird zu Beginn jeder Kaufphase automatisch und kostenlos gekauft. *Einmal – Offen · Mehrfach – Offen* |
+| Huldigung | `stamp_fawning_service(Ereignis-ID)` | Wenn du eine Provinz nimmst, wird das Ereignis automatisch und kostenlos gekauft. *Einmal – Ja · Mehrfach – Gleiche Wirkung* |
+| Gold mit Vorzügen | `stamp_perks_of_wealth(Ereignis-ID)` | Wenn du ein Gold nimmst, führe das Ereignis aus. *Einmal – Ja · Mehrfach – Gleiche Wirkung* |
+| 2x SP | `stamp_double_vp(Landmarken-ID)` | Die Landmarke vergibt doppelt so viele Siegpunkte. *Einmal – Offen · Mehrfach – Offen* |
+| Plus Aktion | `stamp_action_way(Weg-ID)` | Wenn du eine Karte nach den Anweisungen dieses Wegs spielst, **+1 Aktion**. *Einmal – Offen · Mehrfach – Offen* |
+| Plus Geld | `stamp_coin_way(Weg-ID)` | Wenn du eine Karte nach den Anweisungen dieses Wegs spielst, +![1 Geld](Spielzeichen/geld-1.png). *Einmal – Offen · Mehrfach – Offen* |
+| Platzregen | `stamp_also_debt(Prophezeiungs-ID)` | Wenn die Prophezeiung eintritt, erhält jeder Spieler 5 Schulden. *Einmal – Offen · Mehrfach – Offen* |
+| Geldregen | `stamp_also_gold(Prophezeiungs-ID)` | Wenn die Prophezeiung eintritt, nimmt jeder Spieler 3 Gold außerhalb des Vorrats. *Einmal – Offen · Mehrfach – Offen* |
+| Wie eine Plage | `stamp_also_plague(Prophezeiungs-ID)` | Wenn die Prophezeiung eintritt, nimmt jeder Spieler 3 Flüche außerhalb des Vorrats. *Einmal – Offen · Mehrfach – Offen* |
+| Punktebonus | `stamp_also_respect(Prophezeiungs-ID)` | Wenn die Prophezeiung eintritt, erhält jeder Spieler mit positivem Punktestand so viele Siegpunktmarker, wie er zu diesem Zeitpunkt Siegpunkte hat. *Einmal – Offen · Mehrfach – Offen* |
 
 #### Alle 28 Änderungen beim Spielaufbau mit `start_`
 
-| Was sich ändert | Befehl | Wirkung und Anwendung | Einmal | Mehrfach |
-| --- | --- | --- | --- | --- |
-| Gefallen | `start_10_favor` | Jeder Spieler startet mit 10 Gefallen. | Ja | Bis 3× |
-| Dorfbewohner | `start_10_villagers` | Jeder Spieler startet mit 10 Dorfbewohnern. | Ja | Bis 3× |
-| Taler | `start_5_coffers` | Jeder Spieler startet mit 5 Talern. | Ja | Bis 3× |
-| Zusätzliche Startkarte | `start_add_card(Karten-ID)` | Jeder Spieler startet mit einer Kopie dieser Karte zusätzlich im Startdeck. | Ja | Bis 3× |
-| Eine Startkarte von jedem Stapel | `start_add_each_pile` | Jeder Spieler startet mit einer Kopie von jedem Königreichkarten-Stapel zusätzlich im Startdeck. | Ja | Bis 3× |
-| Zweiter Stein gefällig? | `start_allow_second_cube(Projekt-ID)` | Erlaubt einen zweiten Projektstein auf dem gewählten Projekt und verdoppelt damit dessen Effekt. | Offen | Offen |
-| Kosten der Flüche | `start_curse_cost_3` | Flüche kosten ![3 Geld](Spielzeichen/geld-3.png). | Offen | Offen |
-| Doppeltes Startdeck | `start_double_deck` | Jeder Spieler startet mit doppelt so vielen Exemplaren jeder Karte seines Startdecks. | Ja | Bis 3× |
-| Doppeltes Erbstück | `start_double_heirloom(Karten-ID)` | Zwei Exemplare des Erbstücks ersetzen bei jedem Spieler zwei Startkupfer. Gib die zugehörige Königreichkarte an, etwa `start_double_heirloom(secret_cave)` für Geheime Höhle. | Ja | Bis 3× |
-| Doppelter Vorratsstapel | `start_double_pile(Stapel-ID)` | Verdoppelt den Inhalt des Vorratsstapels. `start_double_pile(village)` wurde mit Dorf im Spiel bestätigt. | Ja | Bis 3× |
-| Doppelte Siegpunktmarker | `start_double_vp_tokens(Landmarken-ID)` | Legt pro Spieler 6 zusätzliche Siegpunktmarker auf die gewählte Landmarke. Bei Landmarken mit regulär 6 Markern pro Spieler verdoppelt sich dadurch die Startmenge. | Offen | Offen |
-| Karte bereits im Spiel | `start_in_play(Karten-ID)` | Jeder Spieler startet mit der gewählten Dauerkarte bereits im Spiel. Die Plünderer-Kampagne nutzt `start_in_play(search)` für Suche. | Ja | Bis 3× |
-| Verdeckter Reisemarker | `start_journey_facedown` | Jeder Spieler beginnt mit verdecktem Reisemarker. | Ja | Wechselt pro Kopie |
-| Gemischter Stapel | `start_make_split_pile(Stapel-ID,Karten-ID)` | Ersetzt die untere Hälfte eines vorhandenen Stapels mit mindestens 10 Karten durch die zweite Karte. Bei einem Zehnerstapel ersetzt `start_make_split_pile(vassal,groundskeeper)` die unteren 5 Vasallen durch Gärtnerinnen. | Ja | Gleiche Wirkung |
-| Eingeborenendorf | `start_native_village(Karten-ID)` | Jeder Spieler startet mit der gewählten Karte auf seinem Eingeborenendorf-Tableau. `start_native_village(silver)` legt dort ein Silber ab. | Ja | Bis 3× |
-| Zusätzliche Siegpunktmarker auf Aktionsstapeln | `start_plus_2_vp_tokens(Landmarken-ID)` | Legt beim Aufbau je 2 zusätzliche Siegpunktmarker auf die Aktionsstapel im Vorrat, ausgenommen Stapel vom Typ Sammlung. Die passende Ziel-ID für Entweihter Schrein ist `defiled_shrine`. | Offen | Offen |
-| Zusätzliche Siegpunktmarker auf Geldstapeln | `start_plus_8_vp_tokens(Landmarken-ID)` | Legt beim Aufbau je 8 zusätzliche Siegpunktmarker auf die Geldstapel im Vorrat. Die passende Ziel-ID für Aquädukt ist `aqueduct`. | Offen | Offen |
-| Startkupfer austauschen | `start_replace_copper(Karten-ID)` | Ersetzt pro Spieler ein Startkupfer durch eine neu erzeugte Kopie der gewählten Karte. | Ja | Bis 3× |
-| Startkupfer durch eine Karte vom Stapel ersetzen | `start_replace_copper_from_pile(Stapel-ID)` | Nimmt pro Spieler eine Karte vom gewählten Stapel und legt sie anstelle eines Kupfers ins Startdeck. | Ja | Bis 3× |
-| Startanwesen austauschen | `start_replace_estate(Karten-ID)` | Ersetzt pro Spieler ein Startanwesen durch eine neu erzeugte Kopie der gewählten Karte, etwa mit `start_replace_estate(silver)`. | Ja | Bis 3× |
-| Startanwesen durch eine Karte vom Stapel ersetzen | `start_replace_estate_from_pile(Stapel-ID)` | Nimmt pro Spieler eine Karte vom gewählten Stapel und legt sie anstelle eines Anwesens ins Startdeck. Die Menagerie-Kampagne nutzt `start_replace_estate_from_pile(horse)` dreimal, damit jeder Spieler mit 3 Pferden startet. | Ja | Bis 3× |
-| Gleiche Belohnungen | `start_same_reward` | Das Spiel wählt eine Belohnung zufällig aus und macht alle anderen Belohnungen zu Kopien davon. Die Vorlage mit Ritterkampf (`joust`) verwendet den Befehl ohne Klammern. | Offen | Offen |
-| Stapel mischen | `start_shuffle_pile(Stapel-ID)` | Mischt den gewählten gemischten Vorratsstapel beim Aufbau, etwa `start_shuffle_pile(patrician)` für den Stapel mit Patrizier und Handelsplatz. | Offen | Offen |
-| Wirtshaus | `start_tavern(Karten-ID)` | Jeder Spieler startet mit der gewählten Karte auf seinem Wirtshaus-Tableau. Eine Kampagnenvorlage nutzt zweimal `start_tavern(copper)`. | Ja | Bis 3× |
-| Flüche im Müll | `start_trash_curses` | Erzeugt beim Aufbau 10 Flüche direkt im Müll. | Ja | Bis 3× |
-| Stapel im Müll | `start_trash_pile(Karten-ID)` | Erzeugt beim Aufbau einen Stapel der gewählten Karte direkt im Müll. | Ja | Bis 3× |
-| Dreifacher Vorratsstapel | `start_triple_pile(Stapel-ID)` | Verdreifacht den Inhalt des gewählten Vorratsstapels. | Ja | Bis 3× |
-| Projektstein | `start_with_cube(Projekt-ID)` | Jeder Spieler startet mit einem Projektstein auf dem gewählten Projekt. Die Kampagne nutzt etwa `start_with_cube(pageant)` für Festzug. | Offen | Offen |
+| Was sich ändert | Befehl | Wirkung und Anwendung |
+| --- | --- | --- |
+| Gefallen | `start_10_favor` | Jeder Spieler startet mit 10 Gefallen. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Dorfbewohner | `start_10_villagers` | Jeder Spieler startet mit 10 Dorfbewohnern. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Taler | `start_5_coffers` | Jeder Spieler startet mit 5 Talern. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Zusätzliche Startkarte | `start_add_card(Karten-ID)` | Jeder Spieler startet mit einer Kopie dieser Karte zusätzlich im Startdeck. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Eine Startkarte von jedem Stapel | `start_add_each_pile` | Jeder Spieler startet mit einer Kopie von jedem Königreichkarten-Stapel zusätzlich im Startdeck. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Zweiter Stein gefällig? | `start_allow_second_cube(Projekt-ID)` | Erlaubt einen zweiten Projektstein auf dem gewählten Projekt und verdoppelt damit dessen Effekt. *Einmal – Offen · Mehrfach – Offen* |
+| Kosten der Flüche | `start_curse_cost_3` | Flüche kosten ![3 Geld](Spielzeichen/geld-3.png). *Einmal – Offen · Mehrfach – Offen* |
+| Doppeltes Startdeck | `start_double_deck` | Jeder Spieler startet mit doppelt so vielen Exemplaren jeder Karte seines Startdecks. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Doppeltes Erbstück | `start_double_heirloom(Karten-ID)` | Zwei Exemplare des Erbstücks ersetzen bei jedem Spieler zwei Startkupfer. Gib die zugehörige Königreichkarte an, etwa `start_double_heirloom(secret_cave)` für Geheime Höhle. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Doppelter Vorratsstapel | `start_double_pile(Stapel-ID)` | Verdoppelt den Inhalt des Vorratsstapels. `start_double_pile(village)` wurde mit Dorf im Spiel bestätigt. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Doppelte Siegpunktmarker | `start_double_vp_tokens(Landmarken-ID)` | Legt pro Spieler 6 zusätzliche Siegpunktmarker auf die gewählte Landmarke. Bei Landmarken mit regulär 6 Markern pro Spieler verdoppelt sich dadurch die Startmenge. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Karte bereits im Spiel | `start_in_play(Karten-ID)` | Jeder Spieler startet mit der gewählten Dauerkarte bereits im Spiel. Die Plünderer-Kampagne nutzt `start_in_play(search)` für Suche. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Verdeckter Reisemarker | `start_journey_facedown` | Jeder Spieler beginnt mit verdecktem Reisemarker. *Einmal – Ja · Mehrfach – Wechselt pro Kopie* |
+| Gemischter Stapel | `start_make_split_pile(Stapel-ID,Karten-ID)` | Ersetzt die untere Hälfte eines vorhandenen Stapels mit mindestens 10 Karten durch die zweite Karte. Bei einem Zehnerstapel ersetzt `start_make_split_pile(vassal,groundskeeper)` die unteren 5 Vasallen durch Gärtnerinnen. *Einmal – Ja · Mehrfach – Gleiche Wirkung* |
+| Eingeborenendorf | `start_native_village(Karten-ID)` | Jeder Spieler startet mit der gewählten Karte auf seinem Eingeborenendorf-Tableau. `start_native_village(silver)` legt dort ein Silber ab. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Zusätzliche Siegpunktmarker auf Aktionsstapeln | `start_plus_2_vp_tokens(Landmarken-ID)` | Legt beim Aufbau je 2 zusätzliche Siegpunktmarker auf die Aktionsstapel im Vorrat, ausgenommen Stapel vom Typ Sammlung. Die passende Ziel-ID für Entweihter Schrein ist `defiled_shrine`. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Zusätzliche Siegpunktmarker auf Geldstapeln | `start_plus_8_vp_tokens(Landmarken-ID)` | Legt beim Aufbau je 8 zusätzliche Siegpunktmarker auf die Geldstapel im Vorrat. Die passende Ziel-ID für Aquädukt ist `aqueduct`. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Startkupfer austauschen | `start_replace_copper(Karten-ID)` | Ersetzt pro Spieler ein Startkupfer durch eine neu erzeugte Kopie der gewählten Karte. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Startkupfer durch eine Karte vom Stapel ersetzen | `start_replace_copper_from_pile(Stapel-ID)` | Nimmt pro Spieler eine Karte vom gewählten Stapel und legt sie anstelle eines Kupfers ins Startdeck. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Startanwesen austauschen | `start_replace_estate(Karten-ID)` | Ersetzt pro Spieler ein Startanwesen durch eine neu erzeugte Kopie der gewählten Karte, etwa mit `start_replace_estate(silver)`. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Startanwesen durch eine Karte vom Stapel ersetzen | `start_replace_estate_from_pile(Stapel-ID)` | Nimmt pro Spieler eine Karte vom gewählten Stapel und legt sie anstelle eines Anwesens ins Startdeck. Die Menagerie-Kampagne nutzt `start_replace_estate_from_pile(horse)` dreimal, damit jeder Spieler mit 3 Pferden startet. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Gleiche Belohnungen | `start_same_reward` | Das Spiel wählt eine Belohnung zufällig aus und macht alle anderen Belohnungen zu Kopien davon. Die Vorlage mit Ritterkampf (`joust`) verwendet den Befehl ohne Klammern. *Einmal – Offen · Mehrfach – Offen* |
+| Stapel mischen | `start_shuffle_pile(Stapel-ID)` | Mischt den gewählten gemischten Vorratsstapel beim Aufbau, etwa `start_shuffle_pile(patrician)` für den Stapel mit Patrizier und Handelsplatz. *Einmal – Offen · Mehrfach – Offen* |
+| Wirtshaus | `start_tavern(Karten-ID)` | Jeder Spieler startet mit der gewählten Karte auf seinem Wirtshaus-Tableau. Eine Kampagnenvorlage nutzt zweimal `start_tavern(copper)`. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Flüche im Müll | `start_trash_curses` | Erzeugt beim Aufbau 10 Flüche direkt im Müll. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Stapel im Müll | `start_trash_pile(Karten-ID)` | Erzeugt beim Aufbau einen Stapel der gewählten Karte direkt im Müll. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Dreifacher Vorratsstapel | `start_triple_pile(Stapel-ID)` | Verdreifacht den Inhalt des gewählten Vorratsstapels. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Projektstein | `start_with_cube(Projekt-ID)` | Jeder Spieler startet mit einem Projektstein auf dem gewählten Projekt. Die Kampagne nutzt etwa `start_with_cube(pageant)` für Festzug. *Einmal – Ja · Mehrfach – Spielstart bricht bei 2× und 3× ab* |
 
 #### Weitere Varianten aus der Kampagnenerzeugung
 
@@ -222,113 +222,113 @@ The tables cover 89 commands and six campaign generation variants in game build 
 
 +![1 coin](Spielzeichen/geld-1.png) adds 1 coin to your spending money for this turn. You can spend a Coffers token on a later turn.
 
-The **Once** and **Repeated** columns report measurements from local games in build 3315. **Up to 3×** means each copy through the third had an additional effect. **Same result** means two and three copies matched one copy in the test. **Untested** marks a pending or inconclusive test. [Measurements](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
+The **Once** and **Repeated** notes in the effect cell report measurements from local games in build 3315. **Up to 3×** means each copy through the third had an additional effect. **Same result** means two and three copies matched one copy in the test. **Untested** marks a pending or inconclusive test. [Measurements](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
 
 #### All 27 twists with `twist_`
 
 A **non-Supply copy** is an extra copy of the card that you gain from outside the Supply.
 
-| In-game name | Command | Effect | Once | Repeated |
-| --- | --- | --- | --- | --- |
-| Big Ideas | `twist_big_ideas` | At the start of your turn, **+1 Card**. | Yes | Up to 3× |
-| Busy Busy | `twist_busy_busy` | At the start of your turn, **+1 Action**. | Yes | Up to 3× |
-| Extra Oomph | `twist_extra_oomph` | At the start of your turn, +![1 coin](Spielzeichen/geld-1.png). | Yes | Up to 3× |
-| Forever Favored | `twist_forever_favored` | At the start of your turn, **+1 Favor**. | Yes | Up to 3× |
-| Garbage Heap | `twist_garbage_heap` | At the start of your turn, you may trash a card from your hand. | Untested | Untested |
-| Penny Party | `twist_penny_party` | Gain a Copper at the start of your turn. | Yes | Up to 3× |
-| Shoppers | `twist_shoppers` | At the start of your turn, **+1 Buy**. | Yes | Up to 3× |
-| Cramped | `twist_cramped` | Your regular hand draw is 4 cards instead of 5. | Yes | Up to 3× |
-| From the Throne | `twist_from_the_throne` | The first Action card you play each turn is automatically played twice. | Untested | Untested |
-| Landfill | `twist_landfill` | When you trash one of your cards, **+1 Card**. This also applies when you trash the card from somewhere other than your hand. | Untested | Untested |
-| So much Stuff | `twist_so_much_stuff` | When you play your first card in a turn, gain a non-Supply copy of it. | Untested | Untested |
-| Double Up | `twist_double_up` | The first time you gain an Action or Treasure card in a turn, also gain a non-Supply copy of it. | Yes | Up to 3× |
-| Fast Track | `twist_fast_track` | When you gain a Duration or Reserve card, set it aside and play it at the start of the upcoming Clean-up. | Untested | Untested |
-| Favored Landlords | `twist_favored_landlords` | When you gain a Victory card, **+1 Favor**. | Yes | Up to 3× |
-| Favored Wealthy | `twist_favored_wealthy` | When you gain a Treasure card, **+1 Favor**. | Yes | Up to 3× |
-| Incoming | `twist_incoming` | When you gain an Action or Treasure card, put it straight onto your deck instead of your discard pile. | Yes | Same result |
-| Rebates | `twist_rebates` | When you gain a card, +![1 coin](Spielzeichen/geld-1.png). | Yes | Up to 3× |
-| Beakers | `twist_beakers` | Unspent Potion resources carry over until you spend them. You can use them to pay on later turns, like Coffers. | Untested | Untested |
-| Delayed Joy | `twist_delayed_joy` | You may save any Boon and resolve it on your next turn. | Untested | Untested |
-| Pennies Saved | `twist_pennies_saved` | At the end of your Buy phase, convert unspent coins to Coffers. | Untested | Untested |
-| Real Estate Barons | `twist_real_estate_barons` | You can spend VP tokens as Coffers. | Untested | Untested |
-| Sale | `twist_sale` | Cards cost ![1 coin](Spielzeichen/geld-1.png) less. | Untested | Untested |
-| Head Start | `twist_head_start` | In the campaign, you get 2 extra turns at the start. The AI gets 10 VP tokens. | Untested | Untested |
-| Mirror Loot | `twist_mirror_loot` | The Loot pile consists of copies of the same Loot card. | Untested | Untested |
-| Room for More | `twist_room_for_more(pile-ID)` | Adds the chosen Kingdom pile to the Supply at setup. [Loading it from a custom set](#twelve-or-more-kingdom-piles) remains unverified. | Yes | Once in the F8 editor |
-| Turn Turn Turn | `twist_turn_turn_turn` | At the start of each human turn after the first, move the top group of matching cards to the bottom of each Supply pile that can rotate. | Untested | Untested |
-| Typhoon | `twist_typhoon(pile-ID,pile-ID,…)` | At the start of human turns, the game replaces a Kingdom pile in the Supply. The list in parentheses specifies up to 20 possible replacement pile IDs. | Untested | Untested |
+| In-game name | Command | Effect |
+| --- | --- | --- |
+| Big Ideas | `twist_big_ideas` | At the start of your turn, **+1 Card**. *Once – Yes · Repeated – Up to 3×* |
+| Busy Busy | `twist_busy_busy` | At the start of your turn, **+1 Action**. *Once – Yes · Repeated – Up to 3×* |
+| Extra Oomph | `twist_extra_oomph` | At the start of your turn, +![1 coin](Spielzeichen/geld-1.png). *Once – Yes · Repeated – Up to 3×* |
+| Forever Favored | `twist_forever_favored` | At the start of your turn, **+1 Favor**. *Once – Yes · Repeated – Up to 3×* |
+| Garbage Heap | `twist_garbage_heap` | At the start of your turn, you may trash a card from your hand. *Once – Untested · Repeated – Untested* |
+| Penny Party | `twist_penny_party` | Gain a Copper at the start of your turn. *Once – Yes · Repeated – Up to 3×* |
+| Shoppers | `twist_shoppers` | At the start of your turn, **+1 Buy**. *Once – Yes · Repeated – Up to 3×* |
+| Cramped | `twist_cramped` | Your regular hand draw is 4 cards instead of 5. *Once – Yes · Repeated – Up to 3×* |
+| From the Throne | `twist_from_the_throne` | The first Action card you play each turn is automatically played twice. *Once – Untested · Repeated – Untested* |
+| Landfill | `twist_landfill` | When you trash one of your cards, **+1 Card**. This also applies when you trash the card from somewhere other than your hand. *Once – Untested · Repeated – Untested* |
+| So much Stuff | `twist_so_much_stuff` | When you play your first card in a turn, gain a non-Supply copy of it. *Once – Untested · Repeated – Untested* |
+| Double Up | `twist_double_up` | The first time you gain an Action or Treasure card in a turn, also gain a non-Supply copy of it. *Once – Yes · Repeated – Up to 3×* |
+| Fast Track | `twist_fast_track` | When you gain a Duration or Reserve card, set it aside and play it at the start of the upcoming Clean-up. *Once – Untested · Repeated – Untested* |
+| Favored Landlords | `twist_favored_landlords` | When you gain a Victory card, **+1 Favor**. *Once – Yes · Repeated – Up to 3×* |
+| Favored Wealthy | `twist_favored_wealthy` | When you gain a Treasure card, **+1 Favor**. *Once – Yes · Repeated – Up to 3×* |
+| Incoming | `twist_incoming` | When you gain an Action or Treasure card, put it straight onto your deck instead of your discard pile. *Once – Yes · Repeated – Same result* |
+| Rebates | `twist_rebates` | When you gain a card, +![1 coin](Spielzeichen/geld-1.png). *Once – Yes · Repeated – Up to 3×* |
+| Beakers | `twist_beakers` | Unspent Potion resources carry over until you spend them. You can use them to pay on later turns, like Coffers. *Once – Untested · Repeated – Untested* |
+| Delayed Joy | `twist_delayed_joy` | You may save any Boon and resolve it on your next turn. *Once – Untested · Repeated – Untested* |
+| Pennies Saved | `twist_pennies_saved` | At the end of your Buy phase, convert unspent coins to Coffers. *Once – Untested · Repeated – Untested* |
+| Real Estate Barons | `twist_real_estate_barons` | You can spend VP tokens as Coffers. *Once – Untested · Repeated – Untested* |
+| Sale | `twist_sale` | Cards cost ![1 coin](Spielzeichen/geld-1.png) less. *Once – Untested · Repeated – Untested* |
+| Head Start | `twist_head_start` | In the campaign, you get 2 extra turns at the start. The AI gets 10 VP tokens. *Once – Untested · Repeated – Untested* |
+| Mirror Loot | `twist_mirror_loot` | The Loot pile consists of copies of the same Loot card. *Once – Yes · Repeated – Same result* |
+| Room for More | `twist_room_for_more(pile-ID)` | Adds the chosen Kingdom pile to the Supply at setup. [Loading it from a custom set](#twelve-or-more-kingdom-piles) remains unverified. *Once – Yes · Repeated – Once in the F8 editor* |
+| Turn Turn Turn | `twist_turn_turn_turn` | At the start of each human turn after the first, move the top group of matching cards to the bottom of each Supply pile that can rotate. *Once – Untested · Repeated – Untested* |
+| Typhoon | `twist_typhoon(pile-ID,pile-ID,…)` | At the start of human turns, the game replaces a Kingdom pile in the Supply. The list in parentheses specifies up to 20 possible replacement pile IDs. *Once – Untested · Repeated – Untested* |
 
 #### All 34 stamps with `stamp_`
 
-| In-game name | Command | Effect | Once | Repeated |
-| --- | --- | --- | --- | --- |
-| Plus Action | `stamp_plus_action(card-ID)` | When you play a card from this pile, **+1 Action**. | Untested | Untested |
-| Plus Card | `stamp_plus_card(card-ID)` | When you play a card from this pile, **+1 Card**. | Untested | Untested |
-| Plus Buy | `stamp_plus_buy(card-ID)` | When you play a card from this pile, **+1 Buy**. | Untested | Untested |
-| Plus Coin | `stamp_plus_coin(card-ID)` | When you play a card from this pile, +![1 coin](Spielzeichen/geld-1.png). | Untested | Untested |
-| Chameleonized | `stamp_chameleonize(card-ID)` | When you play the card, swap **+Cards** and coin bonuses in equal amounts. **+2 Cards** becomes +![2 coins](Spielzeichen/geld-2.png), and vice versa. | Untested | Untested |
-| Discounted | `stamp_discounted(card-ID)` | The card costs ![1 coin](Spielzeichen/geld-1.png) less. | Untested | Untested |
-| Pay Later | `stamp_pay_later(card-ID)` | Convert the card's coin cost to an equal amount of Debt. | Untested | Untested |
-| Two For One | `stamp_two_for_one(card-ID)` | The card costs ![1 coin](Spielzeichen/geld-1.png) more. When you gain it, also gain a non-Supply copy. | Untested | Untested |
-| Offers Insight | `stamp_offers_insight(card-ID)` | When you gain this card, **+1 Card** at the end of the turn. | Untested | Untested |
-| With Horse | `stamp_with_horse(card-ID)` | When you gain this card, gain a Horse. | Untested | Untested |
-| With Spoils | `stamp_with_spoils(card-ID)` | When you gain this card, gain a Spoils (`spoils`). | Untested | Untested |
-| With Villager | `stamp_with_villager(card-ID)` | When you gain this card, **+1 Villager**. | Yes | Up to 3× |
-| Durationified | `stamp_durationified(card-ID)` | This card is also a Duration. When you play it, it gives you **+1 Card** and **+1 Action** at the start of your next turn. | Untested | Untested |
-| Treasurified | `stamp_treasurified(card-ID)` | This card is also a Treasure, so you can play it as a Treasure in your Buy phase. | Untested | Untested |
-| Victorified | `stamp_victorified(card-ID)` | This card is also a Victory card and is worth ![1 victory point](Spielzeichen/siegpunkt-1.png). | Untested | Untested |
-| Reactionified | `stamp_reactionified(card-ID)` | This card is also a Reaction. You may play it when you gain, trash, or discard it outside of Clean-up. | Untested | Untested |
-| Shadowified | `stamp_shadowified(card-ID)` | This card is also a Shadow. You can play it from your deck as if it were in your hand. When you shuffle it, put it on the bottom of your deck. | Untested | Untested |
-| -2 Cost | `stamp_cost_2_less(event-ID)` | The Event costs ![2 coins](Spielzeichen/geld-2.png) less. | Untested | Untested |
-| -2 Debt Cost | `stamp_cost_2D_less(event-ID)` | The Event costs 2 less Debt. | Untested | Untested |
-| Free | `stamp_cost_zero(event-ID)` | The Event costs ![0 coins](Spielzeichen/geld-0.png). | Untested | Untested |
-| Bonus Money | `stamp_bonus_money(event-ID)` | When you buy this Event, +![1 coin](Spielzeichen/geld-1.png). | Yes | Up to 3× |
-| Also Silver | `stamp_also_silver(event-ID)` | When you buy this Event, gain a Silver. | Yes | Same result |
-| Motivational | `stamp_motivational(event-ID)` | When you buy this Event, **+2 Cards** at the end of the turn. | Untested | Untested |
-| Got It Already | `stamp_got_it_already(event-ID)` | You automatically buy this Event for free on your first turn. | Yes | Up to 3× |
-| One Track Mind | `stamp_one_track_mind(event-ID)` | You automatically buy this Event for free at the start of each Buy phase. | Untested | Untested |
-| Fawning Service | `stamp_fawning_service(event-ID)` | When you gain a Province, you automatically buy this Event for free. | Untested | Untested |
-| Perks of Wealth | `stamp_perks_of_wealth(event-ID)` | When you gain a Gold, resolve this Event. | Untested | Untested |
-| 2x VP | `stamp_double_vp(landmark-ID)` | The Landmark awards twice as many victory points. | Untested | Untested |
-| Plus Action | `stamp_action_way(way-ID)` | When you play a card using this Way, **+1 Action**. | Untested | Untested |
-| Plus Coin | `stamp_coin_way(way-ID)` | When you play a card using this Way, +![1 coin](Spielzeichen/geld-1.png). | Untested | Untested |
-| Also Debt | `stamp_also_debt(prophecy-ID)` | When the Prophecy comes true, each player gets 5 Debt. | Untested | Untested |
-| Also Gold | `stamp_also_gold(prophecy-ID)` | When the Prophecy comes true, each player gains 3 Gold from outside the Supply. | Untested | Untested |
-| Also Plague | `stamp_also_plague(prophecy-ID)` | When the Prophecy comes true, each player gains 3 Curses from outside the Supply. | Untested | Untested |
-| Also Respect | `stamp_also_respect(prophecy-ID)` | When the Prophecy comes true, each player with a positive score gets as many VP tokens as they currently have victory points. | Untested | Untested |
+| In-game name | Command | Effect |
+| --- | --- | --- |
+| Plus Action | `stamp_plus_action(card-ID)` | When you play a card from this pile, **+1 Action**. *Once – Untested · Repeated – Untested* |
+| Plus Card | `stamp_plus_card(card-ID)` | When you play a card from this pile, **+1 Card**. *Once – Untested · Repeated – Untested* |
+| Plus Buy | `stamp_plus_buy(card-ID)` | When you play a card from this pile, **+1 Buy**. *Once – Untested · Repeated – Untested* |
+| Plus Coin | `stamp_plus_coin(card-ID)` | When you play a card from this pile, +![1 coin](Spielzeichen/geld-1.png). *Once – Untested · Repeated – Untested* |
+| Chameleonized | `stamp_chameleonize(card-ID)` | When you play the card, swap **+Cards** and coin bonuses in equal amounts. **+2 Cards** becomes +![2 coins](Spielzeichen/geld-2.png), and vice versa. *Once – Untested · Repeated – Untested* |
+| Discounted | `stamp_discounted(card-ID)` | The card costs ![1 coin](Spielzeichen/geld-1.png) less. *Once – Untested · Repeated – Untested* |
+| Pay Later | `stamp_pay_later(card-ID)` | Convert the card's coin cost to an equal amount of Debt. *Once – Untested · Repeated – Untested* |
+| Two For One | `stamp_two_for_one(card-ID)` | The card costs ![1 coin](Spielzeichen/geld-1.png) more. When you gain it, also gain a non-Supply copy. *Once – Yes · Repeated – Up to 3×* |
+| Offers Insight | `stamp_offers_insight(card-ID)` | When you gain this card, **+1 Card** at the end of the turn. *Once – Untested · Repeated – Untested* |
+| With Horse | `stamp_with_horse(card-ID)` | When you gain this card, gain a Horse. *Once – Yes · Repeated – Up to 3×* |
+| With Spoils | `stamp_with_spoils(card-ID)` | When you gain this card, gain a Spoils (`spoils`). *Once – Yes · Repeated – Up to 3×* |
+| With Villager | `stamp_with_villager(card-ID)` | When you gain this card, **+1 Villager**. *Once – Yes · Repeated – Up to 3×* |
+| Durationified | `stamp_durationified(card-ID)` | This card is also a Duration. When you play it, it gives you **+1 Card** and **+1 Action** at the start of your next turn. *Once – Untested · Repeated – Untested* |
+| Treasurified | `stamp_treasurified(card-ID)` | This card is also a Treasure, so you can play it as a Treasure in your Buy phase. *Once – Untested · Repeated – Untested* |
+| Victorified | `stamp_victorified(card-ID)` | This card is also a Victory card and is worth ![1 victory point](Spielzeichen/siegpunkt-1.png). *Once – Untested · Repeated – Untested* |
+| Reactionified | `stamp_reactionified(card-ID)` | This card is also a Reaction. You may play it when you gain, trash, or discard it outside of Clean-up. *Once – Untested · Repeated – Untested* |
+| Shadowified | `stamp_shadowified(card-ID)` | This card is also a Shadow. You can play it from your deck as if it were in your hand. When you shuffle it, put it on the bottom of your deck. *Once – Untested · Repeated – Untested* |
+| -2 Cost | `stamp_cost_2_less(event-ID)` | The Event costs ![2 coins](Spielzeichen/geld-2.png) less. *Once – Untested · Repeated – Untested* |
+| -2 Debt Cost | `stamp_cost_2D_less(event-ID)` | The Event costs 2 less Debt. *Once – Untested · Repeated – Untested* |
+| Free | `stamp_cost_zero(event-ID)` | The Event costs ![0 coins](Spielzeichen/geld-0.png). *Once – Untested · Repeated – Untested* |
+| Bonus Money | `stamp_bonus_money(event-ID)` | When you buy this Event, +![1 coin](Spielzeichen/geld-1.png). *Once – Yes · Repeated – Up to 3×* |
+| Also Silver | `stamp_also_silver(event-ID)` | When you buy this Event, gain a Silver. *Once – Yes · Repeated – Same result* |
+| Motivational | `stamp_motivational(event-ID)` | When you buy this Event, **+2 Cards** at the end of the turn. *Once – Untested · Repeated – Untested* |
+| Got It Already | `stamp_got_it_already(event-ID)` | You automatically buy this Event for free on your first turn. *Once – Yes · Repeated – Up to 3×* |
+| One Track Mind | `stamp_one_track_mind(event-ID)` | You automatically buy this Event for free at the start of each Buy phase. *Once – Untested · Repeated – Untested* |
+| Fawning Service | `stamp_fawning_service(event-ID)` | When you gain a Province, you automatically buy this Event for free. *Once – Yes · Repeated – Same result* |
+| Perks of Wealth | `stamp_perks_of_wealth(event-ID)` | When you gain a Gold, resolve this Event. *Once – Yes · Repeated – Same result* |
+| 2x VP | `stamp_double_vp(landmark-ID)` | The Landmark awards twice as many victory points. *Once – Untested · Repeated – Untested* |
+| Plus Action | `stamp_action_way(way-ID)` | When you play a card using this Way, **+1 Action**. *Once – Untested · Repeated – Untested* |
+| Plus Coin | `stamp_coin_way(way-ID)` | When you play a card using this Way, +![1 coin](Spielzeichen/geld-1.png). *Once – Untested · Repeated – Untested* |
+| Also Debt | `stamp_also_debt(prophecy-ID)` | When the Prophecy comes true, each player gets 5 Debt. *Once – Untested · Repeated – Untested* |
+| Also Gold | `stamp_also_gold(prophecy-ID)` | When the Prophecy comes true, each player gains 3 Gold from outside the Supply. *Once – Untested · Repeated – Untested* |
+| Also Plague | `stamp_also_plague(prophecy-ID)` | When the Prophecy comes true, each player gains 3 Curses from outside the Supply. *Once – Untested · Repeated – Untested* |
+| Also Respect | `stamp_also_respect(prophecy-ID)` | When the Prophecy comes true, each player with a positive score gets as many VP tokens as they currently have victory points. *Once – Untested · Repeated – Untested* |
 
 #### All 28 setup changes with `start_`
 
-| What changes | Command | Effect and use | Once | Repeated |
-| --- | --- | --- | --- | --- |
-| Favors | `start_10_favor` | Each player starts with 10 Favors. | Yes | Up to 3× |
-| Villagers | `start_10_villagers` | Each player starts with 10 Villagers. | Yes | Up to 3× |
-| Coffers | `start_5_coffers` | Each player starts with 5 Coffers. | Yes | Up to 3× |
-| Extra starting card | `start_add_card(card-ID)` | Each player starts with an extra copy of this card in their starting deck. | Yes | Up to 3× |
-| One starting card from each pile | `start_add_each_pile` | Each player starts with an extra copy of a card from each Kingdom pile in their starting deck. | Yes | Up to 3× |
-| Second Cube | `start_allow_second_cube(project-ID)` | Allows a second cube on the chosen Project, doubling its effect. | Untested | Untested |
-| Cost of Curses | `start_curse_cost_3` | Curses cost ![3 coins](Spielzeichen/geld-3.png). | Untested | Untested |
-| Double starting deck | `start_double_deck` | Each player starts with twice as many copies of every card in their starting deck. | Yes | Up to 3× |
-| Double Heirloom | `start_double_heirloom(card-ID)` | Two copies of the Heirloom replace two starting Coppers per player. Use the associated Kingdom card ID, as in `start_double_heirloom(secret_cave)` for Secret Cave. | Yes | Up to 3× |
-| Double Supply pile | `start_double_pile(pile-ID)` | Doubles the number of cards in the Supply pile. `start_double_pile(village)` was verified with Village in a game test. | Yes | Up to 3× |
-| Double VP tokens | `start_double_vp_tokens(landmark-ID)` | Adds 6 VP tokens per player to the chosen Landmark. This doubles the starting amount for Landmarks that normally have 6 tokens per player. | Untested | Untested |
-| Card already in play | `start_in_play(card-ID)` | Each player starts with the chosen Duration card already in play. The Plunder campaign uses `start_in_play(search)` for Search. | Yes | Up to 3× |
-| Journey token face down | `start_journey_facedown` | Each player starts with their Journey token face down. | Yes | Flips with each copy |
-| Split pile | `start_make_split_pile(pile-ID,card-ID)` | Replaces the bottom half of an existing pile of at least 10 cards with the second card. In a ten-card pile, `start_make_split_pile(vassal,groundskeeper)` replaces the bottom 5 Vassals with Groundskeepers. | Yes | Same result |
-| Native Village | `start_native_village(card-ID)` | Each player starts with the chosen card on their Native Village mat. `start_native_village(silver)` puts a Silver there. | Yes | Up to 3× |
-| Extra VP tokens on Action piles | `start_plus_2_vp_tokens(landmark-ID)` | At setup, adds 2 VP tokens to each Action pile in the Supply, excluding Gathering piles. The target ID for Defiled Shrine is `defiled_shrine`. | Untested | Untested |
-| Extra VP tokens on Treasure piles | `start_plus_8_vp_tokens(landmark-ID)` | At setup, adds 8 VP tokens to each Treasure pile in the Supply. The target ID for Aqueduct is `aqueduct`. | Untested | Untested |
-| Replace a starting Copper | `start_replace_copper(card-ID)` | Replaces one starting Copper per player with a newly created copy of the chosen card. | Yes | Up to 3× |
-| Replace a starting Copper with a card from a pile | `start_replace_copper_from_pile(pile-ID)` | Takes one card per player from the chosen pile and puts it in their starting deck in place of a Copper. | Yes | Up to 3× |
-| Replace a starting Estate | `start_replace_estate(card-ID)` | Replaces one starting Estate per player with a newly created copy of the chosen card, as in `start_replace_estate(silver)`. | Yes | Up to 3× |
-| Replace a starting Estate with a card from a pile | `start_replace_estate_from_pile(pile-ID)` | Takes one card per player from the chosen pile and puts it in their starting deck in place of an Estate. The Menagerie campaign uses `start_replace_estate_from_pile(horse)` three times so each player starts with 3 Horses. | Yes | Up to 3× |
-| Identical Rewards | `start_same_reward` | The game picks a Reward at random and makes all the other Rewards copies of it. The Joust (`joust`) template uses the command without parentheses. | Untested | Untested |
-| Shuffle a pile | `start_shuffle_pile(pile-ID)` | Shuffles the chosen split Supply pile at setup. For example, `start_shuffle_pile(patrician)` shuffles the Patrician and Emporium pile. | Untested | Untested |
-| Tavern | `start_tavern(card-ID)` | Each player starts with the chosen card on their Tavern mat. One campaign template uses `start_tavern(copper)` twice. | Yes | Up to 3× |
-| Curses in the trash | `start_trash_curses` | Creates 10 Curses directly in the trash at setup. | Yes | Up to 3× |
-| Pile in the trash | `start_trash_pile(card-ID)` | Creates a pile of the chosen card directly in the trash at setup. | Yes | Up to 3× |
-| Triple Supply pile | `start_triple_pile(pile-ID)` | Triples the number of cards in the chosen Supply pile. | Yes | Up to 3× |
-| Project cube | `start_with_cube(project-ID)` | Each player starts with a cube on the chosen Project. One campaign example is `start_with_cube(pageant)` for Pageant. | Untested | Untested |
+| What changes | Command | Effect and use |
+| --- | --- | --- |
+| Favors | `start_10_favor` | Each player starts with 10 Favors. *Once – Yes · Repeated – Up to 3×* |
+| Villagers | `start_10_villagers` | Each player starts with 10 Villagers. *Once – Yes · Repeated – Up to 3×* |
+| Coffers | `start_5_coffers` | Each player starts with 5 Coffers. *Once – Yes · Repeated – Up to 3×* |
+| Extra starting card | `start_add_card(card-ID)` | Each player starts with an extra copy of this card in their starting deck. *Once – Yes · Repeated – Up to 3×* |
+| One starting card from each pile | `start_add_each_pile` | Each player starts with an extra copy of a card from each Kingdom pile in their starting deck. *Once – Yes · Repeated – Up to 3×* |
+| Second Cube | `start_allow_second_cube(project-ID)` | Allows a second cube on the chosen Project, doubling its effect. *Once – Untested · Repeated – Untested* |
+| Cost of Curses | `start_curse_cost_3` | Curses cost ![3 coins](Spielzeichen/geld-3.png). *Once – Untested · Repeated – Untested* |
+| Double starting deck | `start_double_deck` | Each player starts with twice as many copies of every card in their starting deck. *Once – Yes · Repeated – Up to 3×* |
+| Double Heirloom | `start_double_heirloom(card-ID)` | Two copies of the Heirloom replace two starting Coppers per player. Use the associated Kingdom card ID, as in `start_double_heirloom(secret_cave)` for Secret Cave. *Once – Yes · Repeated – Up to 3×* |
+| Double Supply pile | `start_double_pile(pile-ID)` | Doubles the number of cards in the Supply pile. `start_double_pile(village)` was verified with Village in a game test. *Once – Yes · Repeated – Up to 3×* |
+| Double VP tokens | `start_double_vp_tokens(landmark-ID)` | Adds 6 VP tokens per player to the chosen Landmark. This doubles the starting amount for Landmarks that normally have 6 tokens per player. *Once – Yes · Repeated – Up to 3×* |
+| Card already in play | `start_in_play(card-ID)` | Each player starts with the chosen Duration card already in play. The Plunder campaign uses `start_in_play(search)` for Search. *Once – Yes · Repeated – Up to 3×* |
+| Journey token face down | `start_journey_facedown` | Each player starts with their Journey token face down. *Once – Yes · Repeated – Flips with each copy* |
+| Split pile | `start_make_split_pile(pile-ID,card-ID)` | Replaces the bottom half of an existing pile of at least 10 cards with the second card. In a ten-card pile, `start_make_split_pile(vassal,groundskeeper)` replaces the bottom 5 Vassals with Groundskeepers. *Once – Yes · Repeated – Same result* |
+| Native Village | `start_native_village(card-ID)` | Each player starts with the chosen card on their Native Village mat. `start_native_village(silver)` puts a Silver there. *Once – Yes · Repeated – Up to 3×* |
+| Extra VP tokens on Action piles | `start_plus_2_vp_tokens(landmark-ID)` | At setup, adds 2 VP tokens to each Action pile in the Supply, excluding Gathering piles. The target ID for Defiled Shrine is `defiled_shrine`. *Once – Yes · Repeated – Up to 3×* |
+| Extra VP tokens on Treasure piles | `start_plus_8_vp_tokens(landmark-ID)` | At setup, adds 8 VP tokens to each Treasure pile in the Supply. The target ID for Aqueduct is `aqueduct`. *Once – Yes · Repeated – Up to 3×* |
+| Replace a starting Copper | `start_replace_copper(card-ID)` | Replaces one starting Copper per player with a newly created copy of the chosen card. *Once – Yes · Repeated – Up to 3×* |
+| Replace a starting Copper with a card from a pile | `start_replace_copper_from_pile(pile-ID)` | Takes one card per player from the chosen pile and puts it in their starting deck in place of a Copper. *Once – Yes · Repeated – Up to 3×* |
+| Replace a starting Estate | `start_replace_estate(card-ID)` | Replaces one starting Estate per player with a newly created copy of the chosen card, as in `start_replace_estate(silver)`. *Once – Yes · Repeated – Up to 3×* |
+| Replace a starting Estate with a card from a pile | `start_replace_estate_from_pile(pile-ID)` | Takes one card per player from the chosen pile and puts it in their starting deck in place of an Estate. The Menagerie campaign uses `start_replace_estate_from_pile(horse)` three times so each player starts with 3 Horses. *Once – Yes · Repeated – Up to 3×* |
+| Identical Rewards | `start_same_reward` | The game picks a Reward at random and makes all the other Rewards copies of it. The Joust (`joust`) template uses the command without parentheses. *Once – Untested · Repeated – Untested* |
+| Shuffle a pile | `start_shuffle_pile(pile-ID)` | Shuffles the chosen split Supply pile at setup. For example, `start_shuffle_pile(patrician)` shuffles the Patrician and Emporium pile. *Once – Untested · Repeated – Untested* |
+| Tavern | `start_tavern(card-ID)` | Each player starts with the chosen card on their Tavern mat. One campaign template uses `start_tavern(copper)` twice. *Once – Yes · Repeated – Up to 3×* |
+| Curses in the trash | `start_trash_curses` | Creates 10 Curses directly in the trash at setup. *Once – Yes · Repeated – Up to 3×* |
+| Pile in the trash | `start_trash_pile(card-ID)` | Creates a pile of the chosen card directly in the trash at setup. *Once – Yes · Repeated – Up to 3×* |
+| Triple Supply pile | `start_triple_pile(pile-ID)` | Triples the number of cards in the chosen Supply pile. *Once – Yes · Repeated – Up to 3×* |
+| Project cube | `start_with_cube(project-ID)` | Each player starts with a cube on the chosen Project. One campaign example is `start_with_cube(pageant)` for Pageant. *Once – Yes · Repeated – Game start fails at 2× and 3×* |
 
 #### Other campaign generation variants
 

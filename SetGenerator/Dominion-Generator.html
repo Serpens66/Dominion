@@ -689,7 +689,7 @@
         <details>
           <summary class="section-summary" data-en="Landscapes">Landschaften</summary>
           <div class="section-body">
-            <p class="muted" id="land-source-help" data-en="Landscapes have their own slots. Under Source expansion, leave both fields empty (Auto) to follow the Kingdom pool. Enter 0 to 0 to exclude Landscapes from that expansion.">Landschaften belegen eigene Plätze. Unter Herkunft übernehmen zwei leere Felder (Auto) die Freigabe aus dem Hauptstapel-Pool. 0 bis 0 sperrt die Landschaften dieser Erweiterung.</p>
+            <p class="muted" id="land-source-help" data-en="Landscapes have their own slots. Under Source expansion, leave both fields empty (Auto) to follow the Kingdom pool. Enter 0 to 0 to exclude Landscapes from that expansion. Press Down Arrow at 0 to return to Auto.">Landschaften belegen eigene Plätze. Unter Herkunft übernehmen zwei leere Felder (Auto) die Freigabe aus dem Hauptstapel-Pool. 0 bis 0 sperrt die Landschaften dieser Erweiterung. Bei 0 führt die Pfeiltaste nach unten zurück zu Auto.</p>
             <div class="quota-columns" id="land-quotas">
               <div id="land-ranges" class="range-rules quota-table">
                 <h3 data-en="Total and type">Gesamtzahl und Typ</h3><span id="land-from" class="range-bound" data-en="From">Von</span><span id="land-to" class="range-bound" data-en="To">Bis</span>
@@ -2661,6 +2661,21 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
       if (isValidRangeBound(lower, Number(from.max)) && isValidRangeBound(upper, Number(to.max)) && lower > upper) {
         other.value = edited.value;
       }
+    });
+    if (!rule.inherited) continue;
+    edited.addEventListener("keydown", event => {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || edited.validity.badInput) return;
+      if (event.key === "ArrowUp" && edited.value === "") {
+        edited.value = "0";
+        if (other.value === "") other.value = "0";
+      } else if (event.key === "ArrowDown" && edited.valueAsNumber === 0) {
+        edited.value = other.value = "";
+      } else {
+        if (event.key === "ArrowDown" && edited.value === "") event.preventDefault();
+        return;
+      }
+      event.preventDefault();
+      edited.dispatchEvent(new Event("input", { bubbles: true }));
     });
   }
   rangeInputs.set(rule.id, fields);
