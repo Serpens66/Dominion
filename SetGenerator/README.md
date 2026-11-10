@@ -48,7 +48,7 @@ Unter **Spielaufbau** erscheinen die Landschaften, benötigte Sonderkarten und Z
 
 Fahre mit der Maus über einen Kartennamen im Kartenpool, in den Ziehregeln oder im Ergebnis. Du kannst ihn auch per Tab fokussieren. Per Klick oder Tippen lässt sich die Vorschau offen halten und schließen. Über **Language** neben **Design** kannst du die Oberfläche zwischen Deutsch und Englisch umschalten. Der Wechsel stellt auch die Kartenvorschau auf die gewählte Sprache. Mit **Kartenvorschau** lässt sich die Kartensprache danach separat ändern. Der Filter zum Ziehen mehrerer Karten zählt Burggraben, Hexe, Laboratorium, Ratsversammlung, Schmiede und Bibliothek.
 
-Die kleinen Münz-, Punkte- und Filtersymbole aus Dominion sind in der HTML-Datei eingebettet und stehen offline zur Verfügung. Feste Boni erscheinen in der Spielschreibweise, etwa „+2 Karten, +1 Aktion“ beim Laboratorium. Das optionale Bildpaket enthält vollständige Kartenvorderseiten des Basisspiels auf Deutsch und Englisch. Mit der Zusatzoption für Erweiterungen kommen auflösbare Illustrationen hinzu. Bei fehlenden Bildern erscheint die lokalisierte Textvorschau. Der Generator zeigt auf Wunsch unter **Effekt als Text** auch die lesbare Kurzfassung mit den Vorschauen für erwähnte Karten.
+Die kleinen Münz-, Punkte- und Filtersymbole aus Dominion sind in der HTML-Datei eingebettet und stehen offline zur Verfügung. Feste Boni erscheinen in der Spielschreibweise, etwa „+2 Karten, +1 Aktion“ beim Laboratorium. Das optionale Bildpaket enthält fertig gerenderte Vorderseiten des Basisspiels auf Deutsch und Englisch. Für die übrigen Karten setzt der Generator die Vorderseite aus dem Spielrahmen, den Kosten, der Illustration und dem lokalisierten Regeltext zusammen. Karten ohne Illustration verwenden denselben Aufbau. Der Generator zeigt auf Wunsch unter **Effekt als Text** auch die lesbare Kurzfassung mit den Vorschauen für erwähnte Karten.
 
 Für die Kartenbilder das [Extraktionswerkzeug](extract_card_images.py) herunterladen und mit Python 3.9 oder neuer und Pillow ab Version 10.4 ausführen. Gib den Pfad zu deiner Steam-Datei `Dominion.xpack` und den gewünschten Pfad zum neuen Bildpaket an.
 
@@ -59,7 +59,7 @@ python .\extract_card_images.py "E:\ProgrammeE\Steam\steamapps\common\Dominion\D
 
 Ergänze für die verfügbaren Illustrationen der Erweiterungen den Parameter **--all-expansions**. Das Werkzeug meldet fehlende oder nicht lesbare Ressourcen je Karte.
 
-Wähle das erzeugte JSON im Generator unter **Kartenbilder laden** aus. Das Werkzeug setzt die Karten lokal aus Spielillustration, Rahmenteilen, Münze, Titel, Typ und lokalisiertem Spieltext zusammen. Ältere Pakete zeigen weiterhin die Illustration mit der Textvorschau. Der Exporter wurde mit der Steam-Installation von Spielbuild 3315 geprüft. [Ressourcenbefund](../Documentation/Sources/Source_Register.md#illustrationen-aus-l05)
+Wähle das erzeugte JSON im Generator unter **Kartenbilder laden** aus. Ältere Bildpakete liefern ihre vorhandenen Illustrationen an dieselbe Kartenvorschau. Das Werkzeug meldet Karten, für die sich keine Illustration auflösen lässt. Der Exporter wurde mit der Steam-Installation von Spielbuild 3315 geprüft. [Ressourcenbefund](../Documentation/Sources/Source_Register.md#illustrationen-aus-l05)
 
 ## Karten nach Eigenschaften filtern
 
