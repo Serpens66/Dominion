@@ -193,42 +193,19 @@ def script_json(data):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("xpack", type=Path, nargs="?")
+    parser.add_argument("xpack", type=Path)
     parser.add_argument("--html", type=Path, default=ROOT / "Dominion-Generator.html")
-    parser.add_argument("--image-pack", type=Path)
-    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    if not args.xpack and not args.image_pack:
-        parser.error("Dominion.xpack oder --image-pack angeben.")
-    if args.image_pack and (not args.output or args.output.resolve() == args.html.resolve()):
-        parser.error("Für die Bildversion --output mit einem eigenen Dateipfad angeben.")
+    if args.html.resolve() == args.xpack.resolve():
+        parser.error("HTML-Datei und Spielpaket müssen unterschiedliche Dateien sein.")
 
-    output = args.output or args.html
-    if any(path and output.resolve() == path.resolve() for path in (args.xpack, args.image_pack)):
-        parser.error("Die Ausgabedatei muss sich vom Spielpaket und vom Bildpaket unterscheiden.")
-
+    catalog = load_catalog(args.xpack)
     source = args.html.read_text(encoding="utf-8")
-    if args.xpack:
-        catalog = load_catalog(args.xpack)
-        source = replace_script(source, '<script type="application/json" id="catalog">', script_json(catalog))
-        print(f"{len(catalog['cards'])} Kartendefinitionen eingebettet.")
+    source = replace_script(source, '<script type="application/json" id="catalog">', script_json(catalog))
     worker = (ROOT / "generator_solver.js").read_text(encoding="utf-8")
-    worker_marker = '<script type="text/plain" id="generator-solver">'
-    source = replace_script(source, worker_marker, worker)
-    if args.image_pack:
-        pack = json.loads(args.image_pack.read_text(encoding="utf-8-sig"))
-        if (not isinstance(pack, dict) or pack.get("format") != "dominion-card-images"
-                or pack.get("version") != 1 or not isinstance(pack.get("images"), dict)):
-            raise ValueError("Das Bildpaket hat ein unbekanntes Format.")
-        if 'id="embedded-image-pack"' in source:
-            raise ValueError("Für die Bildversion die HTML-Datei ohne eingebettetes Bildpaket verwenden.")
-        tag = '<script type="application/json" id="embedded-image-pack">'
-        source = source.replace(worker_marker, tag + script_json(pack) + "</script>\n" + worker_marker, 1)
-        if output.resolve().parent != ROOT.resolve():
-            source = source.replace("extract_card_images.py", (ROOT / "extract_card_images.py").resolve().as_uri())
-        print(f"{len(pack['images'])} Kartenillustrationen eingebettet.")
-
-    output.write_bytes(source.replace("\n", "\r\n").encode("utf-8"))
+    source = replace_script(source, '<script type="text/plain" id="generator-solver">', worker)
+    args.html.write_bytes(source.replace("\n", "\r\n").encode("utf-8"))
+    print(f"{len(catalog['cards'])} Kartendefinitionen eingebettet.")
 
 
 if __name__ == "__main__":

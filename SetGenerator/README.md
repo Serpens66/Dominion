@@ -82,24 +82,29 @@ Aus dem Projektordner den Generator-Build mit der geprüften Dominion.xpack ausf
 ```
 
 
-## Eigenständige HTML-Datei mit eingebetteten Bildern erzeugen
+## Texte im Generator ändern
 
-Ein mit `extract_card_images.py` erzeugtes Bildpaket verwenden. Mit `--all-expansions` enthält es die verfügbaren Erweiterungsbilder. Als Ausgabe eine eigene Datei wählen. Der Build verwendet den eingebetteten Katalog der lokalen HTML-Datei und den aktuellen Zieh-Worker.
+Öffne [Dominion-Generator.html](Dominion-Generator.html) im Editor, suche den angezeigten Text und ändere ihn. Bei HTML-Elementen steht der deutsche Text zwischen den Tags. Die englische Fassung steht im Attribut `data-en`. Meldungen und dynamische Beschriftungen stehen im JavaScript, zum Beispiel in Aufrufen wie `tr("Deutsch", "English")`. Speichere die Datei und lade sie im Browser neu.
+
+## Kartenbilder lokal laden
+
+Lege das mit `extract_card_images.py` erzeugte Bildpaket als `Dominion-Kartenbilder.json` neben die HTML-Datei. Wenn du die HTML-Datei direkt öffnest, wähle das Paket über **Kartenbilder laden**. Für automatisches Laden starte im Projektordner einen lokalen Server und öffne den Generator unter `http://127.0.0.1:8000/Dominion-Generator.html`.
 
 ```powershell
-python .\SetGenerator\generator_catalog.py --image-pack .\Dominion-Kartenbilder.json --output .\Dominion-Generator-mit-Bildern.html
-node .\SetGenerator\test_generator_solver.js .\Dominion-Generator-mit-Bildern.html
+& 'D:\\CDesktopLink\\Portable\\Python\\WinPy64\\python\\python.exe' -m http.server 8000 --bind 127.0.0.1 --directory .\\SetGenerator
 ```
 
-Der Test vergleicht den Zieh-Worker mit seinem Quelltext und beide HTML-Dateien miteinander. Die Varianten unterscheiden sich nur durch das Bildpaket und gegebenenfalls den Pfad zum Extraktionswerkzeug.
+Browser speichern Einstellungen pro Adresse. Über **Einstellungen exportieren** und **Einstellungen importieren** überträgst du sie zwischen der lokal geöffneten Datei, dem lokalen Server und der Website.
 
-## Generator über GitHub Pages anbieten
+## Generator über GitHub Pages öffnen
 
-GitHub Pages kann den Generator als statische Seite unter `https://serpens66.github.io/Dominion/` bereitstellen. Besucher öffnen die Seite direkt im Browser. Ziehung und Dateiverarbeitung bleiben im Browser. Auf der Website und beim lokalen Öffnen gelten getrennte Browserspeicher. Vorhandene Einstellungen können per JSON übertragen werden. [GitHub Pages im Überblick](https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages)
+[Dominion-Generator im Browser öffnen](https://serpens66.github.io/Dominion/). Ziehung und Dateiverarbeitung laufen im Browser. Die Website verwendet eigene Symbole. Bei den Karten erscheinen Name, Typ und Kosten. Ein eigenes Bildpaket lässt sich optional über **Kartenbilder laden** öffnen.
 
-1. Eine öffentlich verwendbare Ausgabe erstellen. Auch die Version ohne eingebettete Kartenbilder enthält Symbole, Texturen und Originaltexte aus dem Steam-Spiel. Vor einer Veröffentlichung die Rechte für diese Inhalte klären oder sie durch freigegebene Alternativen ersetzen.
-2. Die freigegebene Ausgabe als `index.html` in einem eigenen Branch `gh-pages` ablegen. Nur Dateien ergänzen, auf die diese Ausgabe verlinkt und die öffentlich bereitgestellt werden dürfen. Für die statische Ausgabe eine leere `.nojekyll` ergänzen.
-3. Im GitHub-Repository unter **Settings → Pages → Source** die Option **Deploy from a branch** wählen. Als Quelle **gh-pages** und **/(root)** auswählen und speichern. Anschließend die von GitHub angezeigte Adresse und HTTPS prüfen. [Veröffentlichungsquelle konfigurieren](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
-4. Die veröffentlichte Seite in Firefox und einem Chromium-Browser öffnen. Ziehung, Kopieren sowie Import und Export von Einstellungen prüfen. Für den Profilexport steht je nach Browser der XML-Kopierweg zur Verfügung. Für direkte Schreibtests ein separates Testprofil verwenden.
+GitHub Actions baut die Website bei Änderungen am Generator auf `main` aus derselben HTML-Datei. Der Build erstellt aus der Workspace-Datei das veröffentlichte `index.html` mit eigenen Symbolen und den für die Ziehung benötigten Kartendaten. Für die lokale Prüfung des Pages-Builds im Projektordner ausführen.
 
-GitHub Free unterstützt Pages für öffentliche Repositorys. Pages kann auch bei einem privaten Repository öffentlich erreichbar sein. [Voraussetzungen für GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#who-can-use-this-feature)
+```powershell
+node .\\SetGenerator\\test_generator_solver.js
+& 'D:\\CDesktopLink\\Portable\\Python\\WinPy64\\python\\python.exe' -B .\\SetGenerator\\build_pages.py .\\SetGenerator\\.pages\\index.html
+```
+
+Im Repository ist unter **Settings → Pages → Source** die Quelle **GitHub Actions** eingestellt. [Veröffentlichungsquelle für GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)

@@ -5,18 +5,24 @@ const worker=fs.readFileSync(path.join(__dirname,"generator_solver.js"),"utf8");
 const readScript = (page, id) => page.match(new RegExp('id="' + id + '">([\\s\\S]+?)</script>'))?.[1];
 const normalize = source => source.replace(/\r\n/g, "\n").trim();
 assert.equal(normalize(readScript(html, "generator-solver")), normalize(worker), "embedded worker must match the solver source");
-if (process.argv[2]) {
-  const imageHtml = fs.readFileSync(process.argv[2], "utf8");
-  const pack = JSON.parse(readScript(imageHtml, "embedded-image-pack"));
-  assert.equal(pack.format, "dominion-card-images");
-  assert.ok(Object.keys(pack.images).length > 0);
-  const withoutPack = imageHtml.replace(/<script type="application\/json" id="embedded-image-pack">[\s\S]*?<\/script>\r?\n/, "")
-    .replace(/file:\/\/\/[^"\s&]*\/extract_card_images\.py/g, "extract_card_images.py");
-  assert.ok(normalize(withoutPack) === normalize(html), "offline variants must differ only in image data and the extractor link");
-}
+assert.equal(readScript(html, "embedded-image-pack"), undefined, "the generator uses an optional external image pack");
 const api=vm.runInNewContext(worker+"\n({analyzeKingdom,assignSetup,chooseLandscapes})");
 const catalog=JSON.parse(html.match(/id="catalog">([\s\S]+?)<\/script>/)[1]);
 const all=catalog.cards, byId=new Map(all.map(c=>[c.id,c])), get=(...ids)=>ids.map(id=>{assert.ok(byId.has(id),id);return byId.get(id);});
+const imagePath = path.join(__dirname, "Dominion-Kartenbilder.json");
+if (fs.existsSync(imagePath)) {
+  const pack = JSON.parse(fs.readFileSync(imagePath, "utf8").replace(/^\uFEFF/, ""));
+  assert.equal(pack.format, "dominion-card-images");
+  assert.equal(pack.version, 1);
+  for (const images of [pack.images, ...Object.values(pack.cards ?? {})]) {
+    assert.ok(Object.keys(images).length > 0);
+    for (const [id, source] of Object.entries(images)) {
+      assert.ok(byId.has(id), id);
+      assert.match(source, /^data:image\/(?:png|webp);base64,/);
+    }
+  }
+}
+
 const base=all.filter(c=>c.kingdomPile&&c.expansion==="base"&&c.edition!=="first");
 const intrigue=all.filter(c=>c.kingdomPile&&c.expansion==="intrigue"&&c.edition!=="first");
 const allPiles=all.filter(c=>c.kingdomPile);

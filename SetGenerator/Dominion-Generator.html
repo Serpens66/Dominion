@@ -1857,8 +1857,7 @@ const imagePack = document.getElementById("image-pack");
 const imageStatus = document.getElementById("image-status");
 const previews = new Set();
 const isFirstEdition = card => card.edition === "first";
-const embeddedImagePack = document.getElementById("embedded-image-pack");
-const defaultImageData = embeddedImagePack ? JSON.parse(embeddedImagePack.textContent) : { images: {} };
+let defaultImageData = { images: {} };
 let imageData = defaultImageData;
 const resetPreview = document.getElementById("reset-preview");
 let activePreview = null;
@@ -3639,15 +3638,17 @@ function showImageStatus() {
     : tr("Kartenvorschau ohne Illustrationen.", "Card previews without illustrations.");
 }
 showImageStatus();
-imagePack.addEventListener("change", async () => {
-  const [file] = imagePack.files;
-  if (!file) return;
+async function loadImages(readPack, useAsDefault = false) {
   imagePack.disabled = resetPreview.disabled = true;
   imageStatus.className = "";
   imageStatus.textContent = tr("Bildpaket wird gelesen …", "Reading the image pack…");
   try {
-    imageData = await readImagePack(file);
-    if (activePreview) updatePreview(activePreview);
+    const pack = await readPack();
+    if (pack) {
+      imageData = pack;
+      if (useAsDefault) defaultImageData = pack;
+      if (activePreview) updatePreview(activePreview);
+    }
     showImageStatus();
   } catch (error) {
     imageStatus.className = "error";
@@ -3656,7 +3657,21 @@ imagePack.addEventListener("change", async () => {
     imagePack.disabled = resetPreview.disabled = false;
     imagePack.value = "";
   }
+}
+
+imagePack.addEventListener("change", () => {
+  const [file] = imagePack.files;
+  if (file) loadImages(() => readImagePack(file));
 });
+
+if (["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) {
+  loadImages(async () => {
+    const response = await fetch("Dominion-Kartenbilder.json");
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(tr("Das lokale Bildpaket konnte nicht geladen werden.", "The local image pack could not be loaded."));
+    return readImagePack(await response.blob());
+  }, true);
+}
 
 resetPreview.addEventListener("click", () => {
   previewLanguage.value = uiLanguage;
