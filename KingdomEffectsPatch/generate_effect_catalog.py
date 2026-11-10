@@ -33,7 +33,7 @@ def read_effects():
     catalog = catalog.split("#### Weitere Varianten aus der Kampagnenerzeugung", 1)[0]
     pattern = (
         r"^\| ([^|]+) \| `((?:twist|stamp|start)_[a-z0-9_]+)(?:\(([^)]+)\))?`"
-        r" \| (.*?) \| [^|\n]+ \| [^|\n]+ \|$"
+        r" \| ([^\n]*?) \*Einmal – [^\n]*? · Mehrfach – [^\n]*?\* \|$"
     )
     effects = []
     for name, command, args, description in re.findall(pattern, catalog, re.MULTILINE | re.IGNORECASE):

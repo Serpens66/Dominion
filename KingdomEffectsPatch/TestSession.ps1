@@ -1,4 +1,4 @@
-param([switch]$Online)
+param([switch]$Online, [switch]$Editor)
 
 $ErrorActionPreference = 'Stop'
 
@@ -90,7 +90,7 @@ function Start-TestProfile {
 }
 
 function Invoke-TestSession {
-    param([switch]$Online)
+    param([switch]$Online, [switch]$Editor)
 
     Assert-GameClosed
     $work = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'DominionModTests\3315'
@@ -108,6 +108,9 @@ function Invoke-TestSession {
         if ($Online) {
             Write-Host 'Dominion 3315 | Privates Spiel mit festen Effekten'
             $session = '--online'
+            $mode = '--apply'
+        } elseif ($Editor) {
+            Write-Host 'Dominion 3315 | Effekteditor (F8)'
             $mode = '--apply'
         } else {
             Write-Host 'Dominion 3315 | Lokal spielen und Weitergeben'
@@ -188,7 +191,7 @@ function Invoke-TestSession {
 
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        Invoke-TestSession -Online:$Online
+        Invoke-TestSession -Online:$Online -Editor:$Editor
     } catch {
         Write-Host $_.Exception.Message
         exit 1

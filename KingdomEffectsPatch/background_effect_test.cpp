@@ -34,6 +34,11 @@ constexpr DWORD spoils = 0x92E;
 constexpr DWORD arena = 0xC33;
 constexpr DWORD pageant = 0xE20;
 constexpr DWORD loot = 0x1128;
+constexpr DWORD rewards = 0x718;
+constexpr DWORD patrician = 0xC06;
+constexpr DWORD curse = 0x100;
+constexpr DWORD travelling_fair = 0xB23;
+constexpr DWORD dominate_event = 0xC29;
 
 constexpr char base_kingdom[] = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop";
 constexpr char pixie_kingdom[] = "-k pixie, market, merchant, militia, mine, moat, remodel, smithy, village, workshop";
@@ -57,6 +62,8 @@ constexpr char shrine_kingdom[] = "-k cellar, market, merchant, militia, mine, m
 constexpr char pageant_kingdom[] = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop, "
                                    "pageant, -m Landscapes(0,1)";
 constexpr char loot_kingdom[] = "-k pickaxe, market, merchant, militia, mine, moat, remodel, smithy, village, workshop";
+constexpr char joust_kingdom[] = "-k joust, market, merchant, militia, mine, moat, remodel, smithy, village, workshop";
+constexpr char patrician_kingdom[] = "-k patrician, market, merchant, militia, mine, moat, remodel, smithy, village, workshop";
 constexpr char free_fair[] = "stamp_got_it_already(travelling_fair)";
 
 struct Purchase {
@@ -73,9 +80,12 @@ constexpr Purchase delve{"stamp_got_it_already(delve)", 2, silver, 1};
 constexpr Purchase triumph{"stamp_got_it_already(triumph)", 1, estate, 4};
 constexpr Purchase dominate{"stamp_got_it_already(dominate)", 1, province, 1};
 constexpr Purchase wedding{"stamp_got_it_already(wedding)", 1, gold, 1};
+constexpr Purchase delve_duration{
+    "stamp_got_it_already(delve), stamp_durationified(silver)", 2, silver, 1};
 
 enum class Metric {
-    hand, supply, pile_types, owned, location, token, token_face, pile_tokens, project_cube, money, actions, buys
+    hand, supply, pile_types, owned, location, token, token_face, pile_tokens, project_cube, money, actions, buys,
+    price, card_type, mixed_pile
 };
 
 struct Probe {
@@ -138,6 +148,21 @@ constexpr Probe probes[] = {
     {"start_with_cube(pageant)", 0x14B5, {0, 1}, Metric::project_cube, 0xE01, pageant, 1, pageant_kingdom},
     {"twist_mirror_loot", 0x17E2, {15, 1, 1, 1}, Metric::pile_types, loot, 30, 3, loot_kingdom},
     {"twist_room_for_more(chapel)", 0x17D8, {0, 10}, Metric::supply, chapel, 0, 1},
+    {"start_same_reward", 0xDC7, {6, 1, 1, 1}, Metric::pile_types, rewards, 6, 3, joust_kingdom},
+    {"start_shuffle_pile(patrician)", 0xDC1, {0, 1, 1, 1}, Metric::mixed_pile, patrician, 10, 3, patrician_kingdom},
+    {"start_curse_cost_3", 0xDC2, {0, 300, 600, 900}, Metric::price, curse},
+    {"twist_sale", 0x17D7, {300, 200, 100, 0}, Metric::price, village},
+    {"stamp_discounted(village)", 0x1B5B, {300, 200, 100, 0}, Metric::price, village},
+    {"stamp_pay_later(village)", 0x1B69, {300, 3, 3, 3}, Metric::price, village},
+    {"stamp_cost_zero(travelling_fair)", 0x1420, {200, 0, 0, 0}, Metric::price, travelling_fair, 0, 3, fair_kingdom},
+    {"stamp_cost_2_less(dominate)", 0x1424, {1400, 1200, 1000, 800}, Metric::price, dominate_event, 0, 3, dominate_kingdom},
+    {"stamp_two_for_one(village)", 0x1B5A, {300, 400, 500, 600}, Metric::price, village},
+    {"stamp_treasurified(village)", 0x1B5E, {0, 1, 1, 1}, Metric::card_type, village, 0x2},
+    {"stamp_victorified(village)", 0x1B5C, {0, 1, 1, 1}, Metric::card_type, village, 0x8},
+    {"stamp_durationified(village)", 0x1B5D, {0, 1, 1, 1}, Metric::card_type, village, 0x80},
+    {"stamp_reactionified(village)", 0x1B5F, {0, 1, 1, 1}, Metric::card_type, village, 0x40},
+    {"stamp_shadowified(village)", 0x1B60, {0, 1, 1, 1}, Metric::card_type, village, 0x1000},
+    {"twist_fast_track", 0x17DC, {0, 1, 0, 0}, Metric::location, silver, 0x46D, 3, delve_kingdom, &delve_duration},
 };
 
 class HiddenDesktop {
@@ -194,6 +219,32 @@ public:
         SIZE_T amount = 0;
         require(WriteProcessMemory(info_.hProcess, reinterpret_cast<void*>(address), data, size, &amount) &&
                 amount == size, "Cannot write to the test process.");
+    }
+
+    template<std::size_t Size, std::size_t Count>
+    DWORD query(const std::array<BYTE, Size>& code, const std::array<DWORD, Count>& args) const {
+        // Give the disposable child one data page and a separate executable page for the query.
+        constexpr SIZE_T page = 4096;
+        static_assert(Size < page && sizeof(args) < page);
+        const auto memory = reinterpret_cast<std::uintptr_t>(
+            VirtualAllocEx(info_.hProcess, nullptr, page * 2, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE));
+        require(memory, "Cannot allocate the native query.");
+        write(memory, code.data(), code.size());
+        write(memory + page, args.data(), sizeof(args));
+        DWORD protection;
+        require(VirtualProtectEx(info_.hProcess, reinterpret_cast<void*>(memory), page, PAGE_EXECUTE_READ, &protection) &&
+                FlushInstructionCache(info_.hProcess, reinterpret_cast<void*>(memory), code.size()),
+                "Cannot prepare the native query.");
+        Handle thread(CreateRemoteThread(info_.hProcess, nullptr, 0,
+                                        reinterpret_cast<LPTHREAD_START_ROUTINE>(memory),
+                                        reinterpret_cast<void*>(memory + page), 0, nullptr));
+        require(thread.valid() && WaitForSingleObject(thread.value, 3000) == WAIT_OBJECT_0,
+                "The native query did not finish.");
+        DWORD result;
+        require(GetExitCodeThread(thread.value, &result) && alive(), "The native query failed.");
+        require(VirtualFreeEx(info_.hProcess, reinterpret_cast<void*>(memory), 0, MEM_RELEASE),
+                "Cannot release the native query.");
+        return result;
     }
 
     std::uintptr_t image_base() const {
@@ -332,26 +383,73 @@ unsigned token_count(const Child& child, std::uintptr_t state, DWORD who, DWORD 
 
 DWORD pile_slot(const Child& child, std::uintptr_t state, DWORD type) {
     for (DWORD slot = 7; slot < 0x48; ++slot) {
-        if (child.read(state + 0x1524 + slot * 0x10) == type) return slot;
+        const auto pile = state + 0x1524 + slot * 0x10;
+        if (child.read(pile) == type || child.read(pile + 4) == type) return slot;
     }
     throw std::runtime_error("The test pile is missing from the fixture.");
 }
 
-unsigned pile_types(const Child& child, std::uintptr_t state, DWORD cards, DWORD type, DWORD expected_cards) {
+unsigned observed_price(const Child& child, DWORD base, DWORD state, DWORD who, DWORD card) {
+    const auto cost_query = base + 0x176E90;
+    check_bytes(child, cost_query, std::array<BYTE, 6>{0x55, 0x8B, 0xEC, 0x83, 0xE4, 0xF0});
+    constexpr std::array<BYTE, 29> call{
+        0x8B, 0x44, 0x24, 4, // mov eax, [esp+4]    (query arguments)
+        0x83, 0xEC, 4,       // sub esp, 4          (packed price output)
+        0x8B, 0xCC,          // mov ecx, esp
+        0x6A, 1,             // push 1              (skip card callbacks)
+        0xFF, 0x70, 12,      // push [eax+12]       (card)
+        0xFF, 0x70, 8,       // push [eax+8]        (player)
+        0x8B, 0x50, 4,       // mov edx, [eax+4]    (game state)
+        0xFF, 0x10,          // call [eax]
+        0x83, 0xC4, 12,      // add esp, 12
+        0x58,                // pop eax
+        0xC2, 4, 0           // ret 4
+    };
+    const auto price = child.query(call, std::array<DWORD, 4>{cost_query, state, who, card});
+    return (price & 0xFFFF) * 100 + (price >> 24);
+}
+
+unsigned observed_type(const Child& child, DWORD base, DWORD state, DWORD card, DWORD mask) {
+    const auto type_query = base + 0x1754F0;
+    check_bytes(child, type_query, std::array<BYTE, 5>{0x55, 0x8B, 0xEC, 0x81, 0xEC});
+    constexpr std::array<BYTE, 27> call{
+        0x8B, 0x44, 0x24, 4, // mov eax, [esp+4]    (query arguments)
+        0xFF, 0x70, 16,      // push [eax+16]       (type mask high)
+        0xFF, 0x70, 12,      // push [eax+12]       (type mask low)
+        0x8B, 0x50, 8,       // mov edx, [eax+8]    (card)
+        0x8B, 0x48, 4,       // mov ecx, [eax+4]    (game state)
+        0xFF, 0x10,          // call [eax]
+        0x83, 0xC4, 8,       // add esp, 8
+        0x0F, 0xB6, 0xC0,    // movzx eax, al
+        0xC2, 4, 0           // ret 4
+    };
+    const bool high = mask == 0x1000;
+    return child.query(call, std::array<DWORD, 5>{type_query, state, card, high ? 0 : mask, high ? mask : 0});
+}
+
+struct PileComposition {
+    unsigned types;
+    unsigned groups;
+};
+
+PileComposition pile_composition(const Child& child, std::uintptr_t state, DWORD cards, DWORD type, DWORD expected_cards) {
     const auto slot = pile_slot(child, state, type);
     auto handle = child.read(state + 0x152C + slot * 0x10);
     std::vector<DWORD> types;
-    DWORD visited = 0;
+    DWORD visited = 0, previous_type = 0;
+    unsigned groups = 0;
     while (handle) {
         const auto index = handle & 0xFFFF;
         require(index < cards && visited++ < cards, "Invalid card list in the observed pile.");
         const auto card = state + 0x1A48 + index * 0x64;
         const auto card_type = child.read(card + 4);
+        if (card_type != previous_type) ++groups;
+        previous_type = card_type;
         if (std::find(types.begin(), types.end(), card_type) == types.end()) types.push_back(card_type);
         handle = child.read(card + 0x5C);
     }
     require(visited == expected_cards, "The observed pile has an unexpected size.");
-    return static_cast<unsigned>(types.size());
+    return {static_cast<unsigned>(types.size()), groups};
 }
 
 unsigned supply_count(const Child& child, std::uintptr_t state, DWORD cards, DWORD type, DWORD filter) {
@@ -414,8 +512,15 @@ bool run_probe(const fs::path& exe, const fs::path& folder, std::wstring& deskto
             break;
         case Metric::pile_types:
             metric = "distinct pile cards";
-            result = pile_types(child, state, cards, probe.card_type, probe.qualifier);
+            result = pile_composition(child, state, cards, probe.card_type, probe.qualifier).types;
             break;
+        case Metric::mixed_pile: {
+            metric = "split pile interleaved";
+            const auto pile = pile_composition(child, state, cards, probe.card_type, probe.qualifier);
+            require(pile.types == 2, "Expected two card types in the split pile.");
+            result = pile.groups > 2;
+            break;
+        }
         case Metric::owned:
             metric = probe.card_type ? "owned type" : "owned";
             result = owned_count(child, state, cards, who, probe.card_type);
@@ -438,6 +543,14 @@ bool run_probe(const fs::path& exe, const fs::path& folder, std::wstring& deskto
             metric = "assigned project cubes";
             result = token_count(child, state, who, probe.card_type, false,
                                  pile_slot(child, state, probe.qualifier));
+            break;
+        case Metric::price:
+            metric = "coins*100+debt";
+            result = observed_price(child, base, state, who, probe.card_type);
+            break;
+        case Metric::card_type:
+            metric = "card type present";
+            result = observed_type(child, base, state, probe.card_type, probe.qualifier);
             break;
         case Metric::money:
         case Metric::actions:
@@ -483,9 +596,14 @@ int wmain(int argc, wchar_t** argv) {
             const std::string_view command(probe.command);
             if (std::wstring(command.begin(), command.end()).compare(0, prefix.size(), prefix) != 0) continue;
             for (unsigned copies = 0; copies <= probe.max_copies; ++copies) {
-                const auto number = std::to_wstring(++case_number);
                 try {
-                    if (!run_probe(exe, run / number, name, probe, copies)) all_pass = false;
+                    // A shuffle can leave the two groups intact by chance. Check fresh games in that case.
+                    const unsigned attempts = probe.metric == Metric::mixed_pile && copies ? 3 : 1;
+                    bool pass = false;
+                    for (unsigned attempt = 0; attempt < attempts && !pass; ++attempt) {
+                        pass = run_probe(exe, run / std::to_wstring(++case_number), name, probe, copies);
+                    }
+                    if (!pass) all_pass = false;
                 } catch (const std::exception& error) {
                     std::fprintf(stderr, "%s x%u (case %u): %s\n", probe.command, copies, case_number, error.what());
                     all_pass = false;

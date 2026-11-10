@@ -226,6 +226,28 @@
   .range-rules > .range-bound { font-size: .9rem; color: var(--muted); text-align: center; }
   .range-rules input[type=number] { padding-inline: .25rem; text-align: center; }
   .range-rules input { width: 100%; min-width: 0; }
+  .inherited-bound { position: relative; min-width: 0; }
+  .inherited-bound input[type=number] { appearance: textfield; padding-inline-end: 1.25rem; }
+  .inherited-bound input::-webkit-inner-spin-button,
+  .inherited-bound input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+  .inherited-bound input::placeholder { font-size: .8em; }
+  .inherited-stepper {
+    position: absolute;
+    inset: .2rem .15rem .2rem auto;
+    width: 1rem;
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+  }
+  .inherited-stepper button {
+    padding: 0;
+    border: 0;
+    border-radius: .18rem;
+    background: var(--soft-bg);
+    color: var(--muted);
+    font-size: .85rem;
+    line-height: 1;
+  }
+  .inherited-stepper button:hover { background: var(--soft-hover); }
   .range-rule-name { display: flex; align-items: center; gap: .4rem; min-height: 2rem; }
   input[type=checkbox] { accent-color: var(--green); }
   :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
@@ -689,7 +711,7 @@
         <details>
           <summary class="section-summary" data-en="Landscapes">Landschaften</summary>
           <div class="section-body">
-            <p class="muted" id="land-source-help" data-en="Landscapes have their own slots. Under Source expansion, leave both fields empty (Auto) to follow the Kingdom pool. Enter 0 to 0 to exclude Landscapes from that expansion. Press Down Arrow at 0 to return to Auto.">Landschaften belegen eigene Plätze. Unter Herkunft übernehmen zwei leere Felder (Auto) die Freigabe aus dem Hauptstapel-Pool. 0 bis 0 sperrt die Landschaften dieser Erweiterung. Bei 0 führt die Pfeiltaste nach unten zurück zu Auto.</p>
+            <p class="muted" id="land-source-help" data-en="Landscapes have their own slots. Under Source expansion, leave both fields empty (Auto) to follow the Kingdom pool. Enter 0 to 0 to exclude Landscapes from that expansion. Use the down arrow at 0 to return to Auto.">Landschaften belegen eigene Plätze. Unter Herkunft übernehmen zwei leere Felder (Auto) die Freigabe aus dem Hauptstapel-Pool. 0 bis 0 sperrt die Landschaften dieser Erweiterung. Bei 0 führt der Abwärtspfeil zurück zu Auto.</p>
             <div class="quota-columns" id="land-quotas">
               <div id="land-ranges" class="range-rules quota-table">
                 <h3 data-en="Total and type">Gesamtzahl und Typ</h3><span id="land-from" class="range-bound" data-en="From">Von</span><span id="land-to" class="range-bound" data-en="To">Bis</span>
@@ -2586,6 +2608,23 @@ function addExpansionInfoTrigger(trigger, expansion) {
   });
 }
 
+function stepInheritedRange(field, other, direction) {
+  if (field.validity.badInput) return;
+  const previous = field.value;
+  if (previous === "") {
+    if (direction < 0) return;
+    field.value = "0";
+    if (other.value === "") other.value = "0";
+  } else if (field.valueAsNumber === 0 && direction < 0) {
+    field.value = other.value = "";
+  } else if (direction > 0) {
+    field.stepUp();
+  } else {
+    field.stepDown();
+  }
+  if (field.value !== previous) field.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
 function addRange(rule, groupName, group = document.getElementById(groupName + "-ranges")) {
   const kingdomExpansion = rule.group === "exp" ? rule.id.slice(4) : null;
   const expansion = rule.expansion ?? kingdomExpansion;
@@ -2645,9 +2684,10 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     field.setAttribute("aria-labelledby", title.id + " " + groupName + "-" + bound);
     if (rule.inherited) {
       field.placeholder = "Auto";
+      field.setAttribute("autocomplete", "off");
       field.setAttribute("aria-describedby", "land-source-help");
     }
-    group.append(field);
+    if (!rule.inherited) group.append(field);
     fields.push(field);
   }
   const [from, to] = fields;
@@ -2665,18 +2705,31 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     if (!rule.inherited) continue;
     edited.addEventListener("keydown", event => {
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || edited.validity.badInput) return;
-      if (event.key === "ArrowUp" && edited.value === "") {
-        edited.value = "0";
-        if (other.value === "") other.value = "0";
-      } else if (event.key === "ArrowDown" && edited.valueAsNumber === 0) {
-        edited.value = other.value = "";
-      } else {
-        if (event.key === "ArrowDown" && edited.value === "") event.preventDefault();
-        return;
-      }
+      if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
       event.preventDefault();
-      edited.dispatchEvent(new Event("input", { bubbles: true }));
+      stepInheritedRange(edited, other, event.key === "ArrowUp" ? 1 : -1);
     });
+    const wrapper = document.createElement("div");
+    wrapper.className = "inherited-bound";
+    const stepper = document.createElement("div");
+    stepper.className = "inherited-stepper";
+    for (const [direction, arrow, de, en] of [[1, "▴", "Wert erhöhen", "Increase value"], [-1, "▾", "Wert senken", "Decrease value"]]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.tabIndex = -1;
+      button.textContent = arrow;
+      button.setAttribute("aria-controls", edited.id);
+      const label = () => button.setAttribute("aria-label", tr(de, en));
+      interfaceLabels.push(label);
+      label();
+      button.addEventListener("click", () => {
+        stepInheritedRange(edited, other, direction);
+        edited.focus();
+      });
+      stepper.append(button);
+    }
+    wrapper.append(edited, stepper);
+    group.append(wrapper);
   }
   rangeInputs.set(rule.id, fields);
 }

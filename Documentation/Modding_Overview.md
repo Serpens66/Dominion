@@ -47,28 +47,28 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `stamp_also_silver(Ereignis)` | Beim Kauf erhält der Spieler ein Silber. | Ja | Gleiche Wirkung |
 | `stamp_bonus_money(Ereignis)` | Beim Kauf erhält der Spieler eine Münze. | Ja | Bis 3× |
 | `stamp_chameleonize(Karte)` | Tauscht die auf der Karte gewährten Münz- und Kartenziehboni gegeneinander. | Offen | Offen |
-| `stamp_cost_2_less(Ereignis)` | Senkt die Münzkosten um zwei. | Offen | Offen |
-| `stamp_cost_2D_less(Ereignis)` | Senkt die Schuldenkosten um zwei. | Offen | Offen |
-| `stamp_cost_zero(Ereignis)` | Setzt die Ereigniskosten auf null. | Offen | Offen |
-| `stamp_discounted(Karte)` | Senkt die Münzkosten um eins. | Offen | Offen |
+| `stamp_cost_2_less(Ereignis)` | Senkt die Münzkosten um zwei. | Ja | Bis 3× |
+| `stamp_cost_2D_less(Ereignis)` | Senkt die Schuldenkosten um zwei. | Startabbruch mit Triumph | Startabbruch mit Triumph |
+| `stamp_cost_zero(Ereignis)` | Setzt die Ereigniskosten auf null. | Ja | Gleiche Wirkung |
+| `stamp_discounted(Karte)` | Senkt die Münzkosten um eins. | Ja | Bis 3× |
 | `stamp_double_vp(Landmarke)` | Verdoppelt die von der Landmarke vergebenen Siegpunkte. | Offen | Offen |
-| `stamp_durationified(Karte)` | Macht sie zusätzlich zur Dauerkarte. Im nächsten Zug gibt sie zu Beginn eine Karte und eine Aktion. | Offen | Offen |
+| `stamp_durationified(Karte)` | Macht sie zusätzlich zur Dauerkarte. Im nächsten Zug gibt sie zu Beginn eine Karte und eine Aktion. | Zusatztyp bestätigt | Gleicher Zusatztyp |
 | `stamp_fawning_service(Ereignis)` | Beim Erhalten einer Provinz wird das Ereignis kostenlos gekauft. | Ja | Gleiche Wirkung |
 | `stamp_got_it_already(Ereignis)` | Das Ereignis wird im ersten Zug kostenlos gekauft. | Ja | Bis 3× |
 | `stamp_motivational(Ereignis)` | Nach dem Kauf werden am Zugende zwei Karten gezogen. | Offen | Offen |
 | `stamp_offers_insight(Karte)` | Wer sie erhält, zieht am Zugende eine Karte. | Offen | Offen |
 | `stamp_one_track_mind(Ereignis)` | Das Ereignis wird zu Beginn der Kaufphase kostenlos gekauft. | Offen | Offen |
-| `stamp_pay_later(Karte)` | Wandelt Münzkosten in Schulden um. | Offen | Offen |
+| `stamp_pay_later(Karte)` | Wandelt Münzkosten in Schulden um. | Ja | Gleiche Wirkung |
 | `stamp_perks_of_wealth(Ereignis)` | Beim Erhalten von Gold wird das Ereignis ausgeführt. | Ja | Gleiche Wirkung |
 | `stamp_plus_action(Karte)` | Beim Ausspielen gibt sie eine zusätzliche Aktion. | Offen | Offen |
 | `stamp_plus_buy(Karte)` | Beim Ausspielen gibt sie einen zusätzlichen Kauf. | Offen | Offen |
 | `stamp_plus_card(Karte)` | Beim Ausspielen wird eine zusätzliche Karte gezogen. | Offen | Offen |
 | `stamp_plus_coin(Karte)` | Beim Ausspielen gibt sie eine zusätzliche Münze. | Offen | Offen |
-| `stamp_reactionified(Karte)` | Macht sie zur Reaktion, die beim Erhalten, Entsorgen oder Ablegen außerhalb des Aufräumens ausgespielt werden kann. | Offen | Offen |
-| `stamp_shadowified(Karte)` | Macht sie zum Schatten mit den zugehörigen Regeln fürs Ausspielen aus dem Nachziehstapel. | Offen | Offen |
-| `stamp_treasurified(Karte)` | Gibt ihr zusätzlich den Typ Geld. | Offen | Offen |
+| `stamp_reactionified(Karte)` | Macht sie zur Reaktion, die beim Erhalten, Entsorgen oder Ablegen außerhalb des Aufräumens ausgespielt werden kann. | Zusatztyp bestätigt | Gleicher Zusatztyp |
+| `stamp_shadowified(Karte)` | Macht sie zum Schatten mit den zugehörigen Regeln fürs Ausspielen aus dem Nachziehstapel. | Zusatztyp bestätigt | Gleicher Zusatztyp |
+| `stamp_treasurified(Karte)` | Gibt ihr zusätzlich den Typ Geld. | Zusatztyp bestätigt | Gleicher Zusatztyp |
 | `stamp_two_for_one(Karte)` | Erhöht den Preis um eine Münze. Beim Erhalten kommt eine zusätzliche Kopie von außerhalb des Vorrats dazu. | Ja | Bis 3× |
-| `stamp_victorified(Karte)` | Gibt ihr zusätzlich den Typ Sieg und den Wert von einem Siegpunkt. | Offen | Offen |
+| `stamp_victorified(Karte)` | Gibt ihr zusätzlich den Typ Sieg und den Wert von einem Siegpunkt. | Zusatztyp bestätigt | Gleicher Zusatztyp |
 | `stamp_with_horse(Karte)` | Beim Erhalten bekommt der Spieler zusätzlich ein Pferd. | Ja | Bis 3× |
 | `stamp_with_spoils(Karte)` | Beim Erhalten bekommt der Spieler zusätzlich Beute aus Dark Ages (`spoils`). | Ja | Bis 3× |
 | `stamp_with_villager(Karte)` | Beim Erhalten bekommt der Spieler zusätzlich einen Dorfbewohner. | Ja | Bis 3× |
@@ -84,7 +84,7 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `twist_delayed_joy` | Gaben können bis zum nächsten Zug aufbewahrt werden. | Offen | Offen |
 | `twist_double_up` | Die erste erhaltene Aktions- oder Geldkarte des Zuges gibt eine zusätzliche Kopie von außerhalb des Vorrats. | Ja | Bis 3× |
 | `twist_extra_oomph` | Zu Zugbeginn eine zusätzliche Münze. | Ja | Bis 3× |
-| `twist_fast_track` | Erhaltene Dauer- oder Reservekarten werden beiseitegelegt und zu Beginn des nächsten Aufräumens ausgespielt. | Offen | Offen |
+| `twist_fast_track` | Erhaltene Dauer- oder Reservekarten werden beiseitegelegt und zu Beginn des nächsten Aufräumens ausgespielt. | Beiseitelegen bestätigt | Bei 2× und 3× auf der Ablage |
 | `twist_favored_landlords` | Beim Erhalten einer Siegkarte gibt es einen Gefallen. | Ja | Bis 3× |
 | `twist_favored_wealthy` | Beim Erhalten einer Geldkarte gibt es einen Gefallen. | Ja | Bis 3× |
 | `twist_forever_favored` | Zu Zugbeginn einen Gefallen erhalten. | Ja | Bis 3× |
@@ -99,7 +99,7 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `twist_real_estate_barons` | Siegpunktmarker können wie Taler ausgegeben werden. | Offen | Offen |
 | `twist_rebates` | Beim Erhalten einer Karte gibt es eine Münze. | Ja | Bis 3× |
 | `twist_room_for_more(Königreichstapel)` | Fügt dem Vorrat einen weiteren Königreichstapel hinzu. | Ja | Einmal im F8-Editor |
-| `twist_sale` | Karten kosten eine Münze weniger. | Offen | Offen |
+| `twist_sale` | Karten kosten eine Münze weniger. | Ja | Bis 3× |
 | `twist_shoppers` | Zu Zugbeginn ein zusätzlicher Kauf. Name und Beschreibung sind lokal belegt. | Ja | Bis 3× |
 | `twist_so_much_stuff` | Die erste ausgespielte Karte des Zuges gibt eine Kopie von außerhalb des Vorrats. | Offen | Offen |
 | `twist_turn_turn_turn` | In der Kampagne rotieren geteilte Stapel zu Beginn der menschlichen Züge ab dem zweiten. | Offen | Offen |
@@ -115,7 +115,7 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `start_add_card(Karte)` | Jeder Spieler erhält eine Kopie der Karte ins Startdeck. Der Code schreibt in den Kartenbereich für Startkarten. | Ja | Bis 3× |
 | `start_add_each_pile` | Jeder Spieler erhält eine Kopie von jedem Königreichstapel ins Startdeck. Der Code schreibt in den Kartenbereich für Startkarten. | Ja | Bis 3× |
 | `start_allow_second_cube(Projekt)` | Erlaubt einen zweiten Marker auf dem Projekt. | Offen | Offen |
-| `start_curse_cost_3` | Flüche kosten drei Münzen. | Offen | Offen |
+| `start_curse_cost_3` | Flüche kosten drei Münzen. | Ja | Bis 3× |
 | `start_double_deck` | Verdoppelt das Startdeck. | Ja | Bis 3× |
 | `start_double_heirloom(Karte)` | Für eine Königreichkarte mit Erbstück ersetzen zwei Exemplare des Erbstücks Startkupfer. | Ja | Bis 3× |
 | `start_double_pile(Stapel)` | Verdoppelt den gewählten Vorratsstapel. Der Codepfad und ein einzelner Import sind geprüft. | Ja | Bis 3× |
@@ -130,8 +130,8 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `start_replace_copper_from_pile(Karte)` | Registrierter Gegenpart zu `start_replace_estate_from_pile`. Die Ausführung und zulässigen Ziele sind offen. | Ja | Bis 3× |
 | `start_replace_estate(Karte)` | Ersetzt ein Startanwesen durch die gewählte Karte. | Ja | Bis 3× |
 | `start_replace_estate_from_pile(Karte)` | Ersetzt ein Startanwesen durch eine Karte aus dem gewählten Stapel. Eine eingebaute Vorlage nutzt dreimal `horse`. | Ja | Bis 3× |
-| `start_same_reward(Belohnung)` | Legt fest, dass die Belohnungen gleich sind. Eine Kampagnenvorlage nutzt auch die Form ohne Argument. | Offen | Offen |
-| `start_shuffle_pile(Geteilter Stapel)` | Mischt den gewählten geteilten Stapel beim Aufbau. | Offen | Offen |
+| `start_same_reward(Belohnung)` | Legt fest, dass die Belohnungen gleich sind. Eine Kampagnenvorlage nutzt auch die Form ohne Argument. | Ja | Gleiche Wirkung |
+| `start_shuffle_pile(Geteilter Stapel)` | Mischt den gewählten geteilten Stapel beim Aufbau. | Ja | Stapel bis 3× gemischt |
 | `start_tavern(Karte)` | Legt eine Kopie auf das Wirtshaus-Tableau. Die EXE enthält ein Beispiel mit `copper`. | Ja | Bis 3× |
 | `start_trash_curses` | Legt beim Aufbau Flüche in den Müll. | Ja | Bis 3× |
 | `start_trash_pile(Karte)` | Legt beim Aufbau einen Stapel der gewählten Karte in den Müll. | Ja | Bis 3× |
@@ -229,4 +229,4 @@ Für eine Mod mit unveränderter Zufallsauswahl über alle Erweiterungen ist der
 
 ### Native Effektmessung ohne Fensterfokus
 
-**Im Spiel gemessen am 10. November 2026, Build 3315, Steam-Build 17683350.** Die geprüfte Arbeitskopie lässt sich mit einem temporären Profil auf einem separaten Windows-Desktop starten. Der Runner legt die lokale Partie über Dominions Startlogik an und misst den ersten Zug aus dem nativen Spielzustand. In 184 lokalen Vergleichspartien mit zwei menschlichen Spielerplätzen wurde die Wirkung von 47 Effekten bestätigt. Zwei zusätzliche Fälle mit mehrfachen Projektsteinen brachen beim Start ab. Automatische Ereigniskäufe machen auch einige Kauf- und Erhaltensregeln im ersten Zug messbar. Die Tabellen geben den Stand für einfache und mehrfache Wirkung an. [Testergebnisse und Aufruf](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
+**Im Spiel gemessen am 10. November 2026, Build 3315, Steam-Build 17683350.** Die geprüfte Arbeitskopie lässt sich mit einem temporären Profil auf einem separaten Windows-Desktop starten. Der Runner legt die lokale Partie über Dominions Startlogik an und misst den ersten Zug aus dem nativen Spielzustand. In lokalen Vergleichspartien mit zwei menschlichen Spielerplätzen wurden 55 Effekte bestätigt. Bei sechs weiteren Effekten sind Teilwirkungen gemessen. Bei den mehrfachen Projektsteinen und der Schuldenreduktion mit Triumph wurde ein Startabbruch beobachtet. Automatische Ereigniskäufe machen auch einige Kauf- und Erhaltensregeln im ersten Zug messbar. Die Tabellen geben den Stand für einfache und mehrfache Wirkung an. [Testergebnisse und Aufruf](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)

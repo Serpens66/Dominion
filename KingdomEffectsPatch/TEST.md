@@ -1,7 +1,7 @@
 # Lokaler Test mit Doppelklick
 
 1. Dominion schließen. Der Verbindungsstatus in Dominion und Steam kann unverändert bleiben.
-2. **Lokal-Test-starten.cmd** doppelklicken. **1** wählt den Messmodus, **2** aktiviert den Patch. Beim ersten Lauf die Arbeitskopie fertig kopieren lassen.
+2. Für den Patch **Lokal-Test-starten.cmd** doppelklicken. Für einen Vergleich im Messmodus den Starter aus dem Patchordner als `Lokal-Test-starten.cmd /menue` aufrufen und **1** wählen. Beim ersten Lauf die Arbeitskopie fertig kopieren lassen.
 3. Warten, bis im Starterfenster **„Bereit“** steht. In Dominion **Lokal spielen** wählen, eine Partie gegen die KI mit zwei Spielern anlegen und die **Königreich-Auswahl** öffnen. Den kompletten Text unten mit **Strg+V** ins **Kartensuchfeld** einfügen, mit **Enter** übernehmen und **Spielen** drücken.
 
 Der Starter verwendet ein eigenes Testprofil. Er benennt dein Originalprofil vorübergehend um und stellt es wieder her, sobald du Dominion schließt. Lass das Starterfenster bis zur Wiederherstellung geöffnet. Falls es vorher geschlossen wurde, Dominion beenden und den Starter erneut öffnen. Er stellt das Originalprofil vor der Modusauswahl wieder her. Die Arbeitskopie und das letzte Protokoll liegen unter `%LOCALAPPDATA%\DominionModTests\3315`.
@@ -96,7 +96,7 @@ Der Host kopierte anschließend null Effekte in den Spielzustand. Der Freischalt
 
 ## Effektdialog in der lokalen Königreich-Auswahl
 
-Für Build 3315 den **Lokal-Test-starten.cmd** doppelklicken und **2 – Patch anwenden** wählen. Unter **Lokal spielen** die Königreich-Auswahl öffnen. Für einen festen Test die Zeile in das Kartensuchfeld kopieren und mit Enter bestätigen.
+Für Build 3315 den **Lokal-Test-starten.cmd** doppelklicken. Unter **Lokal spielen** die Königreich-Auswahl öffnen und **F8** drücken. Für einen festen Test lässt sich die folgende Zeile in das Kartensuchfeld kopieren und mit Enter bestätigen.
 
 ```text
 -k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop
@@ -105,7 +105,7 @@ Für Build 3315 den **Lokal-Test-starten.cmd** doppelklicken und **2 – Patch a
 1. **F8** drücken. Nach **Doppelter Vorratsstapel** suchen. **Dorf** auswählen und **Effekt hinzufügen** drücken. Für **Markt** wiederholen. **Kauflaune** suchen und ebenfalls hinzufügen. Erwartet sind **3 / 32** Effektplätze.
 2. **Übernehmen** drücken und die Partie starten. Erwartet sind **Dorf 20**, **Markt 20**, **Werkstatt 10** und ein zusätzlicher Kauf zu Zugbeginn. Für den ersten Test bleibt die automatische Verdopplung ausgeschaltet.
 3. Das Set über das Burgsymbol speichern. Danach das Set in einer frischen Königreich-Auswahl erneut laden und mit **F8** öffnen. Die drei Einträge sollen in derselben Reihenfolge erscheinen. Einen Eintrag entfernen und **Abbrechen** prüfen. Bei einem zweiten Versuch den Eintrag entfernen und **Übernehmen** wählen. Das Ergebnis wird zur eigenen Auswahl, die sich erneut als Set speichern lässt.
-4. Für einen getrennten Test **Alle gezogenen Königreichstapel automatisch verdoppeln** im Dialog aktivieren. Eine frische Zufallspartie soll ihre Hauptstapel verdoppeln. Die Einstellung gilt für die laufende Testsitzung. Modus 2 beginnt ausgeschaltet, Modus 3 eingeschaltet.
+4. Für einen getrennten Test **Alle gezogenen Königreichstapel automatisch verdoppeln** im Dialog aktivieren. Eine frische Zufallspartie soll ihre Hauptstapel verdoppeln. Die Einstellung gilt für die laufende Testsitzung. Beim Doppelklick ist sie anfangs ausgeschaltet. Modus 3 im optionalen Startmenü schaltet sie beim Start ein.
 5. Den festen Test auch mit **Weitergeben** auf dem zweiten Spielerplatz wiederholen. Die Dialogbedienung, Sonderkombinationen und der Start in Weitergeben brauchen einen Spieltest.
 
 ## Automatisierte lokale Effektprüfung im Hintergrund
@@ -169,13 +169,40 @@ Der Runner benötigt unter Windows das Recht, einen separaten Desktop zu erzeuge
 | `start_plus_2_vp_tokens(defiled_shrine)` | Siegpunktmarker auf dem Dorfstapel | 2 | 4 | 6 | 8 |
 | `start_with_cube(pageant)` | Projektsteine auf Festzug | 0 | 1 | Abbruch | Abbruch |
 | `twist_mirror_loot` | Verschiedene Karten im 30 Karten großen Kostbarkeiten-Stapel | 15 | 1 | 1 | 1 |
+| `start_same_reward` | Verschiedene Belohnungen bei Ritterkampf | 6 | 1 | 1 | 1 |
+| `start_shuffle_pile(patrician)` | Die zwei Kartentypen im Stapel sind ineinander gemischt | nein | ja | ja | ja |
+| `start_curse_cost_3` | Münzpreis eines Fluchs | 0 | 3 | 6 | 9 |
+| `twist_sale` | Münzpreis von Dorf | 3 | 2 | 1 | 0 |
+| `stamp_discounted(village)` | Münzpreis von Dorf | 3 | 2 | 1 | 0 |
+| `stamp_pay_later(village)` | Preis von Dorf | 3 Münzen | 3 Schulden | 3 Schulden | 3 Schulden |
+| `stamp_cost_zero(travelling_fair)` | Münzpreis der Wanderkirmes | 2 | 0 | 0 | 0 |
+| `stamp_cost_2_less(dominate)` | Münzpreis von `dominate` | 14 | 12 | 10 | 8 |
+| `stamp_two_for_one(village)` | Münzpreis von Dorf | 3 | 4 | 5 | 6 |
+| `stamp_treasurified`, `stamp_victorified`, `stamp_durationified`, `stamp_reactionified`, `stamp_shadowified`, jeweils auf Dorf | Der jeweilige Zusatztyp ist laut Spielregel vorhanden | nein | ja | ja | ja |
+| `twist_fast_track` | Ablageort des durch `delve` erhaltenen Silbers mit dem Zusatztyp Dauerkarte | Ablage | beiseite | Ablage | Ablage |
 
 Bei den vier Austauschvarianten wurde das erhaltene Silber gezählt. Herkunft des Silbers und Entnahme der ursprünglichen Startkarte waren keine separaten Prüfwerte. **Platz für mehr** hat einen gemeinsamen Zielslot. Der F8-Editor lässt eine Auswahl dieses Effekts zu.
 
 Für die Kaufboni bleibt `stamp_got_it_already(travelling_fair)` in allen Vergleichsfällen aktiv. Die zwei zusätzlichen Käufe belegen den ausgelösten Ereigniskauf. Für die Erhaltensregeln liefern der Silberbonus der Wanderkirmes, das Silber aus dem Vorrat durch `delve` und das Anwesen durch `triumph` gezielte Auslöser. Der Runner prüft, ob der erste Spieler die jeweilige Karte erhalten hat. Bei der Wanderkirmes mit Silberbonus blieben `twist_rebates` und `twist_double_up` in einer Erkundungsreihe ohne messbare Wirkung. Bei `delve` griffen beide.
 
-Für Huldigung und Gold mit Vorzügen lösen kostenlose Käufe von `dominate` und `wedding` den jeweiligen Kartenerhalt aus. Die zwei zusätzlichen Käufe zeigen, dass die Wanderkirmes einmal ausgeführt wurde. Bei `stamp_two_for_one(silver)` wurde der Kartenbonus gemessen. Die Preisänderung bleibt offen.
+Für Huldigung und Gold mit Vorzügen lösen kostenlose Käufe von `dominate` und `wedding` den jeweiligen Kartenerhalt aus. Die zwei zusätzlichen Käufe zeigen, dass die Wanderkirmes einmal ausgeführt wurde. Bei `stamp_two_for_one` wurde der Kartenbonus mit Silber und die Preisänderung mit Dorf gemessen.
+
+Die Preis- und Typabfragen verwenden Dominions Regelfunktionen im ersten Zug. Bei den Zusatztypen steht der Spieltest der Folgeaktionen aus. Der Mischtest beobachtet die Stapelreihenfolge. Er wiederholt einen Fall bei Bedarf mit frischer Zufallsziehung, da auch ein gemischter Stapel zufällig wieder zwei zusammenhängende Gruppen haben kann. Für Überholspur wandelt `stamp_durationified(silver)` das mit `delve` erhaltene Silber in eine Dauerkarte um. Das spätere Ausspielen zu Beginn des Aufräumens steht aus.
+
+`stamp_cost_2D_less(triumph)` brach bei einer, zwei und drei Kopien vor dem ersten Zug mit `ToKey(key, NULL) == key` ab. Die kleingeschriebene Variante `stamp_cost_2d_less(triumph)` lud im Vergleich keinen Effekt und ließ die Kosten bei fünf Schulden.
 
 Zwei und drei gleiche `start_with_cube(pageant)`-Einträge brachen vor dem ersten Zug mit der nativen Assertion `id != DATAID_NULL` ab. Beide Fälle erzeugten einen Minidump. Die reguläre Testreihe prüft für diesen Effekt den Ausgangswert und eine Kopie. Ob `start_allow_second_cube` die Kombination zulässt, ist offen.
 
 **Noch offen.** Zwei lokale Erkundungsreihen mit Taifun erreichten den ersten Zug mit aktivem Effekt, aber ohne Kapelle im Vorrat. Ob ein Stapel später wechselt, bleibt offen. Für weitere Effekte braucht der Runner konkrete Spielzüge oder längere Partien, etwa um Karten auszuspielen, zu entsorgen oder die Endwertung zu erreichen.
+
+## Verbliebene Effekte manuell prüfen
+
+**Lokal-Test-starten.cmd** öffnen und unter **Lokal spielen** oder **Weitergeben** in der Königreich-Auswahl **F8** drücken. Die [Spielanleitung](../Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte) markiert offene und teilweise geprüfte Effekte. Für einen Vergleich dieselbe Ausgangslage zuerst ohne Zieleffekt, dann mit einer, zwei und drei Kopien starten. Hilfseffekte bleiben in allen Fällen gleich. Die dokumentierten Startabbrüche sind separat vermerkt.
+
+Für die Stempel beim Ausspielen, Chamäleon und die Effekte auf die erste gespielte Karte das folgende Set ins Kartensuchfeld kopieren. Dadurch liegt Dorf bereits auf der ersten Hand. Den zu prüfenden Effekt danach über F8 hinzufügen und beim Ausspielen von Dorf Handgröße, Aktionen, Käufe oder Münzen beobachten. Für den Zusatztyp Dauerkarte auch den nächsten eigenen Zug prüfen.
+
+```text
+-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop -x start_add_card(village), twist_big_ideas, twist_big_ideas, twist_big_ideas, twist_big_ideas, twist_big_ideas, twist_big_ideas
+```
+
+Für Effekte am Ende des Zugs den betroffenen Spieler in **Weitergeben** den ersten Zug beenden lassen und den Beginn seines nächsten Zugs prüfen. Bei Müllhaufen und Deponie die Entsorgung einer Handkarte beobachten. Für Wege, Prophezeiungen, Projekte und die Endwertung das jeweilige Ziel im Königreich mitführen und dessen konkreten Auslöser ausspielen. Vorsprung und Rotationskoller haben laut Katalog einen Kampagnenbezug. Die lokale Testreihe deckt diese Kampagnenbedingungen bisher nicht ab.

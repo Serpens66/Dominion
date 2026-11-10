@@ -73,7 +73,7 @@ Eine **Nicht-Vorrats-Kopie** ist ein zusätzliches Exemplar der Karte, das du vo
 | Deponie | `twist_landfill` | Wenn du eine deiner Karten entsorgst, **+1 Karte**. Das gilt auch für Karten, die du von einem anderen Ort als deiner Hand entsorgst. *Einmal – Offen · Mehrfach – Offen* |
 | So viel Zeugs | `twist_so_much_stuff` | Wenn du deine erste Karte in einem Zug spielst, nimm eine Nicht-Vorrats-Kopie dieser Karte. *Einmal – Offen · Mehrfach – Offen* |
 | Verdopplung | `twist_double_up` | Wenn du in einem Zug zum ersten Mal eine Aktions- oder Geldkarte nimmst, nimm zusätzlich eine Nicht-Vorrats-Kopie dieser Karte. *Einmal – Ja · Mehrfach – Bis 3×* |
-| Überholspur | `twist_fast_track` | Wenn du eine Dauer- oder Reservekarte nimmst, lege sie zur Seite und spiele sie zu Beginn der kommenden Aufräumphase. *Einmal – Offen · Mehrfach – Offen* |
+| Überholspur | `twist_fast_track` | Wenn du eine Dauer- oder Reservekarte nimmst, lege sie zur Seite und spiele sie zu Beginn der kommenden Aufräumphase. *Einmal – Beiseitelegen bestätigt · Mehrfach – Bei 2× und 3× auf der Ablage* |
 | Grundbesitzer Verbündet | `twist_favored_landlords` | Wenn du eine Punktekarte nimmst, **+1 Gefallen**. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Reich Verbündet | `twist_favored_wealthy` | Wenn du eine Geldkarte nimmst, **+1 Gefallen**. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Auf dem Weg | `twist_incoming` | Wenn du eine Aktions- oder Geldkarte nimmst, kommt sie sofort oben auf deinen Nachziehstapel statt auf den Ablagestapel. *Einmal – Ja · Mehrfach – Gleiche Wirkung* |
@@ -82,7 +82,7 @@ Eine **Nicht-Vorrats-Kopie** ist ein zusätzliches Exemplar der Karte, das du vo
 | Verzögertes Glück | `twist_delayed_joy` | Du darfst jede Gabe aufbewahren und erst im nächsten Zug ausführen. *Einmal – Offen · Mehrfach – Offen* |
 | Gesparte Pennys | `twist_pennies_saved` | Am Ende deiner Kaufphase wird übriges Geld zu Talern. *Einmal – Offen · Mehrfach – Offen* |
 | Großeigentümer | `twist_real_estate_barons` | Du kannst Siegpunktmarker als Taler ausgeben. *Einmal – Offen · Mehrfach – Offen* |
-| Alles muss raus | `twist_sale` | Karten kosten ![1 Geld](Spielzeichen/geld-1.png) weniger. *Einmal – Offen · Mehrfach – Offen* |
+| Alles muss raus | `twist_sale` | Karten kosten ![1 Geld](Spielzeichen/geld-1.png) weniger. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Vorsprung | `twist_head_start` | In der Kampagne erhältst du zu Beginn 2 Extrazüge. Die KI erhält 10 Siegpunktmarker. *Einmal – Offen · Mehrfach – Offen* |
 | Gespiegelte Kostbarkeiten | `twist_mirror_loot` | Der Kostbarkeiten-Stapel besteht aus Exemplaren derselben Kostbarkeit. *Einmal – Ja · Mehrfach – Gleiche Wirkung* |
 | Platz für Mehr | `twist_room_for_more(Stapel-ID)` | Legt beim Spielaufbau den gewählten Königreichkarten-Stapel in den Vorrat. Die [Übernahme aus einem eigenen Set](#zwölf-oder-mehr-königreichstapel) ist offen. *Einmal – Ja · Mehrfach – Einmal im F8-Editor* |
@@ -98,21 +98,21 @@ Eine **Nicht-Vorrats-Kopie** ist ein zusätzliches Exemplar der Karte, das du vo
 | Plus Kauf | `stamp_plus_buy(Karten-ID)` | Wenn du eine Karte von diesem Stapel spielst, **+1 Kauf**. *Einmal – Offen · Mehrfach – Offen* |
 | Plus Geld | `stamp_plus_coin(Karten-ID)` | Wenn du eine Karte von diesem Stapel spielst, +![1 Geld](Spielzeichen/geld-1.png). *Einmal – Offen · Mehrfach – Offen* |
 | Chamäleon | `stamp_chameleonize(Karten-ID)` | Beim Ausspielen werden **+Karten** und Geldboni in gleicher Höhe getauscht. Aus **+2 Karten** wird zum Beispiel +![2 Geld](Spielzeichen/geld-2.png) und umgekehrt. *Einmal – Offen · Mehrfach – Offen* |
-| Vergünstigt | `stamp_discounted(Karten-ID)` | Die Karte kostet ![1 Geld](Spielzeichen/geld-1.png) weniger. *Einmal – Offen · Mehrfach – Offen* |
-| Später Zahlbar | `stamp_pay_later(Karten-ID)` | Der Geldpreis der Karte wird in gleich viele Schulden umgewandelt. *Einmal – Offen · Mehrfach – Offen* |
+| Vergünstigt | `stamp_discounted(Karten-ID)` | Die Karte kostet ![1 Geld](Spielzeichen/geld-1.png) weniger. *Einmal – Ja · Mehrfach – Bis 3×* |
+| Später Zahlbar | `stamp_pay_later(Karten-ID)` | Der Geldpreis der Karte wird in gleich viele Schulden umgewandelt. *Einmal – Ja · Mehrfach – Gleiche Wirkung* |
 | 2 zum Preis von 1 | `stamp_two_for_one(Karten-ID)` | Die Karte kostet ![1 Geld](Spielzeichen/geld-1.png) mehr. Wenn du sie nimmst, nimm zusätzlich eine Nicht-Vorrats-Kopie. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Einblick Bietend | `stamp_offers_insight(Karten-ID)` | Wenn du diese Karte nimmst, **+1 Karte** am Ende des Zuges. *Einmal – Offen · Mehrfach – Offen* |
 | Pferd Dazu | `stamp_with_horse(Karten-ID)` | Wenn du diese Karte nimmst, nimm ein Pferd. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Beute Dazu | `stamp_with_spoils(Karten-ID)` | Wenn du diese Karte nimmst, nimm eine Beute (`spoils`). *Einmal – Ja · Mehrfach – Bis 3×* |
 | Dorfbewohner Dazu | `stamp_with_villager(Karten-ID)` | Wenn du diese Karte nimmst, **+1 Dorfbewohner**. *Einmal – Ja · Mehrfach – Bis 3×* |
-| Zusatztyp Dauerkarte | `stamp_durationified(Karten-ID)` | Die Karte wird zusätzlich zur Dauerkarte. Wenn du sie spielst, gibt sie dir zu Beginn deines nächsten Zuges **+1 Karte** und **+1 Aktion**. *Einmal – Offen · Mehrfach – Offen* |
-| Zusatztyp Geldkarte | `stamp_treasurified(Karten-ID)` | Die Karte hat zusätzlich den Typ Geld. Du kannst sie dadurch auch als Geldkarte in der Kaufphase spielen. *Einmal – Offen · Mehrfach – Offen* |
-| Zusatztyp Punktekarte | `stamp_victorified(Karten-ID)` | Die Karte wird zusätzlich zur Punktekarte und ist ![1 Siegpunkt](Spielzeichen/siegpunkt-1.png) wert. *Einmal – Offen · Mehrfach – Offen* |
-| Zusatztyp Reaktion | `stamp_reactionified(Karten-ID)` | Die Karte wird zusätzlich zur Reaktion. Du darfst sie spielen, wenn du sie außerhalb der Aufräumphase nimmst, entsorgst oder ablegst. *Einmal – Offen · Mehrfach – Offen* |
-| Zusatztyp Schatten | `stamp_shadowified(Karten-ID)` | Die Karte wird zusätzlich zur Schattenkarte. Du kannst sie aus deinem Nachziehstapel spielen, als wäre sie in deiner Hand. Wenn sie eingemischt wird, kommt sie unter den Nachziehstapel. *Einmal – Offen · Mehrfach – Offen* |
-| −2 Kosten | `stamp_cost_2_less(Ereignis-ID)` | Das Ereignis kostet ![2 Geld](Spielzeichen/geld-2.png) weniger. *Einmal – Offen · Mehrfach – Offen* |
-| −2 Schuldenkosten | `stamp_cost_2D_less(Ereignis-ID)` | Das Ereignis kostet 2 Schulden weniger. *Einmal – Offen · Mehrfach – Offen* |
-| Kostenlos | `stamp_cost_zero(Ereignis-ID)` | Das Ereignis kostet ![0 Geld](Spielzeichen/geld-0.png). *Einmal – Offen · Mehrfach – Offen* |
+| Zusatztyp Dauerkarte | `stamp_durationified(Karten-ID)` | Die Karte wird zusätzlich zur Dauerkarte. Wenn du sie spielst, gibt sie dir zu Beginn deines nächsten Zuges **+1 Karte** und **+1 Aktion**. *Einmal – Zusatztyp bestätigt · Mehrfach – Gleicher Zusatztyp* |
+| Zusatztyp Geldkarte | `stamp_treasurified(Karten-ID)` | Die Karte hat zusätzlich den Typ Geld. Du kannst sie dadurch auch als Geldkarte in der Kaufphase spielen. *Einmal – Zusatztyp bestätigt · Mehrfach – Gleicher Zusatztyp* |
+| Zusatztyp Punktekarte | `stamp_victorified(Karten-ID)` | Die Karte wird zusätzlich zur Punktekarte und ist ![1 Siegpunkt](Spielzeichen/siegpunkt-1.png) wert. *Einmal – Zusatztyp bestätigt · Mehrfach – Gleicher Zusatztyp* |
+| Zusatztyp Reaktion | `stamp_reactionified(Karten-ID)` | Die Karte wird zusätzlich zur Reaktion. Du darfst sie spielen, wenn du sie außerhalb der Aufräumphase nimmst, entsorgst oder ablegst. *Einmal – Zusatztyp bestätigt · Mehrfach – Gleicher Zusatztyp* |
+| Zusatztyp Schatten | `stamp_shadowified(Karten-ID)` | Die Karte wird zusätzlich zur Schattenkarte. Du kannst sie aus deinem Nachziehstapel spielen, als wäre sie in deiner Hand. Wenn sie eingemischt wird, kommt sie unter den Nachziehstapel. *Einmal – Zusatztyp bestätigt · Mehrfach – Gleicher Zusatztyp* |
+| −2 Kosten | `stamp_cost_2_less(Ereignis-ID)` | Das Ereignis kostet ![2 Geld](Spielzeichen/geld-2.png) weniger. *Einmal – Ja · Mehrfach – Bis 3×* |
+| −2 Schuldenkosten | `stamp_cost_2D_less(Ereignis-ID)` | Das Ereignis kostet 2 Schulden weniger. *Einmal – Startabbruch mit Triumph · Mehrfach – Startabbruch mit Triumph* |
+| Kostenlos | `stamp_cost_zero(Ereignis-ID)` | Das Ereignis kostet ![0 Geld](Spielzeichen/geld-0.png). *Einmal – Ja · Mehrfach – Gleiche Wirkung* |
 | Extrageld | `stamp_bonus_money(Ereignis-ID)` | Wenn du das Ereignis kaufst, +![1 Geld](Spielzeichen/geld-1.png). *Einmal – Ja · Mehrfach – Bis 3×* |
 | Silber Dazu | `stamp_also_silver(Ereignis-ID)` | Wenn du das Ereignis kaufst, nimm ein Silber. *Einmal – Ja · Mehrfach – Gleiche Wirkung* |
 | Neue Impulse | `stamp_motivational(Ereignis-ID)` | Wenn du das Ereignis kaufst, **+2 Karten** am Ende des Zuges. *Einmal – Offen · Mehrfach – Offen* |
@@ -138,7 +138,7 @@ Eine **Nicht-Vorrats-Kopie** ist ein zusätzliches Exemplar der Karte, das du vo
 | Zusätzliche Startkarte | `start_add_card(Karten-ID)` | Jeder Spieler startet mit einer Kopie dieser Karte zusätzlich im Startdeck. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Eine Startkarte von jedem Stapel | `start_add_each_pile` | Jeder Spieler startet mit einer Kopie von jedem Königreichkarten-Stapel zusätzlich im Startdeck. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Zweiter Stein gefällig? | `start_allow_second_cube(Projekt-ID)` | Erlaubt einen zweiten Projektstein auf dem gewählten Projekt und verdoppelt damit dessen Effekt. *Einmal – Offen · Mehrfach – Offen* |
-| Kosten der Flüche | `start_curse_cost_3` | Flüche kosten ![3 Geld](Spielzeichen/geld-3.png). *Einmal – Offen · Mehrfach – Offen* |
+| Kosten der Flüche | `start_curse_cost_3` | Flüche kosten ![3 Geld](Spielzeichen/geld-3.png). *Einmal – Ja · Mehrfach – Bis 3×* |
 | Doppeltes Startdeck | `start_double_deck` | Jeder Spieler startet mit doppelt so vielen Exemplaren jeder Karte seines Startdecks. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Doppeltes Erbstück | `start_double_heirloom(Karten-ID)` | Zwei Exemplare des Erbstücks ersetzen bei jedem Spieler zwei Startkupfer. Gib die zugehörige Königreichkarte an, etwa `start_double_heirloom(secret_cave)` für Geheime Höhle. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Doppelter Vorratsstapel | `start_double_pile(Stapel-ID)` | Verdoppelt den Inhalt des Vorratsstapels. `start_double_pile(village)` wurde mit Dorf im Spiel bestätigt. *Einmal – Ja · Mehrfach – Bis 3×* |
@@ -153,8 +153,8 @@ Eine **Nicht-Vorrats-Kopie** ist ein zusätzliches Exemplar der Karte, das du vo
 | Startkupfer durch eine Karte vom Stapel ersetzen | `start_replace_copper_from_pile(Stapel-ID)` | Nimmt pro Spieler eine Karte vom gewählten Stapel und legt sie anstelle eines Kupfers ins Startdeck. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Startanwesen austauschen | `start_replace_estate(Karten-ID)` | Ersetzt pro Spieler ein Startanwesen durch eine neu erzeugte Kopie der gewählten Karte, etwa mit `start_replace_estate(silver)`. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Startanwesen durch eine Karte vom Stapel ersetzen | `start_replace_estate_from_pile(Stapel-ID)` | Nimmt pro Spieler eine Karte vom gewählten Stapel und legt sie anstelle eines Anwesens ins Startdeck. Die Menagerie-Kampagne nutzt `start_replace_estate_from_pile(horse)` dreimal, damit jeder Spieler mit 3 Pferden startet. *Einmal – Ja · Mehrfach – Bis 3×* |
-| Gleiche Belohnungen | `start_same_reward` | Das Spiel wählt eine Belohnung zufällig aus und macht alle anderen Belohnungen zu Kopien davon. Die Vorlage mit Ritterkampf (`joust`) verwendet den Befehl ohne Klammern. *Einmal – Offen · Mehrfach – Offen* |
-| Stapel mischen | `start_shuffle_pile(Stapel-ID)` | Mischt den gewählten gemischten Vorratsstapel beim Aufbau, etwa `start_shuffle_pile(patrician)` für den Stapel mit Patrizier und Handelsplatz. *Einmal – Offen · Mehrfach – Offen* |
+| Gleiche Belohnungen | `start_same_reward` | Das Spiel wählt eine Belohnung zufällig aus und macht alle anderen Belohnungen zu Kopien davon. Die Vorlage mit Ritterkampf (`joust`) verwendet den Befehl ohne Klammern. *Einmal – Ja · Mehrfach – Gleiche Wirkung* |
+| Stapel mischen | `start_shuffle_pile(Stapel-ID)` | Mischt den gewählten gemischten Vorratsstapel beim Aufbau, etwa `start_shuffle_pile(patrician)` für den Stapel mit Patrizier und Handelsplatz. *Einmal – Ja · Mehrfach – Stapel bis 3× gemischt* |
 | Wirtshaus | `start_tavern(Karten-ID)` | Jeder Spieler startet mit der gewählten Karte auf seinem Wirtshaus-Tableau. Eine Kampagnenvorlage nutzt zweimal `start_tavern(copper)`. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Flüche im Müll | `start_trash_curses` | Erzeugt beim Aufbau 10 Flüche direkt im Müll. *Einmal – Ja · Mehrfach – Bis 3×* |
 | Stapel im Müll | `start_trash_pile(Karten-ID)` | Erzeugt beim Aufbau einen Stapel der gewählten Karte direkt im Müll. *Einmal – Ja · Mehrfach – Bis 3×* |
@@ -242,7 +242,7 @@ A **non-Supply copy** is an extra copy of the card that you gain from outside th
 | Landfill | `twist_landfill` | When you trash one of your cards, **+1 Card**. This also applies when you trash the card from somewhere other than your hand. *Once – Untested · Repeated – Untested* |
 | So much Stuff | `twist_so_much_stuff` | When you play your first card in a turn, gain a non-Supply copy of it. *Once – Untested · Repeated – Untested* |
 | Double Up | `twist_double_up` | The first time you gain an Action or Treasure card in a turn, also gain a non-Supply copy of it. *Once – Yes · Repeated – Up to 3×* |
-| Fast Track | `twist_fast_track` | When you gain a Duration or Reserve card, set it aside and play it at the start of the upcoming Clean-up. *Once – Untested · Repeated – Untested* |
+| Fast Track | `twist_fast_track` | When you gain a Duration or Reserve card, set it aside and play it at the start of the upcoming Clean-up. *Once – Setting aside verified · Repeated – Discarded at 2× and 3×* |
 | Favored Landlords | `twist_favored_landlords` | When you gain a Victory card, **+1 Favor**. *Once – Yes · Repeated – Up to 3×* |
 | Favored Wealthy | `twist_favored_wealthy` | When you gain a Treasure card, **+1 Favor**. *Once – Yes · Repeated – Up to 3×* |
 | Incoming | `twist_incoming` | When you gain an Action or Treasure card, put it straight onto your deck instead of your discard pile. *Once – Yes · Repeated – Same result* |
@@ -251,7 +251,7 @@ A **non-Supply copy** is an extra copy of the card that you gain from outside th
 | Delayed Joy | `twist_delayed_joy` | You may save any Boon and resolve it on your next turn. *Once – Untested · Repeated – Untested* |
 | Pennies Saved | `twist_pennies_saved` | At the end of your Buy phase, convert unspent coins to Coffers. *Once – Untested · Repeated – Untested* |
 | Real Estate Barons | `twist_real_estate_barons` | You can spend VP tokens as Coffers. *Once – Untested · Repeated – Untested* |
-| Sale | `twist_sale` | Cards cost ![1 coin](Spielzeichen/geld-1.png) less. *Once – Untested · Repeated – Untested* |
+| Sale | `twist_sale` | Cards cost ![1 coin](Spielzeichen/geld-1.png) less. *Once – Yes · Repeated – Up to 3×* |
 | Head Start | `twist_head_start` | In the campaign, you get 2 extra turns at the start. The AI gets 10 VP tokens. *Once – Untested · Repeated – Untested* |
 | Mirror Loot | `twist_mirror_loot` | The Loot pile consists of copies of the same Loot card. *Once – Yes · Repeated – Same result* |
 | Room for More | `twist_room_for_more(pile-ID)` | Adds the chosen Kingdom pile to the Supply at setup. [Loading it from a custom set](#twelve-or-more-kingdom-piles) remains unverified. *Once – Yes · Repeated – Once in the F8 editor* |
@@ -267,21 +267,21 @@ A **non-Supply copy** is an extra copy of the card that you gain from outside th
 | Plus Buy | `stamp_plus_buy(card-ID)` | When you play a card from this pile, **+1 Buy**. *Once – Untested · Repeated – Untested* |
 | Plus Coin | `stamp_plus_coin(card-ID)` | When you play a card from this pile, +![1 coin](Spielzeichen/geld-1.png). *Once – Untested · Repeated – Untested* |
 | Chameleonized | `stamp_chameleonize(card-ID)` | When you play the card, swap **+Cards** and coin bonuses in equal amounts. **+2 Cards** becomes +![2 coins](Spielzeichen/geld-2.png), and vice versa. *Once – Untested · Repeated – Untested* |
-| Discounted | `stamp_discounted(card-ID)` | The card costs ![1 coin](Spielzeichen/geld-1.png) less. *Once – Untested · Repeated – Untested* |
-| Pay Later | `stamp_pay_later(card-ID)` | Convert the card's coin cost to an equal amount of Debt. *Once – Untested · Repeated – Untested* |
+| Discounted | `stamp_discounted(card-ID)` | The card costs ![1 coin](Spielzeichen/geld-1.png) less. *Once – Yes · Repeated – Up to 3×* |
+| Pay Later | `stamp_pay_later(card-ID)` | Convert the card's coin cost to an equal amount of Debt. *Once – Yes · Repeated – Same result* |
 | Two For One | `stamp_two_for_one(card-ID)` | The card costs ![1 coin](Spielzeichen/geld-1.png) more. When you gain it, also gain a non-Supply copy. *Once – Yes · Repeated – Up to 3×* |
 | Offers Insight | `stamp_offers_insight(card-ID)` | When you gain this card, **+1 Card** at the end of the turn. *Once – Untested · Repeated – Untested* |
 | With Horse | `stamp_with_horse(card-ID)` | When you gain this card, gain a Horse. *Once – Yes · Repeated – Up to 3×* |
 | With Spoils | `stamp_with_spoils(card-ID)` | When you gain this card, gain a Spoils (`spoils`). *Once – Yes · Repeated – Up to 3×* |
 | With Villager | `stamp_with_villager(card-ID)` | When you gain this card, **+1 Villager**. *Once – Yes · Repeated – Up to 3×* |
-| Durationified | `stamp_durationified(card-ID)` | This card is also a Duration. When you play it, it gives you **+1 Card** and **+1 Action** at the start of your next turn. *Once – Untested · Repeated – Untested* |
-| Treasurified | `stamp_treasurified(card-ID)` | This card is also a Treasure, so you can play it as a Treasure in your Buy phase. *Once – Untested · Repeated – Untested* |
-| Victorified | `stamp_victorified(card-ID)` | This card is also a Victory card and is worth ![1 victory point](Spielzeichen/siegpunkt-1.png). *Once – Untested · Repeated – Untested* |
-| Reactionified | `stamp_reactionified(card-ID)` | This card is also a Reaction. You may play it when you gain, trash, or discard it outside of Clean-up. *Once – Untested · Repeated – Untested* |
-| Shadowified | `stamp_shadowified(card-ID)` | This card is also a Shadow. You can play it from your deck as if it were in your hand. When you shuffle it, put it on the bottom of your deck. *Once – Untested · Repeated – Untested* |
-| -2 Cost | `stamp_cost_2_less(event-ID)` | The Event costs ![2 coins](Spielzeichen/geld-2.png) less. *Once – Untested · Repeated – Untested* |
-| -2 Debt Cost | `stamp_cost_2D_less(event-ID)` | The Event costs 2 less Debt. *Once – Untested · Repeated – Untested* |
-| Free | `stamp_cost_zero(event-ID)` | The Event costs ![0 coins](Spielzeichen/geld-0.png). *Once – Untested · Repeated – Untested* |
+| Durationified | `stamp_durationified(card-ID)` | This card is also a Duration. When you play it, it gives you **+1 Card** and **+1 Action** at the start of your next turn. *Once – Added type verified · Repeated – Same added type* |
+| Treasurified | `stamp_treasurified(card-ID)` | This card is also a Treasure, so you can play it as a Treasure in your Buy phase. *Once – Added type verified · Repeated – Same added type* |
+| Victorified | `stamp_victorified(card-ID)` | This card is also a Victory card and is worth ![1 victory point](Spielzeichen/siegpunkt-1.png). *Once – Added type verified · Repeated – Same added type* |
+| Reactionified | `stamp_reactionified(card-ID)` | This card is also a Reaction. You may play it when you gain, trash, or discard it outside of Clean-up. *Once – Added type verified · Repeated – Same added type* |
+| Shadowified | `stamp_shadowified(card-ID)` | This card is also a Shadow. You can play it from your deck as if it were in your hand. When you shuffle it, put it on the bottom of your deck. *Once – Added type verified · Repeated – Same added type* |
+| -2 Cost | `stamp_cost_2_less(event-ID)` | The Event costs ![2 coins](Spielzeichen/geld-2.png) less. *Once – Yes · Repeated – Up to 3×* |
+| -2 Debt Cost | `stamp_cost_2D_less(event-ID)` | The Event costs 2 less Debt. *Once – Start fails with Triumph · Repeated – Start fails with Triumph* |
+| Free | `stamp_cost_zero(event-ID)` | The Event costs ![0 coins](Spielzeichen/geld-0.png). *Once – Yes · Repeated – Same result* |
 | Bonus Money | `stamp_bonus_money(event-ID)` | When you buy this Event, +![1 coin](Spielzeichen/geld-1.png). *Once – Yes · Repeated – Up to 3×* |
 | Also Silver | `stamp_also_silver(event-ID)` | When you buy this Event, gain a Silver. *Once – Yes · Repeated – Same result* |
 | Motivational | `stamp_motivational(event-ID)` | When you buy this Event, **+2 Cards** at the end of the turn. *Once – Untested · Repeated – Untested* |
@@ -307,7 +307,7 @@ A **non-Supply copy** is an extra copy of the card that you gain from outside th
 | Extra starting card | `start_add_card(card-ID)` | Each player starts with an extra copy of this card in their starting deck. *Once – Yes · Repeated – Up to 3×* |
 | One starting card from each pile | `start_add_each_pile` | Each player starts with an extra copy of a card from each Kingdom pile in their starting deck. *Once – Yes · Repeated – Up to 3×* |
 | Second Cube | `start_allow_second_cube(project-ID)` | Allows a second cube on the chosen Project, doubling its effect. *Once – Untested · Repeated – Untested* |
-| Cost of Curses | `start_curse_cost_3` | Curses cost ![3 coins](Spielzeichen/geld-3.png). *Once – Untested · Repeated – Untested* |
+| Cost of Curses | `start_curse_cost_3` | Curses cost ![3 coins](Spielzeichen/geld-3.png). *Once – Yes · Repeated – Up to 3×* |
 | Double starting deck | `start_double_deck` | Each player starts with twice as many copies of every card in their starting deck. *Once – Yes · Repeated – Up to 3×* |
 | Double Heirloom | `start_double_heirloom(card-ID)` | Two copies of the Heirloom replace two starting Coppers per player. Use the associated Kingdom card ID, as in `start_double_heirloom(secret_cave)` for Secret Cave. *Once – Yes · Repeated – Up to 3×* |
 | Double Supply pile | `start_double_pile(pile-ID)` | Doubles the number of cards in the Supply pile. `start_double_pile(village)` was verified with Village in a game test. *Once – Yes · Repeated – Up to 3×* |
@@ -322,8 +322,8 @@ A **non-Supply copy** is an extra copy of the card that you gain from outside th
 | Replace a starting Copper with a card from a pile | `start_replace_copper_from_pile(pile-ID)` | Takes one card per player from the chosen pile and puts it in their starting deck in place of a Copper. *Once – Yes · Repeated – Up to 3×* |
 | Replace a starting Estate | `start_replace_estate(card-ID)` | Replaces one starting Estate per player with a newly created copy of the chosen card, as in `start_replace_estate(silver)`. *Once – Yes · Repeated – Up to 3×* |
 | Replace a starting Estate with a card from a pile | `start_replace_estate_from_pile(pile-ID)` | Takes one card per player from the chosen pile and puts it in their starting deck in place of an Estate. The Menagerie campaign uses `start_replace_estate_from_pile(horse)` three times so each player starts with 3 Horses. *Once – Yes · Repeated – Up to 3×* |
-| Identical Rewards | `start_same_reward` | The game picks a Reward at random and makes all the other Rewards copies of it. The Joust (`joust`) template uses the command without parentheses. *Once – Untested · Repeated – Untested* |
-| Shuffle a pile | `start_shuffle_pile(pile-ID)` | Shuffles the chosen split Supply pile at setup. For example, `start_shuffle_pile(patrician)` shuffles the Patrician and Emporium pile. *Once – Untested · Repeated – Untested* |
+| Identical Rewards | `start_same_reward` | The game picks a Reward at random and makes all the other Rewards copies of it. The Joust (`joust`) template uses the command without parentheses. *Once – Yes · Repeated – Same result* |
+| Shuffle a pile | `start_shuffle_pile(pile-ID)` | Shuffles the chosen split Supply pile at setup. For example, `start_shuffle_pile(patrician)` shuffles the Patrician and Emporium pile. *Once – Yes · Repeated – Pile interleaved up to 3×* |
 | Tavern | `start_tavern(card-ID)` | Each player starts with the chosen card on their Tavern mat. One campaign template uses `start_tavern(copper)` twice. *Once – Yes · Repeated – Up to 3×* |
 | Curses in the trash | `start_trash_curses` | Creates 10 Curses directly in the trash at setup. *Once – Yes · Repeated – Up to 3×* |
 | Pile in the trash | `start_trash_pile(card-ID)` | Creates a pile of the chosen card directly in the trash at setup. *Once – Yes · Repeated – Up to 3×* |
