@@ -8,7 +8,7 @@
 2. Klicke auf **Königreich ziehen** und dann auf **Für Dominion kopieren**.
 3. Füge den Code in das Kartensuchfeld der Königreich-Auswahl in Dominion ein.
 
-Unter **Erweiterungen und Editionen** legst du fest, welche Sets immer zur Auswahl stehen und welche in den Lostopf kommen. Mit **Von** und **Bis** bestimmst du, wie viele Stapel aus einem Set gezogen werden dürfen. Über **Einstellungen sichern oder laden** kannst du deine Auswahl in einen anderen Browser übertragen.
+Unter **Erweiterungen und Editionen** garantiert **Immer** mindestens einen Stapel aus dem Set. **Zufall** nimmt das Set in den Lostopf auf. Mit **Von** und **Bis** bestimmst du, wie viele Stapel aus einem Set gezogen werden dürfen. Über **Einstellungen sichern oder laden** kannst du deine Auswahl in einen anderen Browser übertragen.
 
 ## Web-Namenslisten umwandeln
 

@@ -353,7 +353,6 @@
     padding: .45rem .55rem;
   }
   #exp-ranges .expansion-mode { min-width: 0; padding-inline: .35rem; }
-  .expansion-distinct-range { max-width: 32rem; padding: .2rem 0; border: 0; }
   @media (max-width: 29rem) {
     #exp-ranges > .quota-table { grid-template-columns: minmax(0, 1fr) 3.5rem 3.5rem; }
     #exp-ranges .quota-table > :is(h3, .range-rule-name) { grid-column: 1 / -1; }
@@ -820,8 +819,7 @@
             <button type="button" id="enable-random-expansions" class="secondary" data-en="Add remaining expansions to the lottery">Übrige für Zufall freigeben</button>
             <button type="button" id="reset-expansions" class="secondary" data-en="Reset expansions">Erweiterungen zurücksetzen</button>
           </div>
-          <p class="muted" id="expansion-lottery-help" data-en="Always adds a set to the card pool every time. Random enters it in the lottery. To require piles from a set, raise its From value. 0 to 0 turns a set off.">'Immer' nimmt ein Set bei jeder Ziehung in den Kartenpool auf. 'Zufall' legt es in den Lostopf. Wenn aus einem Set mindestens ein Stapel kommen soll, erhöhe seinen Von-Wert. 0 bis 0 schaltet ein Set aus.</p>
-          <div id="exp-distinct-ranges" class="range-rules expansion-distinct-range"></div>
+          <p class="muted" id="expansion-lottery-help" data-en="Always guarantees at least one Kingdom pile from the set. Random enters the set in the lottery. From and To set the number of piles per set.">Immer garantiert mindestens einen Königreichstapel aus dem Set. Zufall legt das Set in den Lostopf. Mit Von und Bis legst du die Stapelzahl pro Set fest.</p>
           <div id="exp-ranges" class="quota-columns"></div>
         </div>
       </details>
@@ -1548,7 +1546,6 @@ const englishRuleLabels = {
   potions: "With Potion cost", debt: "With Debt cost", "non-action": "Non-Action piles",
   "gain-coffers": "+1 Coffers or more", "gain-villagers": "+1 Villager or more", "gain-favors": "+1 Favor or more",
   "gain-sun": "Sun tokens (Omen)", "gain-vp": "Gain VP tokens", "gain-horse": "Gain Horses", "gain-loot": "Gain Loot",
-  "exp-distinct": "Expansions in the result (excluding the base game)",
   "land-total": "Total Landscapes", "land-distinct": "Different source expansions",
   "first-edition": "First edition cards",
 };
@@ -1702,8 +1699,6 @@ const countRules = [
     id: "gain-" + kind, label, icon: resourceIcons[kind], group: "resources", matches: card => card.gainFilters.includes(kind),
   })),
   { id: "gain-loot", icon: "loot", label: "Kostbarkeiten erhalten", group: "resources", matches: card => card.lootSource },
-  { id: "exp-distinct", icon: "cards", label: "Erweiterungen im Ergebnis (ohne Basisspiel)", group: "exp", distinct: true,
-    matches: card => card.expansion !== "base" },
   ...expansions.map(expansion => ({
     id: "exp-" + expansion, icon: "exp-" + expansion, group: "exp", label: catalog.expansions[expansion],
     initialMax: expansion === "base" ? standardKingdomSize : 0, matches: card => card.expansion === expansion,
@@ -2439,6 +2434,7 @@ function rangeNumber(field) {
 
 function readRange(rule, inherited = false) {
   const [from, to] = rangeInputs.get(rule.id);
+  const minAllowed = Number(from.min ?? 0);
   const maxAllowed = rule.max ?? kingdomSize;
   if (inherited && from.value === "" && to.value === "") return null;
   if (inherited && (from.value === "" || to.value === "")) {
@@ -2447,9 +2443,12 @@ function readRange(rule, inherited = false) {
   }
   const min = rangeNumber(from);
   const max = rangeNumber(to);
-  if (!isValidRangeBound(min, maxAllowed) || !isValidRangeBound(max, maxAllowed)) {
-    throw new Error(tr("Gib für „" + ruleLabel(rule) + "“ zwei ganze Zahlen von 0 bis " + maxAllowed + " ein.",
-      "Enter two whole numbers from 0 to " + maxAllowed + " for “" + ruleLabel(rule) + ".”"));
+  if (!isValidRangeBound(min, maxAllowed) || !isValidRangeBound(max, maxAllowed) ||
+      min < minAllowed || max < minAllowed) {
+    throw new Error(tr(
+      "Gib für „" + ruleLabel(rule) + "“ zwei ganze Zahlen von " + minAllowed + " bis " + maxAllowed + " ein.",
+      "Enter two whole numbers from " + minAllowed + " to " + maxAllowed + " for “" + ruleLabel(rule) + ".”"
+    ));
   }
   if (min > max) throw new Error(tr("Bei „" + ruleLabel(rule) + "“ darf Von nicht größer als Bis sein.",
     "For “" + ruleLabel(rule) + ",” From must be no greater than To."));
@@ -2481,9 +2480,12 @@ function setExpansionMode(id, mode) {
   const [from, to] = rangeInputs.get("exp-" + id);
   expansionModes.get(id).value = mode;
   from.disabled = to.disabled = mode === "off";
+  from.min = to.min = mode === "always" ? "1" : "0";
   if (mode !== "off" && to.valueAsNumber === 0) {
-    from.value = "0";
+    from.value = from.min;
     to.value = String(kingdomSize);
+  } else if (mode === "always" && from.valueAsNumber === 0) {
+    from.value = from.min;
   }
 }
 
@@ -2541,7 +2543,7 @@ function readDrawRequest() {
     sum + Math.min(range.max, pool.filter(card => card.expansion === id).length), 0);
   if (capacity < kingdomSize) throw new Error(tr(`Erweiterungsquoten und Kartenauswahl lassen weniger als ${kingdomSize} Königreichstapel zu.`, `The expansion quotas and card choices allow fewer than ${kingdomSize} Kingdom piles.`));
   const rules = countRules.map(rule => {
-    const range = rule.group === "exp" && !rule.distinct ? expansionQuotas.get(rule.id.slice(4)) : readRange(rule);
+    const range = rule.group === "exp" ? expansionQuotas.get(rule.id.slice(4)) : readRange(rule);
     return serializeRule(rule, range, pool, kingdomSize);
   }).filter(Boolean);
   const landscapeCount = readRange(landRules[0]);
@@ -2919,7 +2921,7 @@ const poolSearchGroups = [
   ["Kartentypen", "Card types", countRules.filter(rule => rule.group === "types")],
   ["Ressourcen und Marker", "Resources and tokens", countRules.filter(rule => rule.group === "resources")],
   ["Erweiterungen und Editionen", "Expansions and editions",
-    [...countRules.filter(rule => rule.group === "exp" && !rule.distinct), firstEditionRule]],
+    [...countRules.filter(rule => rule.group === "exp"), firstEditionRule]],
   ["Landschaften", "Landscapes", landRules.filter(rule => rule.id.startsWith("land-type-"))],
 ];
 const poolProperties = new Map();
@@ -3338,7 +3340,10 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     group.insertBefore(mode, from);
     expansionModes.set(kingdomExpansion, mode);
     setExpansionMode(kingdomExpansion, initialMax > 0 ? "always" : "off");
-    mode.addEventListener("input", () => setExpansionMode(kingdomExpansion, mode.value));
+    mode.addEventListener("input", () => {
+      if (mode.value === "random" && from.min === "1" && from.valueAsNumber === 1) from.value = "0";
+      setExpansionMode(kingdomExpansion, mode.value);
+    });
   }
   for (const [edited, other] of [[from, to], [to, from]]) {
     edited.addEventListener("input", () => {
@@ -3346,6 +3351,7 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
         if (edited.value === "") other.value = "";
         else if (other.value === "") other.value = edited === from ? edited.value : "0";
       }
+      if (hasMode && edited.min === "1" && edited.valueAsNumber === 0) edited.value = "1";
       const lower = rangeNumber(from);
       const upper = rangeNumber(to);
       const limit = rule.max ?? kingdomSize;
@@ -3451,10 +3457,6 @@ function makeRangeHint(id, label) {
 const rangeHints = new Map([
   ["defense", defenseList],
   ["attack-reaction", makeRangeHint("attack-reaction-hint", attackConditionText)],
-  ["exp-distinct", makeRangeHint("exp-distinct-hint", () => tr(
-    "Zählt nur Sets, aus denen tatsächlich ein Hauptstapel gezogen wurde. Ein Set im Kartenpool ohne gezogenen Stapel zählt hier nicht. Bei 2–2 müssen genau zwei Erweiterungen im Ergebnis vertreten sein. Das Basisspiel zählt nicht mit, Promos zählen als ein Set.",
-    "Counts only sets that contributed a Kingdom pile. A set in the card pool with no drawn pile does not count. Set 2–2 to require exactly two expansions in the result. The base game does not count, and Promos count as one set."
-  ))],
   ["land-total", makeRangeHint("land-total-hint", () => tr(
     "Zählt alle gezogenen Landschaften zusammen. Sie kommen zusätzlich zu den Königreichstapeln ins Spiel. Bei 0–0 wird keine Landschaft gezogen.",
     "Counts all drawn Landscapes together. They are added alongside the Kingdom piles. Set 0–0 to draw no Landscapes."
@@ -3505,10 +3507,7 @@ for (const rule of countRules.filter(rule => rule.group !== "exp" && rule.group 
 addQuotaColumns("resources-ranges", countRules.filter(rule => rule.group === "resources"),
   "resource-column", ["Ressourcen und Marker", "Resources and tokens"], 4, { repeatHeading: false });
 for (const rule of landRules.filter(rule => !rule.inherited)) addRange(rule, "land");
-const distinctExpansionRules = document.getElementById("exp-distinct-ranges");
-addRangeHeading(distinctExpansionRules, "exp-distinct", null);
-addRange(countRules.find(rule => rule.id === "exp-distinct"), "exp-distinct", distinctExpansionRules);
-addQuotaColumns("exp-ranges", countRules.filter(rule => rule.group === "exp" && !rule.distinct),
+addQuotaColumns("exp-ranges", countRules.filter(rule => rule.group === "exp"),
   "exp-column", ["Erweiterung", "Expansion"], 5, { withMode: true });
 addQuotaColumns("land-quotas", landRules.filter(rule => rule.inherited), "land-column", ["Herkunft", "Source expansion"], 5);
 for (const expansion of expansions) {
