@@ -10,7 +10,7 @@ Dieses Projekt entwickelt unabhängige Werkzeuge für das digitale Kartenspiel D
 
 Der Konverter verwendet den Kartenkatalog aus Dominion-Spielbuild 3315. Die Anleitung beschreibt auch die Python-Variante und die Grenzen bei besonderem Karten-Setup. [SetGenerator](SetGenerator/README.md)
 
-Der Dominion-Generator zieht Königreiche aus Basisspiel und Erweiterungen. Er unterstützt feste Karten, Ausschlüsse, Ziehregeln und den Export für doppelte Stapel. [Generator direkt im Browser öffnen](https://serpens66.github.io/Dominion/) · [Anleitung](SetGenerator/README.md#html-generator-für-basisspiel-und-erweiterungen)
+Der Dominion-Generator zieht Königreiche aus Basisspiel und Erweiterungen. Er unterstützt feste Karten, Ausschlüsse, Ziehregeln und den Export für doppelte Stapel. [Generator nach der Pages-Bereitstellung öffnen](https://serpens66.github.io/Dominion/) · [Anleitung](SetGenerator/README.md#html-generator-für-basisspiel-und-erweiterungen)
 
 ## Dokumentation
 

@@ -107,4 +107,4 @@ node .\\SetGenerator\\test_generator_solver.js
 & 'D:\\CDesktopLink\\Portable\\Python\\WinPy64\\python\\python.exe' -B .\\SetGenerator\\build_pages.py .\\SetGenerator\\.pages\\index.html
 ```
 
-Im Repository ist unter **Settings → Pages → Source** die Quelle **GitHub Actions** eingestellt. [Veröffentlichungsquelle für GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
+Für die erste Veröffentlichung im Repository unter **Settings → Pages → Source** die Quelle **GitHub Actions** auswählen. Nach dem Push auf `main` startet der Build automatisch. Über **Actions → Publish Dominion Generator → Run workflow** lässt er sich auch manuell starten. [Veröffentlichungsquelle für GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
