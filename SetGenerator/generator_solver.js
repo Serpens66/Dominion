@@ -1,7 +1,7 @@
 "use strict";
 
 const setupTargets = {
-  young_witch: ["Bannstapel", [2, 3]],
+  young_witch: ["Bannkarte im Vorrat", [2, 3]],
   ferryman: ["Stapel neben dem Vorrat", [3, 4]],
   riverboat: ["Für Flussboot beiseite", [5], true],
   way_of_the_mouse: ["Für den Weg der Maus beiseite", [2, 3], true],
@@ -113,7 +113,7 @@ function assignSetup(main, landscapes, request, random, tick) {
   const assigned = new Set(assignments.flatMap(item => item.targets));
   if (blackMarket) {
     const deck = order(unused.filter(card => !taken.extra.has(card.id))).slice(0, 60);
-    assignments.push({ source: blackMarket.id, role: "Schwarzmarktstapel", targets: deck.map(card => card.id) });
+    assignments.push({ source: blackMarket.id, role: "Schwarzmarkt-Deck", targets: deck.map(card => card.id) });
   }
   const setupCards = [...main, ...landscapes, ...extras.filter(card => assigned.has(card.id)),
     ...components.filter(card => assigned.has(card.id))];
@@ -123,9 +123,9 @@ function assignSetup(main, landscapes, request, random, tick) {
     if (card.lootSource) loot = true;
     if (card.cost?.potions) material.add("Tränke");
     if (card.cost?.debt || card.mechanics.includes("debt")) material.add("Schuldenmarker");
-    if (has(card, "liaison")) material.add("Gefallenmarker");
+    if (has(card, "liaison")) material.add("Gefallen-Marker");
     if (has(card, "omen")) material.add("Sonnenmarker");
-    if (has(card, "reserve")) material.add("Wirtshaustableaus");
+    if (has(card, "reserve")) material.add("Wirtshaustableau");
     if (has(card, "fate") && card.id !== "druid") componentGroups.add("boon");
     if (has(card, "doom")) componentGroups.add("hex");
     if (has(card, "looter")) componentGroups.add("ruins");
@@ -134,10 +134,10 @@ function assignSetup(main, landscapes, request, random, tick) {
     if (mechanics.includes("coffers")) material.add("Taler");
     if (mechanics.includes("villagers")) material.add("Dorfbewohner");
     if (mechanics.includes("vp") || ["aqueduct", "arena", "basilica", "baths", "battlefield", "colonnade",
-        "defiled_shrine", "labyrinth"].includes(card.id)) material.add("Siegpunktmarker");
-    if (mechanics.includes("exile")) material.add("Exiltableaus");
-    if (mechanics.includes("journey")) material.add("Reisemarker");
-    if (card.mechanics.includes("trade_route")) material.add("Handelsroutentableau und Münzmarker");
+        "defiled_shrine", "labyrinth"].includes(card.id)) material.add("Punktemarker");
+    if (mechanics.includes("exile")) material.add("Exil Tableau");
+    if (mechanics.includes("journey")) material.add("Reise-Marker");
+    if (card.mechanics.includes("trade_route")) material.add("Handelsrouten-Tableau und Geldmarker");
     for (const id of card.related) assigned.add(id);
   }
   if (requireLoot && ![...main, ...landscapes].some(card => card.lootSource)) return null;

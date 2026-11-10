@@ -398,7 +398,9 @@
             <label for="shelters">Unterschlüpfe</label>
             <select id="shelters"><option value="rules">Nach Spielregel</option><option value="always">Immer</option><option value="never">Nie</option></select>
           </div>
+          <label><input type="checkbox" id="require-loot" aria-describedby="require-loot-help"> Kostbarkeiten im Spiel verlangen</label>
         </div>
+        <p id="require-loot-help" class="muted">Mindestens ein gezogener Hauptstapel oder eine Landschaft muss Kostbarkeiten ins Spiel bringen.</p>
       </fieldset>
       <fieldset class="options" id="draw-rules">
         <legend>Regeln für die Ziehung</legend>
@@ -446,12 +448,6 @@
               <h3>Gesamtzahl und Typ</h3><span id="land-from" class="range-bound">Von</span><span id="land-to" class="range-bound">Bis</span>
             </div>
           </div>
-        </details>
-        <details>
-          <summary>Weitere Ziehregeln</summary>
-          <label><input type="checkbox" id="require-loot"> Beute im Spiel verlangen</label>
-          <div class="row"><button type="button" id="recommended-rules" class="secondary">Empfohlene Filterwerte anwenden</button></div>
-          <p class="muted">Die Vorlage setzt Kartenziehen, Angriffe, Kosten, Nichtaktionen und Ereignisse. Freigegebene Erweiterungen bestimmen weiterhin den Kartenpool.</p>
         </details>
       </fieldset>
       <p id="rule-status" role="status"></p>
@@ -571,7 +567,7 @@
 "use strict";
 
 const setupTargets = {
-  young_witch: ["Bannstapel", [2, 3]],
+  young_witch: ["Bannkarte im Vorrat", [2, 3]],
   ferryman: ["Stapel neben dem Vorrat", [3, 4]],
   riverboat: ["Für Flussboot beiseite", [5], true],
   way_of_the_mouse: ["Für den Weg der Maus beiseite", [2, 3], true],
@@ -683,7 +679,7 @@ function assignSetup(main, landscapes, request, random, tick) {
   const assigned = new Set(assignments.flatMap(item => item.targets));
   if (blackMarket) {
     const deck = order(unused.filter(card => !taken.extra.has(card.id))).slice(0, 60);
-    assignments.push({ source: blackMarket.id, role: "Schwarzmarktstapel", targets: deck.map(card => card.id) });
+    assignments.push({ source: blackMarket.id, role: "Schwarzmarkt-Deck", targets: deck.map(card => card.id) });
   }
   const setupCards = [...main, ...landscapes, ...extras.filter(card => assigned.has(card.id)),
     ...components.filter(card => assigned.has(card.id))];
@@ -693,9 +689,9 @@ function assignSetup(main, landscapes, request, random, tick) {
     if (card.lootSource) loot = true;
     if (card.cost?.potions) material.add("Tränke");
     if (card.cost?.debt || card.mechanics.includes("debt")) material.add("Schuldenmarker");
-    if (has(card, "liaison")) material.add("Gefallenmarker");
+    if (has(card, "liaison")) material.add("Gefallen-Marker");
     if (has(card, "omen")) material.add("Sonnenmarker");
-    if (has(card, "reserve")) material.add("Wirtshaustableaus");
+    if (has(card, "reserve")) material.add("Wirtshaustableau");
     if (has(card, "fate") && card.id !== "druid") componentGroups.add("boon");
     if (has(card, "doom")) componentGroups.add("hex");
     if (has(card, "looter")) componentGroups.add("ruins");
@@ -704,10 +700,10 @@ function assignSetup(main, landscapes, request, random, tick) {
     if (mechanics.includes("coffers")) material.add("Taler");
     if (mechanics.includes("villagers")) material.add("Dorfbewohner");
     if (mechanics.includes("vp") || ["aqueduct", "arena", "basilica", "baths", "battlefield", "colonnade",
-        "defiled_shrine", "labyrinth"].includes(card.id)) material.add("Siegpunktmarker");
-    if (mechanics.includes("exile")) material.add("Exiltableaus");
-    if (mechanics.includes("journey")) material.add("Reisemarker");
-    if (card.mechanics.includes("trade_route")) material.add("Handelsroutentableau und Münzmarker");
+        "defiled_shrine", "labyrinth"].includes(card.id)) material.add("Punktemarker");
+    if (mechanics.includes("exile")) material.add("Exil Tableau");
+    if (mechanics.includes("journey")) material.add("Reise-Marker");
+    if (card.mechanics.includes("trade_route")) material.add("Handelsrouten-Tableau und Geldmarker");
     for (const id of card.related) assigned.add(id);
   }
   if (requireLoot && ![...main, ...landscapes].some(card => card.lootSource)) return null;
@@ -939,16 +935,34 @@ const cardById = new Map(allCards.map(card => [card.id, card]));
 const gameIcons = JSON.parse(document.getElementById("game-icons").textContent);
 const kingdomSize = 10;
 const landscapeLimit = 4;
+const defaultRanges = {
+  cards: [1, 10],
+  attack: [0, 2],
+  "non-action": [0, 3],
+  "cost-1": [0, 1],
+  "cost-2": [1, 2],
+  "cost-3": [1, 3],
+  "cost-4": [2, 3],
+  "cost-5": [2, 4],
+  "cost-6": [0, 2],
+  "cost-7": [0, 1],
+  "land-total": [0, 2],
+  "land-type-event": [0, 2],
+  "land-type-landmark": [0, 0],
+  "land-type-project": [0, 0],
+  "land-type-way": [0, 0],
+  "land-type-trait": [0, 0],
+};
 const expansions = Object.keys(catalog.expansions).filter(id => cards.some(card => card.expansion === id))
   .sort((a, b) => (a === "base" ? -1 : b === "base" ? 1 : catalog.expansions[a].localeCompare(catalog.expansions[b], "de")));
-const landscapeTypes = { event: "Ereignisse", landmark: "Landmarken", project: "Projekte", way: "Wege", trait: "Traits" };
+const landscapeTypes = { event: "Ereignisse", landmark: "Landmarken", project: "Projekte", way: "Wege", trait: "Merkmale" };
 const landscapes = allCards.filter(card => card.types.some(type => Object.hasOwn(landscapeTypes, type)));
 const landscapeExpansions = expansions.filter(id => landscapes.some(card => card.expansion === id));
 const isDefense = card => card.defendsAgainstAttacks === true;
 const isAttackReaction = card => card.attackReaction === true && !isDefense(card);
 const hasType = (card, type) => card.types.includes(type);
 const landRules = [
-  { id: "land-total", label: "Landschaften insgesamt", max: landscapeLimit, initialMax: 0 },
+  { id: "land-total", label: "Landschaften insgesamt", max: landscapeLimit },
   { id: "land-distinct", label: "Verschiedene Herkunftserweiterungen", max: landscapeLimit, distinct: true, matches: () => true },
   ...Object.entries(landscapeTypes).map(([type, label]) =>
     ({ id: "land-type-" + type, label, max: landscapeLimit, matches: card => hasType(card, type) })),
@@ -976,11 +990,12 @@ const countRules = [
   { id: "potions", label: "Mit Trankkosten", group: "cost", matches: card => card.cost?.potions > 0 },
   { id: "debt", label: "Mit Schuldenkosten", group: "cost", matches: card => card.cost?.debt > 0 },
   { id: "non-action", label: "Ohne Aktionstyp", group: "types", matches: card => !hasType(card, "action") },
-  ...Object.entries({ duration: "Dauer", night: "Nacht", treasure: "Geld", victory: "Punkte", liaison: "Liaison", omen: "Omen" })
-    .map(([type, label]) => ({ id: "type-" + type, label, group: "types", matches: card => hasType(card, type) })),
+  ...["duration", "night", "treasure", "victory", "liaison", "omen"].map(type => ({
+    id: "type-" + type, label: catalog.types.de[type], group: "types", matches: card => hasType(card, type),
+  })),
   ...Object.entries({
     coffers: "+1 Taler oder mehr", villagers: "+1 Dorfbewohner oder mehr", favors: "+1 Gefallen oder mehr",
-    sun: "Sonnenmarker (Omen)", vp: "Siegpunktmarker erhalten", horse: "Pferde erhalten",
+    sun: "Sonnenmarker (Omen)", vp: "Punktemarker erhalten", horse: "Pferde erhalten",
   }).map(([kind, label]) => ({
     id: "gain-" + kind, label, group: "resources", matches: card => card.gainFilters.includes(kind),
   })),
@@ -1462,13 +1477,17 @@ function reportRules(tone, message, canDraw = false) {
   if (drawButton.disabled === canDraw) drawButton.disabled = !canDraw;
 }
 
+function isValidRangeBound(value, limit) {
+  return Number.isInteger(value) && value >= 0 && value <= limit;
+}
+
 function readRange(rule, inherited = false) {
   const [from, to] = rangeInputs.get(rule.id);
   const maxAllowed = rule.max ?? kingdomSize;
   if (inherited && from.value === "" && to.value === "") return null;
   const min = from.valueAsNumber;
   const max = to.valueAsNumber;
-  if (![min, max].every(n => Number.isInteger(n) && n >= 0 && n <= maxAllowed)) {
+  if (!isValidRangeBound(min, maxAllowed) || !isValidRangeBound(max, maxAllowed)) {
     throw new Error("Gib für „" + rule.label + "“ zwei ganze Zahlen von 0 bis " + maxAllowed + " ein.");
   }
   if (min > max) throw new Error("Bei „" + rule.label + "“ darf Von nicht größer als Bis sein.");
@@ -1873,8 +1892,9 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
   }
   group.append(name);
   const max = rule.max ?? kingdomSize;
+  const [initialMin, initialMax] = defaultRanges[rule.id] ?? [0, rule.initialMax ?? max];
   const fields = [];
-  for (const [bound, initial] of [["from", 0], ["to", rule.initialMax ?? max]]) {
+  for (const [bound, initial] of [["from", initialMin], ["to", initialMax]]) {
     const field = document.createElement("input");
     field.type = "number";
     field.min = "0";
@@ -1885,6 +1905,16 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     field.setAttribute("aria-labelledby", name.id + " " + groupName + "-" + bound);
     group.append(field);
     fields.push(field);
+  }
+  const [from, to] = fields;
+  for (const [edited, other] of [[from, to], [to, from]]) {
+    edited.addEventListener("input", () => {
+      const lower = from.valueAsNumber;
+      const upper = to.valueAsNumber;
+      if (isValidRangeBound(lower, max) && isValidRangeBound(upper, max) && lower > upper) {
+        other.value = edited.value;
+      }
+    });
   }
   rangeInputs.set(rule.id, fields);
 }
@@ -1937,21 +1967,6 @@ for (const card of cards.filter(isDefense)) {
   defenseList.append(item);
 }
 poolSearch.addEventListener("input", updatePoolGroups);
-const recommended = {
-  cards: [1, 10], attack: [0, 2], "non-action": [0, 3], "cost-1": [0, 1], "cost-2": [1, 2],
-  "cost-3": [1, 3], "cost-4": [2, 3], "cost-5": [2, 4], "cost-6": [0, 2], "cost-7": [0, 1],
-  "land-total": [0, 2], "land-type-event": [0, 2],
-};
-document.getElementById("recommended-rules").addEventListener("click", () => {
-  for (const [id, pair] of Object.entries(recommended)) {
-    const [from, to] = rangeInputs.get(id);
-    [from.value, to.value] = pair.map(String);
-  }
-  for (const type of Object.keys(landscapeTypes)) {
-    if (type !== "event") rangeInputs.get("land-type-" + type)[1].value = "0";
-  }
-  scheduleRuleCheck();
-});
 document.getElementById("setup-options").addEventListener("input", scheduleRuleCheck);
 document.getElementById("draw-rules").addEventListener("input", scheduleRuleCheck);
 drawButton.addEventListener("click", generate);

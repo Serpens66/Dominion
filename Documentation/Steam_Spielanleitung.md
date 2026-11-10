@@ -49,7 +49,7 @@ Im lokalen Test blieb das gespeicherte Set mit `twist_room_for_more(chapel)` bei
 
 ### Katalog der Kampagneneffekte
 
-Die Tabellen erfassen 89 Befehle und sechs Varianten der Kampagnenerzeugung in Spielbuild **3315** (Steam-Build **17683350**). Namen und Regelbegriffe stammen aus den deutschen Spieltexten. Die Beschreibungen fassen die Kampagnenwirkung zusammen. Die Übernahme in private Online-Partien ist offen. [Technischer Effektkatalog](Modding_Overview.md#belegstand-des-effektkatalogs), [Lokale Spieltexte](Sources/Source_Register.md#deutsche-kartentitel-aus-l05)
+Die Tabellen erfassen 89 Befehle und sechs Varianten der Kampagnenerzeugung in Spielbuild **3315** (Steam-Build **17683350**). Namen und Regelbegriffe stammen aus den deutschen Spieltexten. Die Beschreibungen fassen die Kampagnenwirkung zusammen. Im privaten Online-Spiel fehlten die beiden getesteten Verdopplungen in der gestarteten Partie. [Online-Befund](Modding_Overview.md#kampagneneffekte-im-privaten-online-spiel), [Technischer Effektkatalog](Modding_Overview.md#belegstand-des-effektkatalogs), [Lokale Spieltexte](Sources/Source_Register.md#deutsche-kartentitel-aus-l05)
 
 +![1 Geld](Spielzeichen/geld-1.png) erhöht dein Kaufbudget für diesen Zug um 1. Einen Taler kannst du auch in einem späteren Zug ausgeben.
 
@@ -216,7 +216,7 @@ In the local test, the saved set with `twist_room_for_more(chapel)` still had te
 
 ### Campaign effect catalog
 
-The tables cover 89 commands and six campaign generation variants in game build **3315** (Steam build **17683350**). Names and rules terms come from the English game text. The descriptions summarize the campaign effects. Support in private online games remains unverified. [Technical effect catalog](Modding_Overview.md#belegstand-des-effektkatalogs), [Local game text](Sources/Source_Register.md#deutsche-kartentitel-aus-l05)
+The tables cover 89 commands and six campaign generation variants in game build **3315** (Steam build **17683350**). Names and rules terms come from the English game text. The descriptions summarize the campaign effects. The two tested pile-doubling effects were absent when the private online game started. [Online test findings](Modding_Overview.md#kampagneneffekte-im-privaten-online-spiel), [Technical effect catalog](Modding_Overview.md#belegstand-des-effektkatalogs), [Local game text](Sources/Source_Register.md#deutsche-kartentitel-aus-l05)
 
 +![1 coin](Spielzeichen/geld-1.png) adds 1 coin to your spending money for this turn. You can spend a Coffers token on a later turn.
 
