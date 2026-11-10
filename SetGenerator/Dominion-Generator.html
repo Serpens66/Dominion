@@ -536,7 +536,7 @@
   }
   .edition-option:is(:hover, :focus-within) + .edition-tip,
   .conditional-range > span:is(:hover, :focus) + .conditional-range-hint,
-  .conditional-range-hint:is(:hover, :focus-within),
+  .conditional-range-hint:is(:hover, :focus-within, [data-tooltip-pinned]),
   #kingdom-size-help:focus-within > .conditional-range-hint,
   #kingdom-size-help > span:hover + .conditional-range-hint {
     visibility: visible;
@@ -566,7 +566,10 @@
     white-space: nowrap;
   }
   .card-reference:hover > .card-reference-hint,
-  .card-reference:focus > .card-reference-hint { display: block; }
+  .card-reference:focus > .card-reference-hint,
+  .card-reference-hint[data-tooltip-pinned] { display: block; }
+  [data-tooltip-pinned] { z-index: 12; outline: 1px solid var(--accent-text); }
+  [data-tooltip-dismissed] { visibility: hidden !important; transition: none !important; }
   :is(#cards, #planning-cards) label { display: block; font-size: .9rem; }
   .card-preview {
     position: absolute;
@@ -584,7 +587,7 @@
   .preview-face {
     container-type: inline-size;
     display: grid;
-    grid-template-rows: auto auto 1fr auto;
+    grid-template-rows: auto 1fr;
     min-height: 0;
     padding: .18rem;
     border: 1px solid #271e14;
@@ -594,7 +597,7 @@
     font-family: Georgia, serif;
     isolation: isolate;
   }
-  .preview-face [hidden] { display: none; }
+  .card-preview > [hidden], .preview-face .preview-face-art[hidden] { display: none; }
   .preview-face-title, .preview-face-footer {
     z-index: 1;
     position: relative;
@@ -613,22 +616,30 @@
     font-size: clamp(.92rem, 7.2cqi, 1.4rem);
     line-height: 1.05;
   }
+  .preview-face-body {
+    /* The paper continues behind the transparent top of the footer sprite. */
+    --footer-overlap: 7cqi;
+    min-width: 0;
+    margin-block-start: -1cqi;
+    background:
+      var(--frame-paper) center top / calc(100% - 7cqi) calc(100% - 3cqi) no-repeat,
+      var(--frame-pole) left 1.2cqi top / 2.3cqi calc(100% - 3cqi) no-repeat,
+      var(--frame-pole) right 1.2cqi top / 2.3cqi calc(100% - 3cqi) no-repeat;
+  }
   .preview-face .preview-face-art {
     display: block;
     width: calc(100% - 7cqi);
     aspect-ratio: 292 / 216;
-    margin: -1cqi auto 0;
+    margin-inline: auto;
     object-fit: cover;
   }
-  .preview-face .preview-face-art[hidden] { display: none; }
   .preview-face-text {
     min-height: 48cqi;
     display: grid;
     align-items: center;
-    padding: 6cqi 6cqi;
-    background: var(--frame-lip) top / 100% 3cqi no-repeat, var(--frame-paper) center / cover;
-    border-inline: 3.5cqi solid transparent;
-    border-image: var(--frame-pole) 12 stretch;
+    margin-inline: 3.5cqi;
+    padding: 6cqi 6cqi calc(6cqi + var(--footer-overlap));
+    background: var(--frame-lip) top / 100% 3cqi no-repeat;
     font-size: clamp(.76rem, 4.8cqi, .92rem);
     line-height: 1.26;
     text-align: center;
@@ -646,6 +657,7 @@
     grid-template-columns: 18cqi 1fr 12cqi;
     gap: 1cqi;
     min-height: 15cqi;
+    margin-block-start: calc(-1 * var(--footer-overlap));
     background-image: var(--frame-bottom);
     font-size: clamp(.67rem, 4.6cqi, .88rem);
     line-height: 1.1;
@@ -660,7 +672,8 @@
   }
   .preview-face-cost .game-value { font-size: clamp(.78rem, 7cqi, 1.2rem); }
   .preview-face-expansion { width: 8cqi; height: 8cqi; }
-  .preview-face-expansion .game-icon { width: 100%; height: 100%; }
+  .preview-face-expansion .game-icon { width: 100%; height: 100%; filter: brightness(0); }
+  .preview-face-night .preview-face-expansion .game-icon { filter: brightness(0) invert(1); }
   .preview-face .card-reference-hint { color: var(--ink); font-family: system-ui, sans-serif; }
   .card-preview .muted { margin: 0; }
   .card-preview details { margin-top: .25rem; }
@@ -737,7 +750,7 @@
               <option value="12">12</option><option value="13">13</option>
             </select>
             <span id="kingdom-size-help">
-              <span tabindex="0" aria-describedby="kingdom-size-note" data-en="Steam note">Steam-Hinweis</span>
+              <span id="kingdom-size-note-trigger" tabindex="0" aria-describedby="kingdom-size-note" data-en="Steam note">Steam-Hinweis</span>
               <span id="kingdom-size-note" class="conditional-range-hint" role="tooltip" data-en="11–13 piles are experimental for planning. twist_room_for_more takes one target. A reliable way to import custom sets with more than ten freely chosen piles into Steam is still unverified.">11–13 Stapel sind experimentell und dienen der Planung. twist_room_for_more hat ein einzelnes Ziel. Ein verlässlicher Import eigener Sets mit mehr als zehn frei gewählten Stapeln in Steam ist offen.</span>
             </span>
           </div>
@@ -1741,7 +1754,8 @@ const previews = new Set();
 const embeddedImagePack = document.getElementById("embedded-image-pack");
 let imageData = embeddedImagePack ? JSON.parse(embeddedImagePack.textContent) : { images: {} };
 let activePreview = null;
-let previewPinned = false;
+const tooltipTriggers = new WeakMap();
+const pinnedTooltips = new Map();
 let previewCloseTimer;
 const previewCloseDelay = 160;
 const pool = document.getElementById("pool");
@@ -1810,21 +1824,73 @@ function updateEffectSet() {
   updateProfileControls();
 }
 
+function pinTooltip(target) {
+  for (let panel = target; panel; panel = panel.parentElement) {
+    const trigger = tooltipTriggers.get(panel);
+    if (!trigger) continue;
+    panel.removeAttribute("data-tooltip-dismissed");
+    panel.setAttribute("data-tooltip-pinned", "");
+    pinnedTooltips.set(panel, trigger);
+  }
+}
+
+function releaseTooltipPins(container) {
+  for (const panel of pinnedTooltips.keys()) {
+    if (!container.contains(panel)) continue;
+    panel.removeAttribute("data-tooltip-pinned");
+    pinnedTooltips.delete(panel);
+  }
+}
+
+function tooltipGroupContains(panel, target) {
+  let root = panel;
+  for (const candidate of pinnedTooltips.keys()) {
+    if (candidate.contains(root)) root = candidate;
+  }
+  return root.contains(target) || pinnedTooltips.get(root)?.contains(target);
+}
+
+function registerHint(trigger, panel, keyTarget = trigger) {
+  tooltipTriggers.set(panel, keyTarget);
+  const restoreHover = () => panel.removeAttribute("data-tooltip-dismissed");
+  trigger.addEventListener("pointerenter", restoreHover);
+  trigger.addEventListener("focusin", restoreHover);
+  keyTarget.addEventListener("keydown", event => {
+    if (event.key !== "Enter" || event.target !== keyTarget) return;
+    event.preventDefault();
+    dismissTooltipsOutside(keyTarget);
+    pinTooltip(panel);
+  });
+}
+
+function dismissTooltip(panel) {
+  if (panel === activePreview?.panel) {
+    setPreview(null);
+  } else if (panel === expansionInfoPanel) {
+    hideExpansionInfo();
+  } else {
+    releaseTooltipPins(panel);
+    panel.setAttribute("data-tooltip-dismissed", "");
+  }
+}
+
 function setPreview(preview, pinned = false) {
   clearTimeout(previewCloseTimer);
-  if (activePreview) {
+  if (activePreview && activePreview !== preview) {
+    releaseTooltipPins(activePreview.panel);
     activePreview.panel.hidden = true;
     activePreview.button.setAttribute("aria-expanded", "false");
   }
   activePreview = preview;
-  previewPinned = pinned;
   if (preview) {
     preview.panel.hidden = false;
     preview.button.setAttribute("aria-expanded", "true");
+    if (pinned) pinTooltip(preview.panel);
   }
 }
 
 function renderGameText(element, text, language = "de") {
+  releaseTooltipPins(element);
   const content = [];
   let bold = false;
   let emphasis = false;
@@ -1897,6 +1963,7 @@ function gameTextNodes(text, language, elementId, offset, boldBonuses) {
       hint.textContent = name === "Gold" && language === "en" ? "Treasure · +3 coins" : basicCardEffects[name];
       reference.setAttribute("aria-describedby", hint.id);
       reference.append(name, hint);
+      registerHint(reference, hint);
       content.push(reference);
       continue;
     }
@@ -1968,6 +2035,7 @@ function updatePreview({ card, button, panel, face, heading, cost, typeLine, ima
   typeLine.textContent = card.types.map(type => catalog.types[language][type] ?? type).join(" · ");
   const text = formatGameRules(gameRules);
   const paragraphs = (text || (english ? "See game setup." : "Siehe Spielaufbau.")).split(/\n\s*---\s*\n/);
+  releaseTooltipPins(rules);
   rules.replaceChildren(...paragraphs.flatMap((paragraph, index) => {
     const block = document.createElement("div");
     block.id = rules.id + "-" + index;
@@ -2040,6 +2108,7 @@ function addCardPreview(item, card, area) {
   const button = document.createElement("button");
   const panel = document.createElement("div");
   const face = document.createElement("div");
+  const faceBody = document.createElement("div");
   const heading = document.createElement("strong");
   const typeLine = document.createElement("span");
   const cost = document.createElement("span");
@@ -2064,6 +2133,7 @@ function addCardPreview(item, card, area) {
   button.setAttribute("aria-describedby", rules.id);
   face.className = card.types.includes("night") ? "preview-face preview-face-night" : "preview-face";
   face.setAttribute("style", cardFrameStyle(card));
+  faceBody.className = "preview-face-body";
   heading.className = "preview-face-title";
   cost.className = "preview-face-cost";
   image.className = "preview-face-art";
@@ -2080,16 +2150,18 @@ function addCardPreview(item, card, area) {
   if (gameIcons[expansionIcon]) emblem.append(makeGameIcon(expansionIcon));
   footer.append(cost, typeLine, emblem);
   ruleBody.append(rules);
-  face.append(heading, image, ruleBody, footer);
+  faceBody.append(image, ruleBody, footer);
+  face.append(heading, faceBody);
   transcript.append(summary);
   panel.append(face, fullImage, transcript);
   previews.add(preview);
+  tooltipTriggers.set(panel, button);
   updatePreview(preview);
   button.addEventListener("pointerenter", event => {
-    if (event.pointerType === "mouse" && !previewPinned) setPreview(preview);
+    if (event.pointerType === "mouse" && !pinnedTooltips.has(activePreview?.panel)) setPreview(preview);
   });
   const scheduleClose = () => {
-    if (activePreview !== preview || previewPinned) return;
+    if (activePreview !== preview || pinnedTooltips.has(panel)) return;
     clearTimeout(previewCloseTimer);
     previewCloseTimer = setTimeout(() => {
       const focused = document.activeElement;
@@ -2101,12 +2173,12 @@ function addCardPreview(item, card, area) {
   panel.addEventListener("pointerenter", () => clearTimeout(previewCloseTimer));
   panel.addEventListener("pointerleave", scheduleClose);
   button.addEventListener("focus", () => {
-    if (activePreview !== preview) setPreview(preview);
+    if (activePreview !== preview && !pinnedTooltips.has(activePreview?.panel)) setPreview(preview);
   });
   button.addEventListener("focusout", scheduleClose);
   panel.addEventListener("focusout", scheduleClose);
   button.addEventListener("click", () => {
-    if (activePreview === preview && previewPinned) setPreview(null);
+    if (activePreview === preview && pinnedTooltips.has(panel)) setPreview(null);
     else setPreview(preview, true);
   });
   item.append(button, panel);
@@ -2747,7 +2819,6 @@ function updatePoolGroups() {
 
 
 let activeExpansionInfo;
-let expansionInfoPinned = false;
 let expansionInfoTimer;
 const expansionInfoPanel = document.getElementById("expansion-info");
 const expansionInfoRules = document.getElementById("expansion-info-rules");
@@ -2775,20 +2846,20 @@ function hideExpansionInfo() {
   clearTimeout(expansionInfoTimer);
   activeExpansionInfo?.setAttribute("aria-expanded", "false");
   activeExpansionInfo = undefined;
-  expansionInfoPinned = false;
+  releaseTooltipPins(expansionInfoPanel);
   expansionInfoPanel.hidden = true;
 }
 
 function openExpansionInfo(trigger, expansion, pinned = false) {
   clearTimeout(expansionInfoTimer);
   if (activeExpansionInfo === trigger) {
-    if (pinned) expansionInfoPinned = true;
+    if (pinned) pinTooltip(expansionInfoPanel);
     return;
   }
-  if (expansionInfoPinned && !pinned) return;
+  if (pinnedTooltips.has(expansionInfoPanel) && !pinned) return;
   hideExpansionInfo();
   activeExpansionInfo = trigger;
-  expansionInfoPinned = pinned;
+  tooltipTriggers.set(expansionInfoPanel, trigger);
   const info = catalog.expansionInfo[expansion][uiLanguage];
   document.getElementById("expansion-info-title").textContent = expansionName(expansion);
   const originHint = document.getElementById("expansion-info-land-origin");
@@ -2816,12 +2887,13 @@ function openExpansionInfo(trigger, expansion, pinned = false) {
   expansionInfoPanel.hidden = false;
   trigger.setAttribute("aria-expanded", "true");
   positionExpansionInfo();
+  if (pinned) pinTooltip(expansionInfoPanel);
 }
 
 function scheduleExpansionInfoClose() {
   clearTimeout(expansionInfoTimer);
   expansionInfoTimer = setTimeout(() => {
-    if (expansionInfoPinned || !activeExpansionInfo) return;
+    if (pinnedTooltips.has(expansionInfoPanel) || !activeExpansionInfo) return;
     const focused = document.activeElement;
     if (!activeExpansionInfo.contains(focused) && !expansionInfoPanel.contains(focused) &&
         !activeExpansionInfo.matches(":hover") && !expansionInfoPanel.matches(":hover")) hideExpansionInfo();
@@ -2840,7 +2912,7 @@ function addExpansionInfoTrigger(trigger, expansion) {
   trigger.addEventListener("focus", () => openExpansionInfo(trigger, expansion));
   trigger.addEventListener("focusout", scheduleExpansionInfoClose);
   trigger.addEventListener("click", () => {
-    if (activeExpansionInfo === trigger && expansionInfoPinned) hideExpansionInfo();
+    if (activeExpansionInfo === trigger && pinnedTooltips.has(expansionInfoPanel)) hideExpansionInfo();
     else openExpansionInfo(trigger, expansion, true);
   });
 }
@@ -2871,6 +2943,7 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     title.tabIndex = 0;
     title.setAttribute(rule.id === "defense" ? "aria-controls" : "aria-describedby", hint.id);
     wrapper.append(title, hint);
+    registerHint(title, hint);
     name.append(wrapper);
   } else {
     name.append(title);
@@ -2907,6 +2980,7 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     label.append(toggle, text);
     editionInputs.set(expansion, toggle);
     name.append(label, tip);
+    registerHint(label, tip, toggle);
   }
   group.append(name);
   const max = rule.max ?? kingdomSize;
@@ -3149,24 +3223,37 @@ expansionInfoPanel.addEventListener("focusout", scheduleExpansionInfoClose);
 expansionInfoRules.addEventListener("toggle", positionExpansionInfo);
 window.addEventListener("resize", positionExpansionInfo);
 window.addEventListener("scroll", positionExpansionInfo, { passive: true });
+registerHint(document.getElementById("kingdom-size-note-trigger"), document.getElementById("kingdom-size-note"));
 document.addEventListener("toggle", event => {
-  if (activeExpansionInfo && !event.target.open && event.target.contains(activeExpansionInfo)) hideExpansionInfo();
+  if (event.target.open) return;
+  if (activeExpansionInfo && event.target.contains(activeExpansionInfo)) hideExpansionInfo();
+  if (activePreview && event.target.contains(activePreview.button)) setPreview(null);
+  releaseTooltipPins(event.target);
 }, true);
+document.addEventListener("click", event => {
+  if (event.detail === 0) dismissTooltipsOutside(event.target);
+  pinTooltip(event.target);
+});
 document.addEventListener("keydown", event => {
   if (event.key !== "Escape") return;
-  if (activeExpansionInfo) {
-    if (expansionInfoPanel.contains(document.activeElement)) activeExpansionInfo.focus();
-    hideExpansionInfo();
-  }
-  if (activePreview) {
-    if (activePreview.panel.contains(document.activeElement)) activePreview.button.focus();
-    setPreview(null);
-  }
+  const panels = [...pinnedTooltips.keys()];
+  if (activeExpansionInfo && !pinnedTooltips.has(expansionInfoPanel)) panels.push(expansionInfoPanel);
+  if (activePreview && !pinnedTooltips.has(activePreview.panel)) panels.push(activePreview.panel);
+  const focused = document.activeElement;
+  const containing = panels.filter(panel => panel.contains(focused));
+  const outermost = containing.find(panel => !containing.some(other => other !== panel && other.contains(panel)));
+  if (outermost) tooltipTriggers.get(outermost)?.focus();
+  for (const panel of panels) dismissTooltip(panel);
 });
-document.addEventListener("pointerdown", event => {
-  if (activeExpansionInfo && !activeExpansionInfo.contains(event.target) && !expansionInfoPanel.contains(event.target)) hideExpansionInfo();
-  if (activePreview && !activePreview.button.contains(event.target) && !activePreview.panel.contains(event.target)) setPreview(null);
-});
+function dismissTooltipsOutside(target) {
+  const outside = [...pinnedTooltips.keys()].filter(panel => !tooltipGroupContains(panel, target));
+  for (const panel of outside) dismissTooltip(panel);
+  if (activeExpansionInfo && !pinnedTooltips.has(expansionInfoPanel) &&
+      !activeExpansionInfo.contains(target) && !expansionInfoPanel.contains(target)) hideExpansionInfo();
+  if (activePreview && !pinnedTooltips.has(activePreview.panel) &&
+      !activePreview.button.contains(target) && !activePreview.panel.contains(target)) setPreview(null);
+}
+document.addEventListener("pointerdown", event => dismissTooltipsOutside(event.target));
 function showImageStatus() {
   const count = Object.keys(imageData.images).length;
   const complete = new Set(Object.values(imageData.cards ?? {}).flatMap(images => Object.keys(images))).size;
