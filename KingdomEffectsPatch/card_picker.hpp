@@ -17,6 +17,11 @@ struct CardTarget {
     const wchar_t* types;
     const wchar_t* cost;
     const wchar_t* rules;
+    const char* expansion_id;
+    const char* type_icons;
+    int coins;
+    int potions;
+    int debt;
     unsigned kinds;
 };
 

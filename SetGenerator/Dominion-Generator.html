@@ -2662,8 +2662,8 @@ function readSettings(source) {
   const modes = settings.expansionModes;
   const additional = settings.randomExpansionCount;
   if ((modes !== undefined && (!isRecord(modes) || Object.entries(modes).some(([id, mode]) =>
-      !expansionModes.has(id) || !["always", "random", "off"].includes(mode) || (id === "base" && mode === "random")))) ||
-      (additional !== undefined && !isValidRangeBound(additional, expansions.length - 1))) {
+      !expansionModes.has(id) || !["always", "random", "off"].includes(mode)))) ||
+      (additional !== undefined && !isValidRangeBound(additional, expansions.length))) {
     throw new Error(tr("Die Auswahl der Erweiterungen ist ungültig.", "The expansion selection is invalid."));
   }
   const size = settings.kingdomSize ?? standardKingdomSize;
@@ -3323,7 +3323,6 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     interfaceLabels.push(labelMode);
     labelMode();
     for (const [value, de, en] of [["always", "Immer", "Always"], ["random", "Zufall", "Random"], ["off", "Aus", "Off"]]) {
-      if (kingdomExpansion === "base" && value === "random") continue;
       const option = new Option(de, value);
       bindInterfaceLabel(option, () => tr(de, en));
       mode.add(option);
@@ -3535,12 +3534,12 @@ kingdomSizeSelect.addEventListener("change", () => {
 document.getElementById("setup-options").addEventListener("input", event => {
   if (event.target !== kingdomSizeSelect) scheduleRuleCheck();
 });
-for (let count = 0; count < expansions.length; count++) {
+for (let count = 0; count <= expansions.length; count++) {
   randomExpansionCount.add(new Option(String(count), String(count)));
 }
 enableRandomExpansions.addEventListener("click", () => {
   for (const [id, mode] of expansionModes) {
-    if (id !== "base" && mode.value === "off") setExpansionMode(id, "random");
+    if (mode.value === "off") setExpansionMode(id, "random");
   }
   scheduleRuleCheck();
 });

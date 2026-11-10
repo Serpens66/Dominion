@@ -12,7 +12,7 @@ Unter **Erweiterungen und Editionen** garantiert **Immer** mindestens einen Stap
 
 ## Web-Namenslisten umwandeln
 
-Kopiere deine Auswahl aus dem Dominion Randomizer oder gib die Kartennamen selbst ein. Öffne den heruntergeladenen HTML-Konverter, füge die Namen ein und klicke auf **Kartenliste bestätigen**. Den erzeugten Code fügst du in Dominion ins Kartensuchfeld ein. [Dominion Randomizer](https://dominionrandomizer.com/) · [HTML-Konverter herunterladen](https://github.com/Serpens66/Dominion/releases/latest/download/Dominion-Konverter.html)
+Kopiere deine Auswahl aus dem Dominion Randomizer oder gib die Kartennamen selbst ein. Füge die Namen im Konverter ein und klicke auf **Kartenliste bestätigen**. Den erzeugten Code fügst du in Dominion ins Kartensuchfeld ein. [Dominion Randomizer](https://dominionrandomizer.com/) · [Konverter im Browser öffnen](https://serpens66.github.io/Dominion/Dominion-Konverter.html) · [HTML-Konverter herunterladen](https://github.com/Serpens66/Dominion/releases/latest/download/Dominion-Konverter.html)
 
 ### HTML-Konverter mit doppelten Stapeln
 

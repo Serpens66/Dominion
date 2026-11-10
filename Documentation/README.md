@@ -43,12 +43,11 @@ Lege das Bildpaket als Dominion-Kartenbilder.json neben die HTML-Datei. Für die
 
 Die Quelldatei ist [Dominion-Generator.html](../SetGenerator/Dominion-Generator.html). Deutsche Texte stehen zwischen den HTML-Tags, englische Übersetzungen in `data-en`. Dynamische Texte stehen in den Sprachzuordnungen im JavaScript, etwa `tr("Deutsch", "English")`. Speichere die Datei und lade die lokale Seite neu.
 
-Katalog und Zieh-Worker aus dem Projektordner aktualisieren und den Pages-Build lokal prüfen. Passe den Steam-Pfad bei Bedarf an.
+Katalog und Zieh-Worker aus dem Projektordner aktualisieren und prüfen. Passe den Steam-Pfad bei Bedarf an.
 
 ```powershell
 python .\SetGenerator\generator_catalog.py "E:\ProgrammeE\Steam\steamapps\common\Dominion\Dominion.xpack"
 node .\SetGenerator\test_generator_solver.js
-python -B .\SetGenerator\build_pages.py .\SetGenerator\.pages\index.html
 ```
 
-GitHub Actions veröffentlicht die Website bei Änderungen am Generator auf `main`. Den Build kannst du auch über **Actions → Publish Dominion Generator → Run workflow** starten. [Workflow](https://github.com/Serpens66/Dominion/actions/workflows/generator-pages.yml)
+Bei Änderungen am Generator auf `main` veröffentlicht GitHub Actions die HTML-Datei unverändert als `index.html` und legt `Dominion-Konverter.html` daneben. Das optionale Kartenbildpaket bleibt lokal. Du kannst die Veröffentlichung auch über **Actions → Publish Dominion Generator → Run workflow** starten. [Workflow](https://github.com/Serpens66/Dominion/actions/workflows/generator-pages.yml)

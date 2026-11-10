@@ -358,6 +358,20 @@ def image_url(image: Image.Image, format_name: str, **options) -> str:
     return f"data:image/{format_name.lower()};base64," + base64.b64encode(output.getvalue()).decode("ascii")
 
 
+def decode_artwork(read, atlas, path: str) -> Image.Image:
+    resource = read(path)
+    offset = struct.unpack_from("<Q", resource, IMAGE_POINTER_OFFSET)[0]
+    if resource[offset:offset + 4] == b"qoif":
+        return decode_texture(resource)
+    width, height = struct.unpack_from("<II", resource, 0x28)
+    x, y = struct.unpack_from("<II", resource, 0x5C)
+    name = resource[0x78:].split(b"\0", 1)[0].decode("utf-8").removesuffix(".texture")
+    texture = atlas(name)
+    if not (0 < width <= texture.width - x and 0 < height <= texture.height - y):
+        raise ValueError(f"Ungültiger Ausschnitt in der Textur {name}.")
+    return texture.crop((x, y, x + width, y + height))
+
+
 def read_image_pack(path: Path, expansion_images: bool = False) -> dict:
     package_size = path.stat().st_size
     with path.open("rb") as package:
@@ -384,17 +398,7 @@ def read_image_pack(path: Path, expansion_images: bool = False) -> dict:
             return decode_texture(read(name))
 
         def artwork(path: str) -> Image.Image:
-            resource = read(path)
-            offset = struct.unpack_from("<Q", resource, IMAGE_POINTER_OFFSET)[0]
-            if resource[offset:offset + 4] == b"qoif":
-                return decode_texture(resource)
-            width, height = struct.unpack_from("<II", resource, 0x28)
-            x, y = struct.unpack_from("<II", resource, 0x5C)
-            name = resource[0x78:].split(b"\0", 1)[0].decode("utf-8").removesuffix(".texture")
-            texture = atlas(name)
-            if not (0 < width <= texture.width - x and 0 < height <= texture.height - y):
-                raise ValueError(f"Ungültiger Ausschnitt in der Textur {name}.")
-            return texture.crop((x, y, x + width, y + height))
+            return decode_artwork(read, atlas, path)
 
         def sprite(name: str) -> Image.Image:
             return artwork(f"res/card_gen/shared/{name}")

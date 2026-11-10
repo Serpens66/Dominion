@@ -102,11 +102,15 @@ Für Build 3315 den **Lokal-Test-starten.cmd** doppelklicken. Unter **Lokal spie
 -k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop
 ```
 
-1. **F8** drücken. Nach **Doppelter Vorratsstapel** suchen. **Dorf** auswählen und **Effekt hinzufügen** drücken. Für **Markt** wiederholen. **Kauflaune** suchen und ebenfalls hinzufügen. Erwartet sind **3 / 32** Effektplätze.
+1. **F8** drücken. Nach **Doppelter Vorratsstapel** suchen und **Ziele wählen** öffnen. Unter **Aktuelles Königreich** im **Basisspiel** Dorf und Markt anhaken. Mit der Maus über einen Namen fahren oder mit den Pfeiltasten zu ihm wechseln, um die Vorschau zu sehen. **Auswahl übernehmen** drücken. **Kauflaune** suchen und hinzufügen. Erwartet sind **3 / 32** Effektplätze.
 2. **Übernehmen** drücken und die Partie starten. Erwartet sind **Dorf 20**, **Markt 20**, **Werkstatt 10** und ein zusätzlicher Kauf zu Zugbeginn. Für den ersten Test bleibt die automatische Verdopplung ausgeschaltet.
 3. Das Set über das Burgsymbol speichern. Danach das Set in einer frischen Königreich-Auswahl erneut laden und mit **F8** öffnen. Die drei Einträge sollen in derselben Reihenfolge erscheinen. Einen Eintrag entfernen und **Abbrechen** prüfen. Bei einem zweiten Versuch den Eintrag entfernen und **Übernehmen** wählen. Das Ergebnis wird zur eigenen Auswahl, die sich erneut als Set speichern lässt.
 4. Für einen getrennten Test **Alle gezogenen Königreichstapel automatisch verdoppeln** im Dialog aktivieren. Eine frische Zufallspartie soll ihre Hauptstapel verdoppeln. Die Einstellung gilt für die laufende Testsitzung. Beim Doppelklick ist sie anfangs ausgeschaltet. Modus 3 im optionalen Startmenü schaltet sie beim Start ein.
-5. Den festen Test auch mit **Weitergeben** auf dem zweiten Spielerplatz wiederholen. Die Dialogbedienung, Sonderkombinationen und der Start in Weitergeben brauchen einen Spieltest.
+5. Den festen Test auch mit **Weitergeben** auf dem zweiten Spielerplatz wiederholen. Eine bewusste zweite Dorf-Verdopplung mit **Weitere Kopie hinzufügen** prüfen. Erwartet sind **Dorf 40** und **Markt 20**. Einmal in der Kartenauswahl und einmal im Effektdialog abbrechen und die gespeicherte Auswahl danach erneut öffnen.
+
+**Geprüft am 11. November 2026, Spielbuild 3315, Steam-Build 17683350.** Ein isolierter Win32-Dialogtest prüfte Suche über mehrere Begriffe, Hover- und Tastaturvorschau, bewusste Wiederholung, zwei getrennte Zielfelder, die Reihenfolge der Taifun-Ziele und Abbrechen. Von 31 Einträgen aus blieben bei einer Auswahl von zwei weiteren Einträgen alle 31 bestehen. Nach Abwahl eines Ziels ließ sich der 32. Platz belegen.
+
+Die daraus erwarteten Effektbefehle wurden separat im nativen Spielstart mit zwei lokalen Spielerplätzen gemessen. Mit frischen Profilen ergab A → B → A für Dorf und Markt **20/20 → 10/10 → 20/20**. Eine zusätzliche Dorf-Kopie ergab **40/20**. Patrizier und Handelsplatz hatten im verdoppelten Stapel je **10**, Gärten hatte **16** Karten. Das Speichern über das Burgsymbol und erneute Laden über die sichtbare Oberfläche gehören zur manuellen Abnahme.
 
 ## Automatisierte lokale Effektprüfung im Hintergrund
 

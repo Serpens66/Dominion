@@ -3,6 +3,7 @@
 import base64
 import hashlib
 from io import BytesIO
+from functools import lru_cache
 import json
 from pathlib import Path
 import re
@@ -13,7 +14,7 @@ import unicodedata
 DOCS = Path(__file__).resolve().parents[1] / "Documentation"
 GENERATOR = DOCS.parent / "SetGenerator"
 sys.path.insert(0, str(GENERATOR))
-from generator_catalog import load_catalog
+from generator_catalog import load_catalog, read_index, read_resource, read_strings, XPACK_HASH
 
 ARGUMENTS = {
     "Karten-ID": "card",
@@ -23,6 +24,21 @@ ARGUMENTS = {
     "Weg-ID": "way",
     "Prophezeiungs-ID": "prophecy",
     "Projekt-ID": "project",
+}
+TYPE_ICONS = {
+    "action": "actions", "attack": "attack", "reaction": "reaction", "duration": "duration",
+    "night": "night", "treasure": "treasure", "victory": "vp", "liaison": "favor_rules", "omen": "omen",
+    **dict.fromkeys(("event", "landmark", "project", "way", "prophecy"), "landscape"),
+}
+MENU_ASSETS = {
+    "wood": "wood_bar", "panel": "panel_frame_bg_tile", "gold": "button_golden",
+    "check": "ico_check_btn", "checkbox": "checkbox", "seal": "seal_campaign", "plus": "ico_plus2gold",
+}
+MENU_LABELS = {
+    "kingdom": "dom_ui_create_game_tab_kingdom", "choose_card": "dom_ui_create_game_cards_input",
+    "expansions": "dom_ui_create_game_expansions", "done": "dom_ui_score_done",
+    "cancel": "dom_ui_create_game_dismiss", "features": "dom_ui_campaign_features",
+    "kingdom_cards": "dom_ui_gallery_kingdom_cards",
 }
 
 
@@ -116,8 +132,10 @@ def read_targets(catalog, aliases):
                 if cost["debt"]:
                     parts.append(f"{cost['debt']} Schulden")
             expansion = "Grundkarten" if props["expansion"] == "basic" else catalog["expansions"][props["expansion"]]
+            icons = ",".join(dict.fromkeys(TYPE_ICONS[kind] for kind in props["types"] if kind in TYPE_ICONS))
+            costs = (cost["coins"], cost["potions"], cost["debt"]) if cost else (-1, 0, 0)
             targets.append((card_id, title, expansion, search_key("\n".join(terms)), types,
-                            " + ".join(parts), rule_text(rules), kinds))
+                            " + ".join(parts), rule_text(rules), props["expansion"], icons, costs, kinds))
     return sorted(targets, key=lambda row: (search_key(row[2]), search_key(row[1]), row[0]))
 
 
@@ -161,6 +179,61 @@ def prepare_images(output, xpack, targets):
         print(f"Kartenvorschauen verwenden Text, wenn Bilder fehlen: {error}", file=sys.stderr)
 
 
+def prepare_menu(output, xpack):
+    folder = output.parent / "menu-art"
+    folder.mkdir(exist_ok=True)
+    stamp = folder / "source.sha256"
+    source = (GENERATOR / "Dominion-Generator.html").read_text(encoding="utf-8")
+    match = re.search(r'<script type="application/json" id="game-icons">\s*(.*?)</script>', source, re.S)
+    icon_json = match[1] if match else "{}"
+    with xpack.open("rb") as package:
+        entries = read_index(package)
+
+        def read(key):
+            return read_resource(package, entries, key)
+
+        de = read_strings(read("res/translation/de"))
+        lines = ["#pragma once", "namespace kingdom::menu_text {"]
+        lines.extend(f"inline constexpr wchar_t {name}[] = {literal(de[key], True)};"
+                     for name, key in MENU_LABELS.items())
+        lines.append("}")
+        (output.parent / "menu_labels.generated.hpp").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        version = hashlib.sha256(Path(__file__).read_bytes() + (GENERATOR / "extract_card_images.py").read_bytes()
+                                 + (XPACK_HASH + icon_json).encode("utf-8")).hexdigest()
+        if stamp.is_file() and stamp.read_text(encoding="ascii") == version:
+            return
+        try:
+            from PIL import Image
+            from extract_card_images import decode_artwork, decode_texture
+        except ImportError as error:
+            print(f"Menü verwendet die Ersatzfarben: {error}", file=sys.stderr)
+            return
+
+        @lru_cache(maxsize=None)
+        def atlas(key):
+            return decode_texture(read(key))
+
+        complete = True
+        for name, key in MENU_ASSETS.items():
+            try:
+                decode_artwork(read, atlas, f"res/ui_art/{key}").save(folder / f"{name}.png")
+            except (OSError, ValueError, KeyError) as error:
+                print(f"Menügrafik {name}: {error}", file=sys.stderr)
+                complete = False
+        for name, data in json.loads(icon_json).items():
+            if not re.fullmatch(r"[a-z0-9_-]+", name) or name in MENU_ASSETS:
+                continue
+            try:
+                with Image.open(BytesIO(base64.b64decode(data.split(",", 1)[1], validate=True))) as icon:
+                    icon.save(folder / f"{name}.png")
+            except (OSError, ValueError, IndexError) as error:
+                print(f"Menüsymbol {name}: {error}", file=sys.stderr)
+                complete = False
+        if complete:
+            stamp.write_text(version, encoding="ascii")
+
+
 def main(output, xpack):
     output, xpack = Path(output), Path(xpack)
     catalog = load_catalog(xpack)
@@ -173,15 +246,17 @@ def main(output, xpack):
         rows.append(f"    {{{literal(command)}, {literal(name, True)}, {literal(description, True)}, {literal(status, True)}, "
                     f"TargetKind::{first}, TargetKind::{second}}},")
     rows.extend(("};", "", "constexpr CardTarget target_catalog[] = {"))
-    for card_id, *metadata, kinds in targets:
+    for card_id, *metadata, expansion_id, icons, costs, kinds in targets:
         mask = " | ".join(f"kind_mask(TargetKind::{kind})" for kind in kinds)
         fields = ", ".join(literal(value, True) for value in metadata)
-        rows.append(f"    {{{literal(card_id)}, {fields}, {mask}}},")
+        price = ", ".join(map(str, costs))
+        rows.append(f"    {{{literal(card_id)}, {fields}, {literal(expansion_id)}, {literal(icons)}, {price}, {mask}}},")
     rows.extend(("};", "", "constexpr std::pair<std::string_view, std::string_view> target_aliases[] = {"))
     for alias, canonical in aliases.items():
         rows.append(f"    {{{literal(alias)}, {literal(canonical)}}},")
     rows.append("};")
     output.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    prepare_menu(output, xpack)
     prepare_images(output, xpack, {entry[0] for entry in targets})
 
 

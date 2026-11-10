@@ -35,7 +35,6 @@ std::wstring fold_card_search(std::wstring_view text) {
 
 namespace {
 
-constexpr UINT_PTR preview_timer = 1;
 constexpr std::size_t replacement_limit = 20;
 
 struct Picker {
@@ -48,7 +47,6 @@ struct Picker {
     CardTargets selected{};
     std::vector<std::pair<HTREEITEM, const CardTarget*>> visible{};
     std::set<std::wstring, std::less<>> expanded{};
-    const CardTarget* hovered = nullptr;
     const CardTarget* displayed = nullptr;
     ULONG_PTR graphics = 0;
     std::unique_ptr<Gdiplus::Image> image{};
@@ -154,8 +152,6 @@ void render_cards(HWND dialog, Picker& picker) {
     std::array<wchar_t, 256> search{};
     GetDlgItemTextW(dialog, IDC_CARD_QUERY, search.data(), static_cast<int>(search.size()));
     const auto query = fold_card_search(search.data());
-    KillTimer(dialog, preview_timer);
-    picker.hovered = nullptr;
     picker.rendering = true;
     SendMessageW(tree, WM_SETREDRAW, FALSE, 0);
     TreeView_DeleteAllItems(tree);
@@ -199,14 +195,9 @@ LRESULT CALLBACK tree_proc(HWND tree, UINT message, WPARAM wparam, LPARAM lparam
             hit.pt.y = static_cast<short>(HIWORD(lparam));
             const auto item = TreeView_HitTest(tree, &hit);
             const auto* card = card_at(tree, item);
-            if (message == WM_MOUSEMOVE && card != picker.hovered) {
-                picker.hovered = card;
-                if (card) {
-                    TRACKMOUSEEVENT tracking{sizeof tracking, TME_LEAVE, tree, 0};
-                    TrackMouseEvent(&tracking);
-                    SetTimer(dialog, preview_timer, 140, nullptr);
-                } else KillTimer(dialog, preview_timer);
-            } else if (message != WM_MOUSEMOVE && picker.multiple() && card && (hit.flags & TVHT_ONITEMSTATEICON)) {
+            if (message == WM_MOUSEMOVE) {
+                preview(dialog, picker, card);
+            } else if (picker.multiple() && card && (hit.flags & TVHT_ONITEMSTATEICON)) {
                 if (message == WM_LBUTTONDOWN) {
                     SetFocus(tree);
                     TreeView_SelectItem(tree, item);
@@ -214,9 +205,6 @@ LRESULT CALLBACK tree_proc(HWND tree, UINT message, WPARAM wparam, LPARAM lparam
                 }
                 return 0;
             }
-        } else if (message == WM_MOUSELEAVE) {
-            picker.hovered = nullptr;
-            KillTimer(dialog, preview_timer);
         } else if (message == WM_KEYDOWN && wparam == VK_SPACE && picker.multiple()) {
             if (!(lparam & (1 << 30))) toggle_card(dialog, picker, TreeView_GetSelection(tree));
             return 0;
@@ -261,12 +249,31 @@ void paint_preview(const DRAWITEMSTRUCT& draw, const Picker& picker) {
                        (rect.top + rect.bottom - height) / 2, width, height);
 }
 
+void position_picker(HWND dialog) {
+    const auto owner = GetWindow(dialog, GW_OWNER);
+    MONITORINFO monitor{sizeof monitor};
+    RECT window{};
+    if (!GetWindowRect(dialog, &window) ||
+        !GetMonitorInfoW(MonitorFromWindow(owner ? owner : dialog, MONITOR_DEFAULTTONEAREST), &monitor)) return;
+    const auto& work = monitor.rcWork;
+    RECT anchor = work;
+    if (owner) GetWindowRect(owner, &anchor);
+    const auto width = window.right - window.left;
+    const auto height = window.bottom - window.top;
+    const auto x = std::clamp((anchor.left + anchor.right - width) / 2,
+                              work.left, (std::max)(work.left, work.right - width));
+    const auto y = std::clamp((anchor.top + anchor.bottom - height) / 2,
+                              work.top, (std::max)(work.top, work.bottom - height));
+    SetWindowPos(dialog, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
 INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lparam) {
     try {
         if (message == WM_INITDIALOG) {
             auto& picker = *reinterpret_cast<Picker*>(lparam);
             SetWindowLongPtrW(dialog, DWLP_USER, lparam);
             SetWindowTextW(dialog, picker.title);
+            position_picker(dialog);
             const auto tree = GetDlgItem(dialog, IDC_CARD_TREE);
             if (picker.multiple())
                 SetWindowLongPtrW(tree, GWL_STYLE, GetWindowLongPtrW(tree, GWL_STYLE) | TVS_CHECKBOXES);
@@ -279,9 +286,10 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             ShowWindow(GetDlgItem(dialog, IDC_CARD_REPEAT), picker.mode == CardSelection::multiple ? SW_SHOW : SW_HIDE);
             for (const auto id : {IDC_CARD_SELECTION, IDC_CARD_UP, IDC_CARD_DOWN, IDC_CARD_REMOVE})
                 ShowWindow(GetDlgItem(dialog, id), picker.mode == CardSelection::ordered ? SW_SHOW : SW_HIDE);
-            if (picker.mode == CardSelection::multiple && !has_current)
-                SetDlgItemTextW(dialog, IDC_CARD_HINT,
-                    L"Bei Zufallskönigreichen kann der Effektdialog alle gezogenen Stapel automatisch verdoppeln.");
+            if (picker.mode == CardSelection::multiple && picker.current.size() < 10)
+                SetDlgItemTextW(dialog, IDC_CARD_HINT, has_current
+                    ? L"Für die offenen Plätze lässt sich die automatische Verdopplung im Effektdialog einschalten."
+                    : L"Bei Zufallskönigreichen kann der Effektdialog alle gezogenen Stapel automatisch verdoppeln.");
             Gdiplus::GdiplusStartupInput input;
             if (Gdiplus::GdiplusStartup(&picker.graphics, &input, nullptr) != Gdiplus::Ok) picker.graphics = 0;
             render_cards(dialog, picker);
@@ -290,13 +298,9 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
         auto* state = reinterpret_cast<Picker*>(GetWindowLongPtrW(dialog, DWLP_USER));
         if (!state) return FALSE;
         auto& picker = *state;
-        if (message == WM_TIMER && wparam == preview_timer) {
-            KillTimer(dialog, preview_timer);
-            preview(dialog, picker, picker.hovered);
-            return TRUE;
-        }
         if (message == WM_DRAWITEM && wparam == IDC_CARD_IMAGE) {
             paint_preview(*reinterpret_cast<const DRAWITEMSTRUCT*>(lparam), picker);
+            SetWindowLongPtrW(dialog, DWLP_MSGRESULT, TRUE);
             return TRUE;
         }
         if (message == WM_DESTROY) {

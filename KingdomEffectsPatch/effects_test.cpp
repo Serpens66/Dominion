@@ -131,6 +131,30 @@ void known_crashes() {
     assert(known_failure(effects) == Error::debt_stamp);
 }
 
+void editor_selection() {
+    assert((fixed_kingdom_ids("-k village, market, young_witch(chapel), -m Landscapes(0,1) "
+                              "-x twist_room_for_more(gardens)") ==
+            std::vector<std::string>{"village", "market", "young_witch"}));
+    assert(fixed_kingdom_ids("-m Landscapes(0,1) -x twist_room_for_more(gardens)").empty());
+
+    EffectCommands draft(31, "twist_big_ideas");
+    const EffectCommands two{"start_double_pile(village)", "start_double_pile(market)"};
+    const auto original = draft;
+    const auto overflow = append_editor_effects(draft, two, true);
+    assert(overflow.error == Error::capacity && overflow.missing_slots == 1 && draft == original);
+    assert(append_editor_effects(draft, {two.front()}, true).error == Error::none && draft.size() == 32);
+    assert(append_editor_effects(draft, {"start_double_pile( village )"}, true).error == Error::none &&
+           draft.size() == 32);
+    assert(append_editor_effects(draft, {two.front()}, false).error == Error::capacity);
+
+    draft.clear();
+    assert(append_editor_effects(draft, two, true).error == Error::none && draft == two);
+    assert(append_editor_effects(draft, {two.front()}, false).error == Error::none && draft.size() == 3);
+    const auto with_repeat = draft;
+    assert(append_editor_effects(draft, {"twist_room_for_more(chapel)", "stamp_cost_2D_less(triumph)"}, false)
+               .error == Error::debt_stamp && draft == with_repeat);
+}
+
 }
 
 int main() {
@@ -140,6 +164,7 @@ int main() {
     shared_targets();
     text_limits();
     known_crashes();
+    editor_selection();
     kingdom::EffectCommands commands;
     assert(kingdom::read_effect_commands(
         "-k village, market -x start_double_pile(village), twist_typhoon(village,market), "

@@ -125,6 +125,8 @@ Der lokale Modus **Weitergeben** ist in den deutschen Ressourcen unter `dom_ui_c
 
 Der Katalog wird beim Build aus den 89 deutschen Tabelleneinträgen der Spielanleitung und dem Kartenkatalog erzeugt. Die Zielauswahl verwendet kanonische IDs mit deutschen Namen und filtert nach Zieltyp. Bei Platz für Mehr und Taifun werden die gemeinsamen Zielfelder mit der Effektliste ersetzt oder beim Entfernen geleert. Auf dem Host bleibt die Automatik beim lokalen Spielstart verfügbar. Die Dialogoption gilt pro Testsitzung, die ausdrücklich gewählte Effektliste lässt sich als Set speichern.
 
+Die Kartenauswahl verwendet die Erweiterungsgruppen, deutschen und englischen Namen, Kartentypen, Kosten und Regeltexte des SetGenerators. Die Vorschau lädt lokale Illustrationen aus `out/card-previews`. Der Build bereitet sie aus dem Bildpaket des SetGenerators oder der geprüften `Dominion.xpack` vor. Die aktuell festgelegten Stapel stammen aus dem serialisierten `-k`-Abschnitt desselben Setups, das der Editor öffnet. Mehrfachauswahl und Wiederholungen erzeugen einzelne native `-x`-Einträge. Taifun erzeugt einen Eintrag mit einer geordneten Zielliste. [Dialogtest](TEST.md#effektdialog-in-der-lokalen-königreich-auswahl)
+
 ### Schutz vor bekannten lokalen Startabbrüchen
 
 Der Editor und der Textimport prüfen die bekannten Problemfälle. Beim Zusammenführen prüft der Patch zusätzlich die resultierende native Effektliste. `start_with_cube` darf für ein Ziel einmal vorkommen. Der Patch sperrt den Schuldenstempel `stamp_cost_2D_less` in Build 3315. Mit Triumph wurde ein Startabbruch reproduziert. Die kleingeschriebene Schreibweise wurde im Spiel nicht als Effekt geladen. Die Schutzregeln gelten in den lokalen Patchmodi.

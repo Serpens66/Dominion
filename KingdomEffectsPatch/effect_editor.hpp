@@ -69,7 +69,8 @@ inline std::vector<std::string> fixed_kingdom_ids(std::string_view text) {
             (i == 0 || whitespace(text[i - 1]) || text[i - 1] == ',') &&
             (i + 2 == text.size() || whitespace(text[i + 2]));
         if (kingdom && (end || section || (!depth && text[i] == ','))) {
-            const auto id = trimmed(text.substr(start, i - start));
+            const auto entry = trimmed(text.substr(start, i - start));
+            const auto id = trimmed(entry.substr(0, entry.find('(')));
             if (!id.empty() && id.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789_") == id.npos)
                 ids.emplace_back(id);
             start = i + 1;
