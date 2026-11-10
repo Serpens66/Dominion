@@ -1,4 +1,4 @@
-"""Build a bilingual image pack for the 26 base-game cards from Dominion.xpack."""
+"""Build a local image pack from Dominion.xpack."""
 
 import argparse
 import base64
@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import re
 import struct
+import sys
 
 try:
     from PIL import Image, ImageDraw, ImageFont
@@ -31,6 +32,13 @@ TYPE_LABELS = {
     "en": {"action": "Action", "attack": "Action – Attack", "reaction": "Action – Reaction", "vp": "Victory"},
 }
 ASSET_NAMES = {"throne_room": "throne room"}
+EXPANSION_ASSET_NAMES = {
+    "acting_troupe": "acting_troup", "changeling": "changling", "sextant": "sextatnt",
+    "smugglers": "smuggler", "witchs_hut": "witchhut", "wheelwright": "wheelright",
+    "philosophers_stone": "philosopherstone", "summon": "summon-1",
+    "flag": "artifact_flag", "key": "artifact_key", "horn": "artifact_horn",
+    "lantern": "artifact_lantern", "treasure_chest": "artifact_chest",
+}
 INDEX_ENTRY_SIZE = 168
 IMAGE_POINTER_OFFSET = 128
 CARD_SIZE = (344, 524)
@@ -181,7 +189,7 @@ def image_url(image: Image.Image, format_name: str, **options) -> str:
     return f"data:image/{format_name.lower()};base64," + base64.b64encode(output.getvalue()).decode("ascii")
 
 
-def read_image_pack(path: Path) -> dict:
+def read_image_pack(path: Path, expansion_images: bool = False) -> dict:
     package_size = path.stat().st_size
     with path.open("rb") as package:
         magic, version, count = struct.unpack("<4sII", package.read(12))
@@ -244,24 +252,64 @@ def read_image_pack(path: Path) -> dict:
                                    strings[f"dom_card_power_{card_id}"], cost,
                                    CARD_TYPES.get(card_id, "action"), language)
                 complete_cards[language][card_id] = image_url(face, "WEBP", quality=94)
+        if expansion_images:
+            add_expansion_images(path, entries, read, illustrations)
         return {"format": "dominion-card-images", "version": 1,
                 "images": illustrations, "cards": complete_cards}
+
+
+def add_expansion_images(path, entries, read, illustrations):
+    from generator_catalog import load_catalog
+
+    resources = {}
+    for key in entries:
+        parts = key.split("/")
+        if len(parts) == 4 and parts[:2] == ["res", "card_gen"]:
+            expansion, name = parts[2:]
+            canonical = re.sub(r"^[a-z]+2e_", "", name)
+            if expansion == "promo":
+                canonical = canonical.removesuffix("art")
+            resources.setdefault((expansion, normalize_image_name(canonical)), key)
+
+    for card in load_catalog(path)["cards"]:
+        card_id = card["id"]
+        if card_id in illustrations:
+            continue
+        expansion = {"promos": "promo", "basic": "base"}.get(card["expansion"], card["expansion"])
+        names = (card_id, EXPANSION_ASSET_NAMES.get(card_id, card_id), card["text"]["en"][0])
+        resource = next((resources[(expansion, normalize_image_name(name))]
+                         for name in names
+                         if (expansion, normalize_image_name(name)) in resources), None)
+        if resource is None:
+            print(f"Illustration fehlt: {card_id}", file=sys.stderr)
+            continue
+        try:
+            art = decode_texture(read(resource))
+            art.thumbnail((420, 420))
+            illustrations[card_id] = image_url(art, "WEBP", quality=86)
+        except (ValueError, OSError, struct.error) as error:
+            print(f"Illustration nicht lesbar: {card_id} ({error})", file=sys.stderr)
+
+
+def normalize_image_name(name):
+    return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("xpack", type=Path, help="Pfad zu Dominion.xpack")
     parser.add_argument("output", type=Path, help="Pfad für das neue JSON-Bildpaket")
+    parser.add_argument("--all-expansions", action="store_true", help="Illustrationen der Steam-Erweiterungen ergänzen")
     args = parser.parse_args()
     try:
         if "QOI" not in Image.registered_extensions().values():
             raise ValueError("Diese Pillow-Version unterstützt QOI noch nicht. Verwende Pillow 10.4 oder neuer.")
-        pack = read_image_pack(args.xpack)
+        pack = read_image_pack(args.xpack, args.all_expansions)
         with args.output.open("x", encoding="utf-8") as output:
             json.dump(pack, output)
     except (OSError, ValueError, KeyError, struct.error) as error:
         parser.exit(1, f"Bildpaket konnte nicht erstellt werden. {error}\n")
-    print(f"{len(pack['images'])} Karten auf Deutsch und Englisch gespeichert in {args.output}")
+    print(f"{len(pack['images'])} Illustrationen und {len(pack['cards']['de'])} zweisprachige Kartenvorderseiten gespeichert in {args.output}")
 
 
 if __name__ == "__main__":

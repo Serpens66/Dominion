@@ -21,6 +21,10 @@ std::uintptr_t native_setup_serializer;
 std::uintptr_t native_string_construct;
 std::uintptr_t native_local_load;
 std::uintptr_t native_extras_serializer;
+std::uintptr_t native_online_filter;
+std::uintptr_t native_create_message;
+std::uintptr_t native_game_desc;
+std::uintptr_t native_game_state_init;
 const std::byte* image_base;
 std::uintptr_t search_cancel;
 std::uintptr_t create_cancel;
@@ -242,6 +246,69 @@ void __cdecl end_automatic() {
         log("automatic doubling skipped");
         MessageBoxW(GetActiveWindow(), failure, L"Dominion Kingdom Effects Patch", MB_OK | MB_ICONWARNING);
     }
+}
+
+void log_online_text(const char* stage, const char* field, const char* data) {
+    constexpr std::size_t limit = 4096;
+    const std::string_view text(data ? data : "", data ? strnlen_s(data, limit) : 0);
+    const char* extras = "absent";
+    bool village = false;
+    bool market = false;
+    if (text.size() == limit) {
+        extras = "over-limit";
+    } else if (text.empty()) {
+        extras = "empty-field";
+    } else {
+        // Log the presence of the test effects, never the network string itself.
+        bool in_extras = false;
+        std::size_t start = 0;
+        for (std::size_t i = 0; i <= text.size(); ++i) {
+            const bool end = i == text.size();
+            const bool section = !end && text[i] == '-' && (i == 0 || kingdom::whitespace(text[i - 1])) &&
+                                 i + 1 < text.size() && (i + 2 == text.size() || kingdom::whitespace(text[i + 2]));
+            if (!end && !section) continue;
+            if (in_extras) {
+                const auto rules = text.substr(start, i - start);
+                village |= rules.find("start_double_pile(village)") != rules.npos;
+                market |= rules.find("start_double_pile(market)") != rules.npos;
+            }
+            if (end) break;
+            in_extras = text[i + 1] == 'x' || text[i + 1] == 'X';
+            if (in_extras) extras = "present";
+            start = i + 2;
+        }
+    }
+    char event[192];
+    std::snprintf(event, sizeof event, "online %s %s: extras=%s village=%d market=%d",
+                  stage, field, extras, static_cast<int>(village), static_cast<int>(market));
+    log(event);
+}
+
+void __cdecl trace_online_before_filter(const std::byte* config) {
+    log_online_text("before filter", "kingdomData", *reinterpret_cast<const char* const*>(config + 0x30));
+}
+
+void __cdecl trace_online_send(const std::byte* message) {
+    log_online_text("send create", "setupData", *reinterpret_cast<const char* const*>(message + 0x28));
+    log_online_text("send create", "kingdomData", *reinterpret_cast<const char* const*>(message + 0x30));
+}
+
+void __cdecl trace_online_receive(const std::byte* description) {
+    log_online_text("receive description", "setupData", *reinterpret_cast<const char* const*>(description + 0x28));
+    log_online_text("receive description", "kingdomData", *reinterpret_cast<const char* const*>(description + 0x30));
+}
+
+void __cdecl trace_online_load(const std::byte* save) {
+    log_online_text("load network game", "setupData", *reinterpret_cast<const char* const*>(save + 0x38));
+    log_online_text("load network game", "kingdomData", *reinterpret_cast<const char* const*>(save + 0x3C));
+}
+
+void __cdecl trace_online_effects(const std::byte* state) {
+    const auto* client = *reinterpret_cast<const std::byte* const*>(image_base + 0x8C8D5C);
+    if (!client || *reinterpret_cast<const DWORD*>(client + 0x5068) != 2) return;
+    kingdom::Effects effects;
+    std::memcpy(&effects, state + 0x1280, sizeof effects);
+    log("online installed effects", &effects);
 }
 
 // Native call arguments and all registers are live until the original CALL.
@@ -470,12 +537,78 @@ __declspec(naked) void automatic_extras_hook() {
     }
 }
 
+__declspec(naked) void online_filter_hook() {
+    __asm {
+        pushfd
+        pushad
+        push ecx
+        call trace_online_before_filter
+        add esp, 4
+        popad
+        popfd
+        jmp dword ptr [native_online_filter]
+    }
+}
+
+__declspec(naked) void online_send_hook() {
+    __asm {
+        pushfd
+        pushad
+        push dword ptr [esp + 44] // return address, then descriptor and message
+        call trace_online_send
+        add esp, 4
+        popad
+        popfd
+        jmp dword ptr [native_create_message]
+    }
+}
+
+__declspec(naked) void online_receive_hook() {
+    __asm {
+        pushfd
+        pushad
+        push ecx
+        call trace_online_receive
+        add esp, 4
+        popad
+        popfd
+        jmp dword ptr [native_game_desc]
+    }
+}
+
+__declspec(naked) void online_load_hook() {
+    __asm {
+        pushfd
+        pushad
+        push ecx
+        call trace_online_load
+        add esp, 4
+        popad
+        popfd
+        jmp dword ptr [native_local_load]
+    }
+}
+
+__declspec(naked) void online_effects_hook() {
+    __asm {
+        pushfd
+        pushad
+        push edx
+        call trace_online_effects
+        add esp, 4
+        popad
+        popfd
+        jmp dword ptr [native_game_state_init]
+    }
+}
+
 struct Site {
     std::uintptr_t rva;
     const char* original;
     std::size_t length;
     void (*hook)();
     bool jump = false;
+    unsigned mode = 0; // 0 enables the site in every mode.
 };
 
 const Site sites[] = {
@@ -488,9 +621,13 @@ const Site sites[] = {
     {0x20FB27, "\xE8\x84\x51\xED\xFF", 5, set_hook},
     {0x1FCD6D, "\xE8\xAE\x2D\xEE\xFF", 5, save_played_hook},
     {0x1FCDAE, "\xE8\x7D\x3B\xEE\xFF", 5, save_prepared_hook},
-    // Automatic mode adds these two call sites after the normal patch sites.
-    {0x0B1EC6, "\xE8\xA5\x21\x17\x00", 5, local_load_hook},
-    {0x1E9F57, "\xE8\x14\xB4\xEF\xFF", 5, automatic_extras_hook},
+    {0x0B1EC6, "\xE8\xA5\x21\x17\x00", 5, local_load_hook, false, 3},
+    {0x1E9F57, "\xE8\x14\xB4\xEF\xFF", 5, automatic_extras_hook, false, 3},
+    {0x1FFA03, "\xE8\xE8\xC4\xED\xFF", 5, online_filter_hook, false, 4},
+    {0x1FFAF5, "\xE8\x26\xBC\x08\x00", 5, online_send_hook, false, 4},
+    {0x0B7965, "\xE8\x86\xCF\xFF\xFF", 5, online_receive_hook, false, 4},
+    {0x0B0DF3, "\xE8\x78\x32\x17\x00", 5, online_load_hook, false, 4},
+    {0x1EA206, "\xE8\x65\xEF\x0B\x00", 5, online_effects_hook, false, 4},
 };
 
 bool change_site(std::byte* base, const Site& site, bool install) {
@@ -576,7 +713,7 @@ private:
 
 extern "C" DWORD WINAPI install_patch(void* argument) {
     const auto mode = reinterpret_cast<std::uintptr_t>(argument);
-    if (mode < 1 || mode > 3) return 1;
+    if (mode < 1 || mode > 4) return 1;
     if (InterlockedCompareExchange(&initialized, 1, 0) != 0) return 2;
     auto* base = reinterpret_cast<std::byte*>(GetModuleHandleW(nullptr));
     if (!base) return 3;
@@ -585,10 +722,12 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
     const auto* pe = reinterpret_cast<const IMAGE_NT_HEADERS32*>(base + dos->e_lfanew);
     if (pe->Signature != IMAGE_NT_SIGNATURE || pe->FileHeader.Machine != IMAGE_FILE_MACHINE_I386 ||
         pe->OptionalHeader.SizeOfImage < 0x8C8D60) return 3;
-    const auto enabled_count = std::size(sites) - (mode == 3 ? 0 : 2);
-    for (std::size_t i = 0; i < enabled_count; ++i) {
-        const auto& site = sites[i];
+    std::array<const Site*, std::size(sites)> enabled{};
+    std::size_t enabled_count = 0;
+    for (const auto& site : sites) {
+        if (site.mode && site.mode != mode) continue;
         if (std::memcmp(base + site.rva, site.original, site.length) != 0) return 4;
+        enabled[enabled_count++] = &site;
     }
     if (std::memcmp(base + 0x1F6F40, "\xC7\x45\xFC\x01\x00\x00\x00", 7) != 0 ||
         std::memcmp(base + 0x1FF7D4, "\x32\xC0\x8B\x4D\xF4", 5) != 0 ||
@@ -612,6 +751,10 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
     native_string_construct = image + 0x23D720;
     native_local_load = image + 0x224070;
     native_extras_serializer = image + 0x0E5370;
+    native_online_filter = image + 0x0DBEF0;
+    native_create_message = image + 0x28B720;
+    native_game_desc = image + 0x0B48F0;
+    native_game_state_init = image + 0x2A9170;
     search_cancel = image + 0x1F6F40;
     create_cancel = image + 0x1FF7D4;
     merge_original_tail = image + 0x1F6C7A;
@@ -629,14 +772,15 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
         if (active_game) return 8;
         std::size_t installed = 0;
         for (std::size_t i = 0; i < enabled_count; ++i) {
-            if (!change_site(base, sites[i], true)) {
-                while (installed) change_site(base, sites[--installed], false);
+            if (!change_site(base, *enabled[i], true)) {
+                while (installed) change_site(base, *enabled[--installed], false);
                 return 6;
             }
             ++installed;
         }
     }
-    log(mode == 3 ? "build 3315: patch active, automatic local doubling"
+    log(mode == 4 ? "build 3315: patch active, online diagnostics"
+                  : mode == 3 ? "build 3315: patch active, automatic local doubling"
                   : measure_only ? "build 3315: measure mode" : "build 3315: patch active");
     return 0;
 }

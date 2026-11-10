@@ -79,6 +79,35 @@ Die Automatik erhält den Save nur für den synchronen Aufruf auf demselben Thre
 | Empfang und Spielstart | Der Client dekodiert `GameDescMessage` bei `0x0B7952`. Dessen Deskriptor bei `0x4C5810` enthält `kingdomData`. Bei `0x0B4744` bis `0x0B474D` übernimmt der Client den String aus Struktur-Offset `+0x30`. Über `0x0B488D` → `0x0B1BE9` landet er in `GameSave+0x3C`. Der Netzwerkstart setzt bei `0x0B0D19` den Spieltyp 2 und lädt diesen Save bei `0x0B0DF3` über `GameSpecific_Load` → `DomGameLoad`. |
 | Ausführung beim Gast | Bei vorhandenem `kingdomData` springt `DomGameLoad` bei `0x1E9D73` zum Laden des fertigen Kingdoms. `0x1EA131` führt in den nativen Setup-Parser. Der Parser trägt ab `0x0E6084` erkannte Effekte bis zur Kapazität von 32 einzeln ein. `0x0DEDF2` bis `0x0DEE05` übernehmen den ganzen Effektblock aus dem geparsten `kingdomData`. `0x1EA1D3` bis `0x1EA1E4` kopieren ihn in den Spielzustand. Der Pfad umgeht die Zusammenführung aus dem Kartensuchfeld, die gleiche Effekt-IDs zusammenfallen lässt. |
 
-Für ein fertig festgelegtes Set spricht der Clientbefund für einen Patch nur beim Host. Voraussetzung ist, dass der Dienst die vom Host übergebenen Effekte in die aufgelöste Spielbeschreibung übernimmt. Ein Gast mit Build 3315 kann dann dieselben nativen Regeln laden. Die Serverannahme und die Ausführung mehrerer gleichnamiger Effekte mit verschiedenen Zielen sind im privaten Spiel noch offen. Der aussagekräftige Test nutzt ein festes Basisspiel-Set mit mindestens zwei Verdopplungen, einen gepatchten Host und einen unveränderten Gast. Beide prüfen die Vorräte zu Beginn und nach dem Kauf der elften Karte aus demselben Stapel.
+Für ein fertig festgelegtes Set spricht der Clientbefund für einen Patch nur beim Host. Voraussetzung ist, dass der Dienst die vom Host übergebenen Effekte in die aufgelöste Spielbeschreibung übernimmt. Ein Gast mit Build 3315 kann dann dieselben nativen Regeln laden. Im folgenden Spieltest lieferte der Dienst beide Effekte im ursprünglichen `setupData` zurück, aber keinen `-x`-Abschnitt im aufgelösten `kingdomData`. Die Bedingung für einen Patch nur beim Host ist in dieser Partie damit nicht erfüllt. [Netzwerkmessung](TEST.md#ergebnis-der-netzwerkmessung-am-10-november-2026)
 
 Die vorhandene Automatik hängt am Start einer lokalen Offline-Partie. Für die Online-Variante muss der Host die zehn konkreten Stapel vor dem Versand festlegen und ihre Verdopplungen mitgeben. Ob und wann die Online-Ziehung bei einem noch offenen Zufallsset feststeht, ist eine getrennte Frage.
+
+## Messpunkte für den Verlust der Online-Effekte
+
+Der Online-Starter aktiviert neben den bestehenden Importkorrekturen fünf beobachtende Messpunkte. Sie lesen nur die relevanten Setup-Felder und rufen danach unverändert die ursprünglichen Funktionen auf. Der Client sendet seine reguläre Spielanlage. Die Messpunkte gelten für die oben per SHA-256 identifizierte `Dominion.exe`, Spielbuild 3315.
+
+| RVA | Dateioffset | Originalbytes | Messung |
+| --- | --- | --- | --- |
+| `0x1FFA03` | `0x1FEE03` | `E8 E8 C4 ED FF` | `kingdomData` im Host-Setup unmittelbar vor dem Filter, `ECX` mit Struktur-Offset `+0x30`. |
+| `0x1FFAF5` | `0x1FEEF5` | `E8 26 BC 08 00` | `setupData` und `kingdomData` aus dem zweiten Stapelargument der nativen `CreateGameMessage`, nach dem Filter. |
+| `0x0B7965` | `0x0B6D65` | `E8 86 CF FF FF` | Dieselben Felder aus der erfolgreich dekodierten `GameDescMessage` in `ECX`. |
+| `0x0B0DF3` | `0x0B01F3` | `E8 78 32 17 00` | Die Setup-Felder des Netzwerk-Spielstands in `ECX` unmittelbar vor `GameSpecific_Load`. |
+| `0x1EA206` | `0x1E9606` | `E8 65 EF 0B 00` | Die nach dem Parsen in den Netzwerk-Spielzustand kopierte Effektliste, `EDX+0x1280`. |
+
+Die Textmessung protokolliert das Vorhandensein von `-x` und der beiden festen Testregeln für Dorf und Markt. Sie speichert keine vollständigen Netzwerkstrings, Kontodaten oder Spielcodes. Eine vorläufige Lobbybeschreibung kann andere Daten enthalten als die Beschreibung der gestarteten Partie. Für die Auswertung zählt daher die Beschreibung zum Testspiel zusammen mit `load network game` und `installed effects`.
+
+## Online-Spielzüge und lokales Mehrspielerspiel
+
+**Statisch geprüft für Dominion.exe 3315, Steam-Build 17683350.** Der SHA-256 entspricht dem oben dokumentierten Modul. Die Analyse betrifft den installierten Client und den protokollierten privaten Spielstart.
+
+| Pfad | Befund |
+| --- | --- |
+| Beitreten, Starten, Revanche | `JoinGameMessage` bei RVA `0x4C4FBC` beschreibt Spiel-ID, Spielcode, Ausschlüsse und Smartplays. Der Startbefehl bei `0x1FFD3E` und `0x1FFD55` schreibt vier Nutzbytes mit der Spiel-ID. `RematchGameMessage` bei `0x4C420C` hat `replaySet`, aber keinen eigenen Kingdom- oder Effekttext. Ein zweiter vorgesehener Übergabepunkt für `-x` ist auf diesen Pfaden nicht erkennbar. |
+| Laden des aufgelösten Kingdoms | `DomGameLoad` übergibt bei `0x1EA131` ursprünglichen und aufgelösten Setup-Text an `DomSetupConfigFromString`. Bei `0x0DEDF2` bis `0x0DEE05` übernimmt die Funktion den Effektblock aus dem aufgelösten `kingdomData`. Das erklärt, warum der im `setupData` erhaltene Effekttext im gemessenen Spiel wirkungslos bleibt. |
+| Spielzüge und Abgleich | Der lokale Zweig bei `0x1E991F` bis `0x1E993B` schreibt in den lokalen Spielstand. Der Netzwerkzweig ruft bei `0x1E9958` `SubmitNetworkAction` auf. Dieser sendet bei `0x1E98BC` eine `GameMoveMessage` mit Spiel-ID, Position und Daten des Zugprotokolls. Der Client gleicht in `0x0B76E1` bis `0x0B777C` empfangene Spielerprotokolle mit der lokalen Kopie ab und fordert bei Abweichungen eine Aktualisierung an. Die Nachrichtendeskriptoren enthalten keine neu festgelegte Effektliste. Das Ausmaß der serverseitigen Zugprüfung lässt sich daraus nicht bestimmen. |
+| Enthaltene Server-Routinen | `EnterServer` (`0x0AB5B0`) und `ExitServer` (`0x0AB620`) setzen beziehungsweise leeren einen globalen Zeiger. Alle vier direkten Aufruferpaare (`0x0AB740/0x0AB748`, `0x0AB7EA/0x0AB7F2`, `0x0ABA39/0x0ABA41`, `0x0ABF39/0x0ABF41`) rufen beide unmittelbar nacheinander auf. Die Referenzen auf den Zeiger zeigen keinen laufenden Dominion-Server. In der installierten Steam-Version gibt es keine separate Server-EXE. |
+
+Damit ist für **Privates Spiel** kein unterstützter Clientpfad zur Übergabe der getesteten Effektkombination im finalen Setup belegt. Das erneute Einfügen beim Laden könnte die lokalen Vorräte zweier gepatchter Clients ändern. Ob ihr Spiel danach mit dem Zugprotokoll des Dienstes konsistent bliebe, ist offen. Die bisherige Messung erfasst die vom Dienst gelieferte Konfiguration und keine serverseitige Kaufentscheidung.
+
+Der lokale Modus **Weitergeben** ist in den deutschen Ressourcen unter `dom_ui_create_game_pass_and_play` und im Client bei `0x0BE124` belegt. Er verwendet eine gemeinsame Spielinstanz. Dominion ist auf Steam mit **Remote Play Together** gelistet. Damit kann der Host eine lokale Partie über das Internet teilen, während der bestehende Patch in seiner Spielinstanz läuft. Die Kombination aus Arbeitskopie, Steam-Einladung und lokalem Weitergeben ist noch im Spiel zu prüfen. [Dominion auf Steam](https://store.steampowered.com/app/1131620/) · [Steam Remote Play Together](https://store.steampowered.com/remoteplay#together)

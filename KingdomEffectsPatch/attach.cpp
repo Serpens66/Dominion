@@ -182,13 +182,16 @@ void attach(HANDLE process, DWORD pid, DWORD mode, const std::filesystem::path& 
 }
 
 int wmain(int argc, wchar_t** argv) {
-    const DWORD mode = argc != 5 ? 0 : std::wcscmp(argv[2], L"--measure") == 0 ? 1
+    const DWORD requested_mode = argc != 5 ? 0 : std::wcscmp(argv[2], L"--measure") == 0 ? 1
         : std::wcscmp(argv[2], L"--apply") == 0 ? 2
         : std::wcscmp(argv[2], L"--apply-auto") == 0 ? 3 : 0;
-    if (!mode || std::wcscmp(argv[1], L"--offline")) {
-        std::fputs("Usage: attach.exe --offline --measure|--apply|--apply-auto <PID> <test Dominion.exe>\n", stderr);
+    const bool online = requested_mode && std::wcscmp(argv[1], L"--online") == 0;
+    if (!requested_mode || (online ? requested_mode != 2 : std::wcscmp(argv[1], L"--offline") != 0)) {
+        std::fputs("Usage: attach.exe --offline --measure|--apply|--apply-auto <PID> <test Dominion.exe>\n"
+                   "       attach.exe --online --apply <PID> <test Dominion.exe>\n", stderr);
         return 2;
     }
+    const DWORD mode = online ? 4 : requested_mode;
     try {
         wchar_t* end = nullptr;
         const auto pid = std::wcstoul(argv[3], &end, 10);
@@ -220,8 +223,8 @@ int wmain(int argc, wchar_t** argv) {
         wait_for_menu(process.value, pid);
         attach(process.value, pid, mode, dll);
         std::printf("Dominion 3315, PID %lu, %s. Log: %%TEMP%%\\DominionKingdomEffects-%lu.log\n",
-                    pid, mode == 1 ? "measure mode" : mode == 2 ? "patch active"
-                                                              : "patch active, automatic local doubling", pid);
+                    pid, online ? "patch active, online diagnostics" : mode == 1 ? "measure mode"
+                        : mode == 2 ? "patch active" : "patch active, automatic local doubling", pid);
         return 0;
     } catch (const std::exception& error) {
         std::fprintf(stderr, "%s\n", error.what());

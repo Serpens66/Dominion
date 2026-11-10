@@ -1,3 +1,5 @@
+param([switch]$Online)
+
 $ErrorActionPreference = 'Stop'
 
 function Assert-GameClosed {
@@ -88,6 +90,8 @@ function Start-TestProfile {
 }
 
 function Invoke-TestSession {
+    param([switch]$Online)
+
     Assert-GameClosed
     $work = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'DominionModTests\3315'
     $profileParent = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'TempleGates'
@@ -99,19 +103,26 @@ function Invoke-TestSession {
         Assert-GameClosed
         Restore-TestProfile $paths
 
+        $connection = '--offline'
         Write-Host ''
-        Write-Host 'Dominion 3315 | Einzelspieler-Test'
-        Write-Host '1  Messen (erster Test, Originalverhalten)'
-        Write-Host '2  Patch anwenden'
-        Write-Host '3  Patch mit automatischer Verdopplung der gezogenen Stapel'
-        Write-Host 'Q  Beenden'
-        Write-Host 'Internet und Steam koennen online bleiben.'
-        $choice = Read-Host 'Testmodus waehlen'
-        $mode = switch ($choice) {
-            '1' { '--measure' }
-            '2' { '--apply' }
-            '3' { '--apply-auto' }
-            default { return }
+        if ($Online) {
+            Write-Host 'Dominion 3315 | Privates Spiel mit festen Effekten'
+            $connection = '--online'
+            $mode = '--apply'
+        } else {
+            Write-Host 'Dominion 3315 | Einzelspieler-Test'
+            Write-Host '1  Messen (erster Test, Originalverhalten)'
+            Write-Host '2  Patch anwenden'
+            Write-Host '3  Patch mit automatischer Verdopplung der gezogenen Stapel'
+            Write-Host 'Q  Beenden'
+            Write-Host 'Internet und Steam koennen online bleiben.'
+            $choice = Read-Host 'Testmodus waehlen'
+            $mode = switch ($choice) {
+                '1' { '--measure' }
+                '2' { '--apply' }
+                '3' { '--apply-auto' }
+                default { return }
+            }
         }
 
         $game = Join-Path $work 'game\Dominion.exe'
@@ -133,12 +144,17 @@ function Invoke-TestSession {
             Start-TestProfile $paths
             Write-Host 'Dominion startet. Bitte auf die Meldung des Starters warten.'
             $process = Start-Process -FilePath $game -WorkingDirectory (Split-Path $game) -WindowStyle Normal -PassThru
-            & $attach --offline $mode $process.Id $game
+            & $attach $connection $mode $process.Id $game
             if ($LASTEXITCODE -ne 0) {
                 throw 'Der Patch konnte nicht angehaengt werden. Bitte das Spiel schliessen.'
             }
-            Write-Host 'Bereit. In Dominion im Profil den Verbindungsstatus auf Offline-Modus stellen.'
-            Write-Host 'Danach eine lokale Partie erstellen.'
+            if ($Online) {
+                Write-Host 'Bereit. In Dominion im Profil den Offline-Modus ausschalten und auf die Verbindung warten.'
+                Write-Host 'Danach ein Privates Spiel mit dem Test-Set erstellen.'
+            } else {
+                Write-Host 'Bereit. In Dominion im Profil den Verbindungsstatus auf Offline-Modus stellen.'
+                Write-Host 'Danach eine lokale Partie erstellen.'
+            }
             Write-Host 'Das Originalprofil wird wiederhergestellt, sobald Dominion geschlossen ist.'
             $process.WaitForExit()
             $log = Join-Path ([IO.Path]::GetTempPath()) "DominionKingdomEffects-$($process.Id).log"
@@ -168,7 +184,7 @@ function Invoke-TestSession {
 
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        Invoke-TestSession
+        Invoke-TestSession -Online:$Online
     } catch {
         Write-Host $_.Exception.Message
         exit 1
