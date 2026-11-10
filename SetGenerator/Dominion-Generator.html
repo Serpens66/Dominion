@@ -165,6 +165,25 @@
   .secondary { color: var(--accent-text); background: var(--soft-bg); }
   .secondary:hover:not(:disabled) { background: var(--soft-hover); }
   .row { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; margin-top: .8rem; }
+  .draw-action {
+    display: grid;
+    justify-items: center;
+    gap: .75rem;
+    margin-top: 1.35rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+    text-align: center;
+  }
+  .draw-action #rule-status {
+    max-width: min(100%, 62ch);
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .draw-action #draw {
+    width: min(100%, 18rem);
+    padding: .8rem 1rem;
+    font-size: 1.05rem;
+  }
   .setup-selects { margin-top: .4rem; gap: .65rem 1.25rem; }
   .setup-selects > div { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
   .field { display: block; font-weight: 700; margin: 1rem 0 .3rem; }
@@ -398,9 +417,11 @@
             <label for="shelters">Unterschlüpfe</label>
             <select id="shelters"><option value="rules">Nach Spielregel</option><option value="always">Immer</option><option value="never">Nie</option></select>
           </div>
-          <label><input type="checkbox" id="require-loot" aria-describedby="require-loot-help"> Kostbarkeiten im Spiel verlangen</label>
+          <label>
+            <input type="checkbox" id="require-loot">
+            <span>Kostbarkeiten im Spiel verlangen <small class="muted">(mindestens ein Hauptstapel oder eine Landschaft als Quelle)</small></span>
+          </label>
         </div>
-        <p id="require-loot-help" class="muted">Mindestens ein gezogener Hauptstapel oder eine Landschaft muss Kostbarkeiten ins Spiel bringen.</p>
       </fieldset>
       <fieldset class="options" id="draw-rules">
         <legend>Regeln für die Ziehung</legend>
@@ -450,10 +471,6 @@
           </div>
         </details>
       </fieldset>
-      <p id="rule-status" role="status"></p>
-      <div class="row">
-        <button id="draw" class="primary" type="button" disabled>Königreich ziehen</button>
-      </div>
       <details id="pool-details">
         <summary>Karten festhalten oder ausschließen</summary>
         <p class="muted">Suche nach deutschen oder englischen Kartennamen. Festgehaltene Stapel zählen zu den Ziehquoten. Ausgeschlossene Karten bleiben aus der Auswahl.</p>
@@ -475,6 +492,10 @@
         </div>
         <p id="settings-file-status" role="status"></p>
       </details>
+      <div class="draw-action">
+        <p id="rule-status" role="status"></p>
+        <button id="draw" class="primary" type="button" disabled>Königreich ziehen</button>
+      </div>
     </section>
     <section class="output-panel" aria-labelledby="output-title">
       <h2 id="output-title">2. Für Dominion kopieren</h2>
