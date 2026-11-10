@@ -1,5 +1,7 @@
 # SetGenerator
 
+**[Dominion-Generator direkt im Browser öffnen](https://serpens66.github.io/Dominion/)**
+
 Der HTML-Generator zieht standardmäßig zehn Königreichstapel für Dominion von Temple Gates Games. Der separate Konverter übernimmt Namenslisten eines bestehenden Königreichs. Speicherformat und Prüfnachweise stehen in [Documentation/Kingdom_Sets.md](../Documentation/Kingdom_Sets.md).
 
 ## Web-Namenslisten umwandeln
@@ -98,7 +100,7 @@ Browser speichern Einstellungen pro Adresse. Über **Einstellungen exportieren**
 
 ## Generator über GitHub Pages öffnen
 
-[Dominion-Generator im Browser öffnen](https://serpens66.github.io/Dominion/). Ziehung und Dateiverarbeitung laufen im Browser. Die Website verwendet eigene Symbole. Bei den Karten erscheinen Name, Typ und Kosten. Ein eigenes Bildpaket lässt sich optional über **Kartenbilder laden** öffnen.
+Ziehung und Dateiverarbeitung laufen im Browser. Die Website verwendet eigene Symbole. Bei den Karten erscheinen Name, Typ und Kosten. Ein eigenes Bildpaket lässt sich optional über **Kartenbilder laden** öffnen.
 
 GitHub Actions baut die Website bei Änderungen am Generator auf `main` aus derselben HTML-Datei. Der Build erstellt aus der Workspace-Datei das veröffentlichte `index.html` mit eigenen Symbolen und den für die Ziehung benötigten Kartendaten. Für die lokale Prüfung des Pages-Builds im Projektordner ausführen.
 

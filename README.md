@@ -1,5 +1,7 @@
 # Dominion
 
+**[Dominion-Generator direkt im Browser öffnen](https://serpens66.github.io/Dominion/)**
+
 Dieses Projekt entwickelt unabhängige Werkzeuge für das digitale Kartenspiel Dominion von Temple Gates Games. Der Schwerpunkt liegt auf dem Erstellen, Importieren und Teilen eigener Königreiche. Die Dokumentation sammelt außerdem Erkenntnisse zur Steam-Version und zu ihren Karten- und Setup-Daten. [Offizielle Dominion-Seite](https://www.templegatesgames.com/press/sheet.php?p=Dominion)
 
 ## Dominion-Konverter
@@ -10,7 +12,7 @@ Dieses Projekt entwickelt unabhängige Werkzeuge für das digitale Kartenspiel D
 
 Der Konverter verwendet den Kartenkatalog aus Dominion-Spielbuild 3315. Die Anleitung beschreibt auch die Python-Variante und die Grenzen bei besonderem Karten-Setup. [SetGenerator](SetGenerator/README.md)
 
-Der Dominion-Generator zieht Königreiche aus Basisspiel und Erweiterungen. Er unterstützt feste Karten, Ausschlüsse, Ziehregeln und den Export für doppelte Stapel. [Generator nach der Pages-Bereitstellung öffnen](https://serpens66.github.io/Dominion/) · [Anleitung](SetGenerator/README.md#html-generator-für-basisspiel-und-erweiterungen)
+Der Dominion-Generator zieht Königreiche aus Basisspiel und Erweiterungen. Er unterstützt feste Karten, Ausschlüsse, Ziehregeln und den Export für doppelte Stapel. [Anleitung](SetGenerator/README.md#html-generator-für-basisspiel-und-erweiterungen)
 
 ## Dokumentation
 
