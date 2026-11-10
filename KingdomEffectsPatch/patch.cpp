@@ -3,6 +3,7 @@
 #include <tlhelp32.h>
 
 #include "effects.hpp"
+#include "effect_editor.hpp"
 
 #include <cstdio>
 #include <vector>
@@ -25,12 +26,16 @@ std::uintptr_t native_online_filter;
 std::uintptr_t native_create_message;
 std::uintptr_t native_game_desc;
 std::uintptr_t native_game_state_init;
+std::uintptr_t native_active_setup;
+std::uintptr_t native_string_assign;
+std::uintptr_t native_save_profiles;
 const std::byte* image_base;
 std::uintptr_t search_cancel;
 std::uintptr_t create_cancel;
 std::uintptr_t merge_original_tail;
 std::uintptr_t merge_serialization;
 bool measure_only;
+bool automatic_enabled;
 volatile LONG initialized;
 wchar_t log_path[MAX_PATH];
 
@@ -182,11 +187,11 @@ bool __cdecl setup_has_effects(const void* setup) {
     return !measure_only;
 }
 
-bool offline_profile() {
+const std::byte* active_profile() {
     const auto* settings = *reinterpret_cast<const std::byte* const*>(image_base + 0x8C8DC8);
-    if (!settings) return false;
+    if (!settings) return nullptr;
     const auto slots = *reinterpret_cast<const DWORD*>(settings + 0x1E1A0);
-    if (!slots || slots > 4) return false;
+    if (!slots || slots > 4) return nullptr;
     const auto active = *reinterpret_cast<const DWORD*>(settings + 0x1E1A4);
     const auto* profile = settings;
     for (DWORD i = 0; i < slots; ++i) {
@@ -196,22 +201,18 @@ bool offline_profile() {
             break;
         }
     }
-    return *reinterpret_cast<const DWORD*>(profile + 0x42B4) == 1;
+    return profile;
 }
 
 void __cdecl begin_automatic(const std::byte* save) {
     automatic_save = nullptr;
     automatic_failure = nullptr;
+    if (!automatic_enabled) return;
     const auto* client = *reinterpret_cast<const std::byte* const*>(image_base + 0x8C8D5C);
     if (!client || save != client + 0x5098 || *reinterpret_cast<const DWORD*>(client + 0x5068) != 1) return;
     const auto selector = *reinterpret_cast<const DWORD*>(save + 0x1C);
     const auto flags = *reinterpret_cast<const DWORD*>(save + 0x20);
     if (selector || (flags & 0x104)) return;
-    if (!offline_profile()) {
-        automatic_failure = L"Schalte im Dominion-Profil den Offline-Modus ein und starte "
-                            L"eine neue lokale Partie f\u00fcr die automatische Verdopplung.";
-        return;
-    }
     automatic_save = save;
 }
 
@@ -245,6 +246,127 @@ void __cdecl end_automatic() {
     if (failure) {
         log("automatic doubling skipped");
         MessageBoxW(GetActiveWindow(), failure, L"Dominion Kingdom Effects Patch", MB_OK | MB_ICONWARNING);
+    }
+}
+
+class NativeSetupText {
+public:
+    NativeSetupText(const kingdom::Setup& setup, DWORD version) {
+        const auto* data = setup.data();
+        auto* output = &text_;
+        __asm {
+            push 0
+            push version
+            mov edx, data
+            mov ecx, output
+            call dword ptr [native_setup_serializer]
+            add esp, 8
+        }
+    }
+
+    ~NativeSetupText() {
+        const char* empty = nullptr;
+        assign(&text_, &empty);
+    }
+
+    NativeSetupText(const NativeSetupText&) = delete;
+    NativeSetupText& operator=(const NativeSetupText&) = delete;
+
+    std::string_view view() const {
+        return text_ ? std::string_view(text_, strnlen_s(text_, 4096)) : std::string_view{};
+    }
+
+    void write_to(std::byte* field) const { assign(field, &text_); }
+
+private:
+    static void assign(void* target, const char* const* source) {
+        using Assign = void* (__thiscall*)(void*, const char* const*);
+        reinterpret_cast<Assign>(native_string_assign)(target, source);
+    }
+
+    const char* text_{};
+};
+
+bool parsed_effects_match(const kingdom::Setup& parsed, const kingdom::EffectCommands& commands) {
+    const auto list = kingdom::read_effects(parsed.data());
+    if (kingdom::count(list) != commands.size()) return false;
+    for (std::size_t i = 0; i < commands.size(); ++i) {
+        const auto& effect = list[i];
+        const auto& command = commands[i];
+        if (command.find('(') == command.npos) continue;
+        if (effect[0] == kingdom::room || effect[0] == kingdom::typhoon) {
+            const auto offset = effect[0] == kingdom::room ? kingdom::room_offset : kingdom::typhoon_offset;
+            const auto targets = 1 + std::count(command.begin(), command.end(), ',');
+            if (targets > (effect[0] == kingdom::room ? 1 : 20)) return false;
+            for (std::ptrdiff_t n = 0; n < targets; ++n) {
+                if (!*reinterpret_cast<const DWORD*>(parsed.data() + offset + n * 0x10 + 4)) return false;
+            }
+        } else if (!effect[1] ||
+                   (command.find(',') != command.npos && effect[2] == 0xFFFFFFFFu && !effect[4])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
+    static bool held = false;
+    const bool pressed = (GetAsyncKeyState(VK_F8) & 0x8000) != 0;
+    const bool open = pressed && !held;
+    held = pressed;
+    if (!open) return;
+
+    const HWND owner = GetActiveWindow();
+    const auto* profile = active_profile();
+    if (!owner || owner != GetForegroundWindow() || !profile || config != profile + 0x10) return;
+    const auto* client = *reinterpret_cast<const std::byte* const*>(image_base + 0x8C8D5C);
+    if (!client || *reinterpret_cast<const DWORD*>(client + 0x5068)) return;
+    try {
+        const DWORD version = *reinterpret_cast<const DWORD*>(config + 0x28);
+        const NativeSetupText original(*current, version);
+        kingdom::EffectCommands effects;
+        if (!kingdom::read_effect_commands(original.view(), effects) ||
+            !parsed_effects_match(*current, effects)) {
+            throw kingdom::Error::malformed;
+        }
+        bool automatic = automatic_enabled;
+        const auto apply = [&](const kingdom::EffectCommands& edited) {
+            if (edited == effects) return true;
+            const auto commands = kingdom::effect_command_text(edited);
+            if (kingdom::validate_text(commands, 4095) != kingdom::Error::none) return false;
+            using Parse = void (__fastcall*)(const char*, kingdom::Setup*);
+            const auto parse = reinterpret_cast<Parse>(native_parser);
+            kingdom::Setup parsed{};
+            parse(commands.c_str(), &parsed);
+            if (!parsed_effects_match(parsed, edited)) return false;
+
+            auto next = *current;
+            kingdom::replace_effects(next, parsed);
+            const NativeSetupText output(next, version);
+            kingdom::EffectCommands serialized;
+            if (!kingdom::read_effect_commands(output.view(), serialized) ||
+                !kingdom::same_effect_commands(serialized, edited)) return false;
+            // Detach the edited draft from the selected preset as the native
+            // custom setup path does. The user can then save it as a set.
+            output.write_to(config + 0x30);
+            *reinterpret_cast<DWORD*>(config + 0x0C) = 0;
+            *reinterpret_cast<DWORD*>(config + 0x10) = 0;
+            *reinterpret_cast<DWORD*>(config + 0x18) &= ~0x30u;
+            *current = next;
+            using SaveProfiles = void (__fastcall*)(void*);
+            auto* settings = *reinterpret_cast<void* const*>(image_base + 0x8C8DC8);
+            reinterpret_cast<SaveProfiles>(native_save_profiles)(settings);
+            const auto list = kingdom::read_effects(next.data());
+            log("effect editor applied", &list);
+            return true;
+        };
+        log("effect editor opened");
+        if (kingdom::edit_effects(owner, effects, automatic, apply)) {
+            automatic_enabled = automatic;
+        }
+    } catch (...) {
+        MessageBoxW(owner, L"Dominion konnte diese Effektliste nicht übernehmen. Die bisherige Auswahl bleibt erhalten.",
+                    L"Dominion – Königreich-Effekte", MB_OK | MB_ICONWARNING);
     }
 }
 
@@ -312,6 +434,25 @@ void __cdecl trace_online_effects(const std::byte* state) {
 }
 
 // Native call arguments and all registers are live until the original CALL.
+__declspec(naked) void effect_editor_hook() {
+    __asm {
+        // The original setup resolver consumes ECX and one stack argument
+        // which the caller still owns. Observe its initialized output.
+        push dword ptr [esp + 4]
+        call dword ptr [native_active_setup]
+        add esp, 4
+        pushfd
+        pushad
+        push dword ptr [ebp + 8]
+        push eax
+        call maybe_edit_effects
+        add esp, 8
+        popad
+        popfd
+        ret
+    }
+}
+
 __declspec(naked) void search_parser_hook() {
     __asm {
         pushfd
@@ -608,8 +749,11 @@ struct Site {
     std::size_t length;
     void (*hook)();
     bool jump = false;
-    unsigned mode = 0; // 0 enables the site in every mode.
+    unsigned modes = 0; // 0 enables the site in every mode.
 };
+
+constexpr unsigned local_modes = (1u << 2) | (1u << 3);
+constexpr unsigned online_mode = 1u << 4;
 
 const Site sites[] = {
     {0x1F6F17, "\xE8\x94\x6C\xEE\xFF", 5, search_parser_hook},
@@ -621,13 +765,14 @@ const Site sites[] = {
     {0x20FB27, "\xE8\x84\x51\xED\xFF", 5, set_hook},
     {0x1FCD6D, "\xE8\xAE\x2D\xEE\xFF", 5, save_played_hook},
     {0x1FCDAE, "\xE8\x7D\x3B\xEE\xFF", 5, save_prepared_hook},
-    {0x0B1EC6, "\xE8\xA5\x21\x17\x00", 5, local_load_hook, false, 3},
-    {0x1E9F57, "\xE8\x14\xB4\xEF\xFF", 5, automatic_extras_hook, false, 3},
-    {0x1FFA03, "\xE8\xE8\xC4\xED\xFF", 5, online_filter_hook, false, 4},
-    {0x1FFAF5, "\xE8\x26\xBC\x08\x00", 5, online_send_hook, false, 4},
-    {0x0B7965, "\xE8\x86\xCF\xFF\xFF", 5, online_receive_hook, false, 4},
-    {0x0B0DF3, "\xE8\x78\x32\x17\x00", 5, online_load_hook, false, 4},
-    {0x1EA206, "\xE8\x65\xEF\x0B\x00", 5, online_effects_hook, false, 4},
+    {0x1FFF35, "\xE8\x96\x4A\xEE\xFF", 5, effect_editor_hook, false, local_modes},
+    {0x0B1EC6, "\xE8\xA5\x21\x17\x00", 5, local_load_hook, false, local_modes},
+    {0x1E9F57, "\xE8\x14\xB4\xEF\xFF", 5, automatic_extras_hook, false, local_modes},
+    {0x1FFA03, "\xE8\xE8\xC4\xED\xFF", 5, online_filter_hook, false, online_mode},
+    {0x1FFAF5, "\xE8\x26\xBC\x08\x00", 5, online_send_hook, false, online_mode},
+    {0x0B7965, "\xE8\x86\xCF\xFF\xFF", 5, online_receive_hook, false, online_mode},
+    {0x0B0DF3, "\xE8\x78\x32\x17\x00", 5, online_load_hook, false, online_mode},
+    {0x1EA206, "\xE8\x65\xEF\x0B\x00", 5, online_effects_hook, false, online_mode},
 };
 
 bool change_site(std::byte* base, const Site& site, bool install) {
@@ -725,7 +870,7 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
     std::array<const Site*, std::size(sites)> enabled{};
     std::size_t enabled_count = 0;
     for (const auto& site : sites) {
-        if (site.mode && site.mode != mode) continue;
+        if (site.modes && !(site.modes & (1u << mode))) continue;
         if (std::memcmp(base + site.rva, site.original, site.length) != 0) return 4;
         enabled[enabled_count++] = &site;
     }
@@ -755,11 +900,15 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
     native_create_message = image + 0x28B720;
     native_game_desc = image + 0x0B48F0;
     native_game_state_init = image + 0x2A9170;
+    native_active_setup = image + 0x0E49D0;
+    native_string_assign = image + 0x23D850;
+    native_save_profiles = image + 0x0D8AD0;
     search_cancel = image + 0x1F6F40;
     create_cancel = image + 0x1FF7D4;
     merge_original_tail = image + 0x1F6C7A;
     merge_serialization = image + 0x1F6CD3;
     measure_only = mode == 1;
+    automatic_enabled = mode == 3;
 
     {
         ThreadPause paused;

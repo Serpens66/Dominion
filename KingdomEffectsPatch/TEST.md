@@ -1,8 +1,8 @@
-# Offline-Test mit Doppelklick
+# Lokaler Test mit Doppelklick
 
-1. Dominion schließen. Internet und Steam können online bleiben.
-2. **Offline-Test-starten.cmd** doppelklicken. **1** wählt den Messmodus, **2** aktiviert den Patch. Beim ersten Lauf die Arbeitskopie fertig kopieren lassen.
-3. Warten, bis im Starterfenster **„Bereit“** steht. In Dominion das **Profil** öffnen und auf den **Verbindungsstatus** klicken, bis **„Offline-Modus“** angezeigt wird. Dann **Lokal spielen** wählen, eine Partie gegen die KI mit zwei Spielern anlegen und die **Königreich-Auswahl** öffnen. Den kompletten Text unten mit **Strg+V** ins **Kartensuchfeld** einfügen, mit **Enter** übernehmen und **Spielen** drücken.
+1. Dominion schließen. Der Verbindungsstatus in Dominion und Steam kann unverändert bleiben.
+2. **Lokal-Test-starten.cmd** doppelklicken. **1** wählt den Messmodus, **2** aktiviert den Patch. Beim ersten Lauf die Arbeitskopie fertig kopieren lassen.
+3. Warten, bis im Starterfenster **„Bereit“** steht. In Dominion **Lokal spielen** wählen, eine Partie gegen die KI mit zwei Spielern anlegen und die **Königreich-Auswahl** öffnen. Den kompletten Text unten mit **Strg+V** ins **Kartensuchfeld** einfügen, mit **Enter** übernehmen und **Spielen** drücken.
 
 Der Starter verwendet ein eigenes Testprofil. Er benennt dein Originalprofil vorübergehend um und stellt es wieder her, sobald du Dominion schließt. Lass das Starterfenster bis zur Wiederherstellung geöffnet. Falls es vorher geschlossen wurde, Dominion beenden und den Starter erneut öffnen. Er stellt das Originalprofil vor der Modusauswahl wieder her. Die Arbeitskopie und das letzte Protokoll liegen unter `%LOCALAPPDATA%\DominionModTests\3315`.
 
@@ -44,7 +44,7 @@ Die erste Fassung des Speichereingriffs stürzte beim Speichern aus einer laufen
 
 ## Automatische Verdopplung im Einzelspieler
 
-Starte die Arbeitskopie mit **3 – Patch mit automatischer Verdopplung**. Prüfe, dass im Dominion-Profil **Offline-Modus** aktiv ist. Erstelle eine frische lokale Partie gegen die KI. Lass die zehn Königreichplätze zufällig und starte die Partie ohne einzufügenden Text.
+Starte die Arbeitskopie mit **3 – Patch mit automatischer Verdopplung**. Erstelle eine frische lokale Partie gegen die KI. Lass die zehn Königreichplätze zufällig und starte die Partie ohne einzufügenden Text.
 
 - Ein normaler Königreichstapel startet mit **20 Karten**. Bei zwei Spielern beginnt ein gewöhnlicher Königreich-Siegkartenstapel wie Gärten mit **16**, ab drei Spielern mit **24**. Geteilte Stapel sollen beim Leerkaufen ihrer ersten Schicht zur richtigen zweiten Schicht wechseln.
 - Die zehn gezogenen Hauptstapel erhalten ihre normalen nativen Effekte. Grundstapel wie Silber und Gold sowie Zusatzstapel werden durch die Automatik nicht als Ziele hinzugefügt. Ein bereits für dieselbe Karten-ID vorhandener Verdopplungs- oder Verdreifachungseffekt wird übernommen.
@@ -56,7 +56,7 @@ Der Startmodus ist mit Build 3315 statisch und durch x86-Komponententests geprü
 
 ## Privates Online-Spiel mit Patch nur beim Host
 
-1. Schließe Dominion. Starte als Host **Online-Test-starten.cmd** per Doppelklick und warte auf **Bereit**. Der Starter aktiviert den Patch für feste Effekte und verwendet dasselbe separate Testprofil wie der Offline-Starter. Lass das Fenster bis zur Wiederherstellung des Originalprofils geöffnet.
+1. Schließe Dominion. Starte als Host **Online-Test-starten.cmd** per Doppelklick und warte auf **Bereit**. Der Starter aktiviert den Patch für feste Effekte und verwendet dasselbe separate Testprofil wie der lokale Starter. Lass das Fenster bis zur Wiederherstellung des Originalprofils geöffnet.
 2. Schalte im Dominion-Profil den **Offline-Modus** aus, falls er noch aktiv ist, und warte auf die Verbindung. Dein Mitspieler startet Dominion normal über Steam.
 3. Füge in der Königreich-Auswahl fürs **Private Spiel** die komplette Zeile mit Strg+V ins Kartensuchfeld ein und bestätige mit Enter. Erstelle das Spiel mit diesem Set und lade den Mitspieler ein.
 
@@ -64,7 +64,7 @@ Der Startmodus ist mit Build 3315 statisch und durch x86-Komponententests geprü
 -k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop -x start_double_pile(village), start_double_pile(market)
 ```
 
-Beide prüfen zu Spielbeginn **Dorf = 20**, **Markt = 20** und **Werkstatt = 10**. Kauft für eine zusätzliche Prüfung zusammen elf Exemplare aus demselben verdoppelten Stapel. Für diesen Test werden die Effekte ausdrücklich im Set angegeben. Die automatische Verdopplung zufällig gezogener Stapel gehört weiterhin zu Modus 3 des Offline-Starters.
+Beide prüfen zu Spielbeginn **Dorf = 20**, **Markt = 20** und **Werkstatt = 10**. Kauft für eine zusätzliche Prüfung zusammen elf Exemplare aus demselben verdoppelten Stapel. Für diesen Test werden die Effekte ausdrücklich im Set angegeben. Die automatische Verdopplung zufällig gezogener Stapel gehört weiterhin zu Modus 3 des lokalen Starters.
 
 ## Diagnose nach dem privaten Spieltest
 
@@ -93,3 +93,46 @@ Spielbuild 3315, Steam-Build 17683350. Der Host verwendete den Online-Starter mi
 | Save beim Netzwerk-Spielstart | Dorf und Markt | Vorhanden, ohne `-x` |
 
 Der Host kopierte anschließend null Effekte in den Spielzustand. Der Freischaltungsfilter des Hosts hat die Effekte erhalten. Der Online-Dienst hat sie im ursprünglichen Setup-Text zurückgeliefert. Beim Auflösen des Königreichs fehlen sie in der vom Dienst gelieferten Spielkonfiguration. Der Client lädt bei vorhandenem `kingdomData` den Effektblock aus diesem aufgelösten Feld. Welche Regel auf dem Dienst die Liste entfernt oder beim Auflösen auslässt, geht aus der Clientmessung nicht hervor.
+
+## Effektdialog in der lokalen Königreich-Auswahl
+
+Für Build 3315 den **Lokal-Test-starten.cmd** doppelklicken und **2 – Patch anwenden** wählen. Unter **Lokal spielen** die Königreich-Auswahl öffnen. Für einen festen Test die Zeile in das Kartensuchfeld kopieren und mit Enter bestätigen.
+
+```text
+-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop
+```
+
+1. **F8** drücken. Nach **Doppelter Vorratsstapel** suchen. **Dorf** auswählen und **Effekt hinzufügen** drücken. Für **Markt** wiederholen. **Kauflaune** suchen und ebenfalls hinzufügen. Erwartet sind **3 / 32** Effektplätze.
+2. **Übernehmen** drücken und die Partie starten. Erwartet sind **Dorf 20**, **Markt 20**, **Werkstatt 10** und ein zusätzlicher Kauf zu Zugbeginn. Für den ersten Test bleibt die automatische Verdopplung ausgeschaltet.
+3. Das Set über das Burgsymbol speichern. Danach das Set in einer frischen Königreich-Auswahl erneut laden und mit **F8** öffnen. Die drei Einträge sollen in derselben Reihenfolge erscheinen. Einen Eintrag entfernen und **Abbrechen** prüfen. Bei einem zweiten Versuch den Eintrag entfernen und **Übernehmen** wählen. Das Ergebnis wird zur eigenen Auswahl, die sich erneut als Set speichern lässt.
+4. Für einen getrennten Test **Alle gezogenen Königreichstapel automatisch verdoppeln** im Dialog aktivieren. Eine frische Zufallspartie soll ihre Hauptstapel verdoppeln. Die Einstellung gilt für die laufende Testsitzung. Modus 2 beginnt ausgeschaltet, Modus 3 eingeschaltet.
+5. Den festen Test auch mit **Weitergeben** auf dem zweiten Spielerplatz wiederholen. Die Dialogbedienung, Sonderkombinationen und der Start in Weitergeben brauchen einen Spieltest.
+
+## Automatisierte lokale Effektprüfung im Hintergrund
+
+**Im Spiel gemessen am 10. November 2026.** Build 3315, Steam-Build 17683350. Der Nutzer bestätigte vorab drei zusätzliche Karten durch dreimal Große Ideen. Der gespeicherte Spielstand und das Patchprotokoll enthalten jeweils die drei Einträge.
+
+Der x86-Runner startet für jeden Vergleich eine frische Dominion-Arbeitskopie mit zwei lokalen menschlichen Testplätzen auf einem separaten Windows-Desktop. Er erzeugt pro Fall ein eigenes Profil im temporären Verzeichnis, stellt die native Spielstartanforderung ein und liest den Spielzustand im ersten Zug aus. Die Messung benötigt keine Maus- oder Tastatureingaben. Jeder Fall prüft die Anzahl aktiver Effekte sowie die Hand, den Vorrat oder eine Kartenanzahl des ersten Spielers. Der normale Patch und der F8-Dialog sind an diesen Messungen der nativen Regeln nicht beteiligt.
+
+Aus dem Verzeichnis `KingdomEffectsPatch` den Runner bauen und mit dem Pfad der zuvor vom lokalen Starter angelegten Arbeitskopie starten.
+
+```powershell
+.\build.cmd background
+& .\out\background_effect_test.exe "$env:LOCALAPPDATA\DominionModTests\3315\game\Dominion.exe"
+```
+
+Der Runner benötigt unter Windows das Recht, einen separaten Desktop zu erzeugen. Er bricht bei fehlendem Recht vor dem Spielstart ab. Die Konsolentabelle gibt den Effekt, die geplante und geladene Anzahl sowie Messwert und Erwartung aus. Spielstände und Protokolle liegen im ausgegebenen temporären Verzeichnis.
+
+| Effekt | Messwert | 0 Kopien | 1 Kopie | 2 Kopien | 3 Kopien |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Große Ideen | Erste Hand | 5 | 6 | 7 | 8 |
+| Eingepfercht | Erste Hand | 5 | 4 | 3 | 2 |
+| Penny-Party | Eigenes Kupfer im ersten Zug | 7 | 8 | 9 | 10 |
+| Doppelter Vorratsstapel (Dorf) | Vorrat Dorf | 10 | 20 | 40 | 80 |
+| Dreifacher Vorratsstapel (Dorf) | Vorrat Dorf | 10 | 30 | 90 | 270 |
+| Eine Startkarte von jedem Stapel | Eigene Karten im ersten Zug | 10 | 20 | 30 | 40 |
+| Doppeltes Startdeck | Eigene Karten im ersten Zug | 10 | 20 | 40 | 80 |
+| Zusätzliche Startkarte (Silber) | Eigenes Silber im ersten Zug | 0 | 1 | 2 | 3 |
+| Startkupfer oder Startanwesen gegen Silber, je als neue Kopie oder vom Stapel (vier Fälle) | Eigenes Silber im ersten Zug | 0 | 1 | 2 | 3 |
+
+Alle 48 Fälle der Reihe erreichten den ersten Zug und lieferten die erwartete Effektzahl und den angegebenen Messwert. Bei den Austauschvarianten wurde das erhaltene Silber gezählt. Herkunft des Silbers und Entnahme der ursprünglichen Startkarte waren keine separaten Prüfwerte. Für die übrigen 77 Katalogeffekte fehlen Messungen. Effekte für Kartenkäufe, Kartenaktionen, Entsorgen, spätere Zugphasen oder die Endwertung brauchen eigene Ausgangslagen und ausgelöste Spielaktionen. Ein unveränderter erster Zug sagt bei ihnen noch nichts über die Wirkung aus.

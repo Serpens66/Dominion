@@ -103,19 +103,18 @@ function Invoke-TestSession {
         Assert-GameClosed
         Restore-TestProfile $paths
 
-        $connection = '--offline'
+        $session = '--local'
         Write-Host ''
         if ($Online) {
             Write-Host 'Dominion 3315 | Privates Spiel mit festen Effekten'
-            $connection = '--online'
+            $session = '--online'
             $mode = '--apply'
         } else {
-            Write-Host 'Dominion 3315 | Einzelspieler-Test'
+            Write-Host 'Dominion 3315 | Lokal spielen und Weitergeben'
             Write-Host '1  Messen (erster Test, Originalverhalten)'
             Write-Host '2  Patch anwenden'
             Write-Host '3  Patch mit automatischer Verdopplung der gezogenen Stapel'
             Write-Host 'Q  Beenden'
-            Write-Host 'Internet und Steam koennen online bleiben.'
             $choice = Read-Host 'Testmodus waehlen'
             $mode = switch ($choice) {
                 '1' { '--measure' }
@@ -130,7 +129,10 @@ function Invoke-TestSession {
         & (Join-Path $PSScriptRoot 'Prepare-TestCopy.ps1')
         $attach = Join-Path $PSScriptRoot 'out\attach.exe'
         $dll = Join-Path $PSScriptRoot 'out\KingdomEffectsPatch.dll'
-        $sources = 'patch.cpp', 'attach.cpp', 'effects.hpp', 'build.cmd' |
+        $sources = 'patch.cpp', 'attach.cpp', 'working_copy.hpp', 'effects.hpp', 'effect_editor.cpp', 'effect_editor.hpp',
+            'effect_editor.rc', 'effect_editor_ids.h', 'generate_effect_catalog.py', 'build.cmd',
+            '..\Documentation\Steam_Spielanleitung.md', '..\Documentation\Card_Properties.json',
+            '..\Documentation\Card_Titles_de.json' |
             ForEach-Object { Get-Item -LiteralPath (Join-Path $PSScriptRoot $_) }
         $newestSource = ($sources | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1).LastWriteTimeUtc
         $binaries = Get-Item -LiteralPath $attach, $dll -ErrorAction SilentlyContinue
@@ -144,7 +146,7 @@ function Invoke-TestSession {
             Start-TestProfile $paths
             Write-Host 'Dominion startet. Bitte auf die Meldung des Starters warten.'
             $process = Start-Process -FilePath $game -WorkingDirectory (Split-Path $game) -WindowStyle Normal -PassThru
-            & $attach $connection $mode $process.Id $game
+            & $attach $session $mode $process.Id $game
             if ($LASTEXITCODE -ne 0) {
                 throw 'Der Patch konnte nicht angehaengt werden. Bitte das Spiel schliessen.'
             }
@@ -152,8 +154,10 @@ function Invoke-TestSession {
                 Write-Host 'Bereit. In Dominion im Profil den Offline-Modus ausschalten und auf die Verbindung warten.'
                 Write-Host 'Danach ein Privates Spiel mit dem Test-Set erstellen.'
             } else {
-                Write-Host 'Bereit. In Dominion im Profil den Verbindungsstatus auf Offline-Modus stellen.'
-                Write-Host 'Danach eine lokale Partie erstellen.'
+                Write-Host 'Bereit. In Dominion Lokal spielen waehlen.'
+                if ($mode -ne '--measure') {
+                    Write-Host 'In der Koenigreich-Auswahl F8 druecken, um die Effekte zu bearbeiten.'
+                }
             }
             Write-Host 'Das Originalprofil wird wiederhergestellt, sobald Dominion geschlossen ist.'
             $process.WaitForExit()

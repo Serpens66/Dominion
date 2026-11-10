@@ -24,6 +24,17 @@ let out=api.analyzeKingdom(request([],base),()=>{});
 assert.equal(out.total,choose(26,10));
 assert.equal(out.result.main.length,10);
 for(let i=0;i<10;i++)assert.equal(new Set(out.drawExact().main).size,10);
+for(const kingdomSize of [11,12,13]){
+ const pinned=base.slice(0,2);
+ const available=base.slice(2,15);
+ const quota=rule(pinned,2,2);
+ out=api.analyzeKingdom(request(pinned,available,{kingdomSize,rules:[quota]}),()=>{});
+ assert.equal(out.total,choose(available.length,kingdomSize-pinned.length));
+ assert.equal(out.result.main.length,kingdomSize);
+ assert.ok(pinned.every(card=>out.result.main.includes(card.id)));
+ assert.equal(api.analyzeKingdom(request([],base.slice(0,kingdomSize-1),{kingdomSize}),()=>{}).total,0n);
+}
+
 out=api.analyzeKingdom(request([],base.concat(intrigue),{rules:[rule(base,6,6),rule(intrigue,4,4)]}),()=>{});
 assert.equal(out.total,choose(base.length,6)*choose(intrigue.length,4));
 assert.equal(out.result.main.filter(id=>byId.get(id).expansion==="intrigue").length,4);

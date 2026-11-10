@@ -45,7 +45,7 @@ Ein Set mit ausschließlich `-x` lässt das Spiel das Königreich auswürfeln. P
 
 #### Zwölf oder mehr Königreichstapel
 
-Im lokalen Test blieb das gespeicherte Set mit `twist_room_for_more(chapel)` bei zehn Stapeln. Die achte Füllhorn-Mission sieht in ihrer Vorlage zwölf Königreichstapel im Vorrat vor. Zu den zehn Hauptstapeln kommen Vorbote als Bann der Jungen Hexe und Gärten durch „Platz für Mehr“. [Spieltest und Kampagnenvorlage](Modding_Overview.md#zusatzstapel-durch-platz-für-mehr)
+Im lokalen Test blieb das gespeicherte Set mit `twist_room_for_more(chapel)` bei zehn Stapeln. Die achte Füllhorn-Mission sieht in ihrer Vorlage zwölf Königreichstapel im Vorrat vor. Zu den zehn Hauptstapeln kommen Vorbote als Bann der Jungen Hexe und Gärten durch „Platz für Mehr“. Der Effekt hat einen Zielslot. Ein eigener Import mit mehr als zehn frei gewählten Stapeln und eine Grenze von 13 sind offen. [Spieltest und Kampagnenvorlage](Modding_Overview.md#zusatzstapel-durch-platz-für-mehr)
 
 ### Katalog der Kampagneneffekte
 
@@ -212,7 +212,7 @@ A set containing only `-x` lets the game choose a random Kingdom. If the entire 
 
 #### Twelve or more Kingdom piles
 
-In the local test, the saved set with `twist_room_for_more(chapel)` still had ten piles. The eighth Cornucopia campaign mission calls for twelve Kingdom piles in the Supply. Alongside the ten main piles, it adds Harbinger as Young Witch's Bane and Gardens through Room for More. [Game test and campaign template](Modding_Overview.md#zusatzstapel-durch-platz-für-mehr)
+In the local test, the saved set with `twist_room_for_more(chapel)` still had ten piles. The eighth Cornucopia campaign mission calls for twelve Kingdom piles in the Supply. Alongside the ten main piles, it adds Harbinger as Young Witch's Bane and Gardens through Room for More. The effect has one target slot. Importing a custom set with more than ten freely chosen piles and a limit of 13 remain unverified. [Game test and campaign template](Modding_Overview.md#zusatzstapel-durch-platz-für-mehr)
 
 ### Campaign effect catalog
 

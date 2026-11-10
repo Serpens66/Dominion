@@ -66,7 +66,7 @@ Für die Abnahme einer neuen EXE-Version die relevanten Aufrufpfade erneut prüf
 | `0x0B1EC6` | `0x0B12C6` | `E8 A5 21 17 00` | Der Aufruf von `GameSpecific_Load` bei einem neuen lokalen Spiel markiert den konkreten Save für die Automatik. |
 | `0x1E9F57` | `0x1E9357` | `E8 14 B4 EF FF` | Unmittelbar vor dem nativen Effektserializer werden die Effektliste in EDX und die ersten zehn DWORDs der nativen Ziehung bei `EBP-0x750` verwendet. |
 
-Die Automatik erhält den Save nur für den synchronen Aufruf auf demselben Thread. Sie verlangt den aktiven lokalen Save, Dominions eigenen Offline-Modus und ein normales Setup ohne Szenario- oder Tages-/Wochenflags. Die Ziehung erfolgt vorher bei `0x1E9E3E`. Der Client fügt den serialisierten Effekttext dem vollständigen `kingdomData` hinzu, prüft die Auswahl beim Wiederaufbau und speichert sie im nativen lokalen Spielstand. Der Hook verändert weder die Zufallsquelle noch die Stapelstruktur direkt. Spieltests prüfen noch Ausführung, Wiederaufnahme und Zusammensetzung der Spezialstapel.
+Die Automatik erhält den Save nur für den synchronen Aufruf auf demselben Thread. Sie verlangt den aktiven lokalen Save und ein normales Setup ohne Szenario- oder Tages-/Wochenflags. Dominions Verbindungsstatus spielt für die Automatik keine Rolle. Die Ziehung erfolgt vorher bei `0x1E9E3E`. Der Client fügt den serialisierten Effekttext dem vollständigen `kingdomData` hinzu, prüft die Auswahl beim Wiederaufbau und speichert sie im nativen lokalen Spielstand. Der Hook verändert weder die Zufallsquelle noch die Stapelstruktur direkt. Spieltests prüfen noch Ausführung, Wiederaufnahme und Zusammensetzung der Spezialstapel.
 
 ## Privates Spiel mit Patch nur beim Host
 
@@ -81,7 +81,7 @@ Die Automatik erhält den Save nur für den synchronen Aufruf auf demselben Thre
 
 Für ein fertig festgelegtes Set spricht der Clientbefund für einen Patch nur beim Host. Voraussetzung ist, dass der Dienst die vom Host übergebenen Effekte in die aufgelöste Spielbeschreibung übernimmt. Ein Gast mit Build 3315 kann dann dieselben nativen Regeln laden. Im folgenden Spieltest lieferte der Dienst beide Effekte im ursprünglichen `setupData` zurück, aber keinen `-x`-Abschnitt im aufgelösten `kingdomData`. Die Bedingung für einen Patch nur beim Host ist in dieser Partie damit nicht erfüllt. [Netzwerkmessung](TEST.md#ergebnis-der-netzwerkmessung-am-10-november-2026)
 
-Die vorhandene Automatik hängt am Start einer lokalen Offline-Partie. Für die Online-Variante muss der Host die zehn konkreten Stapel vor dem Versand festlegen und ihre Verdopplungen mitgeben. Ob und wann die Online-Ziehung bei einem noch offenen Zufallsset feststeht, ist eine getrennte Frage.
+Die vorhandene Automatik hängt am Start einer lokalen Partie. Für die Online-Variante muss der Host die zehn konkreten Stapel vor dem Versand festlegen und ihre Verdopplungen mitgeben. Ob und wann die Online-Ziehung bei einem noch offenen Zufallsset feststeht, ist eine getrennte Frage.
 
 ## Messpunkte für den Verlust der Online-Effekte
 
@@ -111,3 +111,24 @@ Die Textmessung protokolliert das Vorhandensein von `-x` und der beiden festen T
 Damit ist für **Privates Spiel** kein unterstützter Clientpfad zur Übergabe der getesteten Effektkombination im finalen Setup belegt. Das erneute Einfügen beim Laden könnte die lokalen Vorräte zweier gepatchter Clients ändern. Ob ihr Spiel danach mit dem Zugprotokoll des Dienstes konsistent bliebe, ist offen. Die bisherige Messung erfasst die vom Dienst gelieferte Konfiguration und keine serverseitige Kaufentscheidung.
 
 Der lokale Modus **Weitergeben** ist in den deutschen Ressourcen unter `dom_ui_create_game_pass_and_play` und im Client bei `0x0BE124` belegt. Er verwendet eine gemeinsame Spielinstanz. Dominion ist auf Steam mit **Remote Play Together** gelistet. Damit kann der Host eine lokale Partie über das Internet teilen, während der bestehende Patch in seiner Spielinstanz läuft. Die Kombination aus Arbeitskopie, Steam-Einladung und lokalem Weitergeben ist noch im Spiel zu prüfen. [Dominion auf Steam](https://store.steampowered.com/app/1131620/) · [Steam Remote Play Together](https://store.steampowered.com/remoteplay#together)
+
+## Effektdialog für lokale Partien
+
+**Implementiert und statisch geprüft für Dominion.exe 3315, Steam-Build 17683350.** Der SHA-256 entspricht dem oben dokumentierten Modul. Der x86-Build und Tests der Listenlogik sind erfolgreich. Die Laufzeitabnahme in Dominions Oberfläche steht aus.
+
+| RVA | PE-Dateioffset | Originalbytes | Verwendung |
+| --- | --- | --- | --- |
+| `0x1FFF35` | `0x1FF335` | `E8 96 4A EE FF` | Die Königreich-Oberfläche ruft `0x0E49D0` auf und kopiert das Ergebnis. Die Hülle lässt den Aufruf zuerst laufen und öffnet den Dialog bei F8 mit der bereits aufgelösten Auswahl. |
+| `0x0BBDB0` bis `0x0BBDCF` | – | – | Die lokale Königreich-Einrichtung liegt beim aktiven Profil plus `0x10`. Der Dialog prüft diese Identität und öffnet sich vor dem Partiestart. Dominions Verbindungsstatus ist dafür unerheblich. |
+| `0x0DDBB0`, `0x0E0FF0`, `0x23D850` | – | – | Der Editor lässt den Effekttext nativ parsen, ersetzt die Liste im temporären Setup und prüft die Rückausgabe. Der Spielstring im lokalen Setup wird über die native Zuweisung übernommen. |
+| `0x1F70B5`, `0x1F70C7`, `0x1F70CE` | – | – | Der native Wechsel zur eigenen Auswahl löst die Bindung an das zuvor ausgewählte Profilset. Der Editor verwendet dieselben Felder, damit die geänderte Liste erhalten bleibt. |
+
+Der Katalog wird beim Build aus den 89 deutschen Tabelleneinträgen der Spielanleitung und dem Kartenkatalog erzeugt. Die Zielauswahl verwendet kanonische IDs mit deutschen Namen und filtert nach Zieltyp. Bei Platz für Mehr und Taifun werden die gemeinsamen Zielfelder mit der Effektliste ersetzt oder beim Entfernen geleert. Auf dem Host bleibt die Automatik beim lokalen Spielstart verfügbar. Die Dialogoption gilt pro Testsitzung, die ausdrücklich gewählte Effektliste lässt sich als Set speichern.
+
+## Native Hintergrundtests für Effekte
+
+Der Runner wurde mit der oben per SHA-256 identifizierten `Dominion.exe` geprüft. Alle Moduladressen sind RVAs. Die Profilisolierung setzt vor `ResumeThread` im suspendiert angelegten Kindprozess den leeren Save-Pfadpuffer bei `0x15E3A98`. `XGetSaveGameFolder` bei `0x23C090` (Dateioffset `0x23B490`) gibt diesen Puffer bei gesetztem Inhalt zurück. Der Runner verifiziert die Originalbytes und den Pfad im Prozess. Erst nach Erscheinen des Spiellogs im temporären Ordner startet der Test die lokale Partie.
+
+`DomCreateClick` setzt bei `0x1FF987` die Startanforderung im Client bei Struktur-Offset `+0x5044` auf 1. Der Runner setzt denselben Wert im isolierten Client. `0x0B3515` ruft den regulären Dispatcher auf. Dessen Fall 1 bei `0x0B25A7` (Dateioffset `0x0B19A7`) springt über `0x0B24E6` zu `0x0B1E20` und lädt die lokale Partie. Die Messung wartet auf den ersten Zug und den lokalen Spielstand. Der Spielzustand `G` liegt bei RVA `0x780AD8`, siehe Übergabe an `DomGameLoad` bei `0x224228` und `0x22424B`.
+
+Der Runner liest die Effektliste aus `G+0x1280`, den aktiven Spieler aus `G+0x19CC` und die Karten aus `G+0x1A48`. Die Kartenrecords sind `0x64` Bytes groß. Typ, Ort und Spieler stehen bei `+4`, `+8` und `+0x28`. Der Handort ist `0x3EA`. Für den Vorrat liest der Runner die verkettete Liste aus dem zugehörigen Stapel. Die erwarteten Beobachtungen stehen in den Testfällen. [Gemessene Fälle](TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)

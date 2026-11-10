@@ -201,7 +201,7 @@ function analyzeKingdom(input, onFound, deadline = Date.now() + 4800) {
   const compile = rules => rules.map(rule => ({ ...rule, ids: new Set(rule.ids) }));
   const request = { ...input, rules: compile(input.rules), landscapeRules: compile(input.landscapeRules) };
   const { fixed, candidates, rules } = request;
-  const slots = 10 - fixed.length;
+  const slots = (request.kingdomSize ?? 10) - fixed.length;
   if (slots < 0 || candidates.length < slots) return { total: 0n, result: null };
   let steps = 0;
   function tick() {

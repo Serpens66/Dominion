@@ -1,4 +1,5 @@
 #include "effects.hpp"
+#include "effect_editor.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -119,5 +120,36 @@ int main() {
     automatic_doublings();
     shared_targets();
     text_limits();
+    kingdom::EffectCommands commands;
+    assert(kingdom::read_effect_commands(
+        "-k village, market -x start_double_pile(village), twist_typhoon(village,market), "
+        "start_double_pile(village) -m Landscapes(0,4)", commands));
+    assert((commands == kingdom::EffectCommands{"start_double_pile(village)",
+        "twist_typhoon(village,market)", "start_double_pile(village)"}));
+    assert(kingdom::same_effect_commands(commands, {"start_double_pile(village)",
+        "twist_typhoon(village, market)", "start_double_pile(village)"}));
+    assert(!kingdom::same_effect_commands(commands, {"twist_typhoon(village,market)",
+        "start_double_pile(village)", "start_double_pile(village)"}));
+    assert(kingdom::effect_command_text(commands).find("-x start_double_pile(village)") == 0);
+    assert(kingdom::read_effect_commands("-k village", commands) && commands.empty());
+    assert(!kingdom::read_effect_commands("-x start_double_pile(village", commands));
+
+    kingdom::Setup active{}, replacement{};
+    kingdom::Effects old{}, edited{};
+    old[0][0] = kingdom::room;
+    edited[0][0] = kingdom::typhoon;
+    kingdom::write_effects(active.data(), old);
+    kingdom::write_effects(replacement.data(), edited);
+    active[kingdom::room_offset + 4] = std::byte{7};
+    active[4] = std::byte{9};
+    replacement[kingdom::typhoon_offset + 4] = std::byte{3};
+    kingdom::replace_effects(active, replacement);
+    assert(kingdom::read_effects(active.data()) == edited);
+    assert(active[kingdom::room_offset + 4] == std::byte{});
+    assert(active[kingdom::typhoon_offset + 4] == std::byte{3});
+    assert(active[4] == std::byte{9});
+    kingdom::replace_effects(active, {});
+    assert(kingdom::count(kingdom::read_effects(active.data())) == 0);
+    assert(active[kingdom::typhoon_offset + 4] == std::byte{});
     std::cout << "Effect merge, shared targets and input limits passed.\n";
 }

@@ -164,7 +164,19 @@ def load_catalog(xpack):
         expansion: translations["en"].get(f"dom_expansion_name_{expansion}", name)
         for expansion, name in expansions.items()
     }
-    return {"expansions": expansions, "expansionsEn": english_expansions, "types": types, "cards": cards}
+    expansion_info = {}
+    for expansion in expansions:
+        if expansion == "basic":
+            continue
+        expansion_info[expansion] = {}
+        rule_key = re.compile(r"dom_rules_" + re.escape(expansion) + r"_(\d+)$")
+        for lang, strings in translations.items():
+            description = strings.get(f"dom_ui_store_desc_{expansion}") or strings[f"dom_taptip_expansion_{expansion}_body"]
+            rules = sorted((int(match[1]), text) for key, text in strings.items()
+                           if (match := rule_key.fullmatch(key)) and text)
+            expansion_info[expansion][lang] = {"description": description, "rules": [text for _, text in rules]}
+    return {"expansions": expansions, "expansionsEn": english_expansions, "expansionInfo": expansion_info,
+            "types": types, "cards": cards}
 
 
 def main():
