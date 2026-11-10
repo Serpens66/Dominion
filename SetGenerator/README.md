@@ -16,7 +16,7 @@ Kopiere deine Auswahl aus dem Dominion Randomizer oder gib die Kartennamen selbs
 
 ### HTML-Konverter mit doppelten Stapeln
 
-Generator und Konverter erstellen im Abschnitt **Stapel verdoppeln** einen XML-Eintrag für ein separates Effektset. Die Schritte zum Speichern und Laden in Dominion stehen in der [Steam-Spielanleitung](../Documentation/Steam_Spielanleitung.md#mehrere-stapel-über-ein-gespeichertes-set-verdoppeln).
+Der Konverter erstellt im Abschnitt **Stapel verdoppeln** einen XML-Eintrag für ein separates Effektset. Die Schritte zum Speichern und Laden in Dominion stehen in der [Steam-Spielanleitung](../Documentation/Steam_Spielanleitung.md#mehrere-stapel-über-ein-gespeichertes-set-verdoppeln).
 
 ## Generator offline nutzen und Kartenbilder laden
 
