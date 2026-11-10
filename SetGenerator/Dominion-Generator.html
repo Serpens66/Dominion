@@ -342,10 +342,26 @@
     white-space: nowrap;
   }
   .edition-option input { width: auto; flex: none; margin: 0; }
-  .quota-table .expansion-with-mode { display: flex; flex-wrap: wrap; align-items: center; }
-  .expansion-with-mode .expansion-mode { width: auto; max-width: 100%; margin-inline-start: auto; }
+  #expansion-settings > .section-body { padding-inline: .65rem; }
+  #exp-ranges {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 25rem), 1fr));
+    gap: .65rem;
+  }
+  #exp-ranges > .quota-table {
+    grid-template-columns: minmax(0, 1fr) 5rem 3.5rem 3.5rem;
+    gap: .35rem;
+    padding: .45rem .55rem;
+  }
+  #exp-ranges .expansion-mode { min-width: 0; padding-inline: .35rem; }
+  .expansion-distinct-range { max-width: 32rem; padding: .2rem 0; border: 0; }
+  @media (max-width: 29rem) {
+    #exp-ranges > .quota-table { grid-template-columns: minmax(0, 1fr) 3.5rem 3.5rem; }
+    #exp-ranges .quota-table > :is(h3, .range-rule-name) { grid-column: 1 / -1; }
+  }
   .expansion-lottery-controls { align-items: center; }
   .expansion-lottery-controls select { width: auto; }
+  .set-name-controls { margin-top: .25rem; }
+  .set-name-controls input { flex: 1 1 14rem; width: auto; min-width: 0; }
   .edition-tip {
     max-block-size: min(36rem, 65vh);
     overflow: auto;
@@ -793,22 +809,26 @@
             <span><span data-en="Require Loot in play">Kostbarkeiten im Spiel verlangen</span> <small class="muted" data-en="(at least one Kingdom pile or Landscape as a source)">(mindestens ein Hauptstapel oder eine Landschaft als Quelle)</small></span>
           </label>
         </div>
+        <div class="row"><button id="reset-setup" class="secondary" type="button" data-en="Reset setup">Spielaufbau zurücksetzen</button></div>
       </fieldset>
       <details id="expansion-settings">
         <summary class="section-summary"><span data-en="Expansions and editions">Erweiterungen und Editionen</span><span class="muted" id="expansion-overview"></span></summary>
         <div class="section-body">
           <div class="row expansion-lottery-controls">
-            <label for="random-expansion-count" data-en="Additional expansions">Zusätzliche Erweiterungen</label>
+            <label for="random-expansion-count" data-en="Additional expansions from the lottery">Zusätzlich aus dem Lostopf</label>
             <select id="random-expansion-count" aria-describedby="expansion-lottery-help"></select>
             <button type="button" id="enable-random-expansions" class="secondary" data-en="Add remaining expansions to the lottery">Übrige für Zufall freigeben</button>
+            <button type="button" id="reset-expansions" class="secondary" data-en="Reset expansions">Erweiterungen zurücksetzen</button>
           </div>
-          <p class="muted" id="expansion-lottery-help" data-en="Always and the selected Random expansions form the card pool. From sets the minimum number of piles from an expansion. A range of 0 to 0 turns it off.">Immer und die ausgelosten Erweiterungen bilden den Kartenpool. Von legt fest, wie viele Stapel mindestens aus einem Set kommen. 0 bis 0 schaltet es aus.</p>
+          <p class="muted" id="expansion-lottery-help" data-en="Always adds a set to the card pool every time. Random enters it in the lottery. To require piles from a set, raise its From value. 0 to 0 turns a set off.">'Immer' nimmt ein Set bei jeder Ziehung in den Kartenpool auf. Zufall legt es in den Lostopf. Wenn aus einem Set mindestens ein Stapel kommen soll, erhöhe seinen Von-Wert. 0 bis 0 schaltet ein Set aus.</p>
+          <div id="exp-distinct-ranges" class="range-rules expansion-distinct-range"></div>
           <div id="exp-ranges" class="quota-columns"></div>
         </div>
       </details>
       <fieldset class="options" id="draw-rules">
         <legend data-en="Draw rules">Regeln für die Ziehung</legend>
         <p class="muted" data-en="Number of piles per filter. Set To to the chosen Kingdom size for no upper limit. Use 0 to 0 to exclude matching piles.">Anzahl der Stapel je Filter. Die gewählte Stapelzahl als Bis-Wert lässt die Obergrenze offen. 0 bis 0 schließt passende Stapel aus.</p>
+        <div class="row"><button id="reset-draw-rules" class="secondary" type="button" data-en="Reset draw filters">Ziehfilter zurücksetzen</button></div>
         <div class="rules-overview">
           <div class="rules-overview-column">
             <div class="range-columns">
@@ -831,6 +851,7 @@
           <summary class="section-summary" data-en="Landscapes">Landschaften</summary>
           <div class="section-body">
             <p class="muted" id="land-source-help" data-en="Landscapes have their own slots. Under Source expansion, select Auto in both fields to follow the Kingdom pool. Enter 0 to 0 to exclude Landscapes from that expansion. Use the down arrow at 0 to return to Auto.">Landschaften belegen eigene Plätze. Unter Herkunft übernimmt zweimal Auto die Freigabe aus dem Hauptstapel-Pool. 0 bis 0 sperrt die Landschaften dieser Erweiterung. Bei 0 führt der Abwärtspfeil zurück zu Auto.</p>
+            <div class="row"><button id="reset-landscapes" class="secondary" type="button" data-en="Reset Landscape quotas">Landschaftsquoten zurücksetzen</button></div>
             <div class="quota-columns" id="land-quotas">
               <div id="land-ranges" class="range-rules quota-table"></div>
             </div>
@@ -858,6 +879,10 @@
           </div>
           <div id="pool-search-chips" class="row pool-search-chips"></div>
           <p id="pool-search-status" class="muted" role="status"></p>
+          <div class="row">
+            <button id="reset-excluded-cards" class="secondary" type="button" data-en="Reset excluded cards">Ausgeschlossene Karten zurücksetzen</button>
+            <button id="reset-pinned-cards" class="secondary" type="button" data-en="Reset pinned cards">Festgehaltene Karten zurücksetzen</button>
+          </div>
           <div id="pool"></div>
         </div>
       </details>
@@ -893,6 +918,7 @@
               <option value="de">Deutsch</option>
               <option value="en">Englisch</option>
             </select>
+            <button id="reset-preview" class="secondary" type="button" data-en="Reset card previews">Kartenvorschau zurücksetzen</button>
           </div>
           <p id="image-status" role="status" data-en="Text card previews.">Kartenvorschau mit Text.</p>
           <div class="row">
@@ -924,7 +950,10 @@
     <h2 id="effects-title" data-en="3. Double piles (optional)">3. Stapel verdoppeln (optional)</h2>
     <p data-en="The code doubles all ten drawn Kingdom piles. Save it as a separate set in the profile file and save the Kingdom from step 2 in the game. Load the doubling set, choose Play, then resign. Unload the set in Kingdom selection while keeping the extra rules, then load the saved Kingdom and start the game.">Der Code verdoppelt alle zehn gezogenen Königreichstapel. Speichere den Code als eigenes Set in der Profildatei und speichere auch das normale Königreich aus Schritt 2 im Spiel. Lade dann das Verdopplungsset, klicke auf „Spielen“ und gib die Partie auf. Entlade das Set in der Kingdom-Auswahl, ohne die Zusatzregeln zu leeren. Lade jetzt das gespeicherte Königreich und starte die Partie.</p>
     <label class="field" for="set-name" data-en="Doubling set name">Name des Verdopplungssets</label>
-    <input id="set-name" type="text" value="Doppelte Stapel">
+    <div class="row set-name-controls">
+      <input id="set-name" type="text" value="Doppelte Stapel">
+      <button id="reset-set-name" class="secondary" type="button" data-en="Reset set name">Setname zurücksetzen</button>
+    </div>
     <div class="output-columns">
       <div>
         <label class="field" for="effects" data-en="Doubling code">Verdopplungscode</label>
@@ -1519,7 +1548,7 @@ const englishRuleLabels = {
   potions: "With Potion cost", debt: "With Debt cost", "non-action": "Non-Action piles",
   "gain-coffers": "+1 Coffers or more", "gain-villagers": "+1 Villager or more", "gain-favors": "+1 Favor or more",
   "gain-sun": "Sun tokens (Omen)", "gain-vp": "Gain VP tokens", "gain-horse": "Gain Horses", "gain-loot": "Gain Loot",
-  "exp-distinct": "Different expansions excluding the base game",
+  "exp-distinct": "Expansions in the result (excluding the base game)",
   "land-total": "Total Landscapes", "land-distinct": "Different source expansions",
   "first-edition": "First edition cards",
 };
@@ -1673,7 +1702,7 @@ const countRules = [
     id: "gain-" + kind, label, icon: resourceIcons[kind], group: "resources", matches: card => card.gainFilters.includes(kind),
   })),
   { id: "gain-loot", icon: "loot", label: "Kostbarkeiten erhalten", group: "resources", matches: card => card.lootSource },
-  { id: "exp-distinct", icon: "cards", label: "Verschiedene Erweiterungen ohne Basisspiel", group: "exp", distinct: true,
+  { id: "exp-distinct", icon: "cards", label: "Erweiterungen im Ergebnis (ohne Basisspiel)", group: "exp", distinct: true,
     matches: card => card.expansion !== "base" },
   ...expansions.map(expansion => ({
     id: "exp-" + expansion, icon: "exp-" + expansion, group: "exp", label: catalog.expansions[expansion],
@@ -1829,7 +1858,9 @@ const imageStatus = document.getElementById("image-status");
 const previews = new Set();
 const isFirstEdition = card => card.edition === "first";
 const embeddedImagePack = document.getElementById("embedded-image-pack");
-let imageData = embeddedImagePack ? JSON.parse(embeddedImagePack.textContent) : { images: {} };
+const defaultImageData = embeddedImagePack ? JSON.parse(embeddedImagePack.textContent) : { images: {} };
+let imageData = defaultImageData;
+const resetPreview = document.getElementById("reset-preview");
 let activePreview = null;
 const tooltipTriggers = new WeakMap();
 const pinnedTooltips = new Map();
@@ -2704,20 +2735,29 @@ function setKingdomSize(size, resizeRanges = false) {
   }
 }
 
-function applySettings(settings) {
-  setKingdomSize(settings.kingdomSize ?? standardKingdomSize);
-  lastValidRanges.clear();
-  for (const [id, [from, to]] of rangeInputs) {
-    const bounds = Object.hasOwn(settings.ranges, id)
-      ? canonicalRangePair(settings.ranges[id]) : defaultRangePair(id, [from, to]);
-    lastValidRanges.set(id, bounds);
+function applyRangeSettings(rules, savedRanges = {}) {
+  for (const { id } of rules) {
+    const fields = rangeInputs.get(id);
+    const bounds = Object.hasOwn(savedRanges, id)
+      ? canonicalRangePair(savedRanges[id]) : defaultRangePair(id, fields);
+    const [from, to] = fields;
     [from.value, to.value] = bounds;
+    lastValidRanges.set(id, bounds);
   }
-  randomExpansionCount.value = String(settings.randomExpansionCount ?? 0);
+}
+
+function applyExpansionModes(modes = {}, additional = 0) {
+  randomExpansionCount.value = String(additional);
   for (const id of expansions) {
     const maximum = rangeInputs.get("exp-" + id)[1].valueAsNumber;
-    setExpansionMode(id, settings.expansionModes?.[id] ?? (maximum > 0 ? "always" : "off"));
+    setExpansionMode(id, modes[id] ?? (maximum > 0 ? "always" : "off"));
   }
+}
+
+function applySettings(settings) {
+  setKingdomSize(settings.kingdomSize ?? standardKingdomSize);
+  applyRangeSettings([...countRules, ...landRules], settings.ranges);
+  applyExpansionModes(settings.expansionModes, settings.randomExpansionCount);
   for (const [id, field] of poolChoices) field.value = settings.cardChoices[id] ?? "random";
   for (const [id, field] of editionInputs) field.checked = settings.editions?.[id] ?? false;
   requireLoot.checked = settings.requireLoot ?? false;
@@ -3296,8 +3336,7 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
       bindInterfaceLabel(option, () => tr(de, en));
       mode.add(option);
     }
-    name.classList.add("expansion-with-mode");
-    name.append(mode);
+    group.insertBefore(mode, from);
     expansionModes.set(kingdomExpansion, mode);
     setExpansionMode(kingdomExpansion, initialMax > 0 ? "always" : "off");
     mode.addEventListener("input", () => setExpansionMode(kingdomExpansion, mode.value));
@@ -3351,7 +3390,7 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
   }
 }
 
-function addRangeHeading(table, id, label) {
+function addRangeHeading(table, id, label, withMode = false) {
   const title = document.createElement(label ? "h3" : "span");
   if (label) {
     title.id = id + "-title";
@@ -3360,7 +3399,9 @@ function addRangeHeading(table, id, label) {
     bindInterfaceLabel(title, () => tr(...label));
   }
   table.append(title);
-  for (const [bound, de, en] of [["from", "Von", "From"], ["to", "Bis", "To"]]) {
+  const columns = [["from", "Von", "From"], ["to", "Bis", "To"]];
+  if (withMode) columns.unshift(["mode", "Auswahl", "Mode"]);
+  for (const [bound, de, en] of columns) {
     const header = document.createElement("span");
     header.id = id + "-" + bound;
     header.className = "range-bound";
@@ -3369,13 +3410,13 @@ function addRangeHeading(table, id, label) {
   }
 }
 
-function addQuotaColumns(containerId, rules, prefix, heading, rowsPerColumn, { repeatHeading = true } = {}) {
+function addQuotaColumns(containerId, rules, prefix, heading, rowsPerColumn, { repeatHeading = true, withMode = false } = {}) {
   const container = document.getElementById(containerId);
   for (let start = 0; start < rules.length; start += rowsPerColumn) {
     const column = document.createElement("div");
     column.className = "range-rules quota-table";
     const columnId = prefix + "-" + start;
-    addRangeHeading(column, columnId, repeatHeading || start === 0 ? heading : null);
+    addRangeHeading(column, columnId, repeatHeading || start === 0 ? heading : null, withMode);
     for (const rule of rules.slice(start, start + rowsPerColumn)) addRange(rule, columnId, column);
     container.append(column);
   }
@@ -3412,8 +3453,8 @@ const rangeHints = new Map([
   ["defense", defenseList],
   ["attack-reaction", makeRangeHint("attack-reaction-hint", attackConditionText)],
   ["exp-distinct", makeRangeHint("exp-distinct-hint", () => tr(
-    "Zählt jede Erweiterung, aus der mindestens ein Königreichstapel gezogen wird, genau einmal. Das Basisspiel zählt dabei nicht mit. Promos zählen als eine Gruppe. Mit 2–2 müssen genau zwei Erweiterungen vertreten sein. Aus jeder davon können mehrere Stapel kommen.",
-    "Counts each expansion represented by at least one drawn Kingdom pile once. The base game is excluded from the count. Promos count as one group. Set 2–2 to require exactly two expansions. Each can contribute multiple piles."
+    "Zählt nur Sets, aus denen tatsächlich ein Hauptstapel gezogen wurde. Ein Set im Kartenpool ohne gezogenen Stapel zählt hier nicht. Bei 2–2 müssen genau zwei Erweiterungen im Ergebnis vertreten sein. Das Basisspiel zählt nicht mit, Promos zählen als ein Set.",
+    "Counts only sets that contributed a Kingdom pile. A set in the card pool with no drawn pile does not count. Set 2–2 to require exactly two expansions in the result. The base game does not count, and Promos count as one set."
   ))],
   ["land-total", makeRangeHint("land-total-hint", () => tr(
     "Zählt alle gezogenen Landschaften zusammen. Sie kommen zusätzlich zu den Königreichstapeln ins Spiel. Bei 0–0 wird keine Landschaft gezogen.",
@@ -3465,7 +3506,11 @@ for (const rule of countRules.filter(rule => rule.group !== "exp" && rule.group 
 addQuotaColumns("resources-ranges", countRules.filter(rule => rule.group === "resources"),
   "resource-column", ["Ressourcen und Marker", "Resources and tokens"], 4, { repeatHeading: false });
 for (const rule of landRules.filter(rule => !rule.inherited)) addRange(rule, "land");
-addQuotaColumns("exp-ranges", countRules.filter(rule => rule.group === "exp"), "exp-column", ["Erweiterung", "Expansion"], 5);
+const distinctExpansionRules = document.getElementById("exp-distinct-ranges");
+addRangeHeading(distinctExpansionRules, "exp-distinct", null);
+addRange(countRules.find(rule => rule.id === "exp-distinct"), "exp-distinct", distinctExpansionRules);
+addQuotaColumns("exp-ranges", countRules.filter(rule => rule.group === "exp" && !rule.distinct),
+  "exp-column", ["Erweiterung", "Expansion"], 5, { withMode: true });
 addQuotaColumns("land-quotas", landRules.filter(rule => rule.inherited), "land-column", ["Herkunft", "Source expansion"], 5);
 for (const expansion of expansions) {
   makePoolGroup(expansion, cards.filter(card => card.expansion === expansion), "pool");
@@ -3597,7 +3642,7 @@ showImageStatus();
 imagePack.addEventListener("change", async () => {
   const [file] = imagePack.files;
   if (!file) return;
-  imagePack.disabled = true;
+  imagePack.disabled = resetPreview.disabled = true;
   imageStatus.className = "";
   imageStatus.textContent = tr("Bildpaket wird gelesen …", "Reading the image pack…");
   try {
@@ -3608,9 +3653,17 @@ imagePack.addEventListener("change", async () => {
     imageStatus.className = "error";
     imageStatus.textContent = error.message;
   } finally {
-    imagePack.disabled = false;
+    imagePack.disabled = resetPreview.disabled = false;
     imagePack.value = "";
   }
+});
+
+resetPreview.addEventListener("click", () => {
+  previewLanguage.value = uiLanguage;
+  imageData = defaultImageData;
+  refreshPreviews();
+  showImageStatus();
+  saveSettings();
 });
 
 async function copyText(field, message, confirmation) {
@@ -3630,6 +3683,11 @@ async function copyText(field, message, confirmation) {
 copy.addEventListener("click", () => copyText(output, copyStatus, document.getElementById("output-label").textContent + tr(" kopiert.", " copied.")));
 copyEffects.addEventListener("click", () => copyText(effects, effectsStatus, tr("Verdopplungscode kopiert.", "Doubling code copied.")));
 copySetXml.addEventListener("click", () => copyText(setXml, effectsStatus, tr("XML-Eintrag kopiert.", "XML entry copied.")));
+document.getElementById("reset-set-name").addEventListener("click", () => {
+  setName.value = tr(setName.defaultValue, "Double Piles");
+  updateEffectSet();
+  saveSettings();
+});
 setName.addEventListener("input", () => {
   updateEffectSet();
   saveSettings();
@@ -3664,6 +3722,43 @@ function replaceSettings(settings, message) {
   settingsFileStatus.className = "success";
   settingsFileStatus.textContent = message();
 }
+
+document.getElementById("reset-setup").addEventListener("click", () => {
+  setKingdomSize(standardKingdomSize, true);
+  coloniesMode.value = sheltersMode.value = "rules";
+  requireLoot.checked = false;
+  scheduleRuleCheck();
+});
+
+document.getElementById("reset-expansions").addEventListener("click", () => {
+  applyRangeSettings(countRules.filter(rule => rule.group === "exp"));
+  applyExpansionModes();
+  for (const field of editionInputs.values()) field.checked = false;
+  scheduleRuleCheck();
+});
+
+document.getElementById("reset-draw-rules").addEventListener("click", () => {
+  applyRangeSettings(countRules.filter(rule => rule.group !== "exp"));
+  scheduleRuleCheck();
+});
+
+document.getElementById("reset-landscapes").addEventListener("click", () => {
+  applyRangeSettings(landRules);
+  scheduleRuleCheck();
+});
+
+function resetCardChoices(choice) {
+  for (const [id, field] of poolChoices) {
+    if (field.value !== choice) continue;
+    field.value = "random";
+    const pin = resultPins.get(id);
+    if (pin) pin.checked = false;
+  }
+  scheduleRuleCheck();
+}
+
+document.getElementById("reset-excluded-cards").addEventListener("click", () => resetCardChoices("excluded"));
+document.getElementById("reset-pinned-cards").addEventListener("click", () => resetCardChoices("pinned"));
 
 resetSettings.addEventListener("click", () => {
   replaceSettings({
