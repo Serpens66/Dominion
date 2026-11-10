@@ -160,7 +160,11 @@ def load_catalog(xpack):
             target.setdefault("alternateTitles", []).extend(
                 strings.get(f"dom_card_title_{alias}", alias) for strings in translations.values()
             )
-    return {"expansions": expansions, "types": types, "cards": cards}
+    english_expansions = {
+        expansion: translations["en"].get(f"dom_expansion_name_{expansion}", name)
+        for expansion, name in expansions.items()
+    }
+    return {"expansions": expansions, "expansionsEn": english_expansions, "types": types, "cards": cards}
 
 
 def main():
