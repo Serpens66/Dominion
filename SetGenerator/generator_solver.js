@@ -197,18 +197,24 @@ function chooseLandscapes(main, request, random, tick) {
 
 const timedOut = Symbol("Zeitlimit");
 
-function analyzeKingdom(input, onFound, deadline = Date.now() + 4800) {
+function analyzeKingdom(input, onFound, deadline = Date.now() + 4800, sampleOnly = false) {
   const compile = rules => rules.map(rule => ({ ...rule, ids: new Set(rule.ids) }));
   const request = { ...input, rules: compile(input.rules), landscapeRules: compile(input.landscapeRules) };
   const { fixed, candidates, rules } = request;
   const slots = (request.kingdomSize ?? 10) - fixed.length;
-  if (slots < 0 || candidates.length < slots) return { total: 0n, result: null };
+  const mainPool = [...fixed, ...candidates];
+  if (slots < 0 || candidates.length < slots ||
+      rules.some(rule => !rule.whenAttacked && rule.min > matching(mainPool, rule)) ||
+      request.landscapeCount.min > request.landscapePool.length ||
+      request.landscapeRules.some(rule => rule.min > matching(request.landscapePool, rule))) {
+    return { total: 0n, result: null };
+  }
   let steps = 0;
   function tick() {
     if ((++steps & 127) === 0 && Date.now() >= deadline) throw timedOut;
   }
   const coupled = request.requireLoot || (request.landscapeCount.max > 0 && request.landscapePool.length > 0) ||
-    [...fixed, ...candidates].some(card => requiresAssignment.has(card.id) || has(card, "liaison") || has(card, "omen"));
+    mainPool.some(card => requiresAssignment.has(card.id) || has(card, "liaison") || has(card, "omen"));
   let sample = null;
   let drawExact;
   try {
@@ -291,6 +297,7 @@ function analyzeKingdom(input, onFound, deadline = Date.now() + 4800) {
       return true;
     });
     if (!sample) return { total: 0n, result: null };
+    if (sampleOnly) return { total: null, result: sample };
 
     if (coupled) {
       let total = 0n;
@@ -340,6 +347,46 @@ function analyzeKingdom(input, onFound, deadline = Date.now() + 4800) {
   }
 }
 
+function analyzeExpansionLottery(request, onFound, deadline = Date.now() + 4800) {
+  const { always, required, optional, count, autoLandscapes } = request.expansionLottery;
+  const remaining = count - required.length;
+  if (remaining < 0 || remaining > optional.length) return { total: 0n, result: null };
+  const combinations = [];
+  const extra = [];
+
+  function collect(index, remaining) {
+    if (!remaining) {
+      combinations.push([...extra]);
+      return;
+    }
+    for (let next = index; next <= optional.length - remaining; next++) {
+      extra.push(optional[next]);
+      collect(next + 1, remaining - 1);
+      extra.pop();
+    }
+  }
+
+  collect(0, remaining);
+  const inherited = new Set(autoLandscapes);
+  for (const picked of shuffled(combinations)) {
+    if (Date.now() >= deadline) return { total: null, result: null };
+    const randomExpansions = [...required, ...picked];
+    const selected = new Set([...always, ...randomExpansions]);
+    const inPool = card => selected.has(card.expansion);
+    const trial = {
+      ...request,
+      candidates: request.candidates.filter(inPool),
+      extras: request.extras.filter(inPool),
+      landscapePool: request.landscapePool.filter(card => !inherited.has(card.expansion) || inPool(card)),
+    };
+    const addExpansions = result => ({ ...result, randomExpansions });
+    const outcome = analyzeKingdom(trial, result => onFound(addExpansions(result)), deadline, true);
+    if (outcome.result) return { total: null, result: addExpansions(outcome.result) };
+    if (outcome.total === null) return outcome;
+  }
+  return { total: 0n, result: null };
+}
+
 let nextExactDraw;
 if (typeof self !== "undefined") self.onmessage = ({ data }) => {
   try {
@@ -347,7 +394,8 @@ if (typeof self !== "undefined") self.onmessage = ({ data }) => {
       self.postMessage({ type: "draw", result: nextExactDraw() });
       return;
     }
-    const result = analyzeKingdom(data.request, sample => self.postMessage({ type: "found", result: sample }));
+    const analyze = data.request.expansionLottery ? analyzeExpansionLottery : analyzeKingdom;
+    const result = analyze(data.request, sample => self.postMessage({ type: "found", result: sample }));
     nextExactDraw = result.drawExact;
     self.postMessage({ type: "done", total: result.total?.toString() ?? null,
       result: result.result, reusable: Boolean(nextExactDraw) });

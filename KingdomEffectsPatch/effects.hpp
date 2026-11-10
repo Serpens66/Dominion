@@ -26,11 +26,24 @@ static_assert(effects_offset + sizeof(Effects) == setup_size);
 using Setup = std::array<std::byte, setup_size>;
 
 enum class Error {
-    none, capacity, shared_target, malformed, repeated_section, input_length
+    none, capacity, shared_target, malformed, repeated_section, input_length, repeated_project_cube, debt_stamp
 };
 
 constexpr std::uint32_t double_pile = 0xDB8;
 constexpr std::uint32_t triple_pile = 0xDBA;
+constexpr std::uint32_t project_cube = 0x14B5;
+constexpr std::uint32_t debt_stamp = 0x1423;
+
+inline const wchar_t* known_failure_message(Error error) {
+    switch (error) {
+        case Error::repeated_project_cube:
+            return L"Projektstein darf f\u00fcr dasselbe Projekt nur einmal vorkommen. Entferne die Wiederholung.";
+        case Error::debt_stamp:
+            return L"Der Stempel \u201e\u22122 Schuldenkosten\u201c kann in diesem Build den Spielstart abbrechen. Entferne ihn aus dem Set.";
+        default:
+            return nullptr;
+    }
+}
 
 inline Effects read_effects(const void* setup) {
     Effects result{};
@@ -40,6 +53,17 @@ inline Effects read_effects(const void* setup) {
 
 inline std::size_t count(const Effects& list) {
     return std::find_if(list.begin(), list.end(), [](const Effect& e) { return !e[0]; }) - list.begin();
+}
+
+inline Error known_failure(const Effects& list) {
+    const auto end = list.begin() + count(list);
+    for (auto it = list.begin(); it != end; ++it) {
+        if ((*it)[0] == debt_stamp) return Error::debt_stamp;
+        if ((*it)[0] == project_cube && std::any_of(list.begin(), it, [&](const Effect& previous) {
+            return previous[0] == project_cube && previous[1] == (*it)[1];
+        })) return Error::repeated_project_cube;
+    }
+    return Error::none;
 }
 
 inline Error append_doublings(Effects& effects, const KingdomPiles& piles) {
@@ -144,7 +168,7 @@ inline std::string_view trimmed(std::string_view s) {
     return s;
 }
 
-inline Error validate_text(std::string_view text, std::size_t maximum_length) {
+inline Error validate_text(std::string_view text, std::size_t maximum_length, bool guard_known_failures = false) {
     if (text.size() > maximum_length) return Error::input_length;
     bool in_extras = false;
     bool seen_extras = false;
@@ -152,6 +176,8 @@ inline Error validate_text(std::string_view text, std::size_t maximum_length) {
     bool seen_typhoon = false;
     unsigned depth = 0;
     unsigned entries = 0;
+    std::array<std::string_view, maximum_effects> projects{};
+    std::size_t project_count = 0;
     std::size_t start = 0;
     const auto finish_entry = [&](std::size_t end) {
         const auto entry = trimmed(text.substr(start, end - start));
@@ -160,6 +186,15 @@ inline Error validate_text(std::string_view text, std::size_t maximum_length) {
         const auto opening = entry.find('(');
         const auto name = trimmed(entry.substr(0, opening));
         if (name.empty() || (opening != entry.npos && entry.back() != ')')) return Error::malformed;
+        if (guard_known_failures) {
+            if (name == "stamp_cost_2D_less" || name == "stamp_cost_2d_less") return Error::debt_stamp;
+            if (name == "start_with_cube" && opening != entry.npos) {
+                const auto target = trimmed(entry.substr(opening + 1, entry.size() - opening - 2));
+                const auto previous = projects.begin() + project_count;
+                if (std::find(projects.begin(), previous, target) != previous) return Error::repeated_project_cube;
+                projects[project_count++] = target;
+            }
+        }
         if (name == "twist_room_for_more") {
             if (seen_room) return Error::shared_target;
             seen_room = true;

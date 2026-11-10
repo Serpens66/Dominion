@@ -2,6 +2,18 @@ const fs=require("node:fs"), assert=require("node:assert/strict"),vm=require("no
 const path=require("node:path");
 const html=fs.readFileSync(path.join(__dirname,"Dominion-Generator.html"),"utf8");
 const worker=fs.readFileSync(path.join(__dirname,"generator_solver.js"),"utf8");
+const readScript = (page, id) => page.match(new RegExp('id="' + id + '">([\\s\\S]+?)</script>'))?.[1];
+const normalize = source => source.replace(/\r\n/g, "\n").trim();
+assert.equal(normalize(readScript(html, "generator-solver")), normalize(worker), "embedded worker must match the solver source");
+if (process.argv[2]) {
+  const imageHtml = fs.readFileSync(process.argv[2], "utf8");
+  const pack = JSON.parse(readScript(imageHtml, "embedded-image-pack"));
+  assert.equal(pack.format, "dominion-card-images");
+  assert.ok(Object.keys(pack.images).length > 0);
+  const withoutPack = imageHtml.replace(/<script type="application\/json" id="embedded-image-pack">[\s\S]*?<\/script>\r?\n/, "")
+    .replace(/file:\/\/\/[^"\s&]*\/extract_card_images\.py/g, "extract_card_images.py");
+  assert.ok(normalize(withoutPack) === normalize(html), "offline variants must differ only in image data and the extractor link");
+}
 const api=vm.runInNewContext(worker+"\n({analyzeKingdom,assignSetup,chooseLandscapes})");
 const catalog=JSON.parse(html.match(/id="catalog">([\s\S]+?)<\/script>/)[1]);
 const all=catalog.cards, byId=new Map(all.map(c=>[c.id,c])), get=(...ids)=>ids.map(id=>{assert.ok(byId.has(id),id);return byId.get(id);});
@@ -83,4 +95,36 @@ const scenic=api.analyzeKingdom(request(base.slice(0,10),[],{
 assert.equal(scenic.total,1n);
 assert.ok(scenic.result.landscapes.includes("foray"));
 assert.equal(new Set(scenic.result.landscapes.map(id=>byId.get(id).expansion)).size,2);
+// Keep combinations in their original order to exercise the retry after an impossible pool.
+const lotteryMath = Object.create(Math);
+lotteryMath.random = () => 0.999999;
+const drawLottery = vm.runInNewContext(worker + "\nanalyzeExpansionLottery", { Math: lotteryMath });
+const foray = byId.get("foray");
+const advance = byId.get("advance");
+const always = ["base", "intrigue", "prosperity"];
+const optional = [advance.expansion, foray.expansion];
+const lottery = request(base.slice(0, 10), [], {
+  landscapePool: [advance, foray],
+  landscapeCount: { min: 1, max: 1 },
+  landscapeRules: [rule([foray], 1, 1)],
+  expansionLottery: { always, required: [], optional, count: 1, autoLandscapes: optional },
+});
+out = drawLottery(lottery, () => {});
+assert.equal(out.total, null);
+assert.equal(out.result.randomExpansions.join(), foray.expansion);
+assert.equal(out.result.landscapes.join(), foray.id);
+assert.ok(out.result.main.every(id => byId.get(id).expansion === "base"));
+
+const explicit = {
+  ...lottery,
+  expansionLottery: { ...lottery.expansionLottery, autoLandscapes: [advance.expansion] },
+};
+out = drawLottery(explicit, () => {});
+assert.equal(out.result.randomExpansions.join(), advance.expansion);
+assert.equal(out.result.landscapes.join(), foray.id);
+assert.equal(drawLottery(lottery, () => {}, Date.now() - 1).total, null);
+assert.equal(drawLottery({
+  ...lottery, expansionLottery: { ...lottery.expansionLottery, required: optional, optional: [] },
+}, () => {}).total, 0n);
+
 console.log("Katalog, exakte Zählung, 6+4, Abwehr, Sonderzuordnungen, Prophezeiung, Landschaftsquoten und Zeitlimit geprüft.");

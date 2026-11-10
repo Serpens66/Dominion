@@ -228,10 +228,11 @@ void add_effect(HWND dialog, Draft& draft) {
         command += ')';
     }
     draft.effects.push_back(std::move(command));
-    const auto error = validate_text(effect_command_text(draft.effects), 4095);
+    const auto error = validate_text(effect_command_text(draft.effects), 4095, true);
     if (error != Error::none) {
         draft.effects.pop_back();
-        SetDlgItemTextW(dialog, IDC_STATUS, error == Error::shared_target
+        const auto* known = known_failure_message(error);
+        SetDlgItemTextW(dialog, IDC_STATUS, known ? known : error == Error::shared_target
             ? L"Platz für Mehr und Taifun dürfen jeweils nur einmal vorkommen."
             : L"Diese Effektliste kann das Spiel nicht übernehmen.");
         return;
@@ -303,6 +304,11 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             }
             update_active(dialog, draft, row);
         } else if (control == IDOK) {
+            const auto error = validate_text(effect_command_text(draft.effects), 4095, true);
+            if (const auto* known = known_failure_message(error)) {
+                SetDlgItemTextW(dialog, IDC_STATUS, known);
+                return TRUE;
+            }
             if (!draft.apply(draft.effects)) {
                 SetDlgItemTextW(dialog, IDC_STATUS, L"Dominion hat die Effektliste abgelehnt. Bitte prüfe die Ziele.");
                 return TRUE;

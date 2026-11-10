@@ -32,10 +32,13 @@ std::uintptr_t native_save_profiles;
 const std::byte* image_base;
 std::uintptr_t search_cancel;
 std::uintptr_t create_cancel;
+std::uintptr_t local_dispatch_continue;
+std::uintptr_t local_dispatch_cancel;
 std::uintptr_t merge_original_tail;
 std::uintptr_t merge_serialization;
 bool measure_only;
 bool automatic_enabled;
+bool local_safety_enabled;
 volatile LONG initialized;
 wchar_t log_path[MAX_PATH];
 
@@ -75,6 +78,11 @@ void log(const char* event, const kingdom::Effects* list = nullptr) {
 }
 
 void reject(kingdom::Error error) {
+    if (const auto* known = kingdom::known_failure_message(error)) {
+        log(error == kingdom::Error::repeated_project_cube ? "rejected repeated project cube" : "rejected debt stamp");
+        MessageBoxW(GetActiveWindow(), known, L"Dominion Kingdom Effects Patch", MB_OK | MB_ICONWARNING);
+        return;
+    }
     const wchar_t* message = L"Der Effektabschnitt konnte nicht gelesen werden.";
     switch (error) {
         case kingdom::Error::capacity:
@@ -101,7 +109,7 @@ bool validate(const char* text) {
     if (!text) return true;
     constexpr std::size_t maximum_length = 4095;
     const auto size = strnlen_s(text, maximum_length + 1);
-    const auto error = kingdom::validate_text({text, size}, maximum_length);
+    const auto error = kingdom::validate_text({text, size}, maximum_length, local_safety_enabled);
     if (error == kingdom::Error::none) return true;
     reject(error);
     return false;
@@ -138,6 +146,13 @@ bool __cdecl prepare_merge(void* current, const void* incoming) {
     if (result.error != kingdom::Error::none) {
         reject(result.error);
         return false;
+    }
+    if (local_safety_enabled) {
+        const auto error = kingdom::known_failure(result.list);
+        if (error != kingdom::Error::none) {
+            reject(error);
+            return false;
+        }
     }
     log(measure_only ? "import would write" : "import prepared", &result.list);
     if (!measure_only) pending = {current, incoming, result};
@@ -202,6 +217,33 @@ const std::byte* active_profile() {
         }
     }
     return profile;
+}
+
+bool __cdecl allow_local_start() {
+    const auto* profile = active_profile();
+    if (!profile) return true;
+    const auto* config = profile + 0x10;
+    const auto* setup_text = *reinterpret_cast<const char* const*>(config + 0x30);
+    const auto* kingdom_text = *reinterpret_cast<const char* const*>(config + 0x34);
+    const char* selected = nullptr;
+    if (*reinterpret_cast<const DWORD*>(config + 0x0C) == 1) {
+        const auto index = *reinterpret_cast<const DWORD*>(config + 0x10);
+        const auto count = *reinterpret_cast<const DWORD*>(profile + 0x71DC);
+        if (index < count && index < 64) {
+            selected = *reinterpret_cast<const char* const*>(profile + 0x6EE0 + index * 12);
+        }
+    }
+    // Local games can start from a resolved kingdom, a setup, or a selected profile set.
+    for (const auto* text : {selected, setup_text, kingdom_text}) {
+        if (!text) continue;
+        constexpr std::size_t limit = 4095;
+        const auto error = kingdom::validate_text({text, strnlen_s(text, limit + 1)}, limit, true);
+        if (kingdom::known_failure_message(error)) {
+            reject(error);
+            return false;
+        }
+    }
+    return true;
 }
 
 void __cdecl begin_automatic(const std::byte* save) {
@@ -333,7 +375,7 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
         const auto apply = [&](const kingdom::EffectCommands& edited) {
             if (edited == effects) return true;
             const auto commands = kingdom::effect_command_text(edited);
-            if (kingdom::validate_text(commands, 4095) != kingdom::Error::none) return false;
+            if (kingdom::validate_text(commands, 4095, true) != kingdom::Error::none) return false;
             using Parse = void (__fastcall*)(const char*, kingdom::Setup*);
             const auto parse = reinterpret_cast<Parse>(native_parser);
             kingdom::Setup parsed{};
@@ -662,6 +704,27 @@ __declspec(naked) void local_load_hook() {
     }
 }
 
+__declspec(naked) void local_dispatch_hook() {
+    __asm {
+        mov dword ptr [edi + 5044h], 0
+        pushfd
+        cmp eax, 1
+        jne resume_dispatch
+        pushad
+        call allow_local_start
+        test al, al
+        jnz allowed
+        popad
+        popfd
+        jmp dword ptr [local_dispatch_cancel]
+    allowed:
+        popad
+    resume_dispatch:
+        popfd
+        jmp dword ptr [local_dispatch_continue]
+    }
+}
+
 __declspec(naked) void automatic_extras_hook() {
     __asm {
         pushfd
@@ -766,6 +829,7 @@ const Site sites[] = {
     {0x1FCD6D, "\xE8\xAE\x2D\xEE\xFF", 5, save_played_hook},
     {0x1FCDAE, "\xE8\x7D\x3B\xEE\xFF", 5, save_prepared_hook},
     {0x1FFF35, "\xE8\x96\x4A\xEE\xFF", 5, effect_editor_hook, false, local_modes},
+    {0x0B24BF, "\xC7\x87\x44\x50\x00\x00\x00\x00\x00\x00", 10, local_dispatch_hook, true, local_modes},
     {0x0B1EC6, "\xE8\xA5\x21\x17\x00", 5, local_load_hook, false, local_modes},
     {0x1E9F57, "\xE8\x14\xB4\xEF\xFF", 5, automatic_extras_hook, false, local_modes},
     {0x1FFA03, "\xE8\xE8\xC4\xED\xFF", 5, online_filter_hook, false, online_mode},
@@ -783,7 +847,9 @@ bool change_site(std::byte* base, const Site& site, bool install) {
         const auto next = reinterpret_cast<std::uintptr_t>(address + 5);
         const auto offset = reinterpret_cast<std::uintptr_t>(site.hook) - next;
         const auto opcode = site.jump ? std::byte{0xE9} : std::byte{0xE8};
-        std::array<std::byte, 6> replacement{opcode, {}, {}, {}, {}, std::byte{0x90}};
+        std::array<std::byte, 10> replacement;
+        replacement.fill(std::byte{0x90});
+        replacement[0] = opcode;
         std::memcpy(replacement.data() + 1, &offset, 4);
         std::memcpy(address, replacement.data(), site.length);
     } else {
@@ -905,10 +971,13 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
     native_save_profiles = image + 0x0D8AD0;
     search_cancel = image + 0x1F6F40;
     create_cancel = image + 0x1FF7D4;
+    local_dispatch_continue = image + 0x0B24C9;
+    local_dispatch_cancel = image + 0x0B24EE;
     merge_original_tail = image + 0x1F6C7A;
     merge_serialization = image + 0x1F6CD3;
     measure_only = mode == 1;
     automatic_enabled = mode == 3;
+    local_safety_enabled = mode == 2 || mode == 3;
 
     {
         ThreadPause paused;

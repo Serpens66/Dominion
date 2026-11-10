@@ -342,6 +342,10 @@
     white-space: nowrap;
   }
   .edition-option input { width: auto; flex: none; margin: 0; }
+  .quota-table .expansion-with-mode { display: flex; flex-wrap: wrap; align-items: center; }
+  .expansion-with-mode .expansion-mode { width: auto; max-width: 100%; margin-inline-start: auto; }
+  .expansion-lottery-controls { align-items: center; }
+  .expansion-lottery-controls select { width: auto; }
   .edition-tip {
     max-block-size: min(36rem, 65vh);
     overflow: auto;
@@ -390,31 +394,57 @@
     pointer-events: none;
   }
   .pool-search-input input { padding-inline-start: 2rem; }
-  .pool-properties { margin-top: .65rem; }
-  .pool-property-groups {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
-    align-items: start;
-    gap: .75rem;
+  .pool-search-controls { gap: .5rem; }
+  .pool-properties-toggle { display: inline-flex; align-items: center; gap: .4rem; }
+  .pool-properties-toggle svg { inline-size: 1.15em; block-size: 1.15em; flex: none; }
+  .pool-properties-toggle[aria-expanded="true"] { background: var(--soft-hover); border-color: var(--gold); }
+  .pool-properties-count {
+    border: 1px solid var(--gold);
+    border-radius: 1rem;
+    min-inline-size: 1.45em;
+    text-align: center;
+    font-size: .85em;
+  }
+  .pool-properties {
+    margin-top: .65rem;
+    background: var(--soft-bg);
+    border: 1px solid var(--line);
+    border-radius: .6rem;
     max-block-size: 24rem;
     overflow: auto;
     padding: .75rem;
   }
+  .pool-property-groups {
+    columns: 15rem 3;
+    column-gap: .75rem;
+  }
   .pool-property-groups fieldset {
+    break-inside: avoid;
     min-inline-size: 0;
-    margin: 0;
+    margin: 0 0 .75rem;
     padding: .35rem .55rem .5rem;
     border: 1px solid var(--line);
     border-radius: .4rem;
   }
   .pool-property-groups legend { font-size: .9rem; font-weight: 700; }
   .pool-property-groups label {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1.2em minmax(0, 1fr);
     align-items: center;
     gap: .35rem;
     padding: .2rem 0;
     cursor: pointer;
   }
+  .card-name-line { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: .15rem .35rem; min-width: 0; justify-self: start; }
+  .card-edition {
+    color: var(--accent-text);
+    border: 1px solid var(--line);
+    border-radius: .3rem;
+    padding-inline: .3em;
+    font-size: .72em;
+    white-space: nowrap;
+  }
+  .card-preview .preview-edition { margin: 0 0 .25rem; color: var(--muted); font-size: .85em; }
   .pool-card-label {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -534,7 +564,7 @@
     box-shadow: 0 .35rem 1rem var(--shadow);
     font-size: .9rem;
   }
-  .edition-option:is(:hover, :focus-within) + .edition-tip,
+  .edition-option:is(:hover, :has(> input:focus-visible)) + .edition-tip,
   .conditional-range > span:is(:hover, :focus) + .conditional-range-hint,
   .conditional-range-hint:is(:hover, :focus-within, [data-tooltip-pinned]),
   #kingdom-size-help:focus-within > .conditional-range-hint,
@@ -767,7 +797,12 @@
       <details id="expansion-settings">
         <summary class="section-summary"><span data-en="Expansions and editions">Erweiterungen und Editionen</span><span class="muted" id="expansion-overview"></span></summary>
         <div class="section-body">
-          <p class="muted" data-en="Use 0 to 0 to exclude an expansion. Set To to the chosen Kingdom size to leave the upper bound open. Equal bounds require that exact number.">0 bis 0 schließt eine Erweiterung aus. Mit der gewählten Stapelzahl als Bis-Wert bleibt die Obergrenze offen. Gleiche Werte verlangen genau diese Zahl.</p>
+          <div class="row expansion-lottery-controls">
+            <label for="random-expansion-count" data-en="Additional expansions">Zusätzliche Erweiterungen</label>
+            <select id="random-expansion-count" aria-describedby="expansion-lottery-help"></select>
+            <button type="button" id="enable-random-expansions" class="secondary" data-en="Add remaining expansions to the lottery">Übrige für Zufall freigeben</button>
+          </div>
+          <p class="muted" id="expansion-lottery-help" data-en="Always and the selected Random expansions form the card pool. From sets the minimum number of piles from an expansion. A range of 0 to 0 turns it off.">Immer und die ausgelosten Erweiterungen bilden den Kartenpool. Von legt fest, wie viele Stapel mindestens aus einem Set kommen. 0 bis 0 schaltet es aus.</p>
           <div id="exp-ranges" class="quota-columns"></div>
         </div>
       </details>
@@ -777,14 +812,8 @@
         <div class="rules-overview">
           <div class="rules-overview-column">
             <div class="range-columns">
-              <div class="range-rules" id="effects-ranges" role="group" aria-labelledby="effects-ranges-title">
-                <h3 id="effects-ranges-title" data-en="Card effects">Karteneffekte</h3>
-                <span class="range-bound" id="effects-from" data-en="From">Von</span><span class="range-bound" id="effects-to" data-en="To">Bis</span>
-              </div>
-              <div class="range-rules" id="combat-ranges" role="group" aria-labelledby="combat-ranges-title">
-                <h3 id="combat-ranges-title" data-en="Attacks and Reactions">Angriff und Reaktion</h3>
-                <span class="range-bound" id="combat-from" data-en="From">Von</span><span class="range-bound" id="combat-to" data-en="To">Bis</span>
-              </div>
+              <div class="range-rules" id="effects-ranges"></div>
+              <div class="range-rules" id="combat-ranges"></div>
             </div>
             <div class="resource-rules" role="group" aria-labelledby="resource-column-0-title">
               <div class="quota-columns" id="resources-ranges"></div>
@@ -793,14 +822,8 @@
           </div>
           <div class="rules-overview-column">
             <div class="range-columns">
-              <div class="range-rules" id="cost-ranges" role="group" aria-labelledby="cost-ranges-title">
-                <h3 id="cost-ranges-title" data-en="Coin costs">Münzkosten</h3>
-                <span class="range-bound" id="cost-from" data-en="From">Von</span><span class="range-bound" id="cost-to" data-en="To">Bis</span>
-              </div>
-              <div class="range-rules" id="types-ranges" role="group" aria-labelledby="types-ranges-title">
-                <h3 id="types-ranges-title" data-en="Card types">Kartentypen</h3>
-                <span class="range-bound" id="types-from" data-en="From">Von</span><span class="range-bound" id="types-to" data-en="To">Bis</span>
-              </div>
+              <div class="range-rules" id="cost-ranges"></div>
+              <div class="range-rules" id="types-ranges"></div>
             </div>
           </div>
         </div>
@@ -809,9 +832,7 @@
           <div class="section-body">
             <p class="muted" id="land-source-help" data-en="Landscapes have their own slots. Under Source expansion, select Auto in both fields to follow the Kingdom pool. Enter 0 to 0 to exclude Landscapes from that expansion. Use the down arrow at 0 to return to Auto.">Landschaften belegen eigene Plätze. Unter Herkunft übernimmt zweimal Auto die Freigabe aus dem Hauptstapel-Pool. 0 bis 0 sperrt die Landschaften dieser Erweiterung. Bei 0 führt der Abwärtspfeil zurück zu Auto.</p>
             <div class="quota-columns" id="land-quotas">
-              <div id="land-ranges" class="range-rules quota-table">
-                <h3 data-en="Total and type">Gesamtzahl und Typ</h3><span id="land-from" class="range-bound" data-en="From">Von</span><span id="land-to" class="range-bound" data-en="To">Bis</span>
-              </div>
+              <div id="land-ranges" class="range-rules quota-table"></div>
             </div>
           </div>
         </details>
@@ -826,12 +847,15 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.1 15.1 5.4 5.4"/></svg>
               <input type="search" id="pool-search" placeholder="Z. B. Burggraben oder Taler" data-en-placeholder="E.g. Moat or Coffers">
             </span>
+            <button id="pool-properties-title" class="secondary pool-properties-toggle" type="button" aria-expanded="false" aria-controls="pool-properties">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M4 6h16M7 12h10m-7 6h4"/></svg>
+              <span data-en="Choose properties">Eigenschaften auswählen</span><span class="pool-properties-count" id="pool-properties-count" hidden></span>
+            </button>
             <button id="clear-pool-search" class="secondary" type="button" data-en="Clear search">Suche zurücksetzen</button>
           </div>
-          <details class="pool-properties" id="pool-properties">
-            <summary class="section-summary" id="pool-properties-title" data-en="Choose properties">Eigenschaften auswählen</summary>
-            <div class="section-body pool-property-groups" id="pool-property-groups"></div>
-          </details>
+          <div class="pool-properties" id="pool-properties" role="group" aria-labelledby="pool-properties-title" hidden>
+            <div class="pool-property-groups"></div>
+          </div>
           <div id="pool-search-chips" class="row pool-search-chips"></div>
           <p id="pool-search-status" class="muted" role="status"></p>
           <div id="pool"></div>
@@ -859,6 +883,7 @@
     <section class="output-panel" aria-labelledby="output-title">
       <h2 id="output-title" data-en="2. Copy into Dominion">2. Für Dominion kopieren</h2>
       <p id="status" role="status"></p>
+      <p id="random-expansion-result" class="muted" hidden></p>
       <div class="output-columns">
         <div>
           <p class="muted" data-en="Select a card name to read its effect.">Wähle einen Kartennamen, um den Effekt zu lesen.</p>
@@ -935,6 +960,7 @@
   <p id="expansion-info-land-origin" class="muted" hidden></p>
   <p id="expansion-info-source" class="muted source-label"></p>
   <p id="expansion-info-description"></p>
+  <p id="expansion-info-promo-cards" hidden></p>
   <details id="expansion-info-rules">
     <summary id="expansion-info-rules-title"></summary>
     <div id="expansion-info-rule-text"></div>
@@ -1260,18 +1286,24 @@ function chooseLandscapes(main, request, random, tick) {
 
 const timedOut = Symbol("Zeitlimit");
 
-function analyzeKingdom(input, onFound, deadline = Date.now() + 4800) {
+function analyzeKingdom(input, onFound, deadline = Date.now() + 4800, sampleOnly = false) {
   const compile = rules => rules.map(rule => ({ ...rule, ids: new Set(rule.ids) }));
   const request = { ...input, rules: compile(input.rules), landscapeRules: compile(input.landscapeRules) };
   const { fixed, candidates, rules } = request;
   const slots = (request.kingdomSize ?? 10) - fixed.length;
-  if (slots < 0 || candidates.length < slots) return { total: 0n, result: null };
+  const mainPool = [...fixed, ...candidates];
+  if (slots < 0 || candidates.length < slots ||
+      rules.some(rule => !rule.whenAttacked && rule.min > matching(mainPool, rule)) ||
+      request.landscapeCount.min > request.landscapePool.length ||
+      request.landscapeRules.some(rule => rule.min > matching(request.landscapePool, rule))) {
+    return { total: 0n, result: null };
+  }
   let steps = 0;
   function tick() {
     if ((++steps & 127) === 0 && Date.now() >= deadline) throw timedOut;
   }
   const coupled = request.requireLoot || (request.landscapeCount.max > 0 && request.landscapePool.length > 0) ||
-    [...fixed, ...candidates].some(card => requiresAssignment.has(card.id) || has(card, "liaison") || has(card, "omen"));
+    mainPool.some(card => requiresAssignment.has(card.id) || has(card, "liaison") || has(card, "omen"));
   let sample = null;
   let drawExact;
   try {
@@ -1354,6 +1386,7 @@ function analyzeKingdom(input, onFound, deadline = Date.now() + 4800) {
       return true;
     });
     if (!sample) return { total: 0n, result: null };
+    if (sampleOnly) return { total: null, result: sample };
 
     if (coupled) {
       let total = 0n;
@@ -1403,6 +1436,46 @@ function analyzeKingdom(input, onFound, deadline = Date.now() + 4800) {
   }
 }
 
+function analyzeExpansionLottery(request, onFound, deadline = Date.now() + 4800) {
+  const { always, required, optional, count, autoLandscapes } = request.expansionLottery;
+  const remaining = count - required.length;
+  if (remaining < 0 || remaining > optional.length) return { total: 0n, result: null };
+  const combinations = [];
+  const extra = [];
+
+  function collect(index, remaining) {
+    if (!remaining) {
+      combinations.push([...extra]);
+      return;
+    }
+    for (let next = index; next <= optional.length - remaining; next++) {
+      extra.push(optional[next]);
+      collect(next + 1, remaining - 1);
+      extra.pop();
+    }
+  }
+
+  collect(0, remaining);
+  const inherited = new Set(autoLandscapes);
+  for (const picked of shuffled(combinations)) {
+    if (Date.now() >= deadline) return { total: null, result: null };
+    const randomExpansions = [...required, ...picked];
+    const selected = new Set([...always, ...randomExpansions]);
+    const inPool = card => selected.has(card.expansion);
+    const trial = {
+      ...request,
+      candidates: request.candidates.filter(inPool),
+      extras: request.extras.filter(inPool),
+      landscapePool: request.landscapePool.filter(card => !inherited.has(card.expansion) || inPool(card)),
+    };
+    const addExpansions = result => ({ ...result, randomExpansions });
+    const outcome = analyzeKingdom(trial, result => onFound(addExpansions(result)), deadline, true);
+    if (outcome.result) return { total: null, result: addExpansions(outcome.result) };
+    if (outcome.total === null) return outcome;
+  }
+  return { total: 0n, result: null };
+}
+
 let nextExactDraw;
 if (typeof self !== "undefined") self.onmessage = ({ data }) => {
   try {
@@ -1410,7 +1483,8 @@ if (typeof self !== "undefined") self.onmessage = ({ data }) => {
       self.postMessage({ type: "draw", result: nextExactDraw() });
       return;
     }
-    const result = analyzeKingdom(data.request, sample => self.postMessage({ type: "found", result: sample }));
+    const analyze = data.request.expansionLottery ? analyzeExpansionLottery : analyzeKingdom;
+    const result = analyze(data.request, sample => self.postMessage({ type: "found", result: sample }));
     nextExactDraw = result.drawExact;
     self.postMessage({ type: "done", total: result.total?.toString() ?? null,
       result: result.result, reusable: Boolean(nextExactDraw) });
@@ -1511,6 +1585,7 @@ function setInterfaceLanguage(language) {
     group.list.replaceChildren(...group.items.map(entry => entry.item));
     for (const { card, cost } of group.items) renderCardCost(cost, card, uiLanguage);
   }
+  updatePoolGroups();
   showImageStatus();
 }
 
@@ -1743,6 +1818,7 @@ async function writeProfileFile(handle, source, updated) {
 const output = document.getElementById("output");
 const copy = document.getElementById("copy");
 const status = document.getElementById("status");
+const randomExpansionResult = document.getElementById("random-expansion-result");
 const copyStatus = document.getElementById("copy-status");
 const cardsList = document.getElementById("cards");
 const previewLanguage = document.getElementById("preview-language");
@@ -1751,6 +1827,7 @@ let currentResult;
 const imagePack = document.getElementById("image-pack");
 const imageStatus = document.getElementById("image-status");
 const previews = new Set();
+const isFirstEdition = card => card.edition === "first";
 const embeddedImagePack = document.getElementById("embedded-image-pack");
 let imageData = embeddedImagePack ? JSON.parse(embeddedImagePack.textContent) : { images: {} };
 let activePreview = null;
@@ -1762,13 +1839,17 @@ const pool = document.getElementById("pool");
 const poolSearch = document.getElementById("pool-search");
 const poolSearchStatus = document.getElementById("pool-search-status");
 const poolPropertiesPanel = document.getElementById("pool-properties");
+const poolPropertyGroups = poolPropertiesPanel.querySelector(".pool-property-groups");
 const poolPropertiesTitle = document.getElementById("pool-properties-title");
-const poolPropertyGroups = document.getElementById("pool-property-groups");
+const poolPropertiesCount = document.getElementById("pool-properties-count");
 const poolSearchChips = document.getElementById("pool-search-chips");
 const selectedPoolProperties = new Set();
 const poolGroups = [];
 const defenseItems = new Map();
 let openBeforeSearch;
+let poolSearchKey;
+let poolSearchHits = 0;
+const resultPins = new Map();
 const editionInputs = new Map();
 const requireLoot = document.getElementById("require-loot");
 const coloniesMode = document.getElementById("colonies");
@@ -1779,8 +1860,12 @@ const poolChoices = new Map();
 const drawButton = document.getElementById("draw");
 const ruleStatus = document.getElementById("rule-status");
 const rangeInputs = new Map();
+const lastValidRanges = new Map();
 const kingdomSizeSelect = document.getElementById("kingdom-size");
 const expansionOverview = document.getElementById("expansion-overview");
+const randomExpansionCount = document.getElementById("random-expansion-count");
+const expansionModes = new Map();
+const enableRandomExpansions = document.getElementById("enable-random-expansions");
 const planningResult = document.getElementById("planning-result");
 const planningCards = document.getElementById("planning-cards");
 const settingsKey = "dominion-generator-settings";
@@ -1884,6 +1969,7 @@ function setPreview(preview, pinned = false) {
   activePreview = preview;
   if (preview) {
     preview.panel.hidden = false;
+    updatePreview(preview);
     preview.button.setAttribute("aria-expanded", "true");
     if (pinned) pinTooltip(preview.panel);
   }
@@ -2025,8 +2111,27 @@ function cardFrameStyle(card) {
   ].map(([name, sprite]) => "--frame-" + name + ":var(--sprite-" + sprite + ")").join(";");
 }
 
-function updatePreview({ card, button, panel, face, heading, cost, typeLine, image, fullImage, rules, ruleBody, transcript, summary }) {
+function updatePreviewLabel({ card, button, badge }) {
+  button.lang = previewLanguage.value;
+  button.textContent = cardTitle(card, previewLanguage.value);
+  if (badge) badge.textContent = tr("1. Ed.", "1st ed.");
+}
+
+function refreshPreviews() {
+  previews.forEach(updatePreviewLabel);
+  if (activePreview) updatePreview(activePreview);
+}
+
+function updatePreview(preview) {
+  const { card, button, panel } = preview;
   const language = previewLanguage.value;
+  const pack = imageData;
+  if (preview.rendered?.language === language && preview.rendered.pack === pack) return;
+  const render = { language, pack };
+  preview.rendered = render;
+  const { face, heading, cost, typeLine, image, fullImage, rules, ruleBody, transcript, summary, editionNote } =
+    preview.content ??= buildPreviewContent(panel, card);
+  button.setAttribute("aria-describedby", rules.id);
   const english = language === "en";
   const [title, gameRules] = card.text[language];
   button.textContent = heading.textContent = title;
@@ -2042,23 +2147,43 @@ function updatePreview({ card, button, panel, face, heading, cost, typeLine, ima
     renderGameText(block, paragraph.trim(), language);
     return index ? [document.createElement("hr"), block] : [block];
   }));
-  const complete = imageData.cards?.[language]?.[card.id];
-  const illustration = imageData.images[card.id];
-  face.hidden = Boolean(complete);
-  transcript.hidden = !complete;
-  fullImage.hidden = !complete;
+  if (editionNote) editionNote.textContent = english ? "First edition" : "1. Edition";
+  face.hidden = false;
+  transcript.hidden = fullImage.hidden = image.hidden = true;
+  fullImage.removeAttribute("src");
+  image.removeAttribute("src");
   fullImage.alt = title;
   summary.textContent = english ? "Effect as text" : "Effekt als Text";
-  image.hidden = !illustration || Boolean(complete);
+  ruleBody.append(rules);
+
+  const complete = pack.cards?.[language]?.[card.id];
+  const illustration = pack.images[card.id];
+  if (complete || illustration) {
+    showPreviewImages(preview, render, complete, illustration);
+  }
+}
+
+async function showPreviewImages(preview, render, complete, illustration) {
+  const { face, image, fullImage, rules, transcript } = preview.content;
   if (complete) {
     fullImage.src = complete;
-    transcript.append(rules);
-  } else {
+    const decoded = await fullImage.decode().then(() => true, () => false);
+    if (preview.rendered !== render) return;
+    if (decoded) {
+      face.hidden = true;
+      fullImage.hidden = transcript.hidden = false;
+      transcript.append(rules);
+      return;
+    }
     fullImage.removeAttribute("src");
-    ruleBody.append(rules);
   }
-  if (illustration && !complete) image.src = illustration;
-  else image.removeAttribute("src");
+  if (illustration) {
+    image.src = illustration;
+    const decoded = await image.decode().then(() => true, () => false);
+    if (preview.rendered !== render) return;
+    image.hidden = !decoded;
+    if (!decoded) image.removeAttribute("src");
+  }
 }
 
 async function readImagePack(file) {
@@ -2092,21 +2217,12 @@ async function readImagePack(file) {
       if (!knownIds.has(id) || typeof source !== "string" || !pattern.test(source)) {
         throw new Error(tr("Das Bildpaket enthält einen ungültigen Eintrag für ", "The image pack contains an invalid entry for ") + id + ".");
       }
-      const image = new Image();
-      image.src = source;
-      try {
-        await image.decode();
-      } catch {
-        throw new Error(tr("Das Bild für " + id + " kann nicht gelesen werden.", "The image for " + id + " could not be read."));
-      }
     }
   }
   return pack;
 }
 
-function addCardPreview(item, card, area) {
-  const button = document.createElement("button");
-  const panel = document.createElement("div");
+function buildPreviewContent(panel, card) {
   const face = document.createElement("div");
   const faceBody = document.createElement("div");
   const heading = document.createElement("strong");
@@ -2120,17 +2236,7 @@ function addCardPreview(item, card, area) {
   const rules = document.createElement("div");
   const transcript = document.createElement("details");
   const summary = document.createElement("summary");
-  const preview = { card, button, panel, face, heading, cost, typeLine, image, fullImage, rules, ruleBody, transcript, summary };
-  button.type = "button";
-  button.className = "card-name";
-  panel.id = "preview-" + area + "-" + card.id;
-  panel.className = "card-preview";
-  panel.hidden = true;
   rules.id = panel.id + "-rules";
-  button.id = panel.id + "-name";
-  button.setAttribute("aria-controls", panel.id);
-  button.setAttribute("aria-expanded", "false");
-  button.setAttribute("aria-describedby", rules.id);
   face.className = card.types.includes("night") ? "preview-face preview-face-night" : "preview-face";
   face.setAttribute("style", cardFrameStyle(card));
   faceBody.className = "preview-face-body";
@@ -2138,7 +2244,6 @@ function addCardPreview(item, card, area) {
   cost.className = "preview-face-cost";
   image.className = "preview-face-art";
   image.alt = "";
-  image.loading = fullImage.loading = "lazy";
   fullImage.className = "card-art";
   fullImage.width = 344;
   fullImage.height = 524;
@@ -2153,10 +2258,42 @@ function addCardPreview(item, card, area) {
   faceBody.append(image, ruleBody, footer);
   face.append(heading, faceBody);
   transcript.append(summary);
+  let editionNote;
+  if (isFirstEdition(card)) {
+    editionNote = document.createElement("p");
+    editionNote.className = "preview-edition";
+    panel.append(editionNote);
+  }
   panel.append(face, fullImage, transcript);
+  return { face, heading, cost, typeLine, image, fullImage, rules, ruleBody, transcript, summary, editionNote };
+}
+
+function addCardPreview(item, card, area) {
+  const button = document.createElement("button");
+  const panel = document.createElement("div");
+  const nameLine = document.createElement("span");
+  nameLine.className = "card-name-line";
+  button.type = "button";
+  button.className = "card-name";
+  panel.id = "preview-" + area + "-" + card.id;
+  panel.className = "card-preview";
+  panel.hidden = true;
+  button.id = panel.id + "-name";
+  button.setAttribute("aria-controls", panel.id);
+  button.setAttribute("aria-expanded", "false");
+  nameLine.append(button);
+  let badge;
+  if (isFirstEdition(card)) {
+    badge = document.createElement("span");
+    badge.className = "card-edition";
+    badge.id = panel.id + "-edition";
+    button.setAttribute("aria-labelledby", button.id + " " + badge.id);
+    nameLine.append(badge);
+  }
+  const preview = { card, button, panel, badge };
   previews.add(preview);
   tooltipTriggers.set(panel, button);
-  updatePreview(preview);
+  updatePreviewLabel(preview);
   button.addEventListener("pointerenter", event => {
     if (event.pointerType === "mouse" && !pinnedTooltips.has(activePreview?.panel)) setPreview(preview);
   });
@@ -2181,7 +2318,7 @@ function addCardPreview(item, card, area) {
     if (activePreview === preview && pinnedTooltips.has(panel)) setPreview(null);
     else setPreview(preview, true);
   });
-  item.append(button, panel);
+  item.append(nameLine, panel);
   return button;
 }
 
@@ -2195,9 +2332,10 @@ function showCards(result, list = cardsList) {
     pin.type = "checkbox";
     pin.checked = choice.value === "pinned";
     pin.setAttribute("aria-label", tr(cardTitle(card, previewLanguage.value) + " festhalten", "Pin " + cardTitle(card, previewLanguage.value)));
+    resultPins.set(card.id, pin);
     pin.addEventListener("change", () => {
       choice.value = pin.checked ? "pinned" : "random";
-      scheduleRuleCheck();
+      updateCardChoice(card.id);
     });
     label.append(pin, tr(" Festhalten", " Pin"));
     item.append(label);
@@ -2207,6 +2345,8 @@ function showCards(result, list = cardsList) {
 
 function clearOutputs() {
   currentResult = undefined;
+  randomExpansionResult.hidden = true;
+  resultPins.clear();
   output.value = "";
   effects.value = "";
   copy.disabled = true;
@@ -2226,9 +2366,9 @@ function clearOutputs() {
   copy.textContent = tr("Für Dominion kopieren", "Copy into Dominion");
 }
 
-function markPoolChanged() {
-  clearOutputs();
-  updateEffectSet();
+function updateCardChoice(id) {
+  const pin = resultPins.get(id);
+  if (pin) pin.checked = poolChoices.get(id).value === "pinned";
   scheduleRuleCheck();
 }
 
@@ -2304,17 +2444,58 @@ function serializeRule(rule, range, pool, count) {
 }
 
 function allowsEdition(card) {
-  return card.edition !== "first" || card.expansion === "promos" || editionInputs.get(card.expansion)?.checked;
+  return !isFirstEdition(card) || card.expansion === "promos" || editionInputs.get(card.expansion)?.checked;
+}
+
+function setExpansionMode(id, mode) {
+  const [from, to] = rangeInputs.get("exp-" + id);
+  expansionModes.get(id).value = mode;
+  from.disabled = to.disabled = mode === "off";
+  if (mode !== "off" && to.valueAsNumber === 0) {
+    from.value = "0";
+    to.value = String(kingdomSize);
+  }
+}
+
+function expansionInPossiblePool(id) {
+  const mode = expansionModes.get(id).value;
+  return mode === "always" || (mode === "random" && Number(randomExpansionCount.value) > 0);
 }
 
 function readDrawRequest() {
+  const count = Number(randomExpansionCount.value);
+  const always = expansions.filter(id => expansionModes.get(id).value === "always");
+  const random = expansions.filter(id => expansionModes.get(id).value === "random");
+  const ranges = new Map(expansions.map(id => [
+    id, expansionModes.get(id).value === "off" ? { min: 0, max: 0 } :
+      readRange(countRules.find(rule => rule.id === "exp-" + id)),
+  ]));
+  const fixed = cards.filter(card => poolChoices.get(card.id).value === "pinned");
+  const landPinned = landscapes.filter(card => poolChoices.get(card.id).value === "pinned");
+  const landQuotas = new Map(landRules.slice(1).map(rule => [rule.id, readRange(rule, rule.inherited)]));
+  const autoLandscapes = landscapeExpansions.filter(id => !landQuotas.get("land-exp-" + id));
+  const pinnedSources = new Set([
+    ...fixed.map(card => card.expansion),
+    ...landPinned.filter(card => autoLandscapes.includes(card.expansion)).map(card => card.expansion),
+  ]);
+  const required = random.filter(id => ranges.get(id).min > 0 || pinnedSources.has(id));
+  if (required.length > count) {
+    const names = required.map(expansionName).join(", ");
+    throw new Error(tr(
+      `Die Mindestquoten oder festgehaltenen Karten benötigen ${required.length} Zufallssets (${names}). Eingestellt sind ${count} zusätzliche Erweiterungen.`,
+      `Minimum quotas or pinned cards require ${required.length} random sets (${names}). The number of additional expansions is ${count}.`
+    ));
+  }
+  if (count > random.length) {
+    throw new Error(tr(`Im Lostopf sind nur ${random.length} Erweiterungen für ${count} zusätzliche Plätze.`,
+      `Only ${random.length} expansions are in the lottery for ${count} additional slots.`));
+  }
   const expansionQuotas = new Map(expansions.map(id => [
-    id, readRange(countRules.find(rule => rule.id === "exp-" + id)),
+    id, expansionInPossiblePool(id) ? ranges.get(id) : { min: 0, max: 0 },
   ]));
   const minTotal = [...expansionQuotas.values()].reduce((sum, range) => sum + range.min, 0);
   if (minTotal > kingdomSize) throw new Error(tr(`Die Mindestzahlen der Erweiterungen brauchen mehr als ${kingdomSize} Königreichstapel.`, `The expansion minimums require more than ${kingdomSize} Kingdom piles.`));
   const allowed = card => expansionQuotas.get(card.expansion).max > 0 && allowsEdition(card);
-  const fixed = cards.filter(card => poolChoices.get(card.id).value === "pinned");
   const disabled = fixed.find(card => !allowed(card));
   if (disabled) throw new Error(tr("„" + cardTitle(disabled) + "“ ist festgehalten. Gib die Erweiterung oder Edition frei.",
     "“" + cardTitle(disabled, "en") + "” is pinned. Enable its expansion or edition."));
@@ -2329,15 +2510,16 @@ function readDrawRequest() {
   const capacity = [...expansionQuotas].reduce((sum, [id, range]) =>
     sum + Math.min(range.max, pool.filter(card => card.expansion === id).length), 0);
   if (capacity < kingdomSize) throw new Error(tr(`Erweiterungsquoten und Kartenauswahl lassen weniger als ${kingdomSize} Königreichstapel zu.`, `The expansion quotas and card choices allow fewer than ${kingdomSize} Kingdom piles.`));
-  const rules = countRules.map(rule => serializeRule(rule, readRange(rule), pool, kingdomSize)).filter(Boolean);
+  const rules = countRules.map(rule => {
+    const range = rule.group === "exp" && !rule.distinct ? expansionQuotas.get(rule.id.slice(4)) : readRange(rule);
+    return serializeRule(rule, range, pool, kingdomSize);
+  }).filter(Boolean);
   const landscapeCount = readRange(landRules[0]);
-  const landQuotas = new Map(landRules.slice(1).map(rule => [rule.id, readRange(rule, rule.inherited)]));
   const landPool = landscapes.filter(card => {
     const explicit = landQuotas.get("land-exp-" + card.expansion);
     return (explicit?.max ?? expansionQuotas.get(card.expansion).max) > 0 &&
       allowsEdition(card) && poolChoices.get(card.id).value !== "excluded";
   });
-  const landPinned = landscapes.filter(card => poolChoices.get(card.id).value === "pinned");
   if (landPinned.some(card => !landPool.includes(card))) {
     throw new Error(tr("Eine festgehaltene Landschaft ist durch ihre Herkunft oder Edition gesperrt.", "A pinned Landscape is blocked by its expansion or edition."));
   }
@@ -2353,8 +2535,12 @@ function readDrawRequest() {
       .reduce((sum, [, quota]) => sum + quota.min, 0);
     if (min > landscapeCount.max) throw new Error(tr("Die Landschaftsquoten verlangen mehr Landschaften als die eingestellte Gesamtzahl erlaubt.", "The Landscape quotas require more Landscapes than the total allows."));
   }
+  const expansionLottery = count ? {
+    count, always, required, optional: random.filter(id => !required.includes(id)), autoLandscapes,
+  } : undefined;
   return {
-    kingdomSize, fixed: fixed.map(solverCard), candidates: pool.filter(card => !fixed.includes(card)).map(solverCard),
+    kingdomSize, expansionLottery, fixed: fixed.map(solverCard),
+    candidates: pool.filter(card => !fixed.includes(card)).map(solverCard),
     extras: pool.map(solverCard), components: allCards.filter(card => !card.kingdomPile).map(solverCard),
     rules, landscapeCount, landscapeRules: landRulesActive, landscapePool: landPool.map(solverCard),
     requireLoot: requireLoot.checked, colonies: coloniesMode.value, shelters: sheltersMode.value,
@@ -2366,7 +2552,6 @@ function checkRules(drawWhenReady = false) {
   ruleCheckTimer = undefined;
   stopAnalysis();
   preparedDraw = null;
-  updatePoolGroups();
   try {
     const request = readDrawRequest();
     const script = document.getElementById("generator-solver").textContent;
@@ -2379,7 +2564,9 @@ function checkRules(drawWhenReady = false) {
       if (!reusable) stopAnalysis();
       if (result) {
         preparedDraw = { result, reusable };
-        const message = total === null
+        const message = request.expansionLottery
+          ? tr("Eine gültige Ziehung mit zusätzlichen Erweiterungen ist bereit.", "A valid draw with additional expansions is ready.")
+          : total === null
           ? tr("Gültige Ziehung verfügbar. Die exakte Anzahl und Gleichverteilung sind offen.", "A valid draw is available. The exact count and equal chances are unverified.")
           : total === "1" ? tr("1 passendes Königreich möglich.", "1 matching Kingdom.")
           : BigInt(total).toLocaleString(uiLocale()) + tr(" passende Königreiche möglich.", " matching Kingdoms.");
@@ -2437,13 +2624,8 @@ function readSettings(source) {
   if (![1, 2].includes(settings?.version)) throw new Error(tr("Die Version der Einstellungen wird nicht unterstützt.", "This settings version is not supported."));
 
   const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
-  const isRangeValue = value => typeof value === "string" &&
-    (value === "" || (value.trim() === value && Number.isFinite(Number(value))));
-  const isRangePair = ([id, pair]) => Array.isArray(pair) && pair.length === 2 && pair.every(value =>
-    isRangeValue(value) && (value === "" || !id.startsWith("land-exp-") || isValidRangeBound(Number(value), landscapeLimit)));
   if ((settings.kingdomSize !== undefined && !allowedKingdomSizes.includes(settings.kingdomSize)) ||
       !isRecord(settings.ranges) || !isRecord(settings.cardChoices) ||
-      !Object.entries(settings.ranges).every(isRangePair) ||
       !Object.values(settings.cardChoices).every(choice => choice === "pinned" || choice === "excluded") ||
       !["de", "en"].includes(settings.previewLanguage) || typeof settings.setName !== "string" ||
       (settings.interfaceLanguage !== undefined && !["de", "en"].includes(settings.interfaceLanguage)) ||
@@ -2453,16 +2635,57 @@ function readSettings(source) {
         !["rules", "always", "never"].includes(settings.shelters)))) {
     throw new Error(tr("Die Datei enthält ungültige Einstellungen.", "The file contains invalid settings."));
   }
+  const modes = settings.expansionModes;
+  const additional = settings.randomExpansionCount;
+  if ((modes !== undefined && (!isRecord(modes) || Object.entries(modes).some(([id, mode]) =>
+      !expansionModes.has(id) || !["always", "random", "off"].includes(mode) || (id === "base" && mode === "random")))) ||
+      (additional !== undefined && !isValidRangeBound(additional, expansions.length - 1))) {
+    throw new Error(tr("Die Auswahl der Erweiterungen ist ungültig.", "The expansion selection is invalid."));
+  }
+  const size = settings.kingdomSize ?? standardKingdomSize;
+  for (const rule of [...countRules, ...landRules]) {
+    if (Object.hasOwn(settings.ranges, rule.id) && !validRangePair(rule, settings.ranges[rule.id], size)) {
+      throw new Error(tr("Ungültige Werte für „" + ruleLabel(rule) + "“.", "Invalid values for “" + ruleLabel(rule) + ".”"));
+    }
+  }
   return settings;
 }
 
+function validRangePair(rule, pair, size = kingdomSize) {
+  if (!Array.isArray(pair) || pair.length !== 2) return false;
+  if (rule.inherited && pair[0] === "" && pair[1] === "") return true;
+  const max = rule.max ?? size;
+  return pair.every(value => typeof value === "string" && value.trim() !== "" && value.trim() === value &&
+    isValidRangeBound(Number(value), max)) &&
+    Number(pair[0]) <= Number(pair[1]);
+}
+
+function canonicalRangePair(pair) {
+  return pair.map(value => value === "" ? "" : String(Number(value)));
+}
+
+function defaultRangePair(id, [from, to]) {
+  if (id.startsWith("land-exp-")) return ["", ""];
+  const initialMax = to.defaultValue === String(standardKingdomSize) ? to.max : to.defaultValue;
+  return [from.defaultValue, initialMax];
+}
+
 function collectSettings() {
-  const ranges = Object.fromEntries([...rangeInputs].map(([id, fields]) => [id, fields.map(field => field.value)]));
+  const ranges = {};
+  for (const rule of [...countRules, ...landRules]) {
+    const fields = rangeInputs.get(rule.id);
+    const pair = fields.map(field => field.value);
+    if (validRangePair(rule, pair)) lastValidRanges.set(rule.id, canonicalRangePair(pair));
+    const previous = lastValidRanges.get(rule.id);
+    ranges[rule.id] = validRangePair(rule, previous) ? previous : defaultRangePair(rule.id, fields);
+  }
   const cardChoices = Object.fromEntries([...poolChoices]
     .filter(([, field]) => field.value !== "random")
     .map(([id, field]) => [id, field.value]));
   const editions = Object.fromEntries([...editionInputs].map(([id, field]) => [id, field.checked]));
-  return { version: 2, kingdomSize, ranges, cardChoices, editions, requireLoot: requireLoot.checked,
+  const modes = Object.fromEntries([...expansionModes].map(([id, field]) => [id, field.value]));
+  return { version: 2, kingdomSize, ranges, cardChoices, editions, expansionModes: modes,
+    randomExpansionCount: Number(randomExpansionCount.value), requireLoot: requireLoot.checked,
     colonies: coloniesMode.value, shelters: sheltersMode.value, interfaceLanguage: uiLanguage,
     previewLanguage: previewLanguage.value, setName: setName.value };
 }
@@ -2483,12 +2706,17 @@ function setKingdomSize(size, resizeRanges = false) {
 
 function applySettings(settings) {
   setKingdomSize(settings.kingdomSize ?? standardKingdomSize);
+  lastValidRanges.clear();
   for (const [id, [from, to]] of rangeInputs) {
-    const initialMax = to.defaultValue === String(standardKingdomSize) ? to.max : to.defaultValue;
-    const bounds = settings.ranges[id] ?? [from.defaultValue ?? "", initialMax ?? ""];
-    [from.value, to.value] = id.startsWith("land-exp-")
-      ? bounds.map(value => value === "" ? "" : String(Number(value)))
-      : bounds;
+    const bounds = Object.hasOwn(settings.ranges, id)
+      ? canonicalRangePair(settings.ranges[id]) : defaultRangePair(id, [from, to]);
+    lastValidRanges.set(id, bounds);
+    [from.value, to.value] = bounds;
+  }
+  randomExpansionCount.value = String(settings.randomExpansionCount ?? 0);
+  for (const id of expansions) {
+    const maximum = rangeInputs.get("exp-" + id)[1].valueAsNumber;
+    setExpansionMode(id, settings.expansionModes?.[id] ?? (maximum > 0 ? "always" : "off"));
   }
   for (const [id, field] of poolChoices) field.value = settings.cardChoices[id] ?? "random";
   for (const [id, field] of editionInputs) field.checked = settings.editions?.[id] ?? false;
@@ -2498,7 +2726,7 @@ function applySettings(settings) {
   previewLanguage.value = settings.previewLanguage;
   if (settings.interfaceLanguage && settings.interfaceLanguage !== uiLanguage) setInterfaceLanguage(settings.interfaceLanguage);
   setName.value = settings.setName;
-  previews.forEach(updatePreview);
+  refreshPreviews();
   updateEffectSet();
 }
 
@@ -2556,16 +2784,15 @@ function generate() {
 }
 
 function showDraw(result) {
-  clearOutputs();
   if (!result) {
     status.className = "error";
     status.textContent = tr("Die Ziehung konnte nicht fertiggestellt werden.", "The draw could not be completed.");
-    updateEffectSet();
     return;
   }
+  clearOutputs();
   currentResult = result;
   const sortedCards = ids => ids.map(id => cardById.get(id))
-    .sort((a, b) => cardTitle(a).localeCompare(cardTitle(b), "de"));
+    .sort((a, b) => cardTitle(a, uiLanguage).localeCompare(cardTitle(b, uiLanguage), uiLocale()));
   const drawn = sortedCards(result.main.slice(0, standardKingdomSize));
   const planned = sortedCards(result.main.slice(standardKingdomSize));
   const ids = drawn.map(card => card.id);
@@ -2597,6 +2824,10 @@ function showDraw(result) {
   });
   status.textContent = [tr(`Letzte Ziehung mit ${result.main.length} Hauptstapeln`, `Last draw with ${result.main.length} Kingdom piles`), ...expansionCounts].join(" · ");
   status.className = "success";
+  const selected = result.randomExpansions ?? [];
+  randomExpansionResult.hidden = selected.length === 0;
+  randomExpansionResult.textContent = selected.length
+    ? tr("Zusätzlich ausgelost: ", "Additional expansions drawn: ") + selected.map(expansionName).join(", ") : "";
   updateEffectSet();
 }
 
@@ -2641,7 +2872,7 @@ function normalizePoolSearch(text) {
   return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim().replace(/\s+/g, " ");
 }
 
-const firstEditionRule = { id: "first-edition", icon: "first-edition", label: "Karten der ersten Edition", matches: card => card.edition === "first" };
+const firstEditionRule = { id: "first-edition", icon: "first-edition", label: "Karten der ersten Edition", matches: isFirstEdition };
 const poolSearchGroups = [
   ["Karteneffekte", "Card effects", countRules.filter(rule => !rule.group)],
   ["Angriff und Reaktion", "Attacks and Reactions", countRules.filter(rule => rule.group === "combat")],
@@ -2680,7 +2911,7 @@ for (const [de, en, rules] of poolSearchGroups) {
       if (toggle.checked) selectedPoolProperties.add(rule.id);
       else selectedPoolProperties.delete(rule.id);
       renderPoolSearchChips();
-      updatePoolGroups();
+      refreshPoolSearch();
     });
     option.append(toggle, makeGameIcon(rule.icon), text);
     group.append(option);
@@ -2690,6 +2921,9 @@ for (const [de, en, rules] of poolSearchGroups) {
 }
 
 function renderPoolSearchChips() {
+  const count = selectedPoolProperties.size;
+  poolPropertiesCount.hidden = count === 0;
+  poolPropertiesCount.textContent = count;
   for (const [id, property] of poolProperties) property.toggle.checked = selectedPoolProperties.has(id);
   const chips = [...selectedPoolProperties].map(id => {
     const chip = document.createElement("button");
@@ -2703,7 +2937,7 @@ function renderPoolSearchChips() {
       const index = [...selectedPoolProperties].indexOf(id);
       selectedPoolProperties.delete(id);
       renderPoolSearchChips();
-      updatePoolGroups();
+      refreshPoolSearch();
       (poolSearchChips.children[index] ?? poolSearchChips.lastElementChild ?? poolPropertiesTitle).focus();
     });
     return chip;
@@ -2750,7 +2984,7 @@ function makePoolGroup(expansion, entries, area) {
       bindInterfaceLabel(option, () => tr(de, en));
       choice.add(option);
     }
-    choice.addEventListener("change", markPoolChanged);
+    choice.addEventListener("change", () => updateCardChoice(card.id));
     poolChoices.set(card.id, choice);
     item.append(cardLabel, cost, choice);
     list.append(item);
@@ -2760,63 +2994,96 @@ function makePoolGroup(expansion, entries, area) {
   poolGroups.push({ expansion, details, summary, list, items, area });
 }
 
+function hidePoolItem(item, hidden) {
+  if (item.hidden === hidden) return;
+  if (hidden) {
+    if (activePreview && item.contains(activePreview.button)) setPreview(null);
+    releaseTooltipPins(item);
+  }
+  item.hidden = hidden;
+}
+
+function updatePoolSearch() {
+  const query = normalizePoolSearch(poolSearch.value);
+  const key = JSON.stringify([query, [...selectedPoolProperties].sort()]);
+  if (key === poolSearchKey) return;
+  poolSearchKey = key;
+  const searching = Boolean(query || selectedPoolProperties.size);
+  const properties = query ? [...poolProperties.values()] : [];
+  const exact = properties.filter(property => property.terms.has(query));
+  const textProperties = exact.length ? exact :
+    properties.filter(property => [...property.terms].some(term => term.includes(query)));
+  const required = [...selectedPoolProperties].map(id => poolProperties.get(id));
+  if (searching && !openBeforeSearch) openBeforeSearch = new Set(poolGroups.filter(group => group.details.open));
+  poolSearchHits = 0;
+  for (const group of poolGroups) {
+    let found = 0;
+    for (const { card, item, searchNames } of group.items) {
+      const match = required.every(property => property.matches(card, group.area)) &&
+        (!query || searchNames.some(title => title.includes(query)) ||
+          textProperties.some(property => property.matches(card, group.area)));
+      hidePoolItem(item, !match);
+      if (match) found++;
+    }
+    poolSearchHits += found;
+    hidePoolItem(group.details, searching && !found);
+    if (searching && found) group.details.open = true;
+    else if (!searching && openBeforeSearch) group.details.open = openBeforeSearch.has(group);
+  }
+  if (!searching) openBeforeSearch = undefined;
+}
+
 function updatePoolGroups() {
   const active = [];
   for (const expansion of expansions) {
     const [from, to] = rangeInputs.get("exp-" + expansion);
-    if (to.valueAsNumber > 0) {
+    if (expansionModes.get(expansion).value === "always" && to.valueAsNumber > 0) {
       const edition = editionInputs.get(expansion)?.checked ? tr(" inkl. 1. Ed.", " incl. 1st ed.") : "";
       active.push(expansionName(expansion) + " " + (from.value || "…") + "–" + to.value + edition);
     }
   }
   const summary = active.slice(0, 3);
   if (active.length > 3) summary.push("+" + (active.length - 3) + tr(" weitere", " more"));
+  const additional = Number(randomExpansionCount.value);
+  if (additional) summary.push(additional + tr(" zusätzlich per Zufall", " additional at random"));
   if (!summary.length) summary.push(tr("Keine Erweiterung aktiv", "No active expansions"));
   const overview = " · " + summary.join(" · ");
   if (expansionOverview.textContent !== overview) expansionOverview.textContent = overview;
-  const query = normalizePoolSearch(poolSearch.value);
-  const searching = Boolean(query || selectedPoolProperties.size);
-  const properties = query ? [...poolProperties.values()] : [];
-  const exactProperties = properties.filter(property => property.terms.has(query));
-  const textProperties = exactProperties.length ? exactProperties :
-    properties.filter(property => [...property.terms].some(term => term.includes(query)));
-  const requiredProperties = [...selectedPoolProperties].map(id => poolProperties.get(id));
-  if (searching && !openBeforeSearch) openBeforeSearch = new Set(poolGroups.filter(group => group.details.open));
-  let hits = 0;
   for (const group of poolGroups) {
-    let available = 0, pinned = 0, excluded = 0, found = 0;
-    for (const { card, item, choice, searchNames } of group.items) {
-      const maximum = rangeInputs.get("exp-" + card.expansion)?.[1].valueAsNumber ?? 0;
-      const landMax = rangeNumber(rangeInputs.get("land-exp-" + card.expansion)?.[1]);
-      const eligible = (group.area === "land-pool" && Number.isFinite(landMax) ? landMax : maximum) > 0 && allowsEdition(card);
+    const maximum = rangeInputs.get("exp-" + group.expansion)[1].valueAsNumber;
+    const landMax = rangeNumber(rangeInputs.get("land-exp-" + group.expansion)?.[1]);
+    const explicitLandscape = group.area === "land-pool" && Number.isFinite(landMax);
+    const enabled = explicitLandscape ? landMax > 0 : maximum > 0 && expansionInPossiblePool(group.expansion);
+    let available = 0, pinned = 0, excluded = 0;
+    for (const { card, choice } of group.items) {
       if (choice.value === "excluded") excluded++;
-      else if (eligible) available++;
+      else if (enabled && allowsEdition(card)) available++;
       if (choice.value === "pinned") pinned++;
-      const match = requiredProperties.every(property => property.matches(card, group.area)) &&
-        (!query || searchNames.some(title => title.includes(query)) ||
-          textProperties.some(property => property.matches(card, group.area)));
-      item.hidden = !match;
-      if (match) found++;
     }
-    hits += found;
     const label = expansionName(group.expansion) + (group.area === "land-pool" ? " · " + tr("Landschaften", "Landscapes") : "");
-    group.summary.textContent = label + " · " + available + tr(" verfügbar · ", " available · ") +
+    const text = label + " · " + available + tr(" verfügbar · ", " available · ") +
       pinned + tr(" fest · ", " pinned · ") + excluded + tr(" ausgeschlossen", " excluded");
-    group.details.hidden = searching && !found;
-    if (searching && found) group.details.open = true;
-    else if (!searching && openBeforeSearch) group.details.open = openBeforeSearch.has(group);
+    if (group.summary.textContent !== text) group.summary.textContent = text;
   }
   let visibleDefense = 0;
   for (const [card, item] of defenseItems) {
-    item.hidden = !(rangeInputs.get("exp-" + card.expansion)[1].valueAsNumber > 0) ||
-      !allowsEdition(card) || poolChoices.get(card.id).value === "excluded";
+    hidePoolItem(item, !expansionInPossiblePool(card.expansion) ||
+      !(rangeInputs.get("exp-" + card.expansion)[1].valueAsNumber > 0) || !allowsEdition(card) || poolChoices.get(card.id).value === "excluded");
     if (!item.hidden) visibleDefense++;
   }
   defenseEmpty.hidden = Boolean(visibleDefense);
-  if (!searching) openBeforeSearch = undefined;
-  poolSearchStatus.textContent = searching ? hits + tr(" Treffer", hits === 1 ? " result" : " results") : "";
+  updatePoolSearchStatus();
 }
 
+function updatePoolSearchStatus() {
+  const text = openBeforeSearch ? poolSearchHits + tr(" Treffer", poolSearchHits === 1 ? " result" : " results") : "";
+  if (poolSearchStatus.textContent !== text) poolSearchStatus.textContent = text;
+}
+
+function refreshPoolSearch() {
+  updatePoolSearch();
+  updatePoolSearchStatus();
+}
 
 let activeExpansionInfo;
 let expansionInfoTimer;
@@ -2871,6 +3138,14 @@ function openExpansionInfo(trigger, expansion, pinned = false) {
   document.getElementById("expansion-info-source").textContent =
     tr("Originalbeschreibung aus der Steam-Version", "Original description from the Steam version");
   renderGameText(document.getElementById("expansion-info-description"), formatGameRules(info.description), uiLanguage);
+  const promoList = document.getElementById("expansion-info-promo-cards");
+  promoList.hidden = expansion !== "promos";
+  if (!promoList.hidden) {
+    const titles = allCards.filter(card => card.expansion === "promos" && card.types.length)
+      .map(card => cardTitle(card, uiLanguage))
+      .sort((a, b) => a.localeCompare(b, uiLocale()));
+    promoList.textContent = tr("Promokarten", "Promo cards") + " · " + titles.join(", ");
+  }
   document.getElementById("expansion-info-rules-title").textContent = tr("Spielregeln anzeigen", "Show game rules");
   const body = document.getElementById("expansion-info-rule-text");
   const sections = info.rules.map((text, index) => {
@@ -2949,7 +3224,7 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     name.append(title);
   }
   const firstEditionCards = kingdomExpansion && expansion !== "promos"
-    ? cards.filter(card => card.expansion === expansion && card.edition === "first")
+    ? cards.filter(card => card.expansion === expansion && isFirstEdition(card))
     : [];
   if (firstEditionCards.length) {
     const label = document.createElement("label");
@@ -3006,6 +3281,27 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     fields.push(field);
   }
   const [from, to] = fields;
+  rangeInputs.set(rule.id, fields);
+  const hasMode = expansions.includes(kingdomExpansion);
+  if (hasMode) {
+    const mode = document.createElement("select");
+    mode.id = "mode-expansion-" + kingdomExpansion;
+    mode.className = "expansion-mode";
+    const labelMode = () => mode.setAttribute("aria-label", tr("Auswahl für ", "Selection for ") + expansionName(kingdomExpansion));
+    interfaceLabels.push(labelMode);
+    labelMode();
+    for (const [value, de, en] of [["always", "Immer", "Always"], ["random", "Zufall", "Random"], ["off", "Aus", "Off"]]) {
+      if (kingdomExpansion === "base" && value === "random") continue;
+      const option = new Option(de, value);
+      bindInterfaceLabel(option, () => tr(de, en));
+      mode.add(option);
+    }
+    name.classList.add("expansion-with-mode");
+    name.append(mode);
+    expansionModes.set(kingdomExpansion, mode);
+    setExpansionMode(kingdomExpansion, initialMax > 0 ? "always" : "off");
+    mode.addEventListener("input", () => setExpansionMode(kingdomExpansion, mode.value));
+  }
   for (const [edited, other] of [[from, to], [to, from]]) {
     edited.addEventListener("input", () => {
       if (rule.inherited) {
@@ -3017,6 +3313,11 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
       const limit = rule.max ?? kingdomSize;
       if (isValidRangeBound(lower, limit) && isValidRangeBound(upper, limit) && lower > upper) {
         other.value = edited.value;
+      }
+      if (hasMode && from.valueAsNumber === 0 && to.valueAsNumber === 0) {
+        const focusMode = document.activeElement === edited;
+        setExpansionMode(kingdomExpansion, "off");
+        if (focusMode) expansionModes.get(kingdomExpansion).focus();
       }
     });
     if (!rule.inherited) continue;
@@ -3048,7 +3349,24 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     wrapper.append(edited, stepper);
     group.append(wrapper);
   }
-  rangeInputs.set(rule.id, fields);
+}
+
+function addRangeHeading(table, id, label) {
+  const title = document.createElement(label ? "h3" : "span");
+  if (label) {
+    title.id = id + "-title";
+    table.setAttribute("role", "group");
+    table.setAttribute("aria-labelledby", title.id);
+    bindInterfaceLabel(title, () => tr(...label));
+  }
+  table.append(title);
+  for (const [bound, de, en] of [["from", "Von", "From"], ["to", "Bis", "To"]]) {
+    const header = document.createElement("span");
+    header.id = id + "-" + bound;
+    header.className = "range-bound";
+    bindInterfaceLabel(header, () => tr(de, en));
+    table.append(header);
+  }
 }
 
 function addQuotaColumns(containerId, rules, prefix, heading, rowsPerColumn, { repeatHeading = true } = {}) {
@@ -3057,22 +3375,7 @@ function addQuotaColumns(containerId, rules, prefix, heading, rowsPerColumn, { r
     const column = document.createElement("div");
     column.className = "range-rules quota-table";
     const columnId = prefix + "-" + start;
-    const showHeading = repeatHeading || start === 0;
-    const title = document.createElement(showHeading ? "h3" : "span");
-    if (showHeading) {
-      title.id = columnId + "-title";
-      bindInterfaceLabel(title, () => tr(heading, {
-        "Ressourcen und Marker": "Resources and tokens", Erweiterung: "Expansion", Herkunft: "Source expansion",
-      }[heading]));
-    }
-    column.append(title);
-    for (const [bound, label] of [["from", "Von"], ["to", "Bis"]]) {
-      const header = document.createElement("span");
-      header.id = columnId + "-" + bound;
-      header.className = "range-bound";
-      bindInterfaceLabel(header, () => tr(label, bound === "from" ? "From" : "To"));
-      column.append(header);
-    }
+    addRangeHeading(column, columnId, repeatHeading || start === 0 ? heading : null);
     for (const rule of rules.slice(start, start + rowsPerColumn)) addRange(rule, columnId, column);
     container.append(column);
   }
@@ -3147,31 +3450,48 @@ for (const card of cards.filter(isDefense)) {
   defenseItems.set(card, item);
   defenseList.append(item);
 }
+for (const [id, de, en] of [
+  ["effects", "Karteneffekte", "Card effects"],
+  ["combat", "Angriff und Reaktion", "Attacks and Reactions"],
+  ["cost", "Münzkosten", "Coin costs"],
+  ["types", "Kartentypen", "Card types"],
+  ["land", "Gesamtzahl und Typ", "Total and type"],
+]) {
+  addRangeHeading(document.getElementById(id + "-ranges"), id, [de, en]);
+}
 for (const rule of countRules.filter(rule => rule.group !== "exp" && rule.group !== "resources")) {
   addRange(rule, rule.group ?? "effects");
 }
 addQuotaColumns("resources-ranges", countRules.filter(rule => rule.group === "resources"),
-  "resource-column", "Ressourcen und Marker", 4, { repeatHeading: false });
+  "resource-column", ["Ressourcen und Marker", "Resources and tokens"], 4, { repeatHeading: false });
 for (const rule of landRules.filter(rule => !rule.inherited)) addRange(rule, "land");
-addQuotaColumns("exp-ranges", countRules.filter(rule => rule.group === "exp"), "exp-column", "Erweiterung", 5);
-addQuotaColumns("land-quotas", landRules.filter(rule => rule.inherited), "land-column", "Herkunft", 5);
+addQuotaColumns("exp-ranges", countRules.filter(rule => rule.group === "exp"), "exp-column", ["Erweiterung", "Expansion"], 5);
+addQuotaColumns("land-quotas", landRules.filter(rule => rule.inherited), "land-column", ["Herkunft", "Source expansion"], 5);
 for (const expansion of expansions) {
   makePoolGroup(expansion, cards.filter(card => card.expansion === expansion), "pool");
 }
 for (const expansion of landscapeExpansions) {
   makePoolGroup(expansion, landscapes.filter(card => card.expansion === expansion), "land-pool");
 }
-poolSearch.addEventListener("input", updatePoolGroups);
-poolPropertiesPanel.addEventListener("keydown", event => {
-  if (event.key !== "Escape" || !poolPropertiesPanel.open) return;
-  poolPropertiesPanel.open = false;
+poolSearch.addEventListener("input", refreshPoolSearch);
+function setPropertiesOpen(open) {
+  poolPropertiesPanel.hidden = !open;
+  poolPropertiesTitle.setAttribute("aria-expanded", String(open));
+}
+
+poolPropertiesTitle.addEventListener("click", () => setPropertiesOpen(poolPropertiesPanel.hidden));
+document.getElementById("pool-details").addEventListener("keydown", event => {
+  if (event.key !== "Escape" || poolPropertiesPanel.hidden) return;
+  if (event.target !== poolPropertiesTitle && !poolPropertiesPanel.contains(event.target)) return;
+  event.stopPropagation();
+  setPropertiesOpen(false);
   poolPropertiesTitle.focus();
 });
 document.getElementById("clear-pool-search").addEventListener("click", () => {
   poolSearch.value = "";
   selectedPoolProperties.clear();
   renderPoolSearchChips();
-  updatePoolGroups();
+  refreshPoolSearch();
   poolSearch.focus();
 });
 kingdomSizeSelect.addEventListener("change", () => {
@@ -3180,6 +3500,15 @@ kingdomSizeSelect.addEventListener("change", () => {
 });
 document.getElementById("setup-options").addEventListener("input", event => {
   if (event.target !== kingdomSizeSelect) scheduleRuleCheck();
+});
+for (let count = 0; count < expansions.length; count++) {
+  randomExpansionCount.add(new Option(String(count), String(count)));
+}
+enableRandomExpansions.addEventListener("click", () => {
+  for (const [id, mode] of expansionModes) {
+    if (id !== "base" && mode.value === "off") setExpansionMode(id, "random");
+  }
+  scheduleRuleCheck();
 });
 document.getElementById("expansion-settings").addEventListener("input", scheduleRuleCheck);
 document.getElementById("draw-rules").addEventListener("input", scheduleRuleCheck);
@@ -3193,6 +3522,7 @@ for (const attribute of ["placeholder", "aria-label"]) {
   }
 }
 restoreSettings();
+updatePoolGroups();
 checkRules();
 languageSelect.addEventListener("change", () => {
   const result = currentResult;
@@ -3201,7 +3531,7 @@ languageSelect.addEventListener("change", () => {
   previewLanguage.value = languageSelect.value;
   setInterfaceLanguage(languageSelect.value);
   if (usesDefaultName && !result) setName.value = tr(setName.defaultValue, "Double Piles");
-  previews.forEach(updatePreview);
+  refreshPreviews();
   if (result) showDraw(result);
   else updateEffectSet();
   for (const id of ["copy-status", "settings-file-status", "profile-status"]) {
@@ -3214,7 +3544,7 @@ for (const icon of document.querySelectorAll("[data-game-icon]")) {
   icon.src = gameIcons[icon.dataset.gameIcon];
 }
 previewLanguage.addEventListener("change", () => {
-  previews.forEach(updatePreview);
+  refreshPreviews();
   saveSettings();
 });
 expansionInfoPanel.addEventListener("pointerenter", () => clearTimeout(expansionInfoTimer));
@@ -3272,7 +3602,7 @@ imagePack.addEventListener("change", async () => {
   imageStatus.textContent = tr("Bildpaket wird gelesen …", "Reading the image pack…");
   try {
     imageData = await readImagePack(file);
-    previews.forEach(updatePreview);
+    if (activePreview) updatePreview(activePreview);
     showImageStatus();
   } catch (error) {
     imageStatus.className = "error";
@@ -3322,8 +3652,9 @@ document.getElementById("export-settings").addEventListener("click", () => {
 });
 
 function replaceSettings(settings, message) {
-  clearOutputs();
   applySettings(settings);
+  if (currentResult) showDraw(currentResult);
+  updatePoolGroups();
   if (settings.theme !== undefined && themeSelect.value !== settings.theme) {
     themeSelect.value = settings.theme;
     themeSelect.dispatchEvent(new Event("change"));

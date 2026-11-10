@@ -112,6 +112,25 @@ void text_limits() {
     assert(validate_text(std::string(4096, 'a'), 4095) == Error::input_length);
 }
 
+void known_crashes() {
+    const auto check = [](std::string_view text) { return validate_text(text, 4095, true); };
+    assert(check("-x start_with_cube(pageant)") == Error::none);
+    assert(check("-x start_with_cube(pageant), start_with_cube(road_network)") == Error::none);
+    assert(check("-x start_with_cube(pageant), twist_big_ideas, start_with_cube( pageant )")
+           == Error::repeated_project_cube);
+    assert(check("-x stamp_cost_2D_less(triumph)") == Error::debt_stamp);
+    assert(check("-x stamp_cost_2d_less(triumph)") == Error::debt_stamp);
+    assert(validate_text("-x stamp_cost_2D_less(triumph)", 4095) == Error::none);
+    Effects effects{};
+    effects[0] = {project_cube, 0xE20, 0xFFFFFFFFu, 0, 0};
+    effects[1] = {project_cube, 0xE21, 0xFFFFFFFFu, 0, 0};
+    assert(known_failure(effects) == Error::none);
+    effects[1][1] = effects[0][1];
+    assert(known_failure(effects) == Error::repeated_project_cube);
+    effects[0][0] = debt_stamp;
+    assert(known_failure(effects) == Error::debt_stamp);
+}
+
 }
 
 int main() {
@@ -120,6 +139,7 @@ int main() {
     automatic_doublings();
     shared_targets();
     text_limits();
+    known_crashes();
     kingdom::EffectCommands commands;
     assert(kingdom::read_effect_commands(
         "-k village, market -x start_double_pile(village), twist_typhoon(village,market), "

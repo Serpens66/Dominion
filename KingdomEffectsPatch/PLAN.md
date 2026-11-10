@@ -125,6 +125,12 @@ Der lokale Modus **Weitergeben** ist in den deutschen Ressourcen unter `dom_ui_c
 
 Der Katalog wird beim Build aus den 89 deutschen Tabelleneinträgen der Spielanleitung und dem Kartenkatalog erzeugt. Die Zielauswahl verwendet kanonische IDs mit deutschen Namen und filtert nach Zieltyp. Bei Platz für Mehr und Taifun werden die gemeinsamen Zielfelder mit der Effektliste ersetzt oder beim Entfernen geleert. Auf dem Host bleibt die Automatik beim lokalen Spielstart verfügbar. Die Dialogoption gilt pro Testsitzung, die ausdrücklich gewählte Effektliste lässt sich als Set speichern.
 
+### Schutz vor bekannten lokalen Startabbrüchen
+
+Der Editor und der Textimport prüfen die bekannten Problemfälle. Beim Zusammenführen prüft der Patch zusätzlich die resultierende native Effektliste. `start_with_cube` darf für ein Ziel einmal vorkommen. Der Patch sperrt den Schuldenstempel `stamp_cost_2D_less` in Build 3315. Mit Triumph wurde ein Startabbruch reproduziert. Die kleingeschriebene Schreibweise wurde im Spiel nicht als Effekt geladen. Die Schutzregeln gelten in den lokalen Patchmodi.
+
+Für vorhandene Profilsets prüft der Patch Startanforderung 1 im lokalen Dispatcher. Der Hook bei RVA `0x0B24BF` (PE-Dateioffset `0x0B18BF`) ersetzt die zehn Byte `C7 87 44 50 00 00 00 00 00 00` und behält das Leeren der Anforderung bei. Bei Freigabe geht es zu `0x0B24C9`, bei Ablehnung zum nativen Funktionsende bei `0x0B24EE`. Zu diesem Zeitpunkt wurde noch keine Partie angelegt. Die Prüfung liest `setupData` und `kingdomData` aus der aktiven Spielkonfiguration sowie bei einem Profilset den gewählten Eintrag aus der Set-Liste. Die Referenzen für diese Felder stehen bei `0x0D5E76` bis `0x0D5E86` und `0x0E48E7` bis `0x0E4913`. [Laufzeitprüfung](TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
+
 ## Native Hintergrundtests für Effekte
 
 Der Runner wurde mit der oben per SHA-256 identifizierten `Dominion.exe` geprüft. Alle Moduladressen sind RVAs. Die Profilisolierung setzt vor `ResumeThread` im suspendiert angelegten Kindprozess den leeren Save-Pfadpuffer bei `0x15E3A98`. `XGetSaveGameFolder` bei `0x23C090` (Dateioffset `0x23B490`) gibt diesen Puffer bei gesetztem Inhalt zurück. Der Runner verifiziert die Originalbytes und den Pfad im Prozess. Erst nach Erscheinen des Spiellogs im temporären Ordner startet der Test die lokale Partie.
