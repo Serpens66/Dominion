@@ -56,13 +56,6 @@ def build(source):
     source, count = re.subn(r'<style>\s*:root\s*\{\s*--sprite-[\s\S]*?</style>\s*', lambda _: style, source)
     if count != 1 or 'id="embedded-image-pack"' in source or "data:image/png" in source or "data:image/webp" in source:
         raise ValueError("Unexpected bundled image resources in Pages output.")
-    source, count = re.subn(
-        r'<p class="muted" id="image-help"[^>]*>[\s\S]*?</p>',
-        '<p class="muted" id="image-help" data-en="You can open your own image pack here.">'
-        'Hier kannst du dein eigenes Bildpaket öffnen.</p>', source,
-    )
-    if count != 1:
-        raise ValueError("Image help block missing.")
     return (source.replace("See game setup.", "Card rules are available in Dominion.")
             .replace("Siehe Spielaufbau.", "Die Kartenregeln findest du in Dominion.")
             .replace("Originalbeschreibung aus der Steam-Version", "Erweiterungsübersicht")

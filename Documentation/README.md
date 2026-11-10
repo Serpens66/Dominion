@@ -37,7 +37,7 @@ python -m pip install Pillow
 python .\SetGenerator\extract_card_images.py "E:\ProgrammeE\Steam\steamapps\common\Dominion\Dominion.xpack" ".\SetGenerator\Dominion-Kartenbilder.json" --all-expansions
 ```
 
-Beim direkten Öffnen der HTML-Datei wählst du das Paket über **Kartenbilder laden**. Für automatisches Laden starte im Projektordner `python -m http.server 8000 --bind 127.0.0.1 --directory SetGenerator` und öffne den Generator über [localhost](http://127.0.0.1:8000/Dominion-Generator.html).
+Lege das Bildpaket als Dominion-Kartenbilder.json neben die HTML-Datei. Für die automatische Bildladung starte im Projektordner `python -m http.server 8000 --bind 127.0.0.1 --directory SetGenerator` und öffne den Generator über [localhost](http://127.0.0.1:8000/Dominion-Generator.html).
 
 ## Generator pflegen
 

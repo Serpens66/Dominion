@@ -746,7 +746,6 @@
   .game-value > span { z-index: 1; font-size: .86em; }
   .game-value-debt { color: #fff4dc; text-shadow: 0 1px 2px #382014; }
   .game-value-vp { color: #fff; text-shadow: 0 0 .15em #18131e, 0 1px #18131e; }
-  #image-pack { max-width: 100%; }
   footer { margin-top: 1.35rem; color: var(--muted); font-size: .85rem; }
   a { color: var(--accent-text); }
 </style>
@@ -909,21 +908,7 @@
       <p id="random-expansion-result" class="muted" hidden></p>
       <div class="output-columns">
         <div>
-          <p class="muted" data-en="Select a card name to read its effect.">Wähle einen Kartennamen, um den Effekt zu lesen.</p>
-          <div class="row">
-            <label for="preview-language" data-en="Card preview">Kartenvorschau</label>
-            <select id="preview-language">
-              <option value="de">Deutsch</option>
-              <option value="en">Englisch</option>
-            </select>
-            <button id="reset-preview" class="secondary" type="button" data-en="Reset card previews">Kartenvorschau zurücksetzen</button>
-          </div>
-          <p id="image-status" role="status" data-en="Text card previews.">Kartenvorschau mit Text.</p>
-          <div class="row">
-            <label class="field" for="image-pack" data-en="Load card images">Kartenbilder laden</label>
-            <input id="image-pack" type="file" accept=".json,application/json" aria-describedby="image-help">
-          </div>
-          <p class="muted" id="image-help" data-en="Select the Dominion-Kartenbilder.json file. &lt;a href=&quot;extract_card_images.py&quot; download&gt;Create an image pack from Steam&lt;/a&gt;">Wähle die Datei Dominion-Kartenbilder.json aus. <a href="extract_card_images.py" download>Bildpaket aus Steam erstellen</a></p>
+          <p class="muted" data-en="Select a card name to open its preview.">Wähle einen Kartennamen, um die Vorschau zu öffnen.</p>
           <ul id="cards" aria-label="Gezogene Königreichstapel" data-en-aria-label="Drawn Kingdom piles"></ul>
           <div id="planning-result" hidden>
             <h3 data-en="Additional piles for planning">Zusatzstapel für die Planung</h3>
@@ -1612,7 +1597,6 @@ function setInterfaceLanguage(language) {
     for (const { card, cost } of group.items) renderCardCost(cost, card, uiLanguage);
   }
   updatePoolGroups();
-  showImageStatus();
 }
 
 const standardKingdomSize = 10;
@@ -1845,16 +1829,11 @@ const status = document.getElementById("status");
 const randomExpansionResult = document.getElementById("random-expansion-result");
 const copyStatus = document.getElementById("copy-status");
 const cardsList = document.getElementById("cards");
-const previewLanguage = document.getElementById("preview-language");
 const languageSelect = document.getElementById("language");
 let currentResult;
-const imagePack = document.getElementById("image-pack");
-const imageStatus = document.getElementById("image-status");
 const previews = new Set();
 const isFirstEdition = card => card.edition === "first";
-let defaultImageData = { images: {} };
-let imageData = defaultImageData;
-const resetPreview = document.getElementById("reset-preview");
+let imageData = { images: {} };
 let activePreview = null;
 const tooltipTriggers = new WeakMap();
 const pinnedTooltips = new Map();
@@ -2137,8 +2116,8 @@ function cardFrameStyle(card) {
 }
 
 function updatePreviewLabel({ card, button, badge }) {
-  button.lang = previewLanguage.value;
-  button.textContent = cardTitle(card, previewLanguage.value);
+  button.lang = uiLanguage;
+  button.textContent = cardTitle(card, uiLanguage);
   if (badge) badge.textContent = tr("1. Ed.", "1st ed.");
 }
 
@@ -2149,7 +2128,7 @@ function refreshPreviews() {
 
 function updatePreview(preview) {
   const { card, button, panel } = preview;
-  const language = previewLanguage.value;
+  const language = uiLanguage;
   const pack = imageData;
   if (preview.rendered?.language === language && preview.rendered.pack === pack) return;
   const render = { language, pack };
@@ -2356,7 +2335,7 @@ function showCards(result, list = cardsList) {
     const choice = poolChoices.get(card.id);
     pin.type = "checkbox";
     pin.checked = choice.value === "pinned";
-    pin.setAttribute("aria-label", tr(cardTitle(card, previewLanguage.value) + " festhalten", "Pin " + cardTitle(card, previewLanguage.value)));
+    pin.setAttribute("aria-label", tr(cardTitle(card, uiLanguage) + " festhalten", "Pin " + cardTitle(card, uiLanguage)));
     resultPins.set(card.id, pin);
     pin.addEventListener("change", () => {
       choice.value = pin.checked ? "pinned" : "random";
@@ -2659,7 +2638,7 @@ function readSettings(source) {
   if ((settings.kingdomSize !== undefined && !allowedKingdomSizes.includes(settings.kingdomSize)) ||
       !isRecord(settings.ranges) || !isRecord(settings.cardChoices) ||
       !Object.values(settings.cardChoices).every(choice => choice === "pinned" || choice === "excluded") ||
-      !["de", "en"].includes(settings.previewLanguage) || typeof settings.setName !== "string" ||
+      typeof settings.setName !== "string" ||
       (settings.interfaceLanguage !== undefined && !["de", "en"].includes(settings.interfaceLanguage)) ||
       (settings.theme !== undefined && !["system", "light", "dark"].includes(settings.theme)) ||
       (settings.version === 2 && (!isRecord(settings.editions) || !Object.values(settings.editions).every(value => typeof value === "boolean") ||
@@ -2719,7 +2698,7 @@ function collectSettings() {
   return { version: 2, kingdomSize, ranges, cardChoices, editions, expansionModes: modes,
     randomExpansionCount: Number(randomExpansionCount.value), requireLoot: requireLoot.checked,
     colonies: coloniesMode.value, shelters: sheltersMode.value, interfaceLanguage: uiLanguage,
-    previewLanguage: previewLanguage.value, setName: setName.value };
+    setName: setName.value };
 }
 
 function setKingdomSize(size, resizeRanges = false) {
@@ -2764,7 +2743,6 @@ function applySettings(settings) {
   requireLoot.checked = settings.requireLoot ?? false;
   coloniesMode.value = settings.colonies ?? "rules";
   sheltersMode.value = settings.shelters ?? "rules";
-  previewLanguage.value = settings.previewLanguage;
   if (settings.interfaceLanguage && settings.interfaceLanguage !== uiLanguage) setInterfaceLanguage(settings.interfaceLanguage);
   setName.value = settings.setName;
   refreshPreviews();
@@ -3571,7 +3549,6 @@ languageSelect.addEventListener("change", () => {
   const result = currentResult;
   const defaultSetName = tr(setName.defaultValue, "Double Piles");
   const usesDefaultName = setName.value === defaultSetName;
-  previewLanguage.value = languageSelect.value;
   setInterfaceLanguage(languageSelect.value);
   if (usesDefaultName && !result) setName.value = tr(setName.defaultValue, "Double Piles");
   refreshPreviews();
@@ -3586,10 +3563,6 @@ languageSelect.addEventListener("change", () => {
 for (const icon of document.querySelectorAll("[data-game-icon]")) {
   icon.src = gameIcons[icon.dataset.gameIcon];
 }
-previewLanguage.addEventListener("change", () => {
-  refreshPreviews();
-  saveSettings();
-});
 expansionInfoPanel.addEventListener("pointerenter", () => clearTimeout(expansionInfoTimer));
 expansionInfoPanel.addEventListener("pointerleave", scheduleExpansionInfoClose);
 expansionInfoPanel.addEventListener("focusout", scheduleExpansionInfoClose);
@@ -3627,58 +3600,19 @@ function dismissTooltipsOutside(target) {
       !activePreview.button.contains(target) && !activePreview.panel.contains(target)) setPreview(null);
 }
 document.addEventListener("pointerdown", event => dismissTooltipsOutside(event.target));
-function showImageStatus() {
-  const count = Object.keys(imageData.images).length;
-  const complete = new Set(Object.values(imageData.cards ?? {}).flatMap(images => Object.keys(images))).size;
-  imageStatus.className = count || complete ? "success" : "";
-  imageStatus.textContent = complete
-    ? complete + tr(" vollständige Kartenbilder und ", " complete card faces and ") + count + tr(" Illustrationen geladen.", " illustrations loaded.")
-    : count ? count + tr(" Illustrationen geladen. Fahre über einen Kartennamen.", " illustrations loaded. Hover over a card name.")
-    : tr("Kartenvorschau ohne Illustrationen.", "Card previews without illustrations.");
-}
-showImageStatus();
-async function loadImages(readPack, useAsDefault = false) {
-  imagePack.disabled = resetPreview.disabled = true;
-  imageStatus.className = "";
-  imageStatus.textContent = tr("Bildpaket wird gelesen …", "Reading the image pack…");
+async function loadLocalImages() {
   try {
-    const pack = await readPack();
-    if (pack) {
-      imageData = pack;
-      if (useAsDefault) defaultImageData = pack;
-      if (activePreview) updatePreview(activePreview);
-    }
-    showImageStatus();
+    const response = await fetch("Dominion-Kartenbilder.json");
+    if (response.status === 404) return;
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    imageData = await readImagePack(await response.blob());
+    if (activePreview) updatePreview(activePreview);
   } catch (error) {
-    imageStatus.className = "error";
-    imageStatus.textContent = error.message;
-  } finally {
-    imagePack.disabled = resetPreview.disabled = false;
-    imagePack.value = "";
+    console.warn("Dominion-Kartenbilder.json", error);
   }
 }
 
-imagePack.addEventListener("change", () => {
-  const [file] = imagePack.files;
-  if (file) loadImages(() => readImagePack(file));
-});
-
-if (["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) {
-  loadImages(async () => {
-    const response = await fetch("Dominion-Kartenbilder.json");
-    if (response.status === 404) return null;
-    if (!response.ok) throw new Error(tr("Das lokale Bildpaket konnte nicht geladen werden.", "The local image pack could not be loaded."));
-    return readImagePack(await response.blob());
-  }, true);
-}
-
-resetPreview.addEventListener("click", () => {
-  previewLanguage.value = uiLanguage;
-  imageData = defaultImageData;
-  refreshPreviews();
-  showImageStatus();
-  saveSettings();
-});
+if (["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) loadLocalImages();
 
 async function copyText(field, message, confirmation) {
   const value = field.value;
@@ -3778,7 +3712,6 @@ resetSettings.addEventListener("click", () => {
   replaceSettings({
     ranges: {},
     cardChoices: {},
-    previewLanguage: uiLanguage,
     setName: tr(setName.defaultValue, "Double Piles"),
     theme: "system",
   }, () => tr("Standardeinstellungen wiederhergestellt.", "Default settings restored."));

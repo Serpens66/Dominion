@@ -18,6 +18,6 @@ Kopiere deine Auswahl aus dem Dominion Randomizer oder gib die Kartennamen selbs
 
 Der Konverter erstellt im Abschnitt **Stapel verdoppeln** einen XML-Eintrag für ein separates Effektset. Die Schritte zum Speichern und Laden in Dominion stehen in der [Steam-Spielanleitung](../Documentation/Steam_Spielanleitung.md#mehrere-stapel-über-ein-gespeichertes-set-verdoppeln).
 
-## Generator offline nutzen und Kartenbilder laden
+## Generator offline nutzen
 
-Speichere die HTML-Datei und öffne sie lokal im Browser. Ein eigenes Bildpaket kannst du online und offline über **Kartenbilder laden** auswählen. [HTML-Datei](Dominion-Generator.html) · [Bildpaket aus Steam erstellen](../Documentation/README.md#kartenbilder-erstellen)
+Speichere die HTML-Datei und öffne sie lokal im Browser. Für Kartenbilder kannst du den Generator über einen lokalen Server öffnen. [HTML-Datei](Dominion-Generator.html) · [Bildpaket aus Steam erstellen](../Documentation/README.md#kartenbilder-erstellen)
