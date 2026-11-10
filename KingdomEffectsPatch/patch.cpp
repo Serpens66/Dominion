@@ -403,7 +403,7 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
             return true;
         };
         log("effect editor opened");
-        if (kingdom::edit_effects(owner, effects, automatic, apply)) {
+        if (kingdom::edit_effects(owner, original.view(), effects, automatic, apply)) {
             automatic_enabled = automatic;
         }
     } catch (...) {

@@ -3,6 +3,7 @@
 
 #include "effect_editor.hpp"
 #include "effect_editor_ids.h"
+#include "card_picker.hpp"
 
 namespace kingdom {
 namespace {
@@ -19,14 +20,9 @@ struct EffectDefinition {
     const char* id;
     const wchar_t* title;
     const wchar_t* description;
+    const wchar_t* status;
     TargetKind first;
     TargetKind second;
-};
-
-struct TargetDefinition {
-    const char* id;
-    const wchar_t* title;
-    unsigned kinds;
 };
 
 #include "effect_catalog.generated.hpp"
@@ -35,17 +31,14 @@ struct Draft {
     EffectCommands effects;
     bool automatic;
     const std::function<bool(const EffectCommands&)>& apply;
+    CardTargets fixed;
     const EffectDefinition* selected = nullptr;
-    std::vector<const TargetDefinition*> replacements;
+    const CardTarget* first = nullptr;
+    const CardTarget* second = nullptr;
 };
 
 std::wstring widen(std::string_view value) {
     return {value.begin(), value.end()}; // All native IDs and effect arguments are ASCII.
-}
-
-std::wstring lowercase(std::wstring value) {
-    if (!value.empty()) CharLowerBuffW(value.data(), static_cast<DWORD>(value.size()));
-    return value;
 }
 
 std::wstring input(HWND dialog, int control) {
@@ -74,8 +67,27 @@ const wchar_t* target_label(TargetKind kind) {
     }
 }
 
-std::wstring target_name(const TargetDefinition& target) {
-    return std::wstring(target.title) + L" (" + widen(target.id) + L")";
+std::string_view canonical_card(std::string_view id) {
+    for (const auto& [alias, canonical] : target_aliases) {
+        if (id == alias) return canonical;
+    }
+    return id;
+}
+
+CardTargets fixed_targets(std::string_view text) {
+    const auto ids = fixed_kingdom_ids(text);
+    CardTargets cards;
+    for (const auto& target : target_catalog) {
+        if (!(target.kinds & kind_mask(TargetKind::kingdom_pile))) continue;
+        if (std::any_of(ids.begin(), ids.end(), [&](const auto& id) { return canonical_card(id) == target.id; }))
+            cards.push_back(&target);
+    }
+    return cards;
+}
+
+bool multiplier(const EffectDefinition& effect) {
+    const std::string_view id(effect.id);
+    return id == "start_double_pile" || id == "start_triple_pile";
 }
 
 std::wstring active_label(std::string_view command) {
@@ -90,7 +102,7 @@ std::wstring active_label(std::string_view command) {
     label += L" · ";
     while (!arguments.empty()) {
         const auto comma = arguments.find(',');
-        const auto argument = trimmed(arguments.substr(0, comma));
+        const auto argument = canonical_card(trimmed(arguments.substr(0, comma)));
         const auto* target = std::find_if(std::begin(target_catalog), std::end(target_catalog),
             [argument](const auto& entry) { return entry.id == argument; });
         label += target == std::end(target_catalog) ? widen(argument) : std::wstring(target->title);
@@ -112,154 +124,134 @@ void update_active(HWND dialog, const Draft& draft, LRESULT selection = -1) {
                             (std::min)(selection, static_cast<LRESULT>(draft.effects.size() - 1)), 0);
     }
     const auto status = std::to_wstring(draft.effects.size()) + L" / 32 Effektplätze belegt";
-    SetDlgItemTextW(dialog, IDC_STATUS, status.c_str());
+    SetDlgItemTextW(dialog, IDC_EFFECT_COUNT, status.c_str());
 }
 
-void populate_targets(HWND dialog, int control, int label, TargetKind kind) {
-    SendDlgItemMessageW(dialog, control, CB_RESETCONTENT, 0, 0);
-    SetDlgItemTextW(dialog, label, target_label(kind));
-    ShowWindow(GetDlgItem(dialog, label), kind == TargetKind::none ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(dialog, control), kind == TargetKind::none ? SW_HIDE : SW_SHOW);
-    if (kind == TargetKind::none) return;
-    const auto mask = kind_mask(kind == TargetKind::pile_list ? TargetKind::kingdom_pile : kind);
-    for (const auto& target : target_catalog) {
-        if (!(target.kinds & mask)) continue;
-        const auto name = target_name(target);
-        const auto row = SendDlgItemMessageW(dialog, control, CB_ADDSTRING, 0,
-                                             reinterpret_cast<LPARAM>(name.c_str()));
-        if (row >= 0) SendDlgItemMessageW(dialog, control, CB_SETITEMDATA, row,
-                                          reinterpret_cast<LPARAM>(&target));
-    }
-    SendDlgItemMessageW(dialog, control, CB_LIMITTEXT, 240, 0);
+void update_targets(HWND dialog, const Draft& draft) {
+    const auto* effect = draft.selected;
+    const bool needs_first = effect && effect->first != TargetKind::none;
+    const bool needs_second = effect && effect->second != TargetKind::none;
+    const bool multiple = effect && (multiplier(*effect) || effect->first == TargetKind::pile_list);
+    ShowWindow(GetDlgItem(dialog, IDC_TARGET), needs_first ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(dialog, IDC_SECOND_TARGET), needs_second ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(dialog, IDC_ADD), effect && (!needs_first || needs_second) ? SW_SHOW : SW_HIDE);
+    EnableWindow(GetDlgItem(dialog, IDC_ADD), effect && (!needs_second || (draft.first && draft.second)));
+    if (needs_first)
+        SetDlgItemTextW(dialog, IDC_TARGET, draft.first ? draft.first->title :
+                       multiple ? L"Ziele wählen…" : L"Ziel wählen…");
+    if (needs_second)
+        SetDlgItemTextW(dialog, IDC_SECOND_TARGET, draft.second ? draft.second->title : L"Zweites Ziel wählen…");
 }
 
 void select_effect(HWND dialog, Draft& draft) {
     const auto row = SendDlgItemMessageW(dialog, IDC_CATALOG, LB_GETCURSEL, 0, 0);
-    draft.selected = row < 0 ? nullptr : reinterpret_cast<const EffectDefinition*>(
+    const auto* selection = row < 0 ? nullptr : reinterpret_cast<const EffectDefinition*>(
         SendDlgItemMessageW(dialog, IDC_CATALOG, LB_GETITEMDATA, row, 0));
-    const auto* effect = draft.selected;
-    SetDlgItemTextW(dialog, IDC_DESCRIPTION, effect ? effect->description : L"");
-    populate_targets(dialog, IDC_TARGET, IDC_TARGET_LABEL, effect ? effect->first : TargetKind::none);
-    populate_targets(dialog, IDC_SECOND_TARGET, IDC_SECOND_LABEL, effect ? effect->second : TargetKind::none);
-    draft.replacements.clear();
-    SendDlgItemMessageW(dialog, IDC_MULTI_TARGETS, LB_RESETCONTENT, 0, 0);
-    const bool multiple = effect && effect->first == TargetKind::pile_list;
-    for (const auto id : {IDC_MULTI_ADD, IDC_MULTI_TARGETS, IDC_MULTI_REMOVE}) {
-        ShowWindow(GetDlgItem(dialog, id), multiple ? SW_SHOW : SW_HIDE);
+    if (selection != draft.selected) {
+        draft.selected = selection;
+        draft.first = draft.second = nullptr;
+        SetDlgItemTextW(dialog, IDC_STATUS, L"");
     }
-    EnableWindow(GetDlgItem(dialog, IDC_ADD), effect != nullptr);
+    SetDlgItemTextW(dialog, IDC_DESCRIPTION, selection ? selection->description : L"");
+    SetDlgItemTextW(dialog, IDC_EFFECT_EVIDENCE, selection ? selection->status : L"");
+    update_targets(dialog, draft);
 }
 
 void filter_catalog(HWND dialog, Draft& draft) {
-    const auto filter = lowercase(input(dialog, IDC_QUERY));
+    const auto filter = fold_card_search(input(dialog, IDC_QUERY));
     const auto category = SendDlgItemMessageW(dialog, IDC_CATEGORY, CB_GETCURSEL, 0, 0);
     const std::array<std::string_view, 4> prefixes{"", "twist_", "stamp_", "start_"};
     const auto prefix = category >= 0 ? prefixes[category] : prefixes[0];
     SendDlgItemMessageW(dialog, IDC_CATALOG, LB_RESETCONTENT, 0, 0);
+    LRESULT selection = 0;
     for (const auto& effect : effect_catalog) {
         const std::string_view id(effect.id);
         if (id.substr(0, prefix.size()) != prefix) continue;
-        if (lowercase(effect.title).find(filter) == filter.npos &&
-            lowercase(widen(id)).find(filter) == filter.npos &&
-            lowercase(effect.description).find(filter) == filter.npos) continue;
+        if (fold_card_search(effect.title).find(filter) == filter.npos &&
+            fold_card_search(widen(id)).find(filter) == filter.npos &&
+            fold_card_search(effect.description).find(filter) == filter.npos) continue;
         std::wstring name(effect.title);
         if (effect.first != TargetKind::none) name += L" · " + std::wstring(target_label(effect.first));
         const auto row = SendDlgItemMessageW(dialog, IDC_CATALOG, LB_ADDSTRING, 0,
                                              reinterpret_cast<LPARAM>(name.c_str()));
         if (row >= 0) SendDlgItemMessageW(dialog, IDC_CATALOG, LB_SETITEMDATA, row,
                                           reinterpret_cast<LPARAM>(&effect));
+        if (&effect == draft.selected && row >= 0) selection = row;
     }
-    SendDlgItemMessageW(dialog, IDC_CATALOG, LB_SETCURSEL, 0, 0);
+    SendDlgItemMessageW(dialog, IDC_CATALOG, LB_SETCURSEL, selection, 0);
     select_effect(dialog, draft);
 }
 
-const TargetDefinition* chosen_target(HWND dialog, int control, TargetKind kind) {
-    const auto row = SendDlgItemMessageW(dialog, control, CB_GETCURSEL, 0, 0);
-    if (row >= 0) return reinterpret_cast<const TargetDefinition*>(
-        SendDlgItemMessageW(dialog, control, CB_GETITEMDATA, row, 0));
-    const auto typed = lowercase(input(dialog, control));
-    if (typed.empty()) return nullptr;
-    const auto mask = kind_mask(kind == TargetKind::pile_list ? TargetKind::kingdom_pile : kind);
-    const TargetDefinition* match = nullptr;
-    for (const auto& target : target_catalog) {
-        if (!(target.kinds & mask)) continue;
-        if (lowercase(widen(target.id)) == typed || lowercase(target_name(target)) == typed) return &target;
-        if (lowercase(target.title) == typed) {
-            if (match) return nullptr; // Ambiguous localized title. Pick a row or enter the ID.
-            match = &target;
-        }
+std::string effect_command(const EffectDefinition& effect, const CardTargets& targets) {
+    std::string command(effect.id);
+    if (targets.empty()) return command;
+    char separator = '(';
+    for (const auto* target : targets) {
+        command += separator;
+        command += target->id;
+        separator = ',';
     }
-    return match;
+    return command + ')';
+}
+
+std::wstring add_commands(HWND dialog, Draft& draft, const EffectCommands& commands, bool skip_existing) {
+    const auto previous = draft.effects.size();
+    const auto result = append_editor_effects(draft.effects, commands, skip_existing);
+    if (const auto* known = known_failure_message(result.error)) return known;
+    if (result.error == Error::capacity)
+        return result.missing_slots == 1 ? L"Für diese Auswahl fehlt ein Effektplatz." :
+               L"Für diese Auswahl fehlen " + std::to_wstring(result.missing_slots) + L" Effektplätze.";
+    if (result.error == Error::shared_target) return L"Platz für Mehr und Taifun sind jeweils einmal möglich.";
+    if (result.error != Error::none) return L"Diese Effektliste kann das Spiel nicht übernehmen.";
+    const auto added = draft.effects.size() - previous;
+    const auto skipped = commands.size() - added;
+    if (added) update_active(dialog, draft, static_cast<LRESULT>(draft.effects.size() - 1));
+    const auto status = std::to_wstring(added) + L" hinzugefügt" +
+        (skipped ? L" · " + std::to_wstring(skipped) + L" bereits vorhanden" : L"");
+    SetDlgItemTextW(dialog, IDC_STATUS, status.c_str());
+    return {};
+}
+
+void choose_targets(HWND dialog, Draft& draft, bool second) {
+    if (!draft.selected) return;
+    const auto& effect = *draft.selected;
+    const auto kind = second ? effect.second : effect.first;
+    if (kind == TargetKind::none) return;
+    const auto mode = kind == TargetKind::pile_list ? CardSelection::ordered :
+                      multiplier(effect) ? CardSelection::multiple : CardSelection::single;
+    const auto mask = kind_mask(kind == TargetKind::pile_list ? TargetKind::kingdom_pile : kind);
+    CardTargets cards, current;
+    for (const auto& card : target_catalog) {
+        if (card.kinds & mask) cards.push_back(&card);
+    }
+    if (mode == CardSelection::multiple) {
+        for (const auto* card : draft.fixed)
+            if (card->kinds & mask) current.push_back(card);
+    }
+    const auto title = std::wstring(effect.title) + L" · " + target_label(kind);
+    pick_cards(dialog, title.c_str(), cards, current, mode, [&](const CardTargets& targets, bool repeat) {
+        if (effect.second != TargetKind::none) {
+            (second ? draft.second : draft.first) = targets.front();
+            update_targets(dialog, draft);
+            return std::wstring{};
+        }
+        EffectCommands commands;
+        if (mode == CardSelection::multiple) {
+            for (const auto* card : targets) commands.push_back(effect_command(effect, {card}));
+        } else commands.push_back(effect_command(effect, targets));
+        return add_commands(dialog, draft, commands, mode == CardSelection::multiple && !repeat);
+    });
 }
 
 void add_effect(HWND dialog, Draft& draft) {
     if (!draft.selected) return;
-    if (draft.effects.size() == maximum_effects) {
-        SetDlgItemTextW(dialog, IDC_STATUS, L"Alle 32 Effektplätze sind belegt.");
-        return;
+    CardTargets targets;
+    if (draft.selected->second != TargetKind::none) {
+        if (!draft.first || !draft.second) return;
+        targets = {draft.first, draft.second};
     }
-    const auto& effect = *draft.selected;
-    std::string command(effect.id);
-    if (effect.first == TargetKind::pile_list) {
-        if (draft.replacements.empty()) {
-            SetDlgItemTextW(dialog, IDC_STATUS, L"Merke mindestens einen Ersatzstapel vor.");
-            return;
-        }
-        char separator = '(';
-        for (const auto* target : draft.replacements) {
-            command += separator;
-            command += target->id;
-            separator = ',';
-        }
-        command += ')';
-    } else if (effect.first != TargetKind::none) {
-        const auto* first = chosen_target(dialog, IDC_TARGET, effect.first);
-        const auto* second = chosen_target(dialog, IDC_SECOND_TARGET, effect.second);
-        if (!first || (effect.second != TargetKind::none && !second)) {
-            SetDlgItemTextW(dialog, IDC_STATUS, L"Bitte wähle die passenden Ziele aus der Liste.");
-            return;
-        }
-        command += '(';
-        command += first->id;
-        if (second) {
-            command += ',';
-            command += second->id;
-        }
-        command += ')';
-    }
-    draft.effects.push_back(std::move(command));
-    const auto error = validate_text(effect_command_text(draft.effects), 4095, true);
-    if (error != Error::none) {
-        draft.effects.pop_back();
-        const auto* known = known_failure_message(error);
-        SetDlgItemTextW(dialog, IDC_STATUS, known ? known : error == Error::shared_target
-            ? L"Platz für Mehr und Taifun dürfen jeweils nur einmal vorkommen."
-            : L"Diese Effektliste kann das Spiel nicht übernehmen.");
-        return;
-    }
-    update_active(dialog, draft, static_cast<LRESULT>(draft.effects.size() - 1));
-}
-
-void edit_replacements(HWND dialog, Draft& draft, bool add) {
-    if (add) {
-        const auto* target = chosen_target(dialog, IDC_TARGET, TargetKind::pile_list);
-        if (!target || draft.replacements.size() == 20 ||
-            std::find(draft.replacements.begin(), draft.replacements.end(), target) != draft.replacements.end()) {
-            SetDlgItemTextW(dialog, IDC_STATUS, L"Wähle einen neuen Ersatzstapel. Maximal 20 sind möglich.");
-            return;
-        }
-        draft.replacements.push_back(target);
-        SendDlgItemMessageW(dialog, IDC_MULTI_TARGETS, LB_ADDSTRING, 0,
-                            reinterpret_cast<LPARAM>(target->title));
-        SetDlgItemTextW(dialog, IDC_TARGET, L"");
-    } else {
-        const auto row = SendDlgItemMessageW(dialog, IDC_MULTI_TARGETS, LB_GETCURSEL, 0, 0);
-        if (row < 0) return;
-        draft.replacements.erase(draft.replacements.begin() + row);
-        SendDlgItemMessageW(dialog, IDC_MULTI_TARGETS, LB_DELETESTRING, row, 0);
-    }
-    const auto status = std::to_wstring(draft.replacements.size()) + L" / 20 Ersatzstapel vorgemerkt";
-    SetDlgItemTextW(dialog, IDC_STATUS, status.c_str());
+    const auto message = add_commands(dialog, draft, {effect_command(*draft.selected, targets)}, false);
+    if (!message.empty()) SetDlgItemTextW(dialog, IDC_STATUS, message.c_str());
 }
 
 INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lparam) {
@@ -289,8 +281,8 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             select_effect(dialog, draft);
         } else if (control == IDC_ADD) {
             add_effect(dialog, draft);
-        } else if (control == IDC_MULTI_ADD || control == IDC_MULTI_REMOVE) {
-            edit_replacements(dialog, draft, control == IDC_MULTI_ADD);
+        } else if (control == IDC_TARGET || control == IDC_SECOND_TARGET) {
+            choose_targets(dialog, draft, control == IDC_SECOND_TARGET);
         } else if (control == IDC_UP || control == IDC_DOWN || control == IDC_REMOVE) {
             auto row = SendDlgItemMessageW(dialog, IDC_ACTIVE, LB_GETCURSEL, 0, 0);
             if (row < 0) return TRUE;
@@ -303,6 +295,7 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
                 row = next;
             }
             update_active(dialog, draft, row);
+            SetDlgItemTextW(dialog, IDC_STATUS, L"");
         } else if (control == IDOK) {
             const auto error = validate_text(effect_command_text(draft.effects), 4095, true);
             if (const auto* known = known_failure_message(error)) {
@@ -329,12 +322,12 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
 
 }
 
-bool edit_effects(void* owner, const EffectCommands& effects, bool& automatic,
+bool edit_effects(void* owner, std::string_view kingdom_text, const EffectCommands& effects, bool& automatic,
                   const std::function<bool(const EffectCommands&)>& apply) {
     HMODULE module{};
     if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                            reinterpret_cast<LPCWSTR>(dialog_proc), &module)) return false;
-    Draft draft{effects, automatic, apply};
+    Draft draft{effects, automatic, apply, fixed_targets(kingdom_text)};
     const auto result = DialogBoxParamW(module, MAKEINTRESOURCEW(IDD_EFFECT_EDITOR),
                                        static_cast<HWND>(owner), dialog_proc, reinterpret_cast<LPARAM>(&draft));
     if (result == -1) {

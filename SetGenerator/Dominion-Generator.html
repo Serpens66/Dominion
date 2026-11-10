@@ -193,6 +193,15 @@
   .field { display: block; font-weight: 700; margin: 1rem 0 .3rem; }
   fieldset { margin: 1rem 0 0; border: 0; padding: 0; }
   legend { font-weight: 700; padding: 0; }
+  .legend-actions {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .35rem .65rem;
+  }
+  .inline-reset { padding: .3rem .55rem; font-size: .9rem; }
+  .landscape-controls { align-items: flex-start; }
+  .landscape-controls p { flex: 1 1 12rem; margin: 0; }
   .options label { display: flex; align-items: baseline; gap: .5rem; padding: .2rem 0; cursor: pointer; }
   .range-columns {
     display: flex;
@@ -780,8 +789,11 @@
   <div class="workspace">
     <section aria-labelledby="input-title">
       <h2 id="input-title" data-en="1. Build a Kingdom">1. Königreich zusammenstellen</h2>
-      <fieldset class="options" id="setup-options">
-        <legend data-en="Setup">Spielaufbau</legend>
+      <fieldset class="options" id="setup-options" aria-labelledby="setup-heading">
+        <legend><span class="legend-actions">
+          <span id="setup-heading" data-en="Setup">Spielaufbau</span>
+          <button id="reset-setup" class="secondary inline-reset" type="button" data-en="Reset setup">Spielaufbau zurücksetzen</button>
+        </span></legend>
         <div class="row setup-selects">
           <div>
             <label for="colonies" data-en="Platinum and Colonies">Platin und Kolonien</label>
@@ -807,7 +819,6 @@
             <span><span data-en="Require Loot in play">Kostbarkeiten im Spiel verlangen</span> <small class="muted" data-en="(at least one Kingdom pile or Landscape as a source)">(mindestens ein Hauptstapel oder eine Landschaft als Quelle)</small></span>
           </label>
         </div>
-        <div class="row"><button id="reset-setup" class="secondary" type="button" data-en="Reset setup">Spielaufbau zurücksetzen</button></div>
       </fieldset>
       <details id="expansion-settings">
         <summary class="section-summary"><span data-en="Expansions and editions">Erweiterungen und Editionen</span><span class="muted" id="expansion-overview"></span></summary>
@@ -822,10 +833,12 @@
           <div id="exp-ranges" class="quota-columns"></div>
         </div>
       </details>
-      <fieldset class="options" id="draw-rules">
-        <legend data-en="Draw rules">Regeln für die Ziehung</legend>
+      <fieldset class="options" id="draw-rules" aria-labelledby="draw-rules-heading">
+        <legend><span class="legend-actions">
+          <span id="draw-rules-heading" data-en="Draw rules">Regeln für die Ziehung</span>
+          <button id="reset-draw-rules" class="secondary inline-reset" type="button" data-en="Reset draw filters">Ziehfilter zurücksetzen</button>
+        </span></legend>
         <p class="muted" data-en="Number of piles per filter. Set To to the chosen Kingdom size for no upper limit. Use 0 to 0 to exclude matching piles.">Anzahl der Stapel je Filter. Die gewählte Stapelzahl als Bis-Wert lässt die Obergrenze offen. 0 bis 0 schließt passende Stapel aus.</p>
-        <div class="row"><button id="reset-draw-rules" class="secondary" type="button" data-en="Reset draw filters">Ziehfilter zurücksetzen</button></div>
         <div class="rules-overview">
           <div class="rules-overview-column">
             <div class="range-columns">
@@ -847,8 +860,10 @@
         <details>
           <summary class="section-summary" data-en="Landscapes">Landschaften</summary>
           <div class="section-body">
-            <p class="muted" id="land-source-help" data-en="Landscapes have their own slots. Under Source expansion, select Auto in both fields to follow the Kingdom pool. Enter 0 to 0 to exclude Landscapes from that expansion. Use the down arrow at 0 to return to Auto.">Landschaften belegen eigene Plätze. Unter Herkunft übernimmt zweimal Auto die Freigabe aus dem Hauptstapel-Pool. 0 bis 0 sperrt die Landschaften dieser Erweiterung. Bei 0 führt der Abwärtspfeil zurück zu Auto.</p>
-            <div class="row"><button id="reset-landscapes" class="secondary" type="button" data-en="Reset Landscape quotas">Landschaftsquoten zurücksetzen</button></div>
+            <div class="row landscape-controls">
+              <p class="muted" id="land-source-help" data-en="Landscapes have their own slots. Under Source expansion, select Auto in both fields to follow the Kingdom pool. Enter 0 to 0 to exclude Landscapes from that expansion. Use the down arrow at 0 to return to Auto.">Landschaften belegen eigene Plätze. Unter Herkunft übernimmt zweimal Auto die Freigabe aus dem Hauptstapel-Pool. 0 bis 0 sperrt die Landschaften dieser Erweiterung. Bei 0 führt der Abwärtspfeil zurück zu Auto.</p>
+              <button id="reset-landscapes" class="secondary inline-reset" type="button" data-en="Reset Landscape quotas">Landschaftsquoten zurücksetzen</button>
+            </div>
             <div class="quota-columns" id="land-quotas">
               <div id="land-ranges" class="range-rules quota-table"></div>
             </div>
@@ -869,17 +884,15 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M4 6h16M7 12h10m-7 6h4"/></svg>
               <span data-en="Choose properties">Eigenschaften auswählen</span><span class="pool-properties-count" id="pool-properties-count" hidden></span>
             </button>
-            <button id="clear-pool-search" class="secondary" type="button" data-en="Clear search">Suche zurücksetzen</button>
+            <button id="clear-pool-search" class="secondary inline-reset" type="button" data-en="Clear search">Suche zurücksetzen</button>
+            <button id="reset-excluded-cards" class="secondary inline-reset" type="button" data-en="Reset excluded cards">Ausschlüsse zurücksetzen</button>
+            <button id="reset-pinned-cards" class="secondary inline-reset" type="button" data-en="Reset pinned cards">Festgehaltene zurücksetzen</button>
           </div>
           <div class="pool-properties" id="pool-properties" role="group" aria-labelledby="pool-properties-title" hidden>
             <div class="pool-property-groups"></div>
           </div>
           <div id="pool-search-chips" class="row pool-search-chips"></div>
           <p id="pool-search-status" class="muted" role="status"></p>
-          <div class="row">
-            <button id="reset-excluded-cards" class="secondary" type="button" data-en="Reset excluded cards">Ausgeschlossene Karten zurücksetzen</button>
-            <button id="reset-pinned-cards" class="secondary" type="button" data-en="Reset pinned cards">Festgehaltene Karten zurücksetzen</button>
-          </div>
           <div id="pool"></div>
         </div>
       </details>
