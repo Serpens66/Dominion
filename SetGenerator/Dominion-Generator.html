@@ -385,6 +385,18 @@
         <div class="option-with-card" id="defense-cards"></div>
         <p id="reaction-availability"></p>
       </div>
+      <p id="settings-storage-status" class="muted" role="status" hidden></p>
+      <details>
+        <summary>Einstellungen sichern oder laden</summary>
+        <p class="muted">Der Generator speichert Änderungen in diesem Browser. Sichere sie als Datei, um sie in einem anderen Browser zu laden.</p>
+        <div class="row">
+          <button id="export-settings" class="secondary" type="button">Einstellungen exportieren</button>
+          <button id="import-settings" class="secondary" type="button">Einstellungen importieren</button>
+          <button id="reset-settings" class="secondary" type="button">Einstellungen zurücksetzen</button>
+          <input id="settings-file" type="file" accept=".json,application/json" hidden>
+        </div>
+        <p id="settings-file-status" role="status"></p>
+      </details>
     </section>
     <section class="output-panel" aria-labelledby="output-title">
       <h2 id="output-title">2. Für Dominion kopieren</h2>
@@ -754,6 +766,8 @@ const poolChoices = new Map();
 const drawButton = document.getElementById("draw");
 const ruleStatus = document.getElementById("rule-status");
 const rangeInputs = new Map();
+const settingsKey = "dominion-generator-settings";
+const settingsStorageStatus = document.getElementById("settings-storage-status");
 let preparedDraw = null;
 let ruleCheckTimer;
 const effects = document.getElementById("effects");
@@ -1015,6 +1029,7 @@ function markPoolChanged() {
 }
 
 function scheduleRuleCheck() {
+  saveSettings();
   preparedDraw = null;
   clearTimeout(ruleCheckTimer);
   ruleCheckTimer = setTimeout(checkRules, 120);
@@ -1050,6 +1065,79 @@ function checkRules() {
   if (ruleStatus.className !== tone) ruleStatus.className = tone;
   if (ruleStatus.textContent !== message) ruleStatus.textContent = message;
   if (drawButton.disabled === canDraw) drawButton.disabled = !canDraw;
+}
+
+function readSettings(source) {
+  let settings;
+  try {
+    settings = JSON.parse(source);
+  } catch {
+    throw new Error("Die Datei enthält kein gültiges JSON.");
+  }
+
+  if (settings?.version !== 1) throw new Error("Die Version der Einstellungen wird nicht unterstützt.");
+
+  const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
+  const isRangeValue = value => typeof value === "string" &&
+    (value === "" || (value.trim() === value && Number.isFinite(Number(value))));
+  if (!isRecord(settings.ranges) || !isRecord(settings.cardChoices) ||
+      !Object.values(settings.ranges).every(pair => Array.isArray(pair) && pair.length === 2 && pair.every(isRangeValue)) ||
+      !Object.values(settings.cardChoices).every(choice => choice === "pinned" || choice === "excluded") ||
+      !["de", "en"].includes(settings.previewLanguage) || typeof settings.setName !== "string" ||
+      (settings.theme !== undefined && !["system", "light", "dark"].includes(settings.theme))) {
+    throw new Error("Die Datei enthält ungültige Einstellungen.");
+  }
+  return settings;
+}
+
+function collectSettings() {
+  const ranges = Object.fromEntries([...rangeInputs].map(([id, fields]) => [id, fields.map(field => field.value)]));
+  const cardChoices = Object.fromEntries([...poolChoices]
+    .filter(([, field]) => field.value !== "random")
+    .map(([id, field]) => [id, field.value]));
+  return { version: 1, ranges, cardChoices, previewLanguage: previewLanguage.value, setName: setName.value };
+}
+
+function applySettings(settings) {
+  for (const [id, [from, to]] of rangeInputs) {
+    [from.value, to.value] = settings.ranges[id] ?? ["0", String(kingdomSize)];
+  }
+  for (const [id, field] of poolChoices) field.value = settings.cardChoices[id] ?? "random";
+  previewLanguage.value = settings.previewLanguage;
+  setName.value = settings.setName;
+  previews.forEach(updatePreview);
+  updateEffectSet();
+}
+
+function showSettingsStorageIssue(message) {
+  settingsStorageStatus.textContent = message;
+  settingsStorageStatus.hidden = !message;
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem(settingsKey, JSON.stringify(collectSettings()));
+  } catch {
+    showSettingsStorageIssue("Der Browser kann Änderungen hier nicht automatisch speichern. Sichere deine Einstellungen als Datei.");
+    return;
+  }
+  if (!settingsStorageStatus.hidden) showSettingsStorageIssue("");
+}
+
+function restoreSettings() {
+  let saved;
+  try {
+    saved = localStorage.getItem(settingsKey);
+  } catch {
+    showSettingsStorageIssue("Der Browser blockiert den lokalen Speicher. Du kannst Einstellungen als Datei sichern und laden.");
+    return;
+  }
+  if (!saved) return;
+  try {
+    applySettings(readSettings(saved));
+  } catch {
+    showSettingsStorageIssue("Die gespeicherten Einstellungen konnten nicht geladen werden. Du kannst eine Sicherungsdatei importieren.");
+  }
 }
 
 function generate() {
@@ -1137,11 +1225,15 @@ for (const rule of countRules) {
 }
 document.getElementById("draw-rules").addEventListener("input", scheduleRuleCheck);
 drawButton.addEventListener("click", generate);
+restoreSettings();
 checkRules();
 for (const icon of document.querySelectorAll("[data-game-icon]")) {
   icon.src = gameIcons[icon.dataset.gameIcon];
 }
-previewLanguage.addEventListener("change", () => previews.forEach(updatePreview));
+previewLanguage.addEventListener("change", () => {
+  previews.forEach(updatePreview);
+  saveSettings();
+});
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && activePreview) setPreview(null);
 });
@@ -1194,7 +1286,68 @@ async function copyText(field, message, confirmation) {
 copy.addEventListener("click", () => copyText(output, copyStatus, "Kingdom-Code kopiert."));
 copyEffects.addEventListener("click", () => copyText(effects, effectsStatus, "Verdopplungscode kopiert."));
 copySetXml.addEventListener("click", () => copyText(setXml, effectsStatus, "XML-Eintrag kopiert."));
-setName.addEventListener("input", updateEffectSet);
+setName.addEventListener("input", () => {
+  updateEffectSet();
+  saveSettings();
+});
+const themeSelect = document.getElementById("theme");
+const settingsFile = document.getElementById("settings-file");
+const importSettings = document.getElementById("import-settings");
+const resetSettings = document.getElementById("reset-settings");
+const settingsFileStatus = document.getElementById("settings-file-status");
+
+document.getElementById("export-settings").addEventListener("click", () => {
+  const settings = { ...collectSettings(), theme: themeSelect.value };
+  const file = new Blob([JSON.stringify(settings, null, 2) + "\n"], { type: "application/json" });
+  const url = URL.createObjectURL(file);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "Dominion-Einstellungen.json";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+
+function replaceSettings(settings, message) {
+  clearOutputs();
+  applySettings(settings);
+  if (settings.theme !== undefined && themeSelect.value !== settings.theme) {
+    themeSelect.value = settings.theme;
+    themeSelect.dispatchEvent(new Event("change"));
+  }
+  checkRules();
+  saveSettings();
+  settingsFileStatus.className = "success";
+  settingsFileStatus.textContent = message;
+}
+
+resetSettings.addEventListener("click", () => {
+  replaceSettings({
+    ranges: {},
+    cardChoices: {},
+    previewLanguage: "de",
+    setName: setName.defaultValue,
+    theme: "system",
+  }, "Standardeinstellungen wiederhergestellt.");
+});
+
+importSettings.addEventListener("click", () => settingsFile.click());
+settingsFile.addEventListener("change", async () => {
+  const [file] = settingsFile.files;
+  if (!file) return;
+  importSettings.disabled = resetSettings.disabled = true;
+  try {
+    if (file.size > 256 * 1024) throw new Error("Die Datei ist zu groß für eine Einstellungsdatei.");
+    const settings = readSettings(await file.text());
+    replaceSettings(settings, "Einstellungen übernommen.");
+  } catch (error) {
+    settingsFileStatus.className = "error";
+    settingsFileStatus.textContent = "Import fehlgeschlagen. " + error.message;
+  } finally {
+    settingsFile.value = "";
+    importSettings.disabled = resetSettings.disabled = false;
+  }
+});
+
 profileConsent.addEventListener("change", updateProfileControls);
 
 profileSelect.addEventListener("click", async () => {
