@@ -27,3 +27,28 @@ Ziel ist die Steam-Version von Dominion von Temple Gates Games. Die erste Unters
 - **Offen** kennzeichnet eine Hypothese oder eine ausstehende Prüfung.
 
 Die Profilstruktur ist lokal belegt. Der erste Spieltest soll zeigen, ob ein extern hinzugefügter Eintrag in der Set-Auswahl erscheint, sich spielen lässt und einen Neustart übersteht. Ablauf und Abnahmekriterien stehen im [Kingdom-Befund](Kingdom_Sets.md).
+
+## Kartenbilder erstellen
+
+Installiere Python und Pillow. Führe den Befehl im Projektordner aus und passe den Pfad zu Dominion an. Mit `--all-expansions` nimmt das Werkzeug auch Bilder aus den Erweiterungen auf.
+
+```powershell
+python -m pip install Pillow
+python .\SetGenerator\extract_card_images.py "E:\ProgrammeE\Steam\steamapps\common\Dominion\Dominion.xpack" ".\SetGenerator\Dominion-Kartenbilder.json" --all-expansions
+```
+
+Beim direkten Öffnen der HTML-Datei wählst du das Paket über **Kartenbilder laden**. Für automatisches Laden starte im Projektordner `python -m http.server 8000 --bind 127.0.0.1 --directory SetGenerator` und öffne den Generator über [localhost](http://127.0.0.1:8000/Dominion-Generator.html).
+
+## Generator pflegen
+
+Die Quelldatei ist [Dominion-Generator.html](../SetGenerator/Dominion-Generator.html). Deutsche Texte stehen zwischen den HTML-Tags, englische Übersetzungen in `data-en`. Dynamische Texte stehen in den Sprachzuordnungen im JavaScript, etwa `tr("Deutsch", "English")`. Speichere die Datei und lade die lokale Seite neu.
+
+Katalog und Zieh-Worker aus dem Projektordner aktualisieren und den Pages-Build lokal prüfen. Passe den Steam-Pfad bei Bedarf an.
+
+```powershell
+python .\SetGenerator\generator_catalog.py "E:\ProgrammeE\Steam\steamapps\common\Dominion\Dominion.xpack"
+node .\SetGenerator\test_generator_solver.js
+python -B .\SetGenerator\build_pages.py .\SetGenerator\.pages\index.html
+```
+
+GitHub Actions veröffentlicht die Website bei Änderungen am Generator auf `main`. Den Build kannst du auch über **Actions → Publish Dominion Generator → Run workflow** starten. [Workflow](https://github.com/Serpens66/Dominion/actions/workflows/generator-pages.yml)
