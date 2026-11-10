@@ -49,6 +49,16 @@ e3cf4242c2756f9120901c28f2dbdbe636b1d7235cbec9616f0c622d65d90047
 
 Zur Reproduktion den KCPX-Index der Version 7 ab Dateioffset 12 in 168-Byte-Einträgen lesen. Ressourcendateioffset und Länge stehen bei Byte 12 und 16 des Eintrags als Little-Endian-`uint32`. Der nullterminierte Pfad beginnt bei Byte 40. In der Übersetzungsressource stehen der Tabellenoffset bei Byte 8 und die Anzahl der Zeilen bei Byte 16 als Little-Endian-`uint64`. Pro 40-Byte-Zeile enthalten die ersten vier `uint64` die Grenzen der beiden UTF-8-Strings relativ zum Ressourcenanfang. Die ID ist der Teil des Schlüssels hinter `dom_card_title_`.
 
+### Illustrationen aus L05
+
+**Lokal dekodiert für Spielbuild 3315.** Unter `res/card_gen/base/` enthält `Dominion.xpack` je eine Illustration für alle 26 Königreichstapel der zweiten Edition. Die Ressource für `throne_room` heißt `throne room`. Das Little-Endian-`uint64` bei Ressourcendateioffset `0x80` verweist auf den QOI-Datenstrom. Bei allen 26 Ressourcen liegt er bei `0x88` und enthält ein Bild mit 292 × 216 Pixeln. Kartentitel und Effekttexte sind getrennt in `res/translation/de` und `res/translation/en-us` vorhanden.
+
+[extract_card_images.py](../../SetGenerator/extract_card_images.py) dekodiert die Illustrationen aus einer lokalen Installation in ein optionales Bildpaket. Es rendert zusätzlich vollständige Kartenvorderseiten auf Deutsch und Englisch. Dafür verwendet es die Rahmenteile `frame_action_*`, `frame_reaction_*` und `frame_vp_*`, den Texthintergrund `txt_back`, die Münze und die lokalisierten Titel und Effekte. Der Renderer setzt Zeilenumbrüche, fette Boni und Münz- und Punktesymbole aus der Spielsyntax um. Die Anordnung orientiert sich an der Steam-Kartenvorschau.
+
+**Farbreihenfolge.** Die hier geprüften QOI-Texturen aus Build 3315 speichern Blau vor Rot. Beim Export in PNG werden die beiden Kanäle getauscht. Der Vergleich mit einem Screenshot der Steam-Karte Markt bestätigt die goldgelbe Münze und die Farben der Marktillustration. Ältere Bildpakete lassen sich mit dem korrigierten Werkzeug neu erstellen.
+
+**Spielsymbole, lokal dekodiert für Spielbuild 3315.** Münze und Punkteschild stammen aus `res/card_gen/shared/ico_coin_smaller` und `res/card_gen/shared/vp`. Die sechs Ziehregelsymbole stehen in `res/ui_art/` unter `ico_modifier_requireaction`, `ico_modifier_requirecards`, `ico_modifier_requirebuy`, `ico_modifier_requiretrashing`, `ico_modifier_reaction` und `ico_modifier_requireattacks`. Die Sprite-Metadaten enthalten Breite und Höhe bei Offset `0x28`, die obere linke Position bei `0x5C` und den Namen der QOI-Textur ab `0x78`. Der Generator bettet diese Ausschnitte als verkleinerte PNGs ein. Die Bonusnotation sowie die Platzhalter `[n]` für Münzen und `{n}` für Punkte orientieren sich an `dom_card_power_*` in den deutschen und englischen Übersetzungsressourcen.
+
 ### Karteneigenschaften aus L01 und L05
 
 **Statisch extrahiert für Spielbuild 3315.** [Card_Properties.json](../Card_Properties.json) ordnet dieselben 855 IDs wie die deutsche Titelliste zu. Unter `cards` stehen 853 Kartendefinitionen. `harem` verweist als Alias auf `farm`. Beide lösen intern die Kartennummer `0x318` aus. Für den Lokalisierungseintrag `shadow` gibt es in den ausgewerteten Kartentabellen keine eigene Definition, daher steht dort `null`.

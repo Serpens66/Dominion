@@ -1056,6 +1056,7 @@
         "reaction"
       ],
       "kingdomPile": true,
+      "attackReaction": true,
       "edition": "shared",
       "cost": {
         "coins": 2,
@@ -1677,6 +1678,7 @@
         "duration"
       ],
       "kingdomPile": true,
+      "attackReaction": true,
       "edition": "shared",
       "cost": {
         "coins": 3,
@@ -1935,6 +1937,7 @@
         "duration"
       ],
       "kingdomPile": false,
+      "defendsAgainstAttacks": true,
       "edition": "shared",
       "cost": {
         "coins": 6,
@@ -3369,6 +3372,7 @@
         "reaction"
       ],
       "kingdomPile": true,
+      "attackReaction": true,
       "edition": "second",
       "cost": {
         "coins": 4,
@@ -5460,6 +5464,7 @@
         "reaction"
       ],
       "kingdomPile": true,
+      "attackReaction": true,
       "edition": "second",
       "cost": {
         "coins": 3,
@@ -5479,6 +5484,7 @@
         "night"
       ],
       "kingdomPile": true,
+      "defendsAgainstAttacks": true,
       "edition": "shared",
       "cost": {
         "coins": 2,
@@ -6011,6 +6017,7 @@
         "reaction"
       ],
       "kingdomPile": true,
+      "attackReaction": true,
       "edition": "first",
       "cost": {
         "coins": 4,
@@ -7036,6 +7043,7 @@
         "duration"
       ],
       "kingdomPile": true,
+      "defendsAgainstAttacks": true,
       "edition": "shared",
       "cost": {
         "coins": 2,
@@ -7955,6 +7963,7 @@
         "reaction"
       ],
       "kingdomPile": true,
+      "defendsAgainstAttacks": true,
       "edition": "shared",
       "cost": {
         "coins": 2,
@@ -8601,6 +8610,7 @@
         "traveller"
       ],
       "kingdomPile": true,
+      "defendsAgainstAttacks": true,
       "edition": "shared",
       "cost": {
         "coins": 2,
@@ -10831,6 +10841,7 @@
         "reaction"
       ],
       "kingdomPile": true,
+      "attackReaction": true,
       "edition": "first",
       "cost": {
         "coins": 2,
@@ -11061,6 +11072,7 @@
         "loot"
       ],
       "kingdomPile": false,
+      "defendsAgainstAttacks": true,
       "edition": "shared",
       "cost": {
         "coins": 7,

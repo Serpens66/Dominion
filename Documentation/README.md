@@ -6,6 +6,7 @@ Ziel ist die Steam-Version von Dominion von Temple Gates Games. Die erste Unters
 | --- | --- |
 | Eigene Kingdoms speichern, laden oder teilen | [Speicherformat, Zwischenablage und Offline-Test](Kingdom_Sets.md) |
 | Regelbasierten Kingdom-Generator entwerfen | [SetGenerator](../SetGenerator/README.md) |
+| Offene Wünsche an den Web-Randomizer mit unserem Generator abgleichen | [KingdomCreator als Referenz](KingdomCreator.md) |
 | Deutsche Kartentitel als Kingdom-IDs nachschlagen | [Kartentitel und IDs (JSON)](Card_Titles_de.json) |
 | Königreichstapel, Kartentypen, Kosten und Filter nachschlagen | [Karteneigenschaften (JSON)](Card_Properties.json) |
 | Kopierte Kartennamen von dominionrandomizer.com umwandeln | [Web-Namenslisten im Konverter](Kingdom_Sets.md#web-namenslisten-im-konverter) |

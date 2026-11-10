@@ -159,7 +159,13 @@ Die festen Kampagnenvorlagen enthalten die Verdopplung unter anderem für Fluch 
 | Eingabe im Kartensuchfeld | Beobachtung im Spiel | Gespeicherte Zusätze in `GameSetup_Save/config/kingdomData` |
 | --- | --- | --- |
 | [Einzelner Effekt für Dorf](Steam_Spielanleitung.md#ein-dorfstapel-mit-20-karten) | Dorf startet mit 20 Karten. | Nur `start_double_pile(village)` |
-| [Zehn Verdopplungen, durch Kommas getrennt](Steam_Spielanleitung.md#testzeile-für-zehn-verdopplungen) | Keller startet mit 20 Karten. Die übrigen Stapel starten mit je zehn. | Nur `start_double_pile(cellar)` |
+| [Zehn Verdopplungen, durch Kommas getrennt](#testzeile-für-zehn-verdopplungen) | Keller startet mit 20 Karten. Die übrigen Stapel starten mit je zehn. | Nur `start_double_pile(cellar)` |
+
+#### Testzeile für zehn Verdopplungen
+
+```text
+-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop -x start_double_pile(cellar), start_double_pile(market), start_double_pile(merchant), start_double_pile(militia), start_double_pile(mine), start_double_pile(moat), start_double_pile(remodel), start_double_pile(smithy), start_double_pile(village), start_double_pile(workshop)
+```
 
 Beim ersten Versuch mit der langen Zeile meldete der Nutzer einen Kampagnenhinweis und überall zehn Karten. Im zeitlich passenden Spielstand zu diesem früheren Versuch stand eine andere Auswahl, ohne Keller, mit `start_double_pile(cellar)` als einzigem Zusatz. Ohne Zielstapel läuft die Verdopplung ins Leere.
 
@@ -177,7 +183,7 @@ Auch zwei nacheinander bestätigte Suchfeldeingaben funktionierten laut Nutzer f
 | --- | --- |
 | `0x1F6F17`, `0x1F6F2F`, `0x1FE032` | Texteingabe wird geparst und an die Zusammenführung bei `0x1F6A90` übergeben. |
 | `0x1F6C74` bis `0x1F6CD1`, `0x1F6D6F` | Die Schleife vergleicht ausschließlich das erste DWORD der 20-Byte-Einträge. Bei Gleichheit überspringt sie den neuen Effekt. Ohne Treffer kopiert sie den vollständigen Eintrag in den nächsten freien Slot. |
-| `0x0DE780`, `0x0DEA7C`, `0x0E5FF0` | Der Konfigurationsparser verarbeitet einen `-x`-Abschnitt als Kommaliste. Jeder Eintrag erhält eine eigene Effekt-ID und ein eigenes Ziel. Wiederholte IDs sind hier zulässig. Jeder Aufruf von `FromExtrasStr` initialisiert die Liste neu, weshalb mehrere `-x`-Abschnitte keine Anhängesyntax sind. Eingebaute Kampagnen nutzen dieselbe Kommaliste, unter anderem mit derselben Effekt-ID für mehrere Startkartentausche bei RVA `0x40D342`. |
+| `0x0DE780`, `0x0DEA7C`, `0x0E5FF0` | Der Konfigurationsparser verarbeitet einen `-x`-Abschnitt als Kommaliste. Jeder Eintrag speichert seine Effekt-ID. Bei normalen Effekten wie `start_double_pile` speichert er auch sein eigenes Ziel. Wiederholte IDs sind hier zulässig; `twist_room_for_more` nutzt einen [separaten Zielslot](#zusatzstapel-durch-platz-für-mehr). Jeder Aufruf von `FromExtrasStr` initialisiert die Liste neu, weshalb mehrere `-x`-Abschnitte keine Anhängesyntax sind. Eingebaute Kampagnen nutzen dieselbe Kommaliste, unter anderem mit derselben Effekt-ID für mehrere Startkartentausche bei RVA `0x40D342`. |
 | `0x20FB10` bis `0x20FB27`, `0x0E48E7`, `0x0E4A41`, `0x0DEDF2` bis `0x0DEE05` | Das Auswählen eines gespeicherten Sets hinterlegt dessen Index. Beim Auflösen liest das Spiel den Kingdom-Text aus dem Profil, parst ihn und übernimmt die ganze Liste mit 32 Einträgen aus dem gespeicherten Set. Dieser Kopierpfad enthält keinen Vergleich der Effekt-IDs. |
 | `0x18CD70` bis `0x18CD8A`, `0x11BB20`, `0x11BBFC` | Der Spielaufbau ruft `CampaignApplyExtras` auf. Die Schleife verarbeitet die Effektliste Eintrag für Eintrag. `0x11B630` lädt die Zielkarte aus dem jeweiligen Eintrag. Danach führt `0x110280` die Verdopplung für dieses Ziel aus. |
 
@@ -193,10 +199,20 @@ Der [bestätigte Bedienablauf](Steam_Spielanleitung.md#mehrere-stapel-über-ein-
 
 **Grenzen der Nachschlageliste.** [Start_Double_Pile_Karten.txt](Start_Double_Pile_Karten.txt) enthält die 498 als Königreichstapel markierten IDs aus `Card_Properties.json`, die sieben Grundstapel und `colony`, `platinum`, `potion` und `ruins`. Die Liste verwendet kanonische IDs und lässt den Alias `harem` aus. Sie beschreibt Ziele für den Vorrat, deren einzelne Kombinationen nicht vollständig im Spiel getestet sind. Die Routine bei `0x10F9B6` bis `0x10F9DD` sucht in den aufgebauten Stapeln nach der Ziel-ID und kehrt ohne Treffer zurück. `FromExtrasStr` prüft bei `0x0E6084` gegen 32 Einträge und verzweigt beim 33. erkannten Effekt in den Fehlerpfad. Die vollständige Nachschlageliste ist dadurch kein gültiger einzelner `-x`-Abschnitt. Im registrierten Effektkatalog findet sich kein Sammelbefehl für alle Stapel.
 
+### Zusatzstapel durch Platz für Mehr
+
+**Lokaler Nutzertest am 9. November 2026, Build 3315, Steam-Build 17683350.** In `profiles.xml` stand ein Set mit zehn Basisspielstapeln und `-x twist_room_for_more(chapel)`. Der Nutzer meldete, dass die Kapelle nicht hinzukam. In den dazu passenden lokalen Spielständen steht in `config/kingdomData` nur die Auswahl der zehn Hauptstapel, ohne den Effekt. Die Spielstände zeigen das Ergebnis dieses Tests; sie bestimmen nicht allein, an welcher Stelle der Effekt verloren ging.
+
+**Statische Analyse derselben EXE.** `FromExtrasStr` behandelt Effekt-ID `0x17D8` separat: Bei RVA `0x0E60D4` bis `0x0E60EF` ruft der Parser den Kartenparser mit Slot `0x6A` und maximal einer Karte auf. Bei `0x0E5F58` schreibt er das Ziel in den gemeinsamen Slot; das Zielfeld des einzelnen Effekteintrags bleibt auf null. Weitere Vorkommen mit einem Kartenziel überschreiben denselben Slot. Der Setup-Callback liest bei `0x112A0B` aus `G+0x100C` und ruft bei `0x112A1B` die Stapel-Einfügeroutine auf.
+
+Der Parser für gespeicherte Kingdom-Texte überträgt die Zusatzkarte bei `0x0DEA90` bis `0x0DEAA8` in die Kartenauswahl (Ziel-ID bei Offset `0x864`). Die Effektliste beginnt bei Offset `0x1710`. Beim Set-Wechsel ersetzt der Client die Kartenauswahl, einschließlich dieses Ziels, mit der neu gewählten Konfiguration (`0x20FA65`) und behält an diesem Schritt die bisherige Effektliste. Bei der Ausgabe liest der Client beide Teile getrennt (`0x0E357B` bis `0x0E35F9`, `0x0E5510` bis `0x0E552B`). Ein vorhandenes Ziel und der zugehörige Effekt können dadurch beim Wechsel auseinanderfallen. Die mit Verdopplungen bestätigte Bedienfolge belegt keine Übernahme von „Platz für Mehr“.
+
+**Kampagnenvorlage.** Die eingebauten Texte für Füllhorn enthalten dieselbe Syntax, darunter die achte Mission mit `young_witch(harbinger)` und `twist_room_for_more(gardens)` (RVA `0x40EBA0` und `0x40EBBA`). [Build und EXE-Hash](Sources/Source_Register.md#reproduktion-für-l01)
+
 ### Effektsets und Zufallsauswahl
 
 **Im Spiel vom Nutzer bestätigt am 9. November 2026.** Build 3315, lokale Partien mit zwei Spielern. Das Profilset `test` bestand nur aus einem `-x`-Abschnitt mit zehn `start_double_pile`-Einträgen. Der erste Partiestart enthielt ein zufällig gezogenes Königreich und keine Verdopplungen. Nach der Übernahme in ein weiteres Set enthielt die lokale Partie alle zehn Effekte. Beim Versuch, ein wesentlich längeres Effektset zu laden, stürzte das Spiel laut Nutzer ab. Das lokale Log enthält die fehlgeschlagene Assertion `numExtras < maxExtras` in `FromExtrasStr`. Der Abgleich mit RVA `0x0E6084` erklärt den Abbruch ab dem 33. erkannten Effekt.
 
-Ein Effektset ist damit unabhängig von der Kartenauswahl wiederverwendbar. Jedes Ziel belegt einen Eintrag, auch wenn der entsprechende Stapel in der Partie fehlt. Beim Spielaufbau werden nur vorhandene Zielstapel verdoppelt. Eine feste Liste kann alle Zufallsziehungen abdecken, wenn der Pool höchstens 32 Ziele umfasst. Die [Spielanleitung](Steam_Spielanleitung.md#zufällige-königreiche-mit-doppelten-stapeln) enthält eine Liste für die 26 Königreichstapel des Basisspiels in zweiter Edition und einen Ablauf für größere Pools.
+Ein Effektset ist damit unabhängig von der Kartenauswahl wiederverwendbar. Jedes Ziel belegt einen Eintrag, auch wenn der entsprechende Stapel in der Partie fehlt. Beim Spielaufbau werden nur vorhandene Zielstapel verdoppelt. Eine feste Liste kann alle Zufallsziehungen abdecken, wenn der Pool höchstens 32 Ziele umfasst. Die [Spielanleitung](Steam_Spielanleitung.md#zufällige-königreiche-mit-doppelten-stapeln) beschreibt den Ablauf für kleine und große Zufallspools.
 
 Für eine Mod mit unveränderter Zufallsauswahl über alle Erweiterungen ist der relevante Eingriffspunkt der Aufbau der bereits gezogenen Königreichstapel. Die Schleife ab `0x18CC16` initialisiert die zehn Hauptstapel anhand der aufgelösten Auswahl. Der Effektpfad wird anschließend bei `0x18CD70` bis `0x18CD8A` aufgerufen. Eine automatische Verdopplung könnte an der aufgelösten Auswahl ansetzen. Ein Patch dafür und sein Verhalten bei Sonderstapeln sind noch offen.

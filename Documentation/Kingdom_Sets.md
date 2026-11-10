@@ -16,6 +16,8 @@
 
 `strKingdom` enthält kommagetrennte IDs. Im zweiten lokalen Set standen außerdem die Vorsilbe `-k` und der Zusatz `-m Landscapes(0,4)`. Das sind beobachtete Formen. Die vollständige Grammatik und die Bedeutung aller Modifikatoren sind offen. `gamelocal_*.xml` mit Wurzel `GameSetup_Save` und die zugehörigen `.bin`-Dateien gehören zu einzelnen lokalen Partien. Deren XML kann ein Feld `kingdomData` enthalten. [Quellen L02 und L03](Sources/Source_Register.md)
 
+Die zehn Hauptstapel und zusätzliche Vorratsstapel durch Kampagneneffekte sind getrennte Teile des Setups. Im lokalen Test blieb ein gespeichertes Set mit `twist_room_for_more(chapel)` bei zehn Stapeln. Die achte Füllhorn-Mission enthält eine Vorlage für zwölf Vorratsstapel. [Spielanleitung](Steam_Spielanleitung.md#zwölf-oder-mehr-königreichstapel), [Technischer Befund zur Kapazität](Doppelte_Koenigreichstapel_Mod.md#befund)
+
 ## Nativer Profilpfad
 
 **Statisch geprüft für Spielbuild 3315.** Die Profilinitialisierung verwendet `profiles.xml`. Die XML-Serialisierungsdeskriptoren der EXE verbinden das Profilfeld `saveSets` mit den Set-Daten. Der über den Diagnosestring `DomSaveSetGet` identifizierte Pfad greift auf die Set-Liste des aktiven Profils zu. Beim Anlegen eines Sets vergleicht der Code die Anzahl mit `0x40` und nimmt den Eintrag nur bei weniger als 64 vorhandenen Sets an. Vor dem Schreiben des Profils berechnet der Code `expansionsBitset` aus der geparsten Kingdom-Auswahl. Der Dezimalwert `38` oben gehört zum konkreten Beispiel. [Quelle L01](Sources/Source_Register.md)
@@ -53,7 +55,7 @@ Der [Konverter](../SetGenerator/README.md#web-namenslisten-umwandeln) übernimmt
 | Regel | Umsetzung mit unseren Daten |
 | --- | --- |
 | Mindestens ein Aktionsgeber, Mehrfachzieher, Kaufgeber oder Entsorger | Je Rolle eine Mindestanzahl auf den zehn Hauptstapeln prüfen. KingdomCreator verwendet dafür eigene Tags und trennt einfachen Kartenzug von Mehrfachzug. Unsere `nativeFilters` bieten ähnliche Kategorien. Für präzise Regeln wie mindestens zwei Aktionen oder Karten ohne Bedingung braucht es getrennt geprüfte Effektdaten wie beim bestehenden `immediateBuys`. |
-| Angriffe erlauben, begrenzen oder eine Abwehr verlangen | Angriffe über `types` zählen. KingdomCreator fordert optional bei Angriffen eine beliebige Reaktionskarte. Für echte Angriffsabwehr ein eigenes Merkmal vorsehen. `moat` schützt vor Angriffen, während `market_square` auf das Entsorgen einer eigenen Karte reagiert. |
+| Angriffe erlauben, begrenzen oder eine Abwehr verlangen | Angriffe über `types` zählen. KingdomCreator fordert optional bei Angriffen eine beliebige Reaktionskarte. Der Generator nutzt für Angriffsschutz das geprüfte Merkmal `defendsAgainstAttacks`. [Prüfung der Kartentexte](Abwehrkarten.md) |
 | Kosten verteilen | Optional beispielsweise drei bis fünf teure Stapel fordern. KingdomCreator setzt die Grenze bei einem Kostenwert von 5 und gewichtet Münzen, Schulden und Tränke mit 1, 1 und 2. Für unseren Generator die Kostenmetrik wählbar halten, da die drei Währungen im Spiel verschiedene Bedeutungen haben. |
 | Erweiterungen priorisieren und Alchemie bündeln | Eine Mindest- oder Höchstzahl je Erweiterung vorgeben. KingdomCreator reserviert bei Priorisierung fünf Plätze. Für Alchemie bietet er beim Mischen drei bis fünf Stapel oder keine an. |
 | Karten fixieren oder ausschließen | Fixierte Stapel bei der Neuziehung behalten und auf Quoten anrechnen. Ausschlüsse vor der Ziehung anwenden. Wenn feste Karten oder mehrere Quoten einander widersprechen, den Konflikt melden. |
