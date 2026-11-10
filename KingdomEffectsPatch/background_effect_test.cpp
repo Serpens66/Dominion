@@ -21,8 +21,62 @@ constexpr std::uintptr_t save_folder_cache = 0x15E3A98;
 constexpr std::size_t card_capacity = 800;
 constexpr DWORD copper = 0x104;
 constexpr DWORD silver = 0x105;
+constexpr DWORD gold = 0x106;
+constexpr DWORD estate = 0x101;
+constexpr DWORD province = 0x103;
+constexpr DWORD chapel = 0x201;
+constexpr DWORD village = 0x206;
+constexpr DWORD smithy = 0x20E;
+constexpr DWORD goat = 0xD23;
+constexpr DWORD search = 0x1104;
+constexpr DWORD horse = 0xF46;
+constexpr DWORD spoils = 0x92E;
+constexpr DWORD arena = 0xC33;
+constexpr DWORD pageant = 0xE20;
+constexpr DWORD loot = 0x1128;
 
-enum class Metric { hand, supply, owned };
+constexpr char base_kingdom[] = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop";
+constexpr char pixie_kingdom[] = "-k pixie, market, merchant, militia, mine, moat, remodel, smithy, village, workshop";
+constexpr char search_kingdom[] = "-k search, market, merchant, militia, mine, moat, remodel, smithy, village, workshop";
+constexpr char fair_kingdom[] = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop, "
+                                "travelling_fair, -m Landscapes(0,1)";
+constexpr char delve_kingdom[] = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop, "
+                                 "delve, -m Landscapes(0,1)";
+constexpr char triumph_kingdom[] = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop, "
+                                   "triumph, -m Landscapes(0,1)";
+constexpr char dominate_kingdom[] = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop, "
+                                    "dominate, travelling_fair, -m Landscapes(0,2)";
+constexpr char wedding_kingdom[] = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop, "
+                                   "wedding, travelling_fair, -m Landscapes(0,2)";
+constexpr char arena_kingdom[] = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop, "
+                                 "arena, -m Landscapes(0,1)";
+constexpr char aqueduct_kingdom[] = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop, "
+                                    "aqueduct, -m Landscapes(0,1)";
+constexpr char shrine_kingdom[] = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop, "
+                                  "defiled_shrine, -m Landscapes(0,1)";
+constexpr char pageant_kingdom[] = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop, "
+                                   "pageant, -m Landscapes(0,1)";
+constexpr char loot_kingdom[] = "-k pickaxe, market, merchant, militia, mine, moat, remodel, smithy, village, workshop";
+constexpr char free_fair[] = "stamp_got_it_already(travelling_fair)";
+
+struct Purchase {
+    const char* effects;
+    unsigned buys;
+    DWORD gained_type = 0;
+    unsigned min_owned = 0;
+};
+
+constexpr Purchase fair{free_fair, 3};
+constexpr Purchase fair_silver{
+    "stamp_got_it_already(travelling_fair), stamp_also_silver(travelling_fair)", 3, silver, 1};
+constexpr Purchase delve{"stamp_got_it_already(delve)", 2, silver, 1};
+constexpr Purchase triumph{"stamp_got_it_already(triumph)", 1, estate, 4};
+constexpr Purchase dominate{"stamp_got_it_already(dominate)", 1, province, 1};
+constexpr Purchase wedding{"stamp_got_it_already(wedding)", 1, gold, 1};
+
+enum class Metric {
+    hand, supply, pile_types, owned, location, token, token_face, pile_tokens, project_cube, money, actions, buys
+};
 
 struct Probe {
     const char* command;
@@ -30,14 +84,21 @@ struct Probe {
     std::array<unsigned, 4> expected;
     Metric metric = Metric::hand;
     DWORD card_type = 0;
+    DWORD qualifier = 0;
+    unsigned max_copies = 3;
+    const char* kingdom = base_kingdom;
+    const Purchase* purchase = nullptr;
 };
 
 constexpr Probe probes[] = {
     {"twist_big_ideas", 0x1774, {5, 6, 7, 8}},
     {"twist_cramped", 0x17DF, {5, 4, 3, 2}},
     {"twist_penny_party", 0x1775, {7, 8, 9, 10}, Metric::owned, copper},
-    {"start_double_pile(village)", 0xDB8, {10, 20, 40, 80}, Metric::supply, 0x206},
-    {"start_triple_pile(village)", 0xDBA, {10, 30, 90, 270}, Metric::supply, 0x206},
+    {"twist_busy_busy", 0x1771, {1, 2, 3, 4}, Metric::actions},
+    {"twist_shoppers", 0x1772, {1, 2, 3, 4}, Metric::buys},
+    {"twist_extra_oomph", 0x1773, {0, 1, 2, 3}, Metric::money},
+    {"start_double_pile(village)", 0xDB8, {10, 20, 40, 80}, Metric::supply, village},
+    {"start_triple_pile(village)", 0xDBA, {10, 30, 90, 270}, Metric::supply, village},
     {"start_add_card(silver)", 0xDB5, {0, 1, 2, 3}, Metric::owned, silver},
     {"start_add_each_pile", 0xDB6, {10, 20, 30, 40}, Metric::owned},
     {"start_double_deck", 0xDB7, {10, 20, 40, 80}, Metric::owned},
@@ -45,6 +106,38 @@ constexpr Probe probes[] = {
     {"start_replace_estate(silver)", 0xDB2, {0, 1, 2, 3}, Metric::owned, silver},
     {"start_replace_copper_from_pile(silver)", 0xDB3, {0, 1, 2, 3}, Metric::owned, silver},
     {"start_replace_estate_from_pile(silver)", 0xDB4, {0, 1, 2, 3}, Metric::owned, silver},
+    {"start_5_coffers", 0xDC3, {0, 5, 10, 15}, Metric::token, 0xA00},
+    {"start_10_villagers", 0xDC4, {0, 10, 20, 30}, Metric::token, 0xE00},
+    {"start_10_favor", 0xDC5, {0, 10, 20, 30}, Metric::token, 0x1000},
+    {"twist_forever_favored", 0x183A, {0, 1, 2, 3}, Metric::token, 0x1000},
+    {"start_journey_facedown", 0xDBD, {0, 1, 0, 1}, Metric::token_face, 0xB01},
+    {"start_trash_curses", 0xDBB, {0, 10, 20, 30}, Metric::location, 0x100, 2},
+    {"start_trash_pile(silver)", 0xDBC, {0, 40, 80, 120}, Metric::location, silver, 2},
+    {"start_native_village(silver)", 0xDBE, {0, 1, 2, 3}, Metric::location, silver, 0x45F},
+    {"start_tavern(copper)", 0xDBF, {0, 1, 2, 3}, Metric::location, copper, 0x461},
+    {"start_make_split_pile(village,smithy)", 0xDC6, {0, 5, 5, 5}, Metric::supply, village, smithy},
+    {"start_in_play(search)", 0xDB9, {0, 1, 2, 3}, Metric::location, search, 0x3E9, 3, search_kingdom},
+    {"start_double_heirloom(pixie)", 0xDC0, {1, 2, 3, 4}, Metric::owned, goat, 0, 3, pixie_kingdom},
+    {free_fair, 0x141E, {1, 3, 5, 7}, Metric::buys, 0, 0, 3, fair_kingdom},
+    {"stamp_bonus_money(travelling_fair)", 0x141F, {0, 1, 2, 3}, Metric::money, 0, 0, 3, fair_kingdom, &fair},
+    {"stamp_also_silver(travelling_fair)", 0x1425, {0, 1, 1, 1}, Metric::owned, silver, 0, 3, fair_kingdom, &fair},
+    {"twist_favored_wealthy", 0x1839, {0, 1, 2, 3}, Metric::token, 0x1000, 0, 3, fair_kingdom, &fair_silver},
+    {"twist_favored_landlords", 0x1838, {0, 1, 2, 3}, Metric::token, 0x1000, 0, 3, triumph_kingdom, &triumph},
+    {"twist_rebates", 0x1777, {0, 1, 2, 3}, Metric::money, 0, 0, 3, delve_kingdom, &delve},
+    {"twist_double_up", 0x17E0, {1, 2, 3, 4}, Metric::owned, silver, 0, 3, delve_kingdom, &delve},
+    {"twist_incoming", 0x17D9, {0, 1, 1, 1}, Metric::location, silver, 0x3EB, 3, delve_kingdom, &delve},
+    {"stamp_with_villager(silver)", 0x1B67, {0, 1, 2, 3}, Metric::token, 0xE00, 0, 3, delve_kingdom, &delve},
+    {"stamp_with_horse(silver)", 0x1B68, {0, 1, 2, 3}, Metric::owned, horse, 0, 3, delve_kingdom, &delve},
+    {"stamp_with_spoils(silver)", 0x1B66, {0, 1, 2, 3}, Metric::owned, spoils, 0, 3, delve_kingdom, &delve},
+    {"stamp_two_for_one(silver)", 0x1B5A, {1, 2, 3, 4}, Metric::owned, silver, 0, 3, delve_kingdom, &delve},
+    {"stamp_fawning_service(travelling_fair)", 0x1422, {1, 3, 3, 3}, Metric::buys, 0, 0, 3, dominate_kingdom, &dominate},
+    {"stamp_perks_of_wealth(travelling_fair)", 0x1426, {1, 3, 3, 3}, Metric::buys, 0, 0, 3, wedding_kingdom, &wedding},
+    {"start_double_vp_tokens(arena)", 0x1451, {12, 24, 36, 48}, Metric::pile_tokens, 0x601, arena, 3, arena_kingdom},
+    {"start_plus_8_vp_tokens(aqueduct)", 0x1452, {8, 16, 24, 32}, Metric::pile_tokens, 0x601, silver, 3, aqueduct_kingdom},
+    {"start_plus_2_vp_tokens(defiled_shrine)", 0x1453, {2, 4, 6, 8}, Metric::pile_tokens, 0x601, village, 3, shrine_kingdom},
+    {"start_with_cube(pageant)", 0x14B5, {0, 1}, Metric::project_cube, 0xE01, pageant, 1, pageant_kingdom},
+    {"twist_mirror_loot", 0x17E2, {15, 1, 1, 1}, Metric::pile_types, loot, 30, 3, loot_kingdom},
+    {"twist_room_for_more(chapel)", 0x17D8, {0, 10}, Metric::supply, chapel, 0, 1},
 };
 
 class HiddenDesktop {
@@ -126,9 +219,13 @@ void check_bytes(const Child& child, std::uintptr_t address, const std::array<un
 }
 
 void write_profile(const fs::path& folder, const Probe& probe, unsigned copies) {
-    std::string kingdom = "-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop";
+    std::string kingdom = probe.kingdom;
+    if (probe.purchase) {
+        kingdom += " -x ";
+        kingdom += probe.purchase->effects;
+    }
     for (unsigned i = 0; i < copies; ++i) {
-        kingdom += i ? ", " : " -x ";
+        kingdom += (i || probe.purchase) ? ", " : " -x ";
         kingdom += probe.command;
     }
     std::ofstream profile(folder / L"profiles.xml", std::ios::binary);
@@ -209,21 +306,70 @@ unsigned owned_count(const Child& child, std::uintptr_t state, DWORD cards, DWOR
     return count;
 }
 
-unsigned supply_count(const Child& child, std::uintptr_t state, DWORD cards, DWORD type) {
+unsigned location_count(const Child& child, std::uintptr_t state, DWORD cards, DWORD who,
+                        DWORD type, DWORD where) {
+    unsigned count = 0;
+    for (DWORD i = 1; i < cards; ++i) {
+        const auto card = state + 0x1A48 + i * 0x64;
+        if (child.read(card + 8) == where && child.read(card + 4) == type &&
+            (where == 2 || child.read(card + 0x28) == who)) ++count;
+    }
+    return count;
+}
+
+unsigned token_count(const Child& child, std::uintptr_t state, DWORD who, DWORD type, bool face, DWORD where = 0) {
+    const auto records = child.read(state + 0x19A4);
+    require(records <= 256, "Invalid token count.");
+    unsigned count = 0;
+    for (DWORD i = 0; i < records; ++i) {
+        const auto token = state + 0x152C8 + i * 0x20;
+        if (child.read(token) == type && child.read(token + 4) == who && (!where || child.read(token + 8) == where)) {
+            count += face ? (child.read(token + 0x10) & 0xFF) : child.read(token + 0x14);
+        }
+    }
+    return count;
+}
+
+DWORD pile_slot(const Child& child, std::uintptr_t state, DWORD type) {
+    for (DWORD slot = 7; slot < 0x48; ++slot) {
+        if (child.read(state + 0x1524 + slot * 0x10) == type) return slot;
+    }
+    throw std::runtime_error("The test pile is missing from the fixture.");
+}
+
+unsigned pile_types(const Child& child, std::uintptr_t state, DWORD cards, DWORD type, DWORD expected_cards) {
+    const auto slot = pile_slot(child, state, type);
+    auto handle = child.read(state + 0x152C + slot * 0x10);
+    std::vector<DWORD> types;
+    DWORD visited = 0;
+    while (handle) {
+        const auto index = handle & 0xFFFF;
+        require(index < cards && visited++ < cards, "Invalid card list in the observed pile.");
+        const auto card = state + 0x1A48 + index * 0x64;
+        const auto card_type = child.read(card + 4);
+        if (std::find(types.begin(), types.end(), card_type) == types.end()) types.push_back(card_type);
+        handle = child.read(card + 0x5C);
+    }
+    require(visited == expected_cards, "The observed pile has an unexpected size.");
+    return static_cast<unsigned>(types.size());
+}
+
+unsigned supply_count(const Child& child, std::uintptr_t state, DWORD cards, DWORD type, DWORD filter) {
     for (unsigned slot = 0x13; slot <= 0x21; ++slot) {
         const auto pile = state + 0x1524 + slot * 0x10;
         if (child.read(pile) != type) continue;
-        unsigned count = 0;
+        unsigned count = 0, visited = 0;
         auto handle = child.read(pile + 8);
         while (handle) {
             const auto index = handle & 0xFFFF;
-            require(index < cards && count < cards, "Invalid card list in the observed supply.");
-            handle = child.read(state + 0x1A48 + index * 0x64 + 0x5C);
-            ++count;
+            require(index < cards && visited++ < cards, "Invalid card list in the observed supply.");
+            const auto card = state + 0x1A48 + index * 0x64;
+            if (!filter || child.read(card + 4) == filter) ++count;
+            handle = child.read(card + 0x5C);
         }
         return count;
     }
-    throw std::runtime_error("The required supply pile is absent.");
+    return 0;
 }
 
 bool run_probe(const fs::path& exe, const fs::path& folder, std::wstring& desktop, const Probe& probe, unsigned copies) {
@@ -241,8 +387,20 @@ bool run_probe(const fs::path& exe, const fs::path& folder, std::wstring& deskto
     const auto cards = child.read(state + 0x1520);
     require(players == 2 && who < players && cards > 2 && cards <= card_capacity,
             "The native first-turn state does not match the fixture.");
-    unsigned installed = 0;
-    while (installed < 32 && child.read(state + 0x1280 + installed * 0x14) == probe.id) ++installed;
+    const auto resources = state + 0x174F4 + who * 0x5A30;
+    unsigned installed = 0, event_purchase = 0;
+    for (unsigned i = 0; i < 32; ++i) {
+        const auto id = child.read(state + 0x1280 + i * 0x14);
+        if (id == probe.id) ++installed;
+        if (id == 0x141E) ++event_purchase;
+    }
+    if (probe.purchase) {
+        require(event_purchase == 1 && (probe.metric == Metric::buys || child.read(resources + 8) == probe.purchase->buys),
+                "The free event purchase is missing from the fixture.");
+        require(!probe.purchase->gained_type ||
+                    owned_count(child, state, cards, who, probe.purchase->gained_type) >= probe.purchase->min_owned,
+                "The event's card gain is missing from the fixture.");
+    }
     auto result = 0u;
     const char* metric = nullptr;
     switch (probe.metric) {
@@ -252,12 +410,43 @@ bool run_probe(const fs::path& exe, const fs::path& folder, std::wstring& deskto
             break;
         case Metric::supply:
             metric = "supply";
-            result = supply_count(child, state, cards, probe.card_type);
+            result = supply_count(child, state, cards, probe.card_type, probe.qualifier);
+            break;
+        case Metric::pile_types:
+            metric = "distinct pile cards";
+            result = pile_types(child, state, cards, probe.card_type, probe.qualifier);
             break;
         case Metric::owned:
             metric = probe.card_type ? "owned type" : "owned";
             result = owned_count(child, state, cards, who, probe.card_type);
             break;
+        case Metric::location:
+            metric = "cards at location";
+            result = location_count(child, state, cards, who, probe.card_type, probe.qualifier);
+            break;
+        case Metric::token:
+        case Metric::token_face:
+            metric = probe.metric == Metric::token ? "tokens" : "token face";
+            result = token_count(child, state, who, probe.card_type, probe.metric == Metric::token_face);
+            break;
+        case Metric::pile_tokens:
+            metric = "pile tokens";
+            result = token_count(child, state, DWORD(-1), probe.card_type, false,
+                                 pile_slot(child, state, probe.qualifier));
+            break;
+        case Metric::project_cube:
+            metric = "assigned project cubes";
+            result = token_count(child, state, who, probe.card_type, false,
+                                 pile_slot(child, state, probe.qualifier));
+            break;
+        case Metric::money:
+        case Metric::actions:
+        case Metric::buys: {
+            const auto resource = probe.metric == Metric::money ? 0 : probe.metric == Metric::actions ? 1 : 2;
+            metric = probe.metric == Metric::money ? "money" : probe.metric == Metric::actions ? "actions" : "buys";
+            result = child.read(resources + resource * sizeof(DWORD));
+            break;
+        }
     }
     const bool pass = installed == copies && result == probe.expected[copies];
     std::printf("%s\t%u\t%u\t%s\t%u\t%u\t%s\n", probe.command, copies, installed, metric, result,
@@ -270,7 +459,8 @@ bool run_probe(const fs::path& exe, const fs::path& folder, std::wstring& deskto
 
 int wmain(int argc, wchar_t** argv) {
     try {
-        require(argc == 2, "Usage: background_effect_test.exe <test Dominion.exe>");
+        require(argc == 2 || argc == 3, "Usage: background_effect_test.exe <test Dominion.exe> [effect-prefix]");
+        const std::wstring_view prefix = argc == 3 ? argv[2] : L"";
         const auto exe = fs::canonical(argv[1]);
         require(_wcsicmp(exe.filename().c_str(), L"Dominion.exe") == 0, "Expected Dominion.exe.");
         Handle working(CreateFileW(exe.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr));
@@ -290,7 +480,9 @@ int wmain(int argc, wchar_t** argv) {
         unsigned case_number = 0;
         bool all_pass = true;
         for (const auto& probe : probes) {
-            for (unsigned copies = 0; copies < probe.expected.size(); ++copies) {
+            const std::string_view command(probe.command);
+            if (std::wstring(command.begin(), command.end()).compare(0, prefix.size(), prefix) != 0) continue;
+            for (unsigned copies = 0; copies <= probe.max_copies; ++copies) {
                 const auto number = std::to_wstring(++case_number);
                 try {
                     if (!run_probe(exe, run / number, name, probe, copies)) all_pass = false;
@@ -300,6 +492,7 @@ int wmain(int argc, wchar_t** argv) {
                 }
             }
         }
+        require(case_number, "No test cases matched the effect prefix.");
         std::printf("Scratch logs: %ls\n", run.c_str());
         return all_pass ? 0 : 1;
     } catch (const std::exception& error) {

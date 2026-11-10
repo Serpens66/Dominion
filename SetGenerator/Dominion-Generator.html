@@ -814,6 +814,7 @@
 </main>
 <aside id="expansion-info" class="expansion-info" aria-labelledby="expansion-info-title" hidden>
   <strong id="expansion-info-title"></strong>
+  <p id="expansion-info-land-origin" class="muted" hidden></p>
   <p id="expansion-info-source" class="muted source-label"></p>
   <p id="expansion-info-description"></p>
   <details id="expansion-info-rules">
@@ -2531,6 +2532,12 @@ function openExpansionInfo(trigger, expansion, pinned = false) {
   expansionInfoPinned = pinned;
   const info = catalog.expansionInfo[expansion][uiLanguage];
   document.getElementById("expansion-info-title").textContent = expansionName(expansion);
+  const originHint = document.getElementById("expansion-info-land-origin");
+  originHint.hidden = !trigger.id.startsWith("range-land-exp-");
+  originHint.textContent = tr(
+    "Diese Quote zählt Landschaften aus dieser Erweiterung. Zwei leere Felder übernehmen die Freigabe der Hauptstapel. 0–0 sperrt die Landschaften separat.",
+    "This quota counts Landscapes from this expansion. Two blank fields follow the Kingdom pile selection. Set 0–0 to exclude the Landscapes separately."
+  );
   document.getElementById("expansion-info-source").textContent =
     tr("Originalbeschreibung aus der Steam-Version", "Original description from the Steam version");
   renderGameText(document.getElementById("expansion-info-description"), formatGameRules(info.description, uiLanguage), uiLanguage);
@@ -2647,6 +2654,9 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
   for (const [edited, other] of [[from, to], [to, from]]) {
     edited.addEventListener("input", () => {
       const lower = from.valueAsNumber;
+      if (rule.inherited && edited === from && to.value === "" && isValidRangeBound(lower, Number(from.max))) {
+        to.value = from.value;
+      }
       const upper = to.valueAsNumber;
       if (isValidRangeBound(lower, Number(from.max)) && isValidRangeBound(upper, Number(to.max)) && lower > upper) {
         other.value = edited.value;
@@ -2716,6 +2726,34 @@ const rangeHints = new Map([
   ["exp-distinct", makeRangeHint("exp-distinct-hint", () => tr(
     "Zählt jede Erweiterung, aus der mindestens ein Königreichstapel gezogen wird, genau einmal. Das Basisspiel zählt dabei nicht mit. Promos zählen als eine Gruppe. Mit 2–2 müssen genau zwei Erweiterungen vertreten sein. Aus jeder davon können mehrere Stapel kommen.",
     "Counts each expansion represented by at least one drawn Kingdom pile once. The base game is excluded from the count. Promos count as one group. Set 2–2 to require exactly two expansions. Each can contribute multiple piles."
+  ))],
+  ["land-total", makeRangeHint("land-total-hint", () => tr(
+    "Zählt alle gezogenen Landschaften zusammen. Sie kommen zusätzlich zu den Königreichstapeln ins Spiel. Bei 0–0 wird keine Landschaft gezogen.",
+    "Counts all drawn Landscapes together. They are added alongside the Kingdom piles. Set 0–0 to draw no Landscapes."
+  ))],
+  ["land-distinct", makeRangeHint("land-distinct-hint", () => tr(
+    "Zählt die Erweiterungen, aus denen tatsächlich Landschaften gezogen werden. Mehrere Landschaften derselben Erweiterung zählen zusammen als eine Herkunft.",
+    "Counts expansions represented among the drawn Landscapes. Multiple Landscapes from the same expansion count as one source."
+  ))],
+  ["land-type-event", makeRangeHint("land-type-event-hint", () => tr(
+    "In der Kaufphase kannst du ein Ereignis kaufen und seinen Effekt sofort ausführen. Es bleibt für weitere Käufe ausliegen.",
+    "You can buy an Event during your Buy phase and resolve its effect immediately. It stays on the table for future purchases."
+  ))],
+  ["land-type-landmark", makeRangeHint("land-type-landmark-hint", () => tr(
+    "Landmarken geben allen dieselben zusätzlichen Regeln für Siegpunkte. Je nach Landmarke kannst du Punkte gewinnen oder verlieren, während des Spiels oder bei der Schlusswertung.",
+    "Landmarks give everyone the same additional scoring rules. Depending on the Landmark, you can gain or lose points during play or at final scoring."
+  ))],
+  ["land-type-project", makeRangeHint("land-type-project-hint", () => tr(
+    "Ein Projekt kannst du einmal pro Partie kaufen. Sein Vorteil gilt danach für dich. Andere können dasselbe Projekt ebenfalls kaufen.",
+    "You can buy a Project once per game. Its benefit then applies to you. Other players can buy the same Project too."
+  ))],
+  ["land-type-way", makeRangeHint("land-type-way-hint", () => tr(
+    "Beim Ausspielen einer Aktionskarte kannst du den Effekt eines ausliegenden Weges statt des normalen Spieleffekts der Karte nutzen.",
+    "When you play an Action card, you can use an available Way's effect in place of the card's usual on-play effect."
+  ))],
+  ["land-type-trait", makeRangeHint("land-type-trait-hint", () => tr(
+    "Ein Merkmal wird einem Aktions- oder Geldstapel im Vorrat zugeordnet. Es verändert für diese Partie die Regeln für die Karten dieses Stapels.",
+    "A Trait is assigned to an Action or Treasure pile in the Supply. It changes how cards from that pile work for the game."
   ))],
 ]);
 for (const card of cards.filter(isDefense)) {

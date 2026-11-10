@@ -112,7 +112,7 @@ Für Build 3315 den **Lokal-Test-starten.cmd** doppelklicken und **2 – Patch a
 
 **Im Spiel gemessen am 10. November 2026.** Build 3315, Steam-Build 17683350. Der Nutzer bestätigte vorab drei zusätzliche Karten durch dreimal Große Ideen. Der gespeicherte Spielstand und das Patchprotokoll enthalten jeweils die drei Einträge.
 
-Der x86-Runner startet für jeden Vergleich eine frische Dominion-Arbeitskopie mit zwei lokalen menschlichen Testplätzen auf einem separaten Windows-Desktop. Er erzeugt pro Fall ein eigenes Profil im temporären Verzeichnis, stellt die native Spielstartanforderung ein und liest den Spielzustand im ersten Zug aus. Die Messung benötigt keine Maus- oder Tastatureingaben. Jeder Fall prüft die Anzahl aktiver Effekte sowie die Hand, den Vorrat oder eine Kartenanzahl des ersten Spielers. Der normale Patch und der F8-Dialog sind an diesen Messungen der nativen Regeln nicht beteiligt.
+Der x86-Runner startet für jeden Vergleich eine frische Dominion-Arbeitskopie mit zwei menschlichen Spielerplätzen wie in **Weitergeben** auf einem separaten Windows-Desktop. Er erzeugt pro Fall ein eigenes Profil im temporären Verzeichnis, stellt die native Spielstartanforderung ein und liest den Spielzustand im ersten Zug aus. Die Messung benötigt keine Maus- oder Tastatureingaben. Jeder Fall prüft die Anzahl aktiver Effekte und den zum Effekt passenden Messwert. Die automatisierten Messungen prüfen die nativen Regeln nach dem Laden des Sets. Die Bedienung des F8-Editors gehört zum manuellen Test.
 
 Aus dem Verzeichnis `KingdomEffectsPatch` den Runner bauen und mit dem Pfad der zuvor vom lokalen Starter angelegten Arbeitskopie starten.
 
@@ -121,7 +121,7 @@ Aus dem Verzeichnis `KingdomEffectsPatch` den Runner bauen und mit dem Pfad der 
 & .\out\background_effect_test.exe "$env:LOCALAPPDATA\DominionModTests\3315\game\Dominion.exe"
 ```
 
-Der Runner benötigt unter Windows das Recht, einen separaten Desktop zu erzeugen. Er bricht bei fehlendem Recht vor dem Spielstart ab. Die Konsolentabelle gibt den Effekt, die geplante und geladene Anzahl sowie Messwert und Erwartung aus. Spielstände und Protokolle liegen im ausgegebenen temporären Verzeichnis.
+Der Runner benötigt unter Windows das Recht, einen separaten Desktop zu erzeugen. Er bricht bei fehlendem Recht vor dem Spielstart ab. Die Konsolentabelle gibt den Effekt, die geplante und geladene Anzahl sowie Messwert und Erwartung aus. Ein optionales zweites Argument filtert die Testfälle nach dem Anfang der Effekt-ID, etwa `stamp_`. Spielstände und Protokolle liegen im ausgegebenen temporären Verzeichnis.
 
 | Effekt | Messwert | 0 Kopien | 1 Kopie | 2 Kopien | 3 Kopien |
 | --- | --- | ---: | ---: | ---: | ---: |
@@ -134,5 +134,34 @@ Der Runner benötigt unter Windows das Recht, einen separaten Desktop zu erzeuge
 | Doppeltes Startdeck | Eigene Karten im ersten Zug | 10 | 20 | 40 | 80 |
 | Zusätzliche Startkarte (Silber) | Eigenes Silber im ersten Zug | 0 | 1 | 2 | 3 |
 | Startkupfer oder Startanwesen gegen Silber, je als neue Kopie oder vom Stapel (vier Fälle) | Eigenes Silber im ersten Zug | 0 | 1 | 2 | 3 |
+| Gut beschäftigt (`twist_busy_busy`) | Aktionen zu Beginn des ersten Zugs | 1 | 2 | 3 | 4 |
+| Kauflaune (`twist_shoppers`) | Käufe zu Beginn des ersten Zugs | 1 | 2 | 3 | 4 |
+| Das gewisse Etwas (`twist_extra_oomph`) | Münzen zu Beginn des ersten Zugs | 0 | 1 | 2 | 3 |
+| `start_5_coffers` | Taler zu Spielbeginn | 0 | 5 | 10 | 15 |
+| `start_10_villagers` | Dorfbewohner zu Spielbeginn | 0 | 10 | 20 | 30 |
+| `start_10_favor` | Gefallen zu Spielbeginn | 0 | 10 | 20 | 30 |
+| `twist_forever_favored` | Gefallen zu Beginn des ersten Zugs | 0 | 1 | 2 | 3 |
+| `start_journey_facedown` | Seite des Reisemarkers | offen | verdeckt | offen | verdeckt |
+| `start_trash_curses` | Flüche im Müll | 0 | 10 | 20 | 30 |
+| `start_trash_pile(silver)` | Silber im Müll | 0 | 40 | 80 | 120 |
+| `start_native_village(silver)` | Silber auf dem Tableau von Eingeborenendorf | 0 | 1 | 2 | 3 |
+| `start_tavern(copper)` | Kupfer auf dem Wirtshaus-Tableau | 0 | 1 | 2 | 3 |
+| `start_make_split_pile(village,smithy)` | Schmieden im Dorfstapel | 0 | 5 | 5 | 5 |
+| `start_double_heirloom(pixie)` | Ziegen bei Kobold im Königreich | 1 | 2 | 3 | 4 |
+| `start_in_play(search)` | Exemplare von Suche im Spielbereich bei Suche im Königreich | 0 | 1 | 2 | 3 |
+| `twist_room_for_more(chapel)` | Kapellen im zusätzlichen Vorratsstapel | 0 | 10 | — | — |
+| `stamp_got_it_already(travelling_fair)` | Käufe nach der kostenlosen Wanderkirmes | 1 | 3 | 5 | 7 |
+| `stamp_bonus_money(travelling_fair)` | Münzen nach einem kostenlosen Kauf | 0 | 1 | 2 | 3 |
+| `stamp_also_silver(travelling_fair)` | Eigenes Silber nach einem kostenlosen Kauf | 0 | 1 | 1 | 1 |
+| `twist_favored_wealthy` | Gefallen nach dem Silberbonus der Wanderkirmes | 0 | 1 | 2 | 3 |
+| `twist_favored_landlords` | Gefallen nach dem Anwesen durch Triumph | 0 | 1 | 2 | 3 |
+| `twist_rebates` | Münzen nach dem Silber durch `delve` | 0 | 1 | 2 | 3 |
+| `twist_double_up` | Eigenes Silber nach `delve` | 1 | 2 | 3 | 4 |
+| `twist_incoming` | Silber auf dem Nachziehstapel nach `delve` | 0 | 1 | 1 | 1 |
+| `stamp_with_villager(silver)` | Dorfbewohner nach dem Silber durch `delve` | 0 | 1 | 2 | 3 |
 
-Alle 48 Fälle der Reihe erreichten den ersten Zug und lieferten die erwartete Effektzahl und den angegebenen Messwert. Bei den Austauschvarianten wurde das erhaltene Silber gezählt. Herkunft des Silbers und Entnahme der ursprünglichen Startkarte waren keine separaten Prüfwerte. Für die übrigen 77 Katalogeffekte fehlen Messungen. Effekte für Kartenkäufe, Kartenaktionen, Entsorgen, spätere Zugphasen oder die Endwertung brauchen eigene Ausgangslagen und ausgelöste Spielaktionen. Ein unveränderter erster Zug sagt bei ihnen noch nichts über die Wirkung aus.
+Bei den vier Austauschvarianten wurde das erhaltene Silber gezählt. Herkunft des Silbers und Entnahme der ursprünglichen Startkarte waren keine separaten Prüfwerte. **Platz für mehr** hat einen gemeinsamen Zielslot. Der F8-Editor lässt eine Auswahl dieses Effekts zu.
+
+Für die Kaufboni bleibt `stamp_got_it_already(travelling_fair)` in allen Vergleichsfällen aktiv. Die zwei zusätzlichen Käufe belegen den ausgelösten Ereigniskauf. Für die Erhaltensregeln liefern der Silberbonus der Wanderkirmes, das Silber aus dem Vorrat durch `delve` und das Anwesen durch `triumph` gezielte Auslöser. Der Runner prüft, ob der erste Spieler die jeweilige Karte erhalten hat. Bei der Wanderkirmes mit Silberbonus blieben `twist_rebates` und `twist_double_up` in einer Erkundungsreihe ohne messbare Wirkung. Bei `delve` griffen beide.
+
+**Noch offen.** Zwei lokale Erkundungsreihen mit Taifun erreichten den ersten Zug mit aktivem Effekt, aber ohne Kapelle im Vorrat. Ob ein Stapel später wechselt, bleibt offen. Für weitere Effekte braucht der Runner konkrete Spielzüge oder längere Partien, etwa um Karten auszuspielen, zu entsorgen oder die Endwertung zu erreichen.

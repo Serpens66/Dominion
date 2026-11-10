@@ -31,7 +31,10 @@ def read_effects():
     guide = (DOCS / "Steam_Spielanleitung.md").read_text(encoding="utf-8")
     catalog = guide.split("### Katalog der Kampagneneffekte", 1)[1]
     catalog = catalog.split("#### Weitere Varianten aus der Kampagnenerzeugung", 1)[0]
-    pattern = r"^\| ([^|]+) \| `((?:twist|stamp|start)_[a-z0-9_]+)(?:\(([^)]+)\))?` \| (.*?) \|$"
+    pattern = (
+        r"^\| ([^|]+) \| `((?:twist|stamp|start)_[a-z0-9_]+)(?:\(([^)]+)\))?`"
+        r" \| (.*?) \| [^|\n]+ \| [^|\n]+ \|$"
+    )
     effects = []
     for name, command, args, description in re.findall(pattern, catalog, re.MULTILINE | re.IGNORECASE):
         first = second = "none"
