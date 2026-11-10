@@ -227,10 +227,13 @@
   .range-rules input[type=number] { padding-inline: .25rem; text-align: center; }
   .range-rules input { width: 100%; min-width: 0; }
   .inherited-bound { position: relative; min-width: 0; }
-  .inherited-bound input[type=number] { appearance: textfield; padding-inline-end: 1.25rem; }
-  .inherited-bound input::-webkit-inner-spin-button,
-  .inherited-bound input::-webkit-outer-spin-button { appearance: none; margin: 0; }
-  .inherited-bound input::placeholder { font-size: .8em; }
+  .inherited-bound select {
+    appearance: none;
+    width: 100%;
+    padding-inline: .1rem 1.2rem;
+    text-align: center;
+  }
+  .inherited-bound select:has(option:first-child:checked) { color: var(--muted); }
   .inherited-stepper {
     position: absolute;
     inset: .2rem .15rem .2rem auto;
@@ -340,18 +343,16 @@
   }
   .edition-option input { width: auto; flex: none; margin: 0; }
   .edition-tip {
-    display: none;
-    position: absolute;
-    z-index: 3;
-    inset: calc(100% + .2rem) 0 auto;
-    padding: .4rem .5rem;
-    border: 1px solid var(--field-border);
-    border-radius: .35rem;
-    background: var(--paper);
-    box-shadow: 0 .2rem .5rem var(--shadow);
-    white-space: normal;
+    max-block-size: min(36rem, 65vh);
+    overflow: auto;
   }
-  .edition-option:hover .edition-tip, .edition-option:focus-within .edition-tip { display: block; }
+  .edition-tip > p { margin-top: 0; }
+  .edition-tip > ul {
+    margin: .35rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .edition-tip > ul > li { padding-block: .15rem; }
   .expansion-info-trigger {
     min-width: 0;
     padding: 0;
@@ -533,6 +534,7 @@
     box-shadow: 0 .35rem 1rem var(--shadow);
     font-size: .9rem;
   }
+  .edition-option:is(:hover, :focus-within) + .edition-tip,
   .conditional-range > span:is(:hover, :focus) + .conditional-range-hint,
   .conditional-range-hint:is(:hover, :focus-within),
   #kingdom-size-help:focus-within > .conditional-range-hint,
@@ -546,7 +548,7 @@
     inset-inline: 0 auto;
     width: min(24rem, 100%);
   }
-  .defense-pool .card-preview {
+  .defense-pool .card-preview, .edition-tip .card-preview {
     position: static;
     width: 100%;
     box-shadow: none;
@@ -711,7 +713,7 @@
         <details>
           <summary class="section-summary" data-en="Landscapes">Landschaften</summary>
           <div class="section-body">
-            <p class="muted" id="land-source-help" data-en="Landscapes have their own slots. Under Source expansion, leave both fields empty (Auto) to follow the Kingdom pool. Enter 0 to 0 to exclude Landscapes from that expansion. Use the down arrow at 0 to return to Auto.">Landschaften belegen eigene Plätze. Unter Herkunft übernehmen zwei leere Felder (Auto) die Freigabe aus dem Hauptstapel-Pool. 0 bis 0 sperrt die Landschaften dieser Erweiterung. Bei 0 führt der Abwärtspfeil zurück zu Auto.</p>
+            <p class="muted" id="land-source-help" data-en="Landscapes have their own slots. Under Source expansion, select Auto in both fields to follow the Kingdom pool. Enter 0 to 0 to exclude Landscapes from that expansion. Use the down arrow at 0 to return to Auto.">Landschaften belegen eigene Plätze. Unter Herkunft übernimmt zweimal Auto die Freigabe aus dem Hauptstapel-Pool. 0 bis 0 sperrt die Landschaften dieser Erweiterung. Bei 0 führt der Abwärtspfeil zurück zu Auto.</p>
             <div class="quota-columns" id="land-quotas">
               <div id="land-ranges" class="range-rules quota-table">
                 <h3 data-en="Total and type">Gesamtzahl und Typ</h3><span id="land-from" class="range-bound" data-en="From">Von</span><span id="land-to" class="range-bound" data-en="To">Bis</span>
@@ -1351,6 +1353,7 @@ const standardKingdomSize = 10;
 const allowedKingdomSizes = [10, 11, 12, 13];
 let kingdomSize = standardKingdomSize;
 const landscapeLimit = 4;
+const defaultGroupMaxima = { types: 3, resources: 3 };
 const defaultRanges = {
   actions: [1, standardKingdomSize],
   cards: [1, standardKingdomSize],
@@ -1359,7 +1362,8 @@ const defaultRanges = {
   defense: [0, 2],
   "attack-reaction": [0, 2],
   "other-reaction": [0, 2],
-  "non-action": [0, 3],
+  potions: [0, 3],
+  debt: [0, 3],
   "cost-1": [0, 1],
   "cost-2": [1, 2],
   "cost-3": [1, 3],
@@ -1963,16 +1967,20 @@ function isValidRangeBound(value, limit) {
   return Number.isInteger(value) && value >= 0 && value <= limit;
 }
 
+function rangeNumber(field) {
+  return field?.value ? Number(field.value) : NaN;
+}
+
 function readRange(rule, inherited = false) {
   const [from, to] = rangeInputs.get(rule.id);
   const maxAllowed = rule.max ?? kingdomSize;
   if (inherited && from.value === "" && to.value === "") return null;
   if (inherited && (from.value === "" || to.value === "")) {
-    throw new Error(tr("Fülle bei „" + ruleLabel(rule) + "“ beide Felder aus oder lass beide für Auto leer.",
-      "For “" + ruleLabel(rule) + ",” fill in both fields or leave both empty for Auto."));
+    throw new Error(tr("Wähle bei „" + ruleLabel(rule) + "“ zwei Zahlen oder zweimal Auto.",
+      "For “" + ruleLabel(rule) + ",” choose two numbers or select Auto in both fields."));
   }
-  const min = from.valueAsNumber;
-  const max = to.valueAsNumber;
+  const min = rangeNumber(from);
+  const max = rangeNumber(to);
   if (!isValidRangeBound(min, maxAllowed) || !isValidRangeBound(max, maxAllowed)) {
     throw new Error(tr("Gib für „" + ruleLabel(rule) + "“ zwei ganze Zahlen von 0 bis " + maxAllowed + " ein.",
       "Enter two whole numbers from 0 to " + maxAllowed + " for “" + ruleLabel(rule) + ".”"));
@@ -2135,9 +2143,11 @@ function readSettings(source) {
   const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
   const isRangeValue = value => typeof value === "string" &&
     (value === "" || (value.trim() === value && Number.isFinite(Number(value))));
+  const isRangePair = ([id, pair]) => Array.isArray(pair) && pair.length === 2 && pair.every(value =>
+    isRangeValue(value) && (value === "" || !id.startsWith("land-exp-") || isValidRangeBound(Number(value), landscapeLimit)));
   if ((settings.kingdomSize !== undefined && !allowedKingdomSizes.includes(settings.kingdomSize)) ||
       !isRecord(settings.ranges) || !isRecord(settings.cardChoices) ||
-      !Object.values(settings.ranges).every(pair => Array.isArray(pair) && pair.length === 2 && pair.every(isRangeValue)) ||
+      !Object.entries(settings.ranges).every(isRangePair) ||
       !Object.values(settings.cardChoices).every(choice => choice === "pinned" || choice === "excluded") ||
       !["de", "en"].includes(settings.previewLanguage) || typeof settings.setName !== "string" ||
       (settings.interfaceLanguage !== undefined && !["de", "en"].includes(settings.interfaceLanguage)) ||
@@ -2179,7 +2189,10 @@ function applySettings(settings) {
   setKingdomSize(settings.kingdomSize ?? standardKingdomSize);
   for (const [id, [from, to]] of rangeInputs) {
     const initialMax = to.defaultValue === String(standardKingdomSize) ? to.max : to.defaultValue;
-    [from.value, to.value] = settings.ranges[id] ?? [from.defaultValue, initialMax];
+    const bounds = settings.ranges[id] ?? [from.defaultValue ?? "", initialMax ?? ""];
+    [from.value, to.value] = id.startsWith("land-exp-")
+      ? bounds.map(value => value === "" ? "" : String(Number(value)))
+      : bounds;
   }
   for (const [id, field] of poolChoices) field.value = settings.cardChoices[id] ?? "random";
   for (const [id, field] of editionInputs) field.checked = settings.editions?.[id] ?? false;
@@ -2478,7 +2491,7 @@ function updatePoolGroups() {
     let available = 0, pinned = 0, excluded = 0, found = 0;
     for (const { card, item, choice, searchNames } of group.items) {
       const maximum = rangeInputs.get("exp-" + card.expansion)?.[1].valueAsNumber ?? 0;
-      const landMax = rangeInputs.get("land-exp-" + card.expansion)?.[1].valueAsNumber;
+      const landMax = rangeNumber(rangeInputs.get("land-exp-" + card.expansion)?.[1]);
       const eligible = (group.area === "land-pool" && Number.isFinite(landMax) ? landMax : maximum) > 0 && allowsEdition(card);
       if (choice.value === "excluded") excluded++;
       else if (eligible) available++;
@@ -2557,8 +2570,8 @@ function openExpansionInfo(trigger, expansion, pinned = false) {
   const originHint = document.getElementById("expansion-info-land-origin");
   originHint.hidden = !trigger.id.startsWith("range-land-exp-");
   originHint.textContent = tr(
-    "Diese Quote zählt Landschaften aus dieser Erweiterung. Zwei leere Felder übernehmen die Freigabe der Hauptstapel. 0–0 sperrt die Landschaften separat.",
-    "This quota counts Landscapes from this expansion. Two blank fields follow the Kingdom pile selection. Set 0–0 to exclude the Landscapes separately."
+    "Diese Quote zählt Landschaften aus dieser Erweiterung. Zweimal Auto übernimmt die Freigabe der Hauptstapel. 0–0 sperrt die Landschaften separat.",
+    "This quota counts Landscapes from this expansion. Selecting Auto in both fields follows the Kingdom pile selection. Set 0–0 to exclude the Landscapes separately."
   );
   document.getElementById("expansion-info-source").textContent =
     tr("Originalbeschreibung aus der Steam-Version", "Original description from the Steam version");
@@ -2608,21 +2621,12 @@ function addExpansionInfoTrigger(trigger, expansion) {
   });
 }
 
-function stepInheritedRange(field, other, direction) {
-  if (field.validity.badInput) return;
-  const previous = field.value;
-  if (previous === "") {
-    if (direction < 0) return;
-    field.value = "0";
-    if (other.value === "") other.value = "0";
-  } else if (field.valueAsNumber === 0 && direction < 0) {
-    field.value = other.value = "";
-  } else if (direction > 0) {
-    field.stepUp();
-  } else {
-    field.stepDown();
-  }
-  if (field.value !== previous) field.dispatchEvent(new Event("input", { bubbles: true }));
+function stepInheritedRange(field, direction, max) {
+  const current = field.value === "" ? -1 : Number(field.value);
+  const next = current + direction;
+  if (next < -1 || next > max) return;
+  field.value = next === -1 ? "" : String(next);
+  field.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 function addRange(rule, groupName, group = document.getElementById(groupName + "-ranges")) {
@@ -2647,7 +2651,10 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
   } else {
     name.append(title);
   }
-  if (kingdomExpansion && expansion !== "promos" && cards.some(card => card.expansion === expansion && card.edition === "first")) {
+  const firstEditionCards = kingdomExpansion && expansion !== "promos"
+    ? cards.filter(card => card.expansion === expansion && card.edition === "first")
+    : [];
+  if (firstEditionCards.length) {
     const label = document.createElement("label");
     label.className = "edition-option";
     const toggle = document.createElement("input");
@@ -2655,59 +2662,71 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     const text = document.createElement("span");
     text.id = "edition-label-" + expansion;
     bindInterfaceLabel(text, () => tr("1. Ed.", "1st ed."));
-    const tip = document.createElement("span");
-    tip.id = "edition-tip-" + expansion;
-    tip.className = "edition-tip";
-    tip.setAttribute("role", "tooltip");
-    bindInterfaceLabel(tip, () => tr(
-      "Nimmt Karten der ersten Edition zur Auswahl hinzu. Beide Editionen teilen sich dieselbe Quote.",
-      "Includes first edition cards in the same pool. Both editions count towards the same quota."
+    const tip = document.createElement("div");
+    tip.className = "conditional-range-hint edition-tip";
+    const note = document.createElement("p");
+    note.id = "edition-tip-" + expansion;
+    bindInterfaceLabel(note, () => tr(
+      "Diese Stapel kommen zur Auswahl hinzu. Beide Editionen teilen sich dieselbe Quote.",
+      "These piles are added to the pool. Both editions count towards the same quota."
     ));
+    const list = document.createElement("ul");
+    firstEditionCards.sort((a, b) => cardTitle(a).localeCompare(cardTitle(b), "de"));
+    for (const card of firstEditionCards) {
+      const item = document.createElement("li");
+      addCardPreview(item, card, "edition");
+      list.append(item);
+    }
+    tip.append(note, list);
     toggle.setAttribute("aria-labelledby", title.id + " " + text.id);
-    toggle.setAttribute("aria-describedby", tip.id);
-    label.append(toggle, text, tip);
+    toggle.setAttribute("aria-describedby", note.id);
+    label.append(toggle, text);
     editionInputs.set(expansion, toggle);
-    name.append(label);
+    name.append(label, tip);
   }
   group.append(name);
   const max = rule.max ?? kingdomSize;
-  const [initialMin, initialMax] = defaultRanges[rule.id] ?? [0, rule.initialMax ?? max];
+  const [initialMin, initialMax] = defaultRanges[rule.id] ?? [0, rule.initialMax ?? defaultGroupMaxima[rule.group] ?? max];
   const fields = [];
   for (const [bound, initial] of [["from", initialMin], ["to", initialMax]]) {
-    const field = document.createElement("input");
-    field.type = "number";
-    field.min = "0";
-    field.max = String(max);
-    field.step = "1";
-    field.defaultValue = rule.inherited ? "" : String(initial);
+    const field = document.createElement(rule.inherited ? "select" : "input");
     field.id = "range-" + rule.id + "-" + bound;
     field.setAttribute("aria-labelledby", title.id + " " + groupName + "-" + bound);
     if (rule.inherited) {
-      field.placeholder = "Auto";
-      field.setAttribute("autocomplete", "off");
+      // A finite choice avoids Firefox's text-field address autofill.
+      field.add(new Option("Auto", ""));
+      for (let value = 0; value <= max; value++) field.add(new Option(String(value), String(value)));
       field.setAttribute("aria-describedby", "land-source-help");
+    } else {
+      field.type = "number";
+      field.min = "0";
+      field.max = String(max);
+      field.step = "1";
+      field.defaultValue = String(initial);
+      group.append(field);
     }
-    if (!rule.inherited) group.append(field);
     fields.push(field);
   }
   const [from, to] = fields;
   for (const [edited, other] of [[from, to], [to, from]]) {
     edited.addEventListener("input", () => {
-      const lower = from.valueAsNumber;
-      if (rule.inherited && edited === from && to.value === "" && isValidRangeBound(lower, Number(from.max))) {
-        to.value = from.value;
+      if (rule.inherited) {
+        if (edited.value === "") other.value = "";
+        else if (other.value === "") other.value = edited === from ? edited.value : "0";
       }
-      const upper = to.valueAsNumber;
-      if (isValidRangeBound(lower, Number(from.max)) && isValidRangeBound(upper, Number(to.max)) && lower > upper) {
+      const lower = rangeNumber(from);
+      const upper = rangeNumber(to);
+      const limit = rule.max ?? kingdomSize;
+      if (isValidRangeBound(lower, limit) && isValidRangeBound(upper, limit) && lower > upper) {
         other.value = edited.value;
       }
     });
     if (!rule.inherited) continue;
     edited.addEventListener("keydown", event => {
-      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || edited.validity.badInput) return;
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
       if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
       event.preventDefault();
-      stepInheritedRange(edited, other, event.key === "ArrowUp" ? 1 : -1);
+      stepInheritedRange(edited, event.key === "ArrowUp" ? 1 : -1, max);
     });
     const wrapper = document.createElement("div");
     wrapper.className = "inherited-bound";
@@ -2723,7 +2742,7 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
       interfaceLabels.push(label);
       label();
       button.addEventListener("click", () => {
-        stepInheritedRange(edited, other, direction);
+        stepInheritedRange(edited, direction, max);
         edited.focus();
       });
       stepper.append(button);
