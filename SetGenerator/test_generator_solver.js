@@ -29,6 +29,15 @@ const intrigue=all.filter(c=>c.kingdomPile&&c.expansion==="intrigue"&&c.edition!
 const allPiles=all.filter(c=>c.kingdomPile);
 const components=all.filter(c=>!c.kingdomPile);
 assert.equal(all.length,853);
+assert.deepEqual(catalog.nativeIds, {
+  gameBuild: 3315, steamBuild: 17683350, rulesVersion: 23,
+  exeSha256: "56e8d563320b7d6c0cf68ae11cdf2c0aa971dbff44bb296651b630815c548877",
+});
+assert.ok(all.every(card => Number.isInteger(card.nativeId) && card.nativeId >= 0x100 && card.nativeId < 0x1400));
+assert.equal(new Set(all.map(card => card.nativeId)).size, 853);
+for (const [id, number] of Object.entries({cellar: 512, village: 518, farm: 792, knights: 2332, sauna: 4869, way_of_the_mouse: 3898, foray: 4412})) {
+  assert.equal(byId.get(id).nativeId, number, "native profile ID for " + id);
+}
 assert.equal(allPiles.length,498);
 assert.equal(base.length,26);
 const imageFiles = JSON.parse(readScript(html, "card-image-files"));
@@ -346,7 +355,7 @@ assert.equal(propertyAPI.validRangePair(propertyRules.get("attack"), ["0", "14"]
 assert.equal(propertyAPI.validRangePair(propertyRules.get("attack"), ["0", "14"], 10, false), false);
 assert.equal(propertyAPI.validRangePair(propertyRules.get("cost-2"), ["0", "14"], 10, true), false);
 
-const sourceFunction = name => html.match(new RegExp("function " + name + "\\([\\s\\S]*?\\n\\}"))[0];
+const sourceFunction = name => html.match(new RegExp("(?:async )?function " + name + "\\([\\s\\S]*?\\n\\}"))[0];
 const validationContext = {
   ...propertyContext, allowedKingdomSizes: [10, 11, 12, 13],
   countRules: propertyAPI.countRules, landRules: [], expansionModes: new Map(),
@@ -410,9 +419,106 @@ assert.equal(parentPreview.panel.hidden, true);
 assert.equal(childPreview.panel.hidden, true);
 assert.equal(tooltipState.pinnedTooltips.size, 0);
 
+// Test both real export components with a small DOM model. No profile is read
+// or written; XML snippets below are synthetic, and clipboard access is mocked.
+class ExportNode extends TooltipNode {
+  constructor(tag = "div") {
+    super(); this.tagName = tag; this.children = []; this.listeners = new Map();
+    this.textContent = ""; this.value = ""; this.className = ""; this.dataset = {};
+  }
+  append(...children) { for (const child of children) { child.parentElement = this; this.children.push(child); } }
+  addEventListener(name, fn) { this.listeners.set(name, fn); }
+  focus() { this.focused = true; }
+  select() { this.selected = true; }
+}
+const selectable = all.filter(card => card.kingdomPile || isLandscapeCard(card));
+assert.equal(selectable.length, 653);
+const banContext = {
+  cardById: byId, uiLanguage: "de", interfaceLabels: [], banExportViews: [],
+  poolChoices: new Map(selectable.map(card => [card.id, {value: "random"}])),
+  document: {createElement: tag => new ExportNode(tag)},
+  cardTitle: (card, lang) => card.text[lang][0],
+};
+banContext.tr = (de, en) => banContext.uiLanguage === "en" ? en : de;
+let copiedBans;
+banContext.navigator = {clipboard: {writeText: async value => {copiedBans = value;}}};
+const bansAPI = vm.runInNewContext(["bindInterfaceLabel", "formatBanEntries", "createBanExport", "updateBanExports", "copyText"]
+  .map(sourceFunction).join("\n") + "\n({formatBanEntries,createBanExport,updateBanExports})", banContext);
+for (const area of ["pool", "result"]) {
+  const mount = new ExportNode(); mount.dataset.banExport = area;
+  banContext.banExportViews.push(bansAPI.createBanExport(mount));
+}
+const banViews = banContext.banExportViews;
+assert.notEqual(banViews[0].field.id, banViews[1].field.id);
+const assertBans = (text, count) => {
+  bansAPI.updateBanExports();
+  for (const view of banViews) {
+    assert.equal(view.field.value, text);
+    assert.equal(view.button.disabled, text === "");
+    assert.ok(view.count.textContent.startsWith(String(count) + " "));
+  }
+};
+assertBans("", 0);
+banContext.poolChoices.get("village").value = "excluded";
+banContext.poolChoices.get("cellar").value = "excluded";
+const expectedBans = "<bans>512</bans>\n<bans>518</bans>";
+assertBans(expectedBans, 2);
+assert.equal(bansAPI.formatBanEntries(["cellar", "cellar"]).count, 1);
+assert.equal(bansAPI.formatBanEntries(["knights"]).text, "<bans>2332</bans>");
+assert.equal(bansAPI.formatBanEntries(["farm"]).text, "<bans>792</bans>");
+assert.ok(byId.get("farm").alternateTitles.some(title => title.toLowerCase() === "harem"));
+banContext.poolChoices.get("way_of_the_mouse").value = "excluded";
+assertBans(expectedBans + "\n<bans>3898</bans>", 3);
+// Imported/saved card choices are sufficient; no draw or expansion setting is needed.
+for (const field of banContext.poolChoices.values()) field.value = "random";
+for (const [id, choice] of Object.entries({adventurer: "excluded", foray: "excluded", moat: "pinned"})) {
+  banContext.poolChoices.get(id).value = choice;
+}
+const restoredBans = bansAPI.formatBanEntries(["adventurer", "foray"]).text;
+assertBans(restoredBans, 2);
+banContext.uiLanguage = "en";
+banContext.interfaceLabels.forEach(render => render());
+assertBans(restoredBans, 2);
+assert.equal(banViews[0].button.textContent, "Copy ban list");
+assert.ok(banViews[0].count.textContent.endsWith(" excluded"));
+const invalidIds = new Map(byId);
+invalidIds.set("cellar", {...byId.get("cellar"), nativeId: undefined});
+assert.throws(() => bansAPI.formatBanEntries(["cellar"], invalidIds), /Cellar/);
+invalidIds.set("cellar", {...byId.get("cellar"), nativeId: byId.get("village").nativeId});
+assert.throws(() => bansAPI.formatBanEntries(["cellar", "village"], invalidIds), /Ambiguous/);
+assert.throws(() => bansAPI.formatBanEntries(["not_a_card"]), /not_a_card/);
+const tooMany = new Map(Array.from({length: 701}, (_, i) => ["test_" + i, {nativeId: 256 + i}]));
+assert.throws(() => bansAPI.formatBanEntries([...tooMany.keys()], tooMany), /700/);
+const originalVillage = byId.get("village");
+byId.set("village", {...originalVillage, nativeId: undefined});
+banContext.poolChoices.get("village").value = "excluded";
+bansAPI.updateBanExports();
+assert.ok(banViews.every(view => view.field.value === "" && view.button.disabled && view.message.className === "error"));
+byId.set("village", originalVillage);
+for (const field of banContext.poolChoices.values()) field.value = "random";
+assertBans("", 0);
+assert.ok(banViews.every(view => view.message.textContent === ""));
+const allBanEntries = bansAPI.formatBanEntries(selectable.map(card => card.id));
+assert.equal(allBanEntries.count, 653);
+assert.equal(new Set(allBanEntries.text.match(/\d+/g)).size, 653);
+
 // Catch syntax failures in every executable inline script.
 for (const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
   if (/type="(?:application\/json|text\/plain)"/.test(match[0].slice(0,match[0].indexOf('>')))) continue;
   new vm.Script(match[1]);
 }
-console.log("Katalog, exakte Zählung, Abwehr, Sonderzuordnungen, Zufallssets, Zusatzkarten-Eigenschaften, Landschaftszusätze, kleine vollständige Vergleichspools und Zeitlimit geprüft.");
+async function checkBanClipboard() {
+  banContext.poolChoices.get("cellar").value = "excluded";
+  banContext.poolChoices.get("village").value = "excluded";
+  assertBans(expectedBans, 2);
+  await banViews[0].button.listeners.get("click")();
+  assert.equal(copiedBans, expectedBans);
+  assert.equal(banViews[0].message.textContent, "Ban-list entries copied.");
+  banContext.navigator.clipboard.writeText = async () => { throw new Error("permission denied"); };
+  await banViews[1].button.listeners.get("click")();
+  assert.equal(banViews[1].field.focused, true);
+  assert.equal(banViews[1].field.selected, true);
+  assert.match(banViews[1].message.textContent, /Ctrl\+C/);
+}
+checkBanClipboard().then(() => console.log("Katalog, Solver, Zusatzkarten, Landschaften, Einstellungen und Bannlisten-IDs/XML-Ausgabe an beiden Stellen samt Kopieren und Fallback geprüft."))
+  .catch(error => { console.error(error); process.exitCode = 1; });

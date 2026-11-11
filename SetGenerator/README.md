@@ -12,6 +12,8 @@ Unter **Erweiterungen und Editionen** garantiert **Immer** mindestens einen Stap
 
 Mit **Zusatzkarten bei Eigenschaften berücksichtigen** zählen feste Kartenreihen und bekannte Zusatzstapel bei den Eigenschaftsquoten mit. Zufällige Aufbaukarten wie beim Weg der Maus bleiben ausgenommen. **Verbunden mit** in der Kartenvorschau zeigt die zugehörigen Karten.
 
+**Bannliste kopieren** gibt die ausgeschlossenen Karten als Einträge für `profiles.xml` aus, im Kartenpool und unter dem Kingdom-Code. Ergänze sie im aktiven Profil in `localBans` für KI/Weitergeben oder in `bans` für Online/Privates Spiel. Dominion vorher schließen, die Datei sichern und vorhandene Zahlen nicht doppelt einfügen.
+
 ## Web-Namenslisten umwandeln
 
 Kopiere deine Auswahl aus dem Dominion Randomizer oder gib die Kartennamen selbst ein. Füge die Namen im Konverter ein und klicke auf **Kartenliste bestätigen**. Den erzeugten Code fügst du in Dominion ins Kartensuchfeld ein. [Dominion Randomizer](https://dominionrandomizer.com/) · [Konverter im Browser öffnen](https://serpens66.github.io/Dominion/Dominion-Konverter.html) · [HTML-Konverter herunterladen](https://github.com/Serpens66/Dominion/releases/latest/download/Dominion-Konverter.html)

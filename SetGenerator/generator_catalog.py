@@ -10,6 +10,61 @@ import struct
 ROOT = Path(__file__).resolve().parent
 CATALOG = ROOT.parent / "Documentation" / "Card_Properties.json"
 XPACK_HASH = "e3cf4242c2756f9120901c28f2dbdbe636b1d7235cbec9616f0c622d65d90047"
+EXE_HASH = "56e8d563320b7d6c0cf68ae11cdf2c0aa971dbff44bb296651b630815c548877"
+
+
+def read_native_ids(exe, card_ids):
+    """Read Build 3315 definition IDs, including CRT-initialized definitions.
+
+    The card-name pointer is at +0x58 and the saved numeric ID at +0x8C.
+    Only reconstruct immediate writes into writable PE sections, never run the
+    executable. The hash and complete, unique mapping are mandatory guards.
+    """
+    data = exe.read_bytes()
+    if hashlib.sha256(data).hexdigest() != EXE_HASH:
+        raise ValueError("Die Dominion.exe stimmt nicht mit Spielbuild 3315 überein.")
+    import pefile
+
+    pe = pefile.PE(data=data, fast_load=True)
+    image = bytearray(pe.get_memory_mapped_image())
+    base = pe.OPTIONAL_HEADER.ImageBase
+    writable = [(section.VirtualAddress, section.VirtualAddress + section.Misc_VirtualSize)
+                for section in pe.sections if section.Characteristics & 0x80000000]
+    for section in pe.sections:
+        if not section.Characteristics & 0x20000000:
+            continue
+        for match in re.finditer(rb"\xc7\x05(.{8})", section.get_data(), re.S):
+            address, value = struct.unpack("<II", match[1])
+            rva = address - base
+            if any(start <= rva and rva + 4 <= end for start, end in writable):
+                struct.pack_into("<I", image, rva, value)
+    pointers = {}
+    for match in re.finditer(rb"[a-z][a-z0-9_]*\x00", image):
+        if match.start() and image[match.start() - 1] != 0:
+            continue
+        name = match[0][:-1].decode("ascii")
+        if name in card_ids:
+            pointers[base + match.start()] = name
+    candidates = {key: set() for key in card_ids}
+    for start, end in writable:
+        for index, (pointer,) in enumerate(struct.iter_unpack("<I", image[start:end - (end - start) % 4])):
+            if pointer not in pointers:
+                continue
+            name_rva = start + index * 4
+            if name_rva + 0x38 > len(image):
+                continue
+            native_id = struct.unpack_from("<I", image, name_rva + 0x34)[0]
+            # Build 3315 card groups 1..19; group 20 is expansion selectors,
+            # not cards (some selectors share a card's textual name).
+            if 0x100 <= native_id < 0x1400:
+                candidates[pointers[pointer]].add(native_id)
+    invalid = [key for key, values in candidates.items() if len(values) != 1]
+    if invalid:
+        raise ValueError("Native Karten-IDs fehlen oder sind mehrdeutig: " + ", ".join(sorted(invalid)))
+    result = {key: next(iter(values)) for key, values in candidates.items()}
+    if len(set(result.values())) != len(result):
+        raise ValueError("Die nativen Karten-IDs sind nicht eindeutig.")
+    return result
 
 VALUE_CARDS = {
     "copper": ("coin", "1"), "silver": ("coin", "2"), "gold": ("coin", "3"), "platinum": ("coin", "5"),
@@ -213,7 +268,7 @@ def read_strings(data):
     return result
 
 
-def load_catalog(xpack):
+def load_catalog(xpack, exe=None):
     properties = json.loads(CATALOG.read_text(encoding="utf-8"))
     if properties["gameBuild"] != 3315:
         raise ValueError("Der Kartenkatalog muss zu Spielbuild 3315 gehören.")
@@ -224,6 +279,9 @@ def load_catalog(xpack):
         entries = read_index(package)
         translations = {lang: read_strings(read_resource(package, entries, f"res/translation/{key}"))
                         for lang, key in (("de", "de"), ("en", "en-us"))}
+    native_ids = read_native_ids(exe or xpack.with_name("Dominion.exe"), {
+        key for key, info in properties["cards"].items() if info and not info.get("aliasFor")
+    })
     cards = []
     for card_id, data in properties["cards"].items():
         if not data or data.get("aliasFor"):
@@ -235,7 +293,7 @@ def load_catalog(xpack):
                 raise ValueError(f"Titel fehlt: {lang}/{card_id}")
             power = strings.get(f"dom_card_power_{card_id}", "")
             localized[lang] = [title, power]
-        cards.append({"id": card_id, **data, "text": localized})
+        cards.append({"id": card_id, **data, "nativeId": native_ids[card_id], "text": localized})
     assert len(cards) == 853 and sum(card["kingdomPile"] for card in cards) == 498
     enrich_cards(cards)
     enrich_relations(cards)
@@ -273,7 +331,9 @@ def load_catalog(xpack):
             rules = sorted((int(match[1]), text) for key, text in strings.items()
                            if (match := rule_key.fullmatch(key)) and text)
             expansion_info[expansion][lang] = {"description": description, "rules": [text for _, text in rules]}
-    return {"expansions": expansions, "expansionsEn": english_expansions, "expansionInfo": expansion_info,
+    return {"nativeIds": {"gameBuild": 3315, "steamBuild": 17683350,
+                          "rulesVersion": properties["rulesVersion"], "exeSha256": EXE_HASH},
+            "expansions": expansions, "expansionsEn": english_expansions, "expansionInfo": expansion_info,
             "types": types, "cards": cards}
 
 
@@ -292,12 +352,14 @@ def script_json(data):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("xpack", type=Path)
+    parser.add_argument("--exe", type=Path, help="Dominion.exe; standardmäßig neben Dominion.xpack")
     parser.add_argument("--html", type=Path, default=ROOT / "Dominion-Generator.html")
     args = parser.parse_args()
-    if args.html.resolve() == args.xpack.resolve():
-        parser.error("HTML-Datei und Spielpaket müssen unterschiedliche Dateien sein.")
+    exe = args.exe or args.xpack.with_name("Dominion.exe")
+    if args.html.resolve() in {args.xpack.resolve(), exe.resolve()}:
+        parser.error("HTML-Datei und Spieldateien müssen unterschiedliche Dateien sein.")
 
-    catalog = load_catalog(args.xpack)
+    catalog = load_catalog(args.xpack, exe)
     source = args.html.read_text(encoding="utf-8")
     source = replace_script(source, '<script type="application/json" id="catalog">', script_json(catalog))
     worker = (ROOT / "generator_solver.js").read_text(encoding="utf-8")

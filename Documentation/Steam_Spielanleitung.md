@@ -186,6 +186,12 @@ In der linken Tabelle steht die originale Effekt-ID in Klammern hinter dem deuts
 
 Wähle für mehrere doppelte Stapel **Doppelter Vorratsstapel** und dann **Ziele wählen**. Hake in **Karte wählen** die gewünschten Namen an oder nutze **Alle angezeigten auswählen** im Bereich **Königreich**. **Alle Karten** öffnet den gesamten passenden Katalog. Mit den Pfeiltasten erreichst du die Kartenvorschau rechts und mit der Leertaste setzt du ein Häkchen. **Kartentext lesen** zeigt die Regeln in einer scrollbaren Textansicht. Aktiviere **Weitere Kopie hinzufügen**, wenn ein bereits eingetragener Effekt erneut wirken soll. Drücke **Fertig** in der Kartenauswahl und anschließend im Effektdialog. [Starter und Testablauf](../KingdomEffectsPatch/TEST.md#effektdialog-in-der-lokalen-königreich-auswahl)
 
+### Online-Banns über die Kartengalerie
+
+Mit aktivem Patch kannst du in der normalen Kartengalerie mehr als fünf Online-Banns pro Kategorie setzen. Öffne eine Karte mit Rechtsklick und verwende **Verbieten → Online**. Das gilt auch für private Online-Partien. Die gemeinsame native Liste fasst höchstens 700 Einträge. Die Zähler zeigen die aktuelle Anzahl. Der ursprüngliche Hilfetext nennt weiterhin fünf Banns.
+
+Der Nutzer bestätigte drei private Basisspiel-Partien mit einer manuell erweiterten Liste und ausschließlich den zehn freigegebenen Karten. Weitere Online-Modi und die volle Kapazität sind noch offen. Der Patch-Starter verwendet ein eigenes Testprofil. [Testablauf und Befunde](../KingdomEffectsPatch/TEST.md#erweiterte-online-bannliste)
+
 ## Dominion on Steam without mods
 
 ### Save and share a Kingdom

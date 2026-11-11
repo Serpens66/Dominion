@@ -114,6 +114,8 @@ Der lokale Modus **Weitergeben** ist in den deutschen Ressourcen unter `dom_ui_c
 
 ## Effektdialog für lokale Partien
 
+Die zusätzliche Galerie-Erweiterung für Online-Banns verwendet die nativen Bannschaltflächen. Sie hebt die getrennten Fünfergrenzen auf und zeigt die aktuelle Anzahl ohne Nenner 5. Die gemeinsame Kapazität bleibt bei 700 Einträgen. Die Änderung gilt in den aktiven Patchmodi 2, 3 und 4. Modul, Originalbytes, RVAs und Prüfstand stehen im [Bannlistenbefund](../Documentation/Modding_Overview.md#erweiterte-banns-über-die-vorhandene-galerie).
+
 **Implementiert für Dominion.exe 3315, Steam-Build 17683350.** Der SHA-256 entspricht dem oben dokumentierten Modul. Lokale Spieltests bestätigen den Editor und die mehrfach gewählten Stapel. Die Dialogtests prüfen zusätzlich Suche, Zielwahl, Reihenfolge, Abbrechen und Kapazitätsgrenzen. Sichtbare Abnahmen neuer Layoutfassungen und weitere Effektprüfungen werden im Testprotokoll getrennt erfasst.
 
 | RVA | PE-Dateioffset | Originalbytes | Verwendung |

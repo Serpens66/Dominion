@@ -231,6 +231,65 @@ Für eine Mod mit unveränderter Zufallsauswahl über alle Erweiterungen ist der
 
 **Im Spiel gemessen am 10. November 2026, Build 3315, Steam-Build 17683350.** Die geprüfte Arbeitskopie lässt sich mit einem temporären Profil auf einem separaten Windows-Desktop starten. Der Runner legt die lokale Partie über Dominions Startlogik an und misst den ersten Zug aus dem nativen Spielzustand. In lokalen Vergleichspartien mit zwei menschlichen Spielerplätzen wurden 55 Effekte bestätigt. Bei sechs weiteren Effekten sind Teilwirkungen gemessen. Bei den mehrfachen Projektsteinen und der Schuldenreduktion mit Triumph wurde ein Startabbruch beobachtet. Automatische Ereigniskäufe machen auch einige Kauf- und Erhaltensregeln im ersten Zug messbar. Die Tabellen geben den Stand für einfache und mehrfache Wirkung an. [Testergebnisse und Aufruf](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
 
+## Bannlisten für lokale und private Online-Partien
+
+**Prüfstand vom 11. November 2026 für Spielbuild 3315, Steam-Build 17683350.** Der SHA-256 von `Dominion.exe` entspricht `56e8d563320b7d6c0cf68ae11cdf2c0aa971dbff44bb296651b630815c548877`. Die folgenden Codebefunde sind statisch geprüft, alle Adressen sind RVAs. Der anschließende Nutzer-Spieltest mit einer erweiterten Online-Bannliste ist unten separat erfasst.
+
+Das aktive Profil enthält zwei getrennte Listen. `bans` liegt in der nativen Profilstruktur bei `+0x58EC`, die Anzahl bei `+0x63DC`. `localBans` liegt bei `+0x63E0`, ihre Anzahl bei `+0x6ED0`. Beide Strukturen haben Platz für 700 Karten-IDs und einen Zähler. Die XML-Deskriptoren bei `0x4C8238` und `0x4C8274` ordnen die gespeicherten Felder zu. Der native Profilkopierer übernimmt bei `0x0D9E9A` bis `0x0D9EBE` jeweils den gesamten Listenblock einschließlich Zähler.
+
+| Pfad | Befund |
+| --- | --- |
+| Zählen der Banntypen | `CountBanTypes` bei `0x208170` zählt Karten und Querkarten getrennt. Die zwei gefundenen direkten Aufrufer liegen in der Galeriedarstellung und der Bearbeitung der Liste. |
+| Online-Schaltfläche | Der Aufruf bei `0x208EA3` bis `0x208EB0` übergibt der Bearbeitungsfunktion `0x208220` zweimal den Grenzwert 5 und die Online-Liste. Die Funktion prüft beim Hinzufügen die passende Gruppenzahl bei `0x20829B` bis `0x2082AF`. |
+| Lokale Schaltfläche | `0x208F88` bis `0x208F95` übergibt zweimal 0 und die lokale Liste. Damit ist die gruppenbezogene Begrenzung aufgehoben. Die gemeinsame Speichergrenze von 700 wird bei `0x2082C0` bis `0x2082D7` geprüft. |
+| Auflösen gespeicherter Karten-IDs | `0x22B450` löst die gespeicherten Karten-IDs in aktuelle Definitionen auf und entfernt ungültige Einträge. Die untersuchte Routine kürzt gültige Listen nicht auf fünf. |
+| Synchronisieren der Online-Banns | `SetBansMessage` bei Deskriptor-RVA `0x4C4614` enthält Zeitstempel, eine variable Bannliste und deren Prüfsumme. Der UI-Sender bei `0x208397` bis `0x208403` verwendet den tatsächlichen Zähler. Der Empfangspfad bei `0x0B6171` bis `0x0B61CB` prüft die Speicherkapazität 700 und übernimmt die empfangene Liste. |
+| Erstellen eines Online-Spiels | `0x1FFA59` bis `0x1FFA8C` übernimmt Online-Liste und tatsächliche Anzahl in `CreateGameMessage`, berechnet die Prüfsumme über alle Einträge und sendet bei `0x1FFAF5`. Der Nachrichten-Deskriptor bei `0x4C51A8` verwendet ein variables Array. Auf diesem Versandpfad ist keine Fünferkürzung erkennbar. |
+| Beitreten | Auch `JoinGameMessage` verwendet die Online-Liste mit tatsächlicher Anzahl, etwa bei `0x0B8FFE` bis `0x0B90A1` und beim Beitritt nach eigener Spielanlage bei `0x1FFB8E` bis `0x1FFC33`. |
+
+**Folgerung für manuelle Profiländerungen.** Die Fünfergrenzen sind im untersuchten Client als Prüfungen der Eingabeoberfläche belegt. Die Profilstruktur und die untersuchten Versandpfade können längere Listen darstellen und übergeben. Der folgende Nutzer-Spieltest bestätigt die Wirkung einer solchen Liste für die geprüften privaten Partien. Die Implementierung des Online-Dienstes ist in dieser Untersuchung nicht zugänglich.
+
+**Nutzer-Spieltest, 11. November 2026.** Im regulären Profil wurde die Online-Liste um die 22 Königreichkarten des Basisspiels ergänzt, die außerhalb der zehn freigegebenen Karten liegen. Die Liste erfasst beide Basisspiel-Editionen. Drei bestehende Banns anderer Erweiterungen blieben enthalten, insgesamt 25 Einträge. Freigegeben waren Keller, Markt, Händlerin, Miliz, Mine, Burggraben, Umbau, Schmiede, Dorf und Werkstatt. Der Nutzer testete anschließend drei private Online-Partien mit dem Basisspiel und berichtete für alle drei ausschließlich diese erlaubten Karten. Für diesen Aufbau ist die Wirkung über fünf Online-Banns damit durch Spielbeobachtung bestätigt. Ein Serverprotokoll dieser drei Partien liegt nicht vor. Erweiterte Querkartenbanns, Matchmaking und die vollständige Kapazität von 700 sind dadurch noch nicht abgenommen.
+
+**Privates Spiel.** Es verwendet die Online-Spielanlage und die Online-Bannliste. Der unveränderte Client bietet auch hier fünf Karten- und fünf Querkartenbanns pro Spieler in der Oberfläche. Der Nutzer-Spieltest zeigt, dass der Dienst im geprüften privaten Aufbau eine größere manuell gespeicherte Liste berücksichtigt.
+
+### Bannlisten-Einträge aus dem Generator
+
+Der Generator exportiert alle ausdrücklich ausgeschlossenen Hauptstapel und Landschaften, einschließlich gespeicherter Ausschlüsse aus derzeit deaktivierten Erweiterungen. Suche, Erweiterungsquoten und Zusatzkarten-Modus verändern diese Liste nicht. Kartenpool und Abschnitt 2 verwenden dieselbe Ausgabe; eine Ziehung ist dafür nicht erforderlich.
+
+**XML-Struktur, lokal beobachtet an L02.** Die beiden äußeren Felder unterscheiden sich, die Einträge darin heißen jeweils `bans`. Anonymisiertes Strukturbeispiel:
+
+```xml
+<localBans>
+  <bans>512</bans>
+  <bans>518</bans>
+</localBans>
+```
+
+Für Online-Partien einschließlich Privates Spiel lautet der äußere Block stattdessen `<bans>…</bans>`. Beide liegen direkt unter dem aktiven `profiles`-Element. Die Ausgabe enthält ausschließlich die inneren `<bans>ZAHL</bans>`-Zeilen zum Ergänzen. Dominion vorher schließen und das Profil sichern. Vorhandene Zahlen nicht erneut einfügen; die Gesamtliste darf die native Kapazität von 700 nicht überschreiten. Der Generator liest und verändert für diese Funktion keine Profildatei.
+
+**Numerische Zuordnung, statisch und technisch geprüft für Build 3315 / Steam-Build 17683350.** Die Kartendefinition enthält den Zeiger auf die Text-ID bei `+0x58` und die numerische Profil-ID bei `+0x8C`. Neben initialisierten Daten werden unmittelbare `mov [absolute Adresse], immediate32`-Schreibzugriffe der EXE in eine lokale PE-Speicheransicht übernommen. Es wird kein Spielcode ausgeführt. Für diesen geprüften Build gehören die Kartengruppen 1 bis 19 zu den Definitionen. Gruppe 20 enthält Erweiterungs-Auswahleinträge; unter anderem teilen sich Menagerie und Plunder einen Textnamen mit echten Karten und werden deshalb nicht als alternative Karten-ID übernommen.
+
+Die Erzeugung verlangt den registrierten EXE-Hash `56e8d563320b7d6c0cf68ae11cdf2c0aa971dbff44bb296651b630815c548877` sowie eine vollständige eindeutige Zuordnung. Alle 853 kanonischen Definitionen und alle 653 im Kartenpool auswählbaren Hauptstapel/Landschaften sind abgedeckt. Beispielsweise gelten Keller = 512, Dorf = 518, Weg der Maus = 3898 und Brandschatzung = 4412. Harem ist ein Alias von Farm und verwendet dessen kanonische ID 792. Gemischte Stapel verwenden die ID ihres auswählbaren Stapels, etwa Ritter = 2332. [Kartendefinitionen aus L01](Sources/Source_Register.md#karteneigenschaften-aus-l01-und-l05)
+
+Der eingebettete Katalog speichert pro Karte `nativeId` und unter `nativeIds` Spielbuild, Steam-Build, Regelversion und EXE-SHA-256. Exportzeilen werden numerisch sortiert und doppelte Karten entfernt. Fehlende oder widersprüchliche ausgewählte IDs sperren die gesamte Kopierausgabe. Die Einstellungsdatei speichert weiterhin nur die vorhandenen Kartenausschlüsse; Zahlen-IDs werden daraus zur Laufzeit aufgelöst.
+
+**Abnahme.** Die Erzeugung, Zuordnung, beide Ausgabekomponenten und synthetische XML-Profile sind technisch geprüft. Das ist vom oben dokumentierten Nutzer-Spieltest mit 25 Online-Banns zu unterscheiden. Die Übernahme einer neu vom Generator erzeugten Liste in eine lokale oder private Steam-Partie steht noch aus. [Testliste](Generator_Erweiterungen_Tests.md#bannlisten-export-für-profilesxml)
+
+### Erweiterte Banns über die vorhandene Galerie
+
+Der Patch verwendet die vorhandenen Schaltflächen **Verbieten**, **KI / Weitergeben** und **Online**. Die Eingabebegrenzung wird im Arbeitsspeicher auf die vom lokalen Bannpfad verwendeten Grenzargumente 0 umgestellt. Die gemeinsame native Kapazität von 700 bleibt wirksam. Die Änderung ist in den Patchmodi 2, 3 und 4 aktiv.
+
+| RVA | PE-Dateioffset | Originalbytes | Ersatz und Zweck |
+| --- | --- | --- | --- |
+| `0x208DB8` | `0x2081B8` | `6A 05 6A 05` | `6A 00 6A 00`, Online-Zweig der gemeinsamen Bannschaltfläche. |
+| `0x208EA3` | `0x2082A3` | `6A 05 6A 05` | `6A 00 6A 00`, eigene Online-Schaltfläche. |
+| `0x465480` | `0x463C80` | `28 25 64 2F 25 64 29 00` | `28 25 64 29 00 00 00 00`, Zählerformat `(%d)`. Die einzige gefundene Referenz ist `0x2075DD`. |
+
+Die vier direkten Aufrufer der nativen Listenbearbeitung `0x208220` wurden abgeglichen. Zwei verwenden die lokalen Grenzargumente 0, zwei die hier ersetzten Online-Grenzargumente 5. `CountBanTypes` bleibt für die getrennten Zähler erhalten. Installation und Rücknahme der drei Byteänderungen verwenden dieselbe Originalbyte-Prüfung, Threadpause und Rücknahme bei Installationsfehlern wie die übrigen Eingriffe. Der ursprüngliche Galerie-Hilfetext nennt weiterhin fünf Online-Banns.
+
+**Automatisiert im nativen Client geprüft.** In einer unsichtbaren Arbeitskopie mit temporärem Offline-Profil akzeptierte die originale Listenbearbeitung mit den gepatchten Grenzargumenten zwölf Karten und sechs Querkarten. Entfernen, erneutes Hinzufügen und Laden aller 18 Einträge nach Prozessneustart funktionierten in beiden geprüften Patchmodi. Der Messmodus behielt seine Fünfergrenze. Die Testaufrufe liefen auf dem Fensterthread und ließen die Netzwerksynchronisierung aus. [Prüfablauf und Grenzen](../KingdomEffectsPatch/TEST.md#erweiterte-online-bannliste)
+
 ## Zusatzkarten und Weg der Maus: nativer Auswahlpfad
 
 **Prüfung vom 11. November 2026 für Spielbuild 3315, Steam-Build 17683350.** Die folgenden Codebefunde sind statisch geprüft, nicht durch eine gestartete Partie bestätigt. Modul: `Dominion.exe`, x86, ImageBase `0x00400000`. SHA-256:

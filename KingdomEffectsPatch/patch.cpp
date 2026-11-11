@@ -813,6 +813,7 @@ struct Site {
     void (*hook)();
     bool jump = false;
     unsigned modes = 0; // 0 enables the site in every mode.
+    const char* replacement = nullptr;
 };
 
 constexpr unsigned local_modes = (1u << 2) | (1u << 3);
@@ -837,13 +838,22 @@ const Site sites[] = {
     {0x0B7965, "\xE8\x86\xCF\xFF\xFF", 5, online_receive_hook, false, online_mode},
     {0x0B0DF3, "\xE8\x78\x32\x17\x00", 5, online_load_hook, false, online_mode},
     {0x1EA206, "\xE8\x65\xEF\x0B\x00", 5, online_effects_hook, false, online_mode},
+    // Zero uses the native unbounded category limits, as for local bans.
+    {0x208DB8, "\x6A\x05\x6A\x05", 4, nullptr, false, local_modes | online_mode,
+               "\x6A\x00\x6A\x00"},
+    {0x208EA3, "\x6A\x05\x6A\x05", 4, nullptr, false, local_modes | online_mode,
+               "\x6A\x00\x6A\x00"},
+    // This formatter has one reference, in the native online ban counter.
+    {0x465480, "(%d/%d)", 8, nullptr, false, local_modes | online_mode, "(%d)\0\0\0"},
 };
 
 bool change_site(std::byte* base, const Site& site, bool install) {
     auto* address = base + site.rva;
     DWORD protection;
     if (!VirtualProtect(address, site.length, PAGE_EXECUTE_READWRITE, &protection)) return false;
-    if (install) {
+    if (install && site.replacement) {
+        std::memcpy(address, site.replacement, site.length);
+    } else if (install) {
         const auto next = reinterpret_cast<std::uintptr_t>(address + 5);
         const auto offset = reinterpret_cast<std::uintptr_t>(site.hook) - next;
         const auto opcode = site.jump ? std::byte{0xE9} : std::byte{0xE8};
@@ -1000,6 +1010,7 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
     log(mode == 4 ? "build 3315: patch active, online diagnostics"
                   : mode == 3 ? "build 3315: patch active, automatic local doubling"
                   : measure_only ? "build 3315: measure mode" : "build 3315: patch active");
+    if (!measure_only) log("online ban category limits removed, native shared capacity 700");
     return 0;
 }
 

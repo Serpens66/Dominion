@@ -49,6 +49,9 @@ Katalog und Zieh-Worker aus dem Projektordner aktualisieren und prüfen. Passe d
 ```powershell
 python .\SetGenerator\generator_catalog.py "E:\ProgrammeE\Steam\steamapps\common\Dominion\Dominion.xpack"
 node .\SetGenerator\test_generator_solver.js
+python .\SetGenerator\test_generator_catalog.py
 ```
+
+Für die Katalogerzeugung wird zusätzlich `pefile` benötigt. Die passende `Dominion.exe` wird neben `Dominion.xpack` erwartet; bei abweichendem Pfad `--exe` verwenden. Der Build prüft beide Spieldateien gegen die registrierten Hashes und bettet die numerischen Profil-IDs ein. Die XML-Tests bearbeiten ausschließlich synthetische Profile.
 
 Bei Änderungen am Generator auf `main` veröffentlicht GitHub Actions die HTML-Datei unverändert als `index.html` und legt `Dominion-Konverter.html` sowie den Ordner `card-images` daneben. Du kannst die Veröffentlichung auch über **Actions → Publish Dominion Generator → Run workflow** starten. [Workflow](https://github.com/Serpens66/Dominion/actions/workflows/generator-pages.yml)

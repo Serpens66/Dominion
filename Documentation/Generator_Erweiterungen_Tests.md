@@ -80,3 +80,21 @@ Stand 11. November 2026. Die folgenden technischen Prüfungen beziehen sich auf 
 | Offen | Steam: gezielter Import einer Maus-Karte. Kampagnenvorlagen getrennt behandeln; erst nach bestätigtem Import eine festgelegte Zufallszuordnung für Filtergarantien verwenden. |
 
 Die Browseroberfläche konnte in diesem Durchlauf die lokale Testseite nicht erreichen; direkte file-URLs werden vom Browserwerkzeug gesperrt. Deshalb sind die neuen Browserfälle ausdrücklich offen. Die Steam-Installation und profiles.xml wurden nicht verändert.
+
+## Bannlisten-Export für profiles.xml
+
+Stand 11. November 2026, native Zuordnung für Spielbuild 3315 / Steam-Build 17683350. Die bestehende Bestätigung des Nutzers zu 25 Online-Banns bleibt ein separater Spieltest.
+
+| Status | Fall und Ergebnis |
+| --- | --- |
+| Technisch geprüft | EXE-Hash, 853 eindeutige kanonische Zahlen-IDs und vollständige Abdeckung der 498 Hauptstapel und 155 auswählbaren Landschaften. Eine fremde EXE wird abgelehnt. |
+| Technisch geprüft | Keller 512, Dorf 518, Farm/Harem 792, Ritter 2332, Sauna 4869, Weg der Maus 3898 und Brandschatzung 4412 abgeglichen. |
+| Technisch geprüft | Gemeinsame Komponente an zwei Stellen im DOM-Modell: Ausschlüsse, importierte Auswahlwerte, Reset und Sprachwechsel liefern dieselben numerisch sortierten Zeilen. Festgehaltene Karten bleiben aus der Ausgabe. Keine Ziehung oder aktive Herkunft erforderlich. |
+| Technisch geprüft | Leere Auswahl deaktiviert Kopieren. Doppelte Karten erscheinen einmal. Fehlende und widersprüchliche ausgewählte Zahlen sperren beide Ausgaben. Die Kapazitätsprüfung meldet mehr als 700 Einträge. Alle 653 auswählbaren Einträge gemeinsam exportiert. |
+| Technisch geprüft | Echte Kopierfunktion mit simulierter Zwischenablage: Erfolgsmeldung und Textauswahl bei verweigertem Zugriff. |
+| Technisch geprüft | Erzeugte Zeilen in synthetische lokale und Online-Profilblöcke eingesetzt und mit XML-Parser geprüft. Vorhandener Beispieleintrag und andere Profilfelder bleiben erhalten. |
+| Offen | Firefox und Edge: beide Stellen bei 390 und 1440 Pixeln, in Hell/Dunkel und Deutsch/Englisch prüfen. Kopieren, manuellen Fallback, Einstellungsimport, Neuladen und Ausschluss-Reset im Browser bestätigen. |
+| Offen | Neue Generator-Ausgabe im gesicherten Profil ergänzen und in einer lokalen Partie prüfen. Spielbuild, Steam-Build, Eingabe, Modus, Soll und tatsächlich gezogene Karten festhalten. |
+| Offen | Neue Generator-Ausgabe für Privates Spiel prüfen. Erweiterte Landschaftsbanns und Matchmaking bleiben getrennte offene Fälle. |
+
+Reproduzierbar mit `node SetGenerator/test_generator_solver.js` und `python SetGenerator/test_generator_catalog.py`. Der Python-Test nutzt für den XML-Test nur synthetische Daten; der zusätzliche native Abgleich wird auf Rechnern ohne lokale Build-3315-EXE übersprungen. Für die neue Ausgabe erfolgte in diesem Durchlauf keine visuelle Browser- oder Steam-Abnahme.
