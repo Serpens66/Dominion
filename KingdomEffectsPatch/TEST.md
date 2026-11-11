@@ -1,5 +1,23 @@
 # Lokaler Test mit Doppelklick
 
+## Release-Kandidat v0.1.0, 11. November 2026
+
+Der neue Release-Starter ist **Dominion-mit-Mod-starten.cmd im entpackten Release-Paket**. Er verwendet das normale Profil; der unten beschriebene bisherige Test-Starter verwendet weiterhin sein getrenntes Testprofil. Anleitung und sichtbare Schlussabnahme stehen in [README](README.md) und [RELEASING](RELEASING.md).
+
+**Automatisiert geprüft, Spielbuild 3315 / Steam-Build 17683350, EXE-Hash wie Quellenregister:**
+
+- Staging-Build mit MSVC x86 `/W4` ohne Warnungen; Effektprüfungen bestanden. Launcher-Prüfung bestätigt erfolgreiche Initialisierung, Fehlerfall und Zeitüberschreitung ohne Beenden des Remote-Threads.
+- Alle 89 Katalogeinträge, drei Beispiel-IDs, Wirkung, Zeitpunkt und Prüfkennzeichnung vollständig. 27 bislang offene Effekte sind als **Ungetestet** sichtbar; Teilbefunde bleiben als solche markiert. Offene Effekte bleiben auswählbar, bekannte Startabbrüche werden weiterhin abgefangen.
+- Das tatsächliche ZIP außerhalb des Projektordners in einen Pfad mit Leerzeichen und Umlaut entpackt; Windows PowerShell 5.1 prüft sämtliche Paketdateien und Hashes. Kein Python und kein Compiler wird vom Release-Starter benötigt.
+- Acht erzeugte Profilstände korrekt auf drei Sicherungen rotiert; unverändertes Profil ohne neue Sicherung. Gesperrte Sicherung abgelehnt, neueste vorhandene Sicherung dabei erhalten. Ausschließlich temporäre, erzeugte Profile verwendet.
+- Steam-Bibliothek in abweichendem Pfad aus `libraryfolders.vdf` erkannt, konfigurierte Installation wiederverwendet, Spielkopie nur einmal erstellt. Falscher Build, falscher Hash, fehlende Paketdateien und unvollständige Kopie abgelehnt. Exklusive Sitzungssperre geprüft.
+- Echter F8-Dialog auf eigenem unsichtbaren Windows-Desktop: 89 Einträge, Prüfkennzeichnungen, Suche nach den drei IDs sowie Zugbeginn/Spielaufbau, leeres Suchergebnis und Abbrechen bestanden. Keine Bedienung des aktiven Desktops.
+- Tatsächlicher Injector aus dem entpackten Paket auf eigenem unsichtbaren Desktop: Original/Kopie-Identitätskollision abgelehnt, gültige Arbeitskopie erfolgreich gepatcht, geänderte lokale Startstelle und Online-Bannlimit im Speicher geprüft. Temporäres Offline-Profil mit zwei lokalen Spielern; erste Hand ohne Große Ideen **5**, mit drei Kopien **8** Karten und drei installierte Effekte. Das normale Profil wurde nicht verwendet.
+
+**Noch offen:** sichtbare Schlussabnahme des Release-Starters mit normalem Profil in Lokal spielen und Weitergeben; tatsächliche Windows-Skalierung 125 %/150 %; offene Effekte und Kombinationen gemäß Katalog. Die Veröffentlichung auf GitHub folgt erst nach der sichtbaren Schlussabnahme. Die bisherige GitHub-Anmeldung Serpens66 und das bestehende Konverter-Release wurden lesend geprüft.
+
+## Bisheriger Diagnose-Starter
+
 1. Dominion schließen. Der Verbindungsstatus in Dominion und Steam kann unverändert bleiben.
 2. Für den Patch **Lokal-Test-starten.cmd** doppelklicken. Für einen Vergleich im Messmodus den Starter aus dem Patchordner als `Lokal-Test-starten.cmd /menue` aufrufen und **1** wählen. Beim ersten Lauf die Arbeitskopie fertig kopieren lassen.
 3. Warten, bis im Starterfenster **„Bereit“** steht. In Dominion **Lokal spielen** wählen, eine Partie gegen die KI mit zwei Spielern anlegen und die **Königreich-Auswahl** öffnen. Den kompletten Text unten mit **Strg+V** ins **Kartensuchfeld** einfügen, mit **Enter** übernehmen und **Spielen** drücken.

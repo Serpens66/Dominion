@@ -1,0 +1,40 @@
+# Release v0.1.0
+
+Der Release-Starter ist vom bisherigen Test-Starter getrennt. Er verwendet das normale Profil und keine Profilordner-Umschaltung. Der Test-Starter bleibt für Diagnosezwecke erhalten. Ein begonnenes altes Profil-Swapping muss zuerst über diesen Test-Starter abgeschlossen werden.
+
+## Bauen und prüfen
+
+`Build-Release.ps1` baut mit `build.cmd staging`, führt die Effektprüfungen aus und erzeugt unter `out/releases/<Zeitpunkt>` ein ZIP mit Prüfsumme. `-SkipBuild` verwendet den vorhandenen Staging-Build. Entwicklungsabhängigkeiten bleiben ausschließlich beim Ersteller: Visual Studio C++ x86, Python und Pillow sowie die lokal installierten Spielressourcen. `DOMINION_PYTHON` und `DOMINION_GAME_DIRECTORY` überschreiben die lokalen Build-Vorgaben.
+
+Das Paket enthält eine explizite Dateiauswahl: Release-Skripte, Anleitung, Versionshinweise, fertigen Injector, Patch-DLL und PNG-Vorschaugrafiken. Keine Spiel-EXE, Xpack-Datei, Profile, Testprogramme, Logs oder Compiler-Zwischendateien. `package.json` verzeichnet Version, unterstützte EXE, Quellcommit, uncommittete Änderungen und SHA-256 der Nutzdateien. Beim Start werden die beiden Binärdateien geprüft. Einzelne fehlende Bilder dürfen auf Textdarstellung zurückfallen.
+
+Die Prüfprogramme werden nicht mitgeliefert:
+
+- `effects_test.exe`: Effektzusammenführung, Zielfelder, Kapazität und Eingabevalidierung.
+- `launcher_test.exe`: erfolgreiche Initialisierung, Initialisierungsfehler und begrenztes Warten ohne Beenden des Remote-Threads.
+- `editor_release_test.exe`: echter F8-Dialog auf eigenem unsichtbaren Desktop; 89 Einträge, Prüfkennzeichnungen, Suche nach IDs und Zeitpunkt, leere Suche und Abbrechen.
+- `test_release_catalog.py`: Vollständigkeit und Zuordnung aller 89 Effekte und Prüfkennzeichnungen.
+- `Test-Release.ps1 -ArchivePath <ZIP> -SourceGameDirectory <Spielordner>`: unter Windows PowerShell 5.1 außerhalb des Projektordners entpacken und alle Paketdateien prüfen; ausschließlich erzeugte Testprofile, Sicherungsrotation, abweichender Steam-Pfad, Leerzeichen/Umlaut, Wiederverwendung der Kopie, falscher Build/Hash, fehlende Dateien und exklusive Sitzungssperre.
+- `release_game_test.exe <Spielkopie/Dominion.exe> <entpacktes-Paket/bin> <Original/Dominion.exe> <0..3>`: tatsächlichen Paket-Injector und die DLL auf unsichtbarem Desktop prüfen. Der Test verwendet ein temporäres Offline-Profil und prüft bei zwei lokalen Spielern die erste Hand ohne bzw. mit mehreren Große-Ideen-Kopien. Er lehnt Original/Kopie-Identität ab und prüft den installierten Bann-Patch. Kein Test verwendet das Nutzerprofil oder simuliert Eingaben am aktiven Desktop.
+
+Vor nativen Tests Spielbuild, Steam-Build und EXE-Hash gegen das Quellenregister prüfen. Durch die Sandbox verweigerte Desktop-Erstellung oder Dateiumbenennung ist kein bestandener Test. Solche Prüfungen mit entsprechender Ausführungsfreigabe wiederholen.
+
+## Sichtbare Schlussabnahme
+
+Das zu veröffentlichende Paket über **Dominion-mit-Mod-starten.cmd** starten. Es darf keinen Compiler und keine Bilderzeugung aufrufen. Der erste Start erstellt seine eigene Spielkopie; weitere Starts verwenden sie erneut.
+
+Dieses Königreich in die Kartensuche kopieren:
+
+```text
+-k cellar, market, merchant, militia, mine, moat, remodel, smithy, village, workshop
+```
+
+In F8 nach `start_double_pile` suchen, Dorf und Markt gemeinsam übernehmen und das Effektset speichern. In **Lokal spielen** die Folge Effektset → normales Set → Effektset prüfen: **20/20 → 10/10 → 20/20**. Eine weitere bewusste Dorf-Kopie muss **40** Dorf ergeben. Eine Partie in **Weitergeben** starten, F8-Vorschau und Speicherung nach Neustart prüfen. Einen als **Ungetestet** markierten Effekt auswählen und den Entwurf abbrechen; keine Wirkung dieses Effekts muss dafür als getestet eingestuft werden.
+
+Das normale Profil muss aktiv sein. Die Sicherungen unter `%LOCALAPPDATA%/DominionKingdomEffectsPatch/profile-backups` dürfen höchstens drei feste XML-Dateien umfassen. Es gibt keine Rücksetzung nach dem Spielende. Die sichtbare Abnahme bleibt bis zur Rückmeldung des Nutzers offen; insbesondere die tatsächliche Windows-Skalierung bei 125 % und 150 % nicht als geprüft ausgeben.
+
+## GitHub-Veröffentlichung
+
+Erst nach sichtbarer Abnahme veröffentlichen. Änderungen committen und nach GitHub übertragen. Das finale Paket aus diesem Quellstand bauen; `sourceDirty` muss `false` sein. Alle Prüfungen müssen sich auf die finalen Dateien beziehen. Reine Dokumentationsänderungen erfordern keinen neuen nativen Build, Änderungen an ausgelieferten Dateien dagegen einen neuen Paketbau und passende Prüfungen.
+
+Mit der vorhandenen GitHub-CLI-Anmeldung zunächst `gh api user --jq .login` prüfen. Das bestehende Release `converter-v1.0.0` und die Generator-Pages nicht verändern. Ein neues Release mit Tag **v0.1.0**, Titel **Dominion Kingdom Effects Patch v0.1.0**, `--prerelease` und `--latest=false` erstellen. ZIP und SHA256SUMS.txt hochladen, Versionshinweise über `--notes-file` aus RELEASE-NOTES.md übernehmen und das Ziel auf den geprüften Quellcommit setzen. Anschließend Download-Dateinamen, Prüfsumme und Vorabversionsstatus über GitHub prüfen. Veröffentlichung und Link in der Dokumentation nachtragen.

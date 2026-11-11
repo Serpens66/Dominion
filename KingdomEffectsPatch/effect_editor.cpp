@@ -24,6 +24,7 @@ struct EffectDefinition {
     const wchar_t* description;
     const wchar_t* timing;
     const wchar_t* status;
+    const wchar_t* verification;
     TargetKind first;
     TargetKind second;
 };
@@ -151,6 +152,7 @@ std::array<RECT, 3> table_cells(HWND dialog, RECT row) {
 std::wstring table_name(const EffectDefinition& effect) {
     std::wstring name = std::wstring(effect.title) + L" (" + widen(effect.id) + L")";
     if (effect.first != TargetKind::none) name += L" · " + std::wstring(target_label(effect.first));
+    if (*effect.verification) name += L" · " + std::wstring(effect.verification);
     return name;
 }
 
@@ -301,7 +303,8 @@ void filter_catalog(HWND dialog, Draft& draft) {
         if (fold_card_search(effect.title).find(filter) == filter.npos &&
             fold_card_search(widen(id)).find(filter) == filter.npos &&
             fold_card_search(effect.description).find(filter) == filter.npos &&
-            fold_card_search(effect.timing).find(filter) == filter.npos) continue;
+            fold_card_search(effect.timing).find(filter) == filter.npos &&
+            fold_card_search(effect.verification).find(filter) == filter.npos) continue;
         const auto name = table_name(effect);
         const auto row = SendDlgItemMessageW(dialog, IDC_CATALOG, LB_ADDSTRING, 0,
                                              reinterpret_cast<LPARAM>(name.c_str()));

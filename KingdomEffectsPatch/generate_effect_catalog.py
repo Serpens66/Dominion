@@ -82,6 +82,17 @@ def search_key(text):
     return "".join(ch for ch in unicodedata.normalize("NFD", text.casefold()) if not unicodedata.combining(ch))
 
 
+def verification_label(status):
+    once, repeated = status.split("\r\n", 1)
+    if "Offen" in once:
+        return "Ungetestet"
+    if "Teil" in once or "Teil" in repeated or "bestätigt" in once:
+        return "Teilweise geprüft"
+    if "Offen" in repeated:
+        return "Mehrfach ungetestet"
+    return ""
+
+
 def rule_text(text):
     text = re.sub(r"-//(?=[a-zäöüß])", "", text)
     text = text.replace("//", "\n").replace("{br}", "\n").replace("{coin_2}", "[2]")
@@ -288,7 +299,7 @@ def main(output, xpack):
     rows = ["// Generated from Documentation by generate_effect_catalog.py.",
             "constexpr EffectDefinition effect_catalog[] = {"]
     for command, name, description, timing, status, first, second in read_effects():
-        rows.append(f"    {{{literal(command)}, {literal(name, True)}, {literal(description, True)}, {literal(timing, True)}, {literal(status, True)}, "
+        rows.append(f"    {{{literal(command)}, {literal(name, True)}, {literal(description, True)}, {literal(timing, True)}, {literal(status, True)}, {literal(verification_label(status), True)}, "
                     f"TargetKind::{first}, TargetKind::{second}}},")
     rows.extend(("};", "", "constexpr CardTarget target_catalog[] = {"))
     for card_id, *metadata, expansion_id, icons, costs, kinds in targets:

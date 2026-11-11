@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tlhelp32.h>
+#include <intrin.h>
 
 #include "effects.hpp"
 #include "effect_editor.hpp"
@@ -989,6 +990,7 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
     automatic_enabled = mode == 3;
     local_safety_enabled = mode == 2 || mode == 3;
 
+    DWORD install_error = 0;
     {
         ThreadPause paused;
         if (!paused.pause(image)) return 7;
@@ -1001,12 +1003,25 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
         std::size_t installed = 0;
         for (std::size_t i = 0; i < enabled_count; ++i) {
             if (!change_site(base, *enabled[i], true)) {
-                while (installed) change_site(base, *enabled[--installed], false);
-                return 6;
+                bool rollback_ok = std::memcmp(base + enabled[i]->rva,
+                                           enabled[i]->original, enabled[i]->length) == 0;
+                while (installed) {
+                    const auto& previous = *enabled[--installed];
+                    rollback_ok = change_site(base, previous, false) && rollback_ok;
+                }
+                // Do not resume game threads with a partially installed patch.
+                // Termination is restricted to this verified working-copy process.
+                if (!rollback_ok) {
+                    TerminateProcess(GetCurrentProcess(), ERROR_PROCESS_ABORTED);
+                    __fastfail(FAST_FAIL_FATAL_APP_EXIT); // Fallback if process termination failed.
+                }
+                install_error = 6;
+                break;
             }
             ++installed;
         }
     }
+    if (install_error) return install_error;
     log(mode == 4 ? "build 3315: patch active, online diagnostics"
                   : mode == 3 ? "build 3315: patch active, automatic local doubling"
                   : measure_only ? "build 3315: measure mode" : "build 3315: patch active");

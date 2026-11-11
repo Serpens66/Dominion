@@ -71,12 +71,19 @@ void wait_for_menu(HANDLE process, DWORD pid) {
     throw std::runtime_error("Main menu not ready. Close any active game and restart the test copy.");
 }
 
-DWORD remote_call(HANDLE process, std::uintptr_t address, void* argument) {
+class InitializationPending : public std::runtime_error {
+public:
+    InitializationPending() : std::runtime_error(
+        "Patch initialization did not finish within 30 seconds. Close Dominion before retrying.") {}
+};
+
+DWORD remote_call(HANDLE process, std::uintptr_t address, void* argument, DWORD timeout = 30000) {
     Handle thread(CreateRemoteThread(process, nullptr, 0,
                   reinterpret_cast<LPTHREAD_START_ROUTINE>(address), argument, 0, nullptr));
     require(thread.valid(), "Cannot start the initialization thread.");
-    require(WaitForSingleObject(thread.value, INFINITE) == WAIT_OBJECT_0,
-            "Initialization thread did not finish.");
+    // On an uncertain result the remote thread may still use its arguments.
+    // Do not terminate it or free its argument buffer from the launcher.
+    if (WaitForSingleObject(thread.value, timeout) != WAIT_OBJECT_0) throw InitializationPending();
     DWORD result = 0;
     require(GetExitCodeThread(thread.value, &result) != FALSE, "Cannot read initialization result.");
     return result;
@@ -100,6 +107,8 @@ void attach(HANDLE process, DWORD pid, DWORD mode, const std::filesystem::path& 
         require(WriteProcessMemory(process, target, dll.c_str(), bytes, &written) && written == bytes,
                 "Cannot copy the DLL path to the target.");
         remote_base = remote_call(process, loader, target);
+    } catch (const InitializationPending&) {
+        throw; // The game owns this allocation until its process exits.
     } catch (...) {
         VirtualFreeEx(process, target, 0, MEM_RELEASE);
         throw;
@@ -117,15 +126,15 @@ void attach(HANDLE process, DWORD pid, DWORD mode, const std::filesystem::path& 
 }
 
 int wmain(int argc, wchar_t** argv) {
-    const DWORD requested_mode = argc != 5 ? 0 : std::wcscmp(argv[2], L"--measure") == 0 ? 1
+    const DWORD requested_mode = argc != 6 ? 0 : std::wcscmp(argv[2], L"--measure") == 0 ? 1
         : std::wcscmp(argv[2], L"--apply") == 0 ? 2
         : std::wcscmp(argv[2], L"--apply-auto") == 0 ? 3 : 0;
     const bool online = requested_mode && std::wcscmp(argv[1], L"--online") == 0;
     const bool local = requested_mode &&
         (std::wcscmp(argv[1], L"--local") == 0 || std::wcscmp(argv[1], L"--offline") == 0);
     if (!local && (!online || requested_mode != 2)) {
-        std::fputs("Usage: attach.exe --local --measure|--apply|--apply-auto <PID> <test Dominion.exe>\n"
-                   "       attach.exe --online --apply <PID> <test Dominion.exe>\n", stderr);
+        std::fputs("Usage: attach.exe --local --measure|--apply|--apply-auto <PID> <copy Dominion.exe> <original Dominion.exe>\n"
+                   "       attach.exe --online --apply <PID> <copy Dominion.exe> <original Dominion.exe>\n", stderr);
         return 2;
     }
     const DWORD mode = online ? 4 : requested_mode;
@@ -144,7 +153,9 @@ int wmain(int argc, wchar_t** argv) {
         Handle executable(CreateFileW(actual.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
                                      FILE_ATTRIBUTE_NORMAL, nullptr));
         require(executable.valid(), "Cannot open the test executable.");
-        Handle original(CreateFileW(L"E:\\ProgrammeE\\Steam\\steamapps\\common\\Dominion\\Dominion.exe",
+        const auto source = std::filesystem::canonical(argv[5]);
+        require(_wcsicmp(source.filename().c_str(), L"Dominion.exe") == 0, "Expected original Dominion.exe.");
+        Handle original(CreateFileW(source.c_str(),
                                     FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                                     nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
         require(original.valid(), "Cannot verify that the working copy is separate from Steam's original.");

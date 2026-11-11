@@ -2,6 +2,8 @@
 
 Die erste Untersuchung gilt für den installierten Steam-Build von Dominion von Temple Gates Games. Dateipfade, EXE-Fingerabdruck und Quellen stehen im [Quellenregister](Sources/Source_Register.md).
 
+**Release-Vorbereitung v0.1.0, 11. November 2026:** Der neue [Release-Starter](../KingdomEffectsPatch/README.md) verwendet das normale Profil mit höchstens drei Sicherungen und eine getrennte, verifizierte Spielkopie. Er benötigt keine Buildwerkzeuge und erzeugt beim Nutzer keine Grafiken. Steam-Bibliotheken werden erkannt; abweichende Pfade sind konfigurierbar. Der Injector erhält Original- und Kopiepfad ausdrücklich, wartet höchstens 30 Sekunden pro Initialisierungsaufruf und lässt bei unsicherem Abschluss noch verwendete Remote-Speicherbereiche bestehen. Eine unvollständige Patch-Rücknahme beendet die Arbeitskopie, bevor angehaltene Spielthreads fortgesetzt werden. Automatisierte Prüfungen und die noch offene sichtbare Schlussabnahme stehen im [Testprotokoll](../KingdomEffectsPatch/TEST.md#release-kandidat-v010-11-november-2026). Noch keine Veröffentlichung.
+
 | Ansatz | Befund | Ausstehender Nachweis |
 | --- | --- | --- |
 | Eigene Kingdoms und externer Generator | **Lokal beobachtet und statisch geprüft.** Die Profildatei enthält benannte Kingdoms. Das Spiel berechnet beim Speichern die Erweiterungsmaske. Der Zwischenablageweg ist in der Community beschrieben. | Ein extern ergänztes Set offline laden und spielen. Exporttext in eine neue Spielkonfiguration einfügen und die Auswahl prüfen. [Kingdom-Befund](Kingdom_Sets.md) |

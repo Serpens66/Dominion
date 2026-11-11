@@ -180,9 +180,13 @@ Eine Kampagnenvorlage weist dem Einsamen Schrein sowohl **Inspirierend** als auc
 
 ## F8-Effektdialog mit dem lokalen Patch
 
+Der Release-Starter **Dominion-mit-Mod-starten.cmd** im entpackten Paket verwendet das normale Profil und hält höchstens drei Profilsicherungen vor. Es werden keine Buildwerkzeuge benötigt. Der bisherige **Lokal-Test-starten.cmd** bleibt ein Diagnose-Starter mit getrenntem Testprofil. [Installation und Sicherungen](../KingdomEffectsPatch/README.md)
+
 Öffne mit dem Patch-Starter in **Lokal spielen** oder **Weitergeben** die Königreich-Auswahl und drücke **F8**. Links findest du Suche, Kategorien und eine Tabelle mit **Effekt**, **Wirkung** und **Wann/wie**. Die Zeilen zeigen ihren vollständigen Text mit Zeilenumbruch. Unter der Tabelle stehen Teststand und Zielwahl des gewählten Effekts. Rechts stehen die aktiven Effekte in ihrer Ausführungsreihenfolge. Unten findest du die automatische Verdopplung gezogener Stapel und die belegten Plätze von insgesamt 32.
 
 In der linken Tabelle steht die originale Effekt-ID in Klammern hinter dem deutschen Namen, beispielsweise **Gespiegelte Kostbarkeiten (twist_mirror_loot)**. Das Suchfeld **Name oder Effekt-ID** findet auch vollständige IDs, Teilbegriffe wie `two_for_one` und Zeitpunkte wie **Zugbeginn** oder **Spielaufbau**. Mit den Pfeiltasten wählst du einen Effekt, mit Bild auf und Bild ab blätterst du in der Tabelle.
+
+**Ungetestet** markiert offene Effekte direkt in der Liste; sie bleiben auswählbar. **Teilweise geprüft** kennzeichnet Teilbefunde, **Mehrfach ungetestet** eine noch offene Wiederholungsprüfung. Der genaue Teststand steht unter der Tabelle. Bekannte Startabbrüche werden weiterhin mit einer konkreten Meldung verhindert.
 
 Wähle für mehrere doppelte Stapel **Doppelter Vorratsstapel** und dann **Ziele wählen**. Hake in **Karte wählen** die gewünschten Namen an oder nutze **Alle angezeigten auswählen** im Bereich **Königreich**. **Alle Karten** öffnet den gesamten passenden Katalog. Mit den Pfeiltasten erreichst du die Kartenvorschau rechts und mit der Leertaste setzt du ein Häkchen. **Kartentext lesen** zeigt die Regeln in einer scrollbaren Textansicht. Aktiviere **Weitere Kopie hinzufügen**, wenn ein bereits eingetragener Effekt erneut wirken soll. Drücke **Fertig** in der Kartenauswahl und anschließend im Effektdialog. [Starter und Testablauf](../KingdomEffectsPatch/TEST.md#effektdialog-in-der-lokalen-königreich-auswahl)
 
@@ -190,7 +194,7 @@ Wähle für mehrere doppelte Stapel **Doppelter Vorratsstapel** und dann **Ziele
 
 Mit aktivem Patch kannst du in der normalen Kartengalerie mehr als fünf Online-Banns pro Kategorie setzen. Öffne eine Karte mit Rechtsklick und verwende **Verbieten → Online**. Das gilt auch für private Online-Partien. Die gemeinsame native Liste fasst höchstens 700 Einträge. Die Zähler zeigen die aktuelle Anzahl. Der ursprüngliche Hilfetext nennt weiterhin fünf Banns.
 
-Der Nutzer bestätigte drei private Basisspiel-Partien mit einer manuell erweiterten Liste und ausschließlich den zehn freigegebenen Karten. Weitere Online-Modi und die volle Kapazität sind noch offen. Der Patch-Starter verwendet ein eigenes Testprofil. [Testablauf und Befunde](../KingdomEffectsPatch/TEST.md#erweiterte-online-bannliste)
+Der Nutzer bestätigte drei private Basisspiel-Partien mit einer manuell erweiterten Liste und ausschließlich den zehn freigegebenen Karten. Weitere Online-Modi und die volle Kapazität sind noch offen. Der Release-Starter verwendet das normale Profil; der bisherige Diagnose-Starter verwendet ein eigenes Testprofil. [Testablauf und Befunde](../KingdomEffectsPatch/TEST.md#erweiterte-online-bannliste)
 
 ## Dominion on Steam without mods
 
