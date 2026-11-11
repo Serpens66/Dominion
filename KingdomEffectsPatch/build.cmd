@@ -23,6 +23,8 @@ cl /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0effects_test.cpp" /link /OU
 effects_test.exe || goto fail
 cl /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0launcher_test.cpp" /link /OUT:launcher_test.exe bcrypt.lib || goto fail
 launcher_test.exe || goto fail
+cl /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0clipboard_test.cpp" /link /OUT:clipboard_test.exe user32.lib gdi32.lib comctl32.lib || goto fail
+clipboard_test.exe || goto fail
 cl /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT /I "%PATCH_OUT%" "%~dp0resources_test.cpp" /link /OUT:resources_test.exe gdiplus.lib user32.lib gdi32.lib || goto fail
 cl /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0release_game_test.cpp" /link /OUT:release_game_test.exe bcrypt.lib user32.lib || goto fail
 cl /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT /I "%PATCH_OUT%" "%~dp0editor_release_test.cpp" "%~dp0card_picker.cpp" "%~dp0dialog_skin.cpp" "%~dp0game_resources.cpp" effect_editor.res /link /OUT:editor_release_test.exe user32.lib gdi32.lib comctl32.lib gdiplus.lib || goto fail

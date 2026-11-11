@@ -1,4 +1,5 @@
 // Actual native dialog controls on a separate desktop; no foreground input.
+#define EFFECT_TABLE_TEST_CLIPBOARD
 #include "effect_editor.cpp"
 #include <cstdio>
 #include <stdexcept>
@@ -107,6 +108,21 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
         }
         SetDlgItemTextW(dialog, IDC_QUERY, L"Ungetestet");
         check(SendMessageW(list, LB_GETCOUNT, 0, 0) == 27, "Untested effect labels missing.");
+        SendMessageW(list,LB_SETSEL,TRUE,-1); SendMessageW(list,WM_COPY,0,0);
+        const auto copied=kingdom::effect_table_detail::test_clipboard;
+        check(copied.find(L"Effekt\tWirkung\tWann/wie\r\n")==0 && copied.find(L"Ungetestet")!=copied.npos,"Filtered table copy failed.");
+        check(std::count(copied.begin(),copied.end(),L'\n')==27,"Copy did not include all 27 filtered rows.");
+        check(copied.find(L"twist_big_ideas")==copied.npos && copied.find(L'\u200B')==copied.npos,"Copy includes hidden rows or layout characters.");
+        auto& table=*reinterpret_cast<kingdom::effect_table_detail::Model*>(GetWindowLongPtrW(list,GWLP_USERDATA));
+        table.select(list,0,true);
+        const auto text_editor=table.open_cell(list,0,0); check(text_editor!=nullptr,"Selectable cell unavailable.");
+        SendMessageW(text_editor,EM_SETSEL,0,-1); SendMessageW(text_editor,WM_COPY,0,0);
+        check(kingdom::effect_table_detail::test_clipboard==kingdom::effect_table_detail::plain_copy(table.rows[0].cells[0]),"Selected text copy failed.");
+        SendMessageW(text_editor,EM_SETSEL,2,7); SendMessageW(text_editor,WM_COPY,0,0);
+        check(kingdom::effect_table_detail::test_clipboard==kingdom::effect_table_detail::plain_copy(table.rows[0].cells[0].substr(2,5)),"Partial text copy failed.");
+        check((GetWindowLongPtrW(text_editor,GWL_STYLE)&ES_READONLY)!=0,"Table text must remain read-only.");
+        SendMessageW(text_editor,WM_KEYDOWN,VK_ESCAPE,0); check(!table.editor,"Escape did not end text selection.");
+        SendMessageW(list,WM_COPY,0,0); check(kingdom::effect_table_detail::test_clipboard.find(L'\t')!=std::wstring::npos,"Single effect row copy failed.");
         SendMessageW(list, LB_SETCURSEL, 0, 0);
         SendMessageW(dialog, WM_COMMAND, MAKEWPARAM(IDC_CATALOG, LBN_SELCHANGE), reinterpret_cast<LPARAM>(list));
         check(IsWindowEnabled(GetDlgItem(dialog, IDC_ADD)) || IsWindowEnabled(GetDlgItem(dialog, IDC_TARGET)),

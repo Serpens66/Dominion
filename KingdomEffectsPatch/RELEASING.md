@@ -14,6 +14,7 @@ Die Prüfprogramme werden nicht mitgeliefert:
 
 - `effects_test.exe`: Effektzusammenführung, Zielfelder, Kapazität und Eingabevalidierung.
 - `launcher_test.exe`: erfolgreiche Initialisierung, Initialisierungsfehler und begrenztes Warten ohne Beenden des Remote-Threads.
+- `clipboard_test.exe`: Unicode-Nutzdaten und HGLOBAL-Eigentumsübergabe mit echten Speicherfunktionen und isolierter Clipboard-API-Grenze; belegte Zwischenablage und fehlgeschlagene Veröffentlichung. Öffnet keine Nutzer-Zwischenablage. Der Dialogtest prüft zusätzlich Textausschnitt, ganze Zelle, Effektzeile und alle gefilterten Zeilen in einem eigenen Ausgabepuffer.
 - `editor_release_test.exe`: echter F8-Dialog auf eigenem unsichtbaren Desktop; 89 Einträge, Prüfkennzeichnungen, Suche nach IDs und Zeitpunkt, leere Suche und Abbrechen. Mit DOMINION_RESOURCE_TEST_PACKAGE zusätzlich die tatsächliche asynchrone Kartenauswahl samt schnellem Wechsel, Kartentext und Schließen während des Ladens.
 - `test_release_catalog.py`: Vollständigkeit und Zuordnung aller 89 Effekte und Prüfkennzeichnungen.
 - `Test-Release.ps1 -ArchivePath <ZIP> -SourceGameDirectory <Spielordner>`: unter Windows PowerShell 5.1 außerhalb des Projektordners entpacken und alle Paketdateien prüfen; ausschließlich erzeugte Testprofile, Sicherungsrotation, abweichender Steam-Pfad, Leerzeichen/Umlaut, direkter Installationsmodus, falscher Build/Hash, fehlende Dateien und exklusive Sitzungssperre.

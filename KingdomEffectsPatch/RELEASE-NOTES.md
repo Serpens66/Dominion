@@ -4,6 +4,7 @@ Erste herunterladbare Windows-Version des Dominion Kingdom Effects Patch für **
 
 - F8-Editor mit 89 Kampagneneffekten, Wirkung, Auslösezeitpunkt, interner ID und dokumentiertem Prüfstand.
 - Effektliste mit von Anfang an vollständigem pixelbasiertem Scrollbereich; zusätzlich 13 Kategorien nach „Wann/wie“, kombinierbar mit der Suche. Mehrere Auslöser pro Effekt bleiben berücksichtigt.
+- Markierbarer, kopierbarer Tabellentext sowie Rechtsklick-Aktionen für eine Effektzeile oder alle gefilterten Effekte. Kopierte Namen und IDs enthalten keine unsichtbaren Layoutzeichen.
 - F8 auch bei der Königreich-Auswahl für Online-Spiele und Privates Spiel. Getrennte Konfigurationen, sichtbarer Hinweis auf die Serverabhängigkeit und deaktivierte lokale Zufallsstapel-Automatik im Online-Editor. Die tatsächliche Online-Wirkung ist weiterhin nicht nachgewiesen.
 - Kartenauswahl nach Erweiterungen mit vollständiger Kartenvorschau und gemeinsamer Auswahl mehrerer Zielstapel.
 - Karten- und Menügrafiken direkt aus der vorhandenen Dominion.xpack; keine mitgelieferten Spielbilder, keine vorherige Extraktion und kein Grafik-Cache auf der Festplatte. Asynchrone Vorschau mit gemeinsamem 96-MiB-Speicher-Cache.

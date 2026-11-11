@@ -176,6 +176,7 @@ void measure_rows(HWND dialog, const Draft& draft) {
     const auto font = reinterpret_cast<HFONT>(SendMessageW(list, WM_GETFONT, 0, 0));
     const auto previous = SelectObject(dc, font);
     const auto padding = draft.skin->units({0, 0, 4, 3});
+    SendMessageW(list,effect_table_padding,padding.right,padding.bottom);
     // Updating row heights can make the vertical scrollbar appear.
     LONG previous_width = -1;
     for (int pass = 0; pass < 2; ++pass) {
@@ -315,6 +316,10 @@ void filter_catalog(HWND dialog, Draft& draft) {
                                              reinterpret_cast<LPARAM>(name.c_str()));
         if (row >= 0) SendDlgItemMessageW(dialog, IDC_CATALOG, LB_SETITEMDATA, row,
                                           reinterpret_cast<LPARAM>(&effect));
+        if (row >= 0) {
+            const auto cells=table_text(effect);
+            SendDlgItemMessageW(dialog,IDC_CATALOG,effect_table_cells,row,reinterpret_cast<LPARAM>(&cells));
+        }
         if (&effect == draft.selected && row >= 0) selection = row;
     }
     measure_rows(dialog, draft);
