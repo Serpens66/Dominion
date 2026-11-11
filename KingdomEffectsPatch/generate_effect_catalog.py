@@ -56,10 +56,10 @@ def read_effects():
     catalog = catalog.split("#### Weitere Varianten aus der Kampagnenerzeugung", 1)[0]
     pattern = (
         r"^\| ([^|]+) \| `((?:twist|stamp|start)_[a-z0-9_]+)(?:\(([^)]+)\))?`"
-        r" \| ([^\n]*?) \*Einmal – ([^\n]*?) · Mehrfach – ([^\n]*?)\* \|$"
+        r" \| ([^|\n]*?) \*Einmal – ([^|\n]*?) · Mehrfach – ([^|\n]*?)\* \| ([^|\n]+) \|$"
     )
     effects = []
-    for name, command, args, description, once, repeated in re.findall(pattern, catalog, re.MULTILINE | re.IGNORECASE):
+    for name, command, args, description, once, repeated, timing in re.findall(pattern, catalog, re.MULTILINE | re.IGNORECASE):
         first = second = "none"
         if command == "twist_typhoon":
             first = "pile_list"
@@ -73,7 +73,7 @@ def read_effects():
             kinds = [ARGUMENTS[part.strip()] for part in args.split(",")]
             first, second = (kinds + ["none"])[:2]
         status = f"Einmal – {once}\r\nMehrfach – {repeated}"
-        effects.append((command, plain_text(name), plain_text(description), status, first, second))
+        effects.append((command, plain_text(name), plain_text(description), plain_text(timing), status, first, second))
     assert len(effects) == len({row[0] for row in effects}) == 89, "Expected 89 documented effects"
     return effects
 
@@ -287,8 +287,8 @@ def main(output, xpack):
     targets = read_targets(catalog, aliases)
     rows = ["// Generated from Documentation by generate_effect_catalog.py.",
             "constexpr EffectDefinition effect_catalog[] = {"]
-    for command, name, description, status, first, second in read_effects():
-        rows.append(f"    {{{literal(command)}, {literal(name, True)}, {literal(description, True)}, {literal(status, True)}, "
+    for command, name, description, timing, status, first, second in read_effects():
+        rows.append(f"    {{{literal(command)}, {literal(name, True)}, {literal(description, True)}, {literal(timing, True)}, {literal(status, True)}, "
                     f"TargetKind::{first}, TargetKind::{second}}},")
     rows.extend(("};", "", "constexpr CardTarget target_catalog[] = {"))
     for card_id, *metadata, expansion_id, icons, costs, kinds in targets:
