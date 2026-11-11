@@ -137,6 +137,7 @@ inline EditorContext editor_context(const std::byte* profile, const std::byte* c
 
 // Returns true only after the user accepts the draft.
 bool edit_effects(void* owner, std::string_view kingdom_text, const EffectCommands& effects, bool& automatic,
-                  const std::function<bool(const EffectCommands&)>& apply, EditorContext context = EditorContext::local);
+                  const std::function<bool(const EffectCommands&)>& apply, EditorContext context = EditorContext::local,
+                  const std::wstring* apply_error = nullptr);
 
 }

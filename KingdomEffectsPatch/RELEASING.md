@@ -43,3 +43,15 @@ Für die Online-Abnahme **Privates Spiel → Königreich-Auswahl → F8** öffne
 Erst nach sichtbarer Abnahme veröffentlichen. Änderungen committen und nach GitHub übertragen. Das finale Paket aus diesem Quellstand bauen; `sourceDirty` muss `false` sein. Alle Prüfungen müssen sich auf die finalen Dateien beziehen. Reine Dokumentationsänderungen erfordern keinen neuen nativen Build, Änderungen an ausgelieferten Dateien dagegen einen neuen Paketbau und passende Prüfungen.
 
 Mit der vorhandenen GitHub-CLI-Anmeldung zunächst `gh api user --jq .login` prüfen. Das bestehende Release `converter-v1.0.0` und die Generator-Pages nicht verändern. Ein neues Release mit Tag **v0.1.0**, Titel **Dominion Kingdom Effects Patch v0.1.0**, `--prerelease` und `--latest=false` erstellen. ZIP und SHA256SUMS.txt hochladen, Versionshinweise über `--notes-file` aus RELEASE-NOTES.md übernehmen und das Ziel auf den geprüften Quellcommit setzen. Anschließend Download-Dateinamen, Prüfsumme und Vorabversionsstatus über GitHub prüfen. Veröffentlichung und Link in der Dokumentation nachtragen.
+
+## Native Effekt-Rundreise
+
+Nach `build.cmd staging` ausführen (Entwicklertest, nicht Teil des Downloads):
+
+```powershell
+$env:SteamAppId = '1131620'
+$env:SteamGameId = '1131620'
+.\out\staging\roundtrip_test.exe '<getrennte Testkopie>\Dominion.exe' '<Projekt>\KingdomEffectsPatch\out\staging\roundtrip_probe.dll'
+```
+
+Der Runner verweigert die Original-EXE als Testkopie und prüft deren Build-3315-Hash. Zwei isolierte Spielprozesse verwenden temporäre Profile und einen unsichtbaren Desktop. Der eigentliche Test läuft auf dem Spielthread, ohne Maus-/Tastatureingaben. `effect-roundtrip.tsv` entsteht neben der Test-DLL. Beide Testdateien und der Rohbericht bleiben aus dem Release-Paket ausgeschlossen. Der veröffentlichte Bericht enthält nur Effektbefehle und Prüfergebnisse.

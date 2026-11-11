@@ -54,6 +54,11 @@ thread_local bool from_clipboard;
 thread_local bool clipboard_rejected;
 thread_local const std::byte* automatic_save;
 thread_local const wchar_t* automatic_failure;
+thread_local kingdom::Effects expected_local_effects{};
+thread_local bool expected_local_valid=false;
+void log_commands(const char*, const kingdom::EffectCommands&);
+void trace_local_prepared(const std::byte*);
+bool validate_native_import(const char*);
 
 void log(const char* event, const kingdom::Effects* list = nullptr) {
     char line[3072];
@@ -117,7 +122,10 @@ bool validate(const char* text) {
 }
 
 bool __cdecl validate_search(const char* text) {
-    return validate(text);
+    const bool valid=validate(text);
+    kingdom::EffectCommands commands;
+    if (valid && text && kingdom::read_effect_commands(text,commands)) log_commands("import requested",commands);
+    return valid && validate_native_import(text);
 }
 
 void __cdecl begin_clipboard() {
@@ -126,7 +134,8 @@ void __cdecl begin_clipboard() {
 }
 
 bool __cdecl validate_clipboard(const char* text) {
-    if (!from_clipboard || validate(text)) return true;
+    if (!from_clipboard) return true;
+    if (validate_search(text)) return true;
     clipboard_rejected = true;
     return false;
 }
@@ -221,6 +230,7 @@ const std::byte* active_profile() {
 }
 
 bool __cdecl allow_local_start() {
+    expected_local_valid=false;
     const auto* profile = active_profile();
     if (!profile) return true;
     const auto* config = profile + 0x10;
@@ -244,6 +254,7 @@ bool __cdecl allow_local_start() {
             return false;
         }
     }
+    trace_local_prepared(config);
     return true;
 }
 
@@ -284,6 +295,19 @@ void __cdecl append_automatic(void* native_extras, const void* rolled_piles, con
 
 void __cdecl end_automatic() {
     automatic_save = nullptr;
+    kingdom::Effects installed{};
+    std::memcpy(&installed,image_base+0x780AD8+0x1280,sizeof installed);
+    log("local installed effects",&installed);
+    const auto expected=kingdom::count(expected_local_effects);
+    const auto received=kingdom::count(installed);
+    const auto compare=!expected_local_valid ? 0 : automatic_enabled ? expected : (std::max)(expected,received);
+    for (std::size_t i=0;i<compare;++i) {
+        if (expected_local_effects[i][0]!=installed[i][0]) {
+            char line[180]; std::snprintf(line,sizeof line,"local effect mismatch at %zu: expected=%X installed=%X",i+1,
+                expected_local_effects[i][0],installed[i][0]); log(line); break;
+        }
+    }
+    expected_local_valid=false;
     const auto* failure = automatic_failure;
     automatic_failure = nullptr;
     if (failure) {
@@ -330,12 +354,70 @@ private:
     const char* text_{};
 };
 
-bool parsed_effects_match(const kingdom::Setup& parsed, const kingdom::EffectCommands& commands) {
+void log_commands(const char* stage, const kingdom::EffectCommands& commands) {
+    for (std::size_t i=0;i<commands.size();++i) {
+        char line[2300];
+        std::snprintf(line,sizeof line,"%s [%zu] %.*s",stage,i+1,
+            static_cast<int>((std::min)(commands[i].size(),std::size_t(2100))),commands[i].c_str());
+        log(line);
+    }
+}
+
+void log_config_snapshot(const char* stage,const std::byte* config) {
+    char line[180];
+    std::snprintf(line,sizeof line,"%s: selector=%lu index=%lu flags=%lX version=%lu",stage,
+        *reinterpret_cast<const DWORD*>(config+0x0C),*reinterpret_cast<const DWORD*>(config+0x10),
+        *reinterpret_cast<const DWORD*>(config+0x18),*reinterpret_cast<const DWORD*>(config+0x28));
+    log(line);
+    for(const auto offset:{0x30,0x34}) {
+        const auto* text=*reinterpret_cast<const char* const*>(config+offset);
+        kingdom::EffectCommands commands;
+        if(text && kingdom::read_effect_commands({text,strnlen_s(text,4096)},commands)) {
+            std::snprintf(line,sizeof line,"%s %s",stage,offset==0x30?"setupData":"kingdomData");
+            log_commands(line,commands);
+        }
+    }
+}
+
+kingdom::Setup resolve_config(const std::byte* config) {
+    kingdom::Setup result{}; auto* output=&result;
+    __asm {
+        push output
+        mov ecx,config
+        call dword ptr [native_active_setup]
+        add esp,4
+    }
+    return result;
+}
+
+void trace_local_prepared(const std::byte* config) {
+    log_config_snapshot("local start configuration",config);
+    const auto setup=resolve_config(config);
+    expected_local_effects=kingdom::read_effects(setup.data());
+    expected_local_valid=true;
+    log("local prepared effects",&expected_local_effects);
+    const NativeSetupText text(setup,*reinterpret_cast<const DWORD*>(config+0x28));
+    kingdom::EffectCommands commands;
+    if (kingdom::read_effect_commands(text.view(),commands)) log_commands("local prepared",commands);
+}
+
+bool parsed_effects_match(const kingdom::Setup& parsed, const kingdom::EffectCommands& commands, std::size_t* mismatch=nullptr) {
     const auto list = kingdom::read_effects(parsed.data());
-    if (kingdom::count(list) != commands.size()) return false;
-    for (std::size_t i = 0; i < commands.size(); ++i) {
+    const auto entries=kingdom::count(list);
+    for (std::size_t i = 0; i < (std::min)(entries,commands.size()); ++i) {
+        if(mismatch) *mismatch=i;
         const auto& effect = list[i];
         const auto& command = commands[i];
+        // Compare identity and every target against an independent native parse.
+        // A count-only check cannot detect replacement, reordering or a wrong target.
+        using Parse=void (__fastcall*)(const char*,kingdom::Setup*);
+        kingdom::Setup single{};
+        const auto text=kingdom::effect_command_text({command});
+        reinterpret_cast<Parse>(native_parser)(text.c_str(),&single);
+        const auto expected=kingdom::read_effects(single.data());
+        if (kingdom::count(expected)!=1 || effect!=expected[0]) {
+            log_commands("effect mismatch",{command}); return false;
+        }
         if (command.find('(') == command.npos) continue;
         if (effect[0] == kingdom::room || effect[0] == kingdom::typhoon) {
             const auto offset = effect[0] == kingdom::room ? kingdom::room_offset : kingdom::typhoon_offset;
@@ -344,12 +426,32 @@ bool parsed_effects_match(const kingdom::Setup& parsed, const kingdom::EffectCom
             for (std::ptrdiff_t n = 0; n < targets; ++n) {
                 if (!*reinterpret_cast<const DWORD*>(parsed.data() + offset + n * 0x10 + 4)) return false;
             }
+            const auto bytes=static_cast<std::size_t>(targets)*0x10;
+            if (std::memcmp(parsed.data()+offset,single.data()+offset,bytes)!=0) return false;
         } else if (!effect[1] ||
                    (command.find(',') != command.npos && effect[2] == 0xFFFFFFFFu && !effect[4])) {
             return false;
         }
     }
+    if(entries!=commands.size()) { if(mismatch) *mismatch=(std::min)(entries,commands.size()); return false; }
     return true;
+}
+
+bool validate_native_import(const char* text) {
+    if(!text) return true;
+    kingdom::EffectCommands commands;
+    if(!kingdom::read_effect_commands(text,commands) || commands.empty()) return true;
+    using Parse=void (__fastcall*)(const char*,kingdom::Setup*);
+    kingdom::Setup parsed{}; reinterpret_cast<Parse>(native_parser)(text,&parsed);
+    const auto effects=kingdom::read_effects(parsed.data()); log("import parsed",&effects);
+    std::size_t mismatch=0;
+    if(parsed_effects_match(parsed,commands,&mismatch)) return true;
+    const auto& command=commands[(std::min)(mismatch,commands.size()-1)];
+    const std::wstring message=L"Der Import wurde bei Effekt "+std::to_wstring(mismatch+1)+L" ("+
+        std::wstring(command.begin(),command.end())+L") nicht vollständig eingelesen. Die bisherige Auswahl bleibt erhalten.";
+    log_commands("import rejected mismatch",{command});
+    MessageBoxW(GetActiveWindow(),message.c_str(),L"Dominion – Königreich-Effekte",MB_OK|MB_ICONWARNING);
+    return false;
 }
 
 void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
@@ -378,30 +480,59 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
         return;
     }
     try {
+        log_config_snapshot("editor configuration",config);
         const DWORD version = *reinterpret_cast<const DWORD*>(config + 0x28);
         const NativeSetupText original(*current, version);
+        const auto opened_list=kingdom::read_effects(current->data()); log("editor configuration effects",&opened_list);
         kingdom::EffectCommands effects;
         if (!kingdom::read_effect_commands(original.view(), effects) ||
             !parsed_effects_match(*current, effects)) {
             throw kingdom::Error::malformed;
         }
         bool automatic = automatic_enabled;
+        std::wstring apply_error;
         const auto apply = [&](const kingdom::EffectCommands& edited) {
+            apply_error.clear();
             if (edited == effects) return true;
+            std::size_t mismatch=0;
+            const auto fail=[&](const wchar_t* stage) {
+                if(edited.empty()) { apply_error=std::wstring(L"Leere Effektliste: ")+stage+L". Die bisherige Auswahl bleibt erhalten."; return false; }
+                const auto& command=edited[(std::min)(mismatch,edited.size()-1)];
+                apply_error=std::wstring(L"Effekt ")+std::to_wstring(mismatch+1)+L" ("+
+                    std::wstring(command.begin(),command.end())+L"): "+stage+L". Die bisherige Auswahl bleibt erhalten.";
+                log_commands("editor rejected",{command}); return false;
+            };
             const auto commands = kingdom::effect_command_text(edited);
+            log_commands("editor requested",edited);
             if (kingdom::validate_text(commands, 4095, true) != kingdom::Error::none) return false;
             using Parse = void (__fastcall*)(const char*, kingdom::Setup*);
             const auto parse = reinterpret_cast<Parse>(native_parser);
             kingdom::Setup parsed{};
             parse(commands.c_str(), &parsed);
-            if (!parsed_effects_match(parsed, edited)) return false;
+            const auto parsed_list=kingdom::read_effects(parsed.data());
+            log("editor parsed",&parsed_list);
+            if (!parsed_effects_match(parsed, edited,&mismatch)) return fail(L"beim Einlesen nicht vollständig übernommen");
 
             auto next = *current;
             kingdom::replace_effects(next, parsed);
             const NativeSetupText output(next, version);
             kingdom::EffectCommands serialized;
             if (!kingdom::read_effect_commands(output.view(), serialized) ||
-                !kingdom::same_effect_commands(serialized, edited)) return false;
+                !kingdom::same_effect_commands(serialized, edited)) {
+                mismatch=0;
+                while(mismatch<(std::min)(serialized.size(),edited.size()) && kingdom::same_effect_commands({serialized[mismatch]},{edited[mismatch]})) ++mismatch;
+                log_commands("editor serialized mismatch",serialized); return fail(L"bei der Ausgabe verändert");
+            }
+            log_commands("editor serialized",serialized);
+            // Resolve an independent custom configuration before touching the real one.
+            // All strings are borrowed read-only; this path never selects a preset.
+            std::array<std::byte,0x38> candidate{};
+            std::memcpy(candidate.data(),config,candidate.size());
+            *reinterpret_cast<DWORD*>(candidate.data()+0x0C)=0;
+            *reinterpret_cast<const char**>(candidate.data()+0x30)=output.view().data();
+            const auto resolved=resolve_config(candidate.data());
+            const auto resolved_list=kingdom::read_effects(resolved.data()); log("editor resolved",&resolved_list);
+            if (!parsed_effects_match(resolved,edited,&mismatch)) return fail(L"beim erneuten Laden verändert");
             // Detach the edited draft from the selected preset as the native
             // custom setup path does. The user can then save it as a set.
             output.write_to(config + 0x30);
@@ -414,10 +545,12 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
             reinterpret_cast<SaveProfiles>(native_save_profiles)(settings);
             const auto list = kingdom::read_effects(next.data());
             log("effect editor applied", &list);
+            log_config_snapshot("editor committed configuration",config);
             return true;
         };
         log(context == kingdom::EditorContext::online ? "effect editor opened: online" : "effect editor opened: local");
-        if (kingdom::edit_effects(owner, original.view(), effects, automatic, apply, context) &&
+        log_commands("editor opened",effects);
+        if (kingdom::edit_effects(owner, original.view(), effects, automatic, apply, context,&apply_error) &&
             context == kingdom::EditorContext::local) {
             automatic_enabled = automatic;
         }

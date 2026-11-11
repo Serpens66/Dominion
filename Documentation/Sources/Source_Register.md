@@ -111,3 +111,9 @@ Die zwei Online-Aufrufstellen und die allein referenzierte Formatzeichenkette de
 ### Numerische Profil-IDs für den Generator aus L01 und L02
 
 **11. November 2026, Build 3315 / Steam-Build 17683350.** Der EXE-Hash wurde erneut bestätigt. Die in L02 gespeicherten Zahlen wurden mit den nativen Definitionen aus L01 abgeglichen. 853 kanonische Karten sind eindeutig zugeordnet; auch alle vorhandenen Einträge der beiden lokal gelesenen Bannlisten ließen sich auflösen. Die Ausgabe verwendet Dezimalzahlen in inneren `bans`-Elementen, sowohl für den äußeren Online-Block `bans` als auch für `localBans`. Die Profildatei wurde dafür ausschließlich gelesen. [Extraktionsverfahren und Format](../Modding_Overview.md#bannlisten-einträge-aus-dem-generator)
+
+### Effekt-Rundreise und Vorschau, 11. November 2026
+
+**Build 3315 / EXE-Hash wie L01, statisch abgeglichen und isoliert dynamisch geprüft.** Der Effekt-Test verwendet den Parser RVA `0x0DDBB0`, die Ausgabe `0x0E0FF0`, den versionsabhängigen Decoder `0x0DEEB0`, den Konfigurationsauflöser `0x0E49D0` und die native Stringzuweisung `0x23D850`. Die gültigen Effektregistrierungen einschließlich `twist_garbage_heap` (ID `0x17DA`) und `twist_beakers` (`0x17D6`) sind in der EXE vorhanden. Die Routine `0x0E5DB0` vergleicht Effektbezeichnungen mit dem registrierten Bestand; daraus folgt keine geprüfte Spielwirkung.
+
+Der Patch verwendet für die verschärfte Übernahmeprüfung ausschließlich bereits vorhandene Parser-/Auflöseradressen und installiert dafür keine weiteren nativen Patchstellen. Die Test-DLL läuft nicht im Release. Ergebnis und Grenzen: [89 Effekte / 356 Prüfungen](../Effect_Roundtrip_Tests.md). Ein Effektverlust bei Rückkehr nach einer Partie mit dem Nutzerprofil bleibt ungeklärt. Neue Markdown-Dateien sind UTF-8 ohne BOM mit CRLF.

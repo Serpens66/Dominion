@@ -1,6 +1,7 @@
 // Actual native dialog controls on a separate desktop; no foreground input.
 #define EFFECT_TABLE_TEST_CLIPBOARD
 #include "effect_editor.cpp"
+#include "card_picker.cpp"
 #include <cstdio>
 #include <stdexcept>
 #pragma comment(lib, "oleaut32.lib")
@@ -10,6 +11,7 @@ std::string failure;
 bool checked = false;
 bool picker_checked = false;
 unsigned picker_ticks = 0;
+bool missing_art=false;
 bool online_checked = false;
 bool online_cancel = false;
 UINT_PTR timer = 0;
@@ -107,11 +109,14 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
             check(SendMessageW(list, LB_GETCOUNT, 0, 0) == 1, "ID search mismatch.");
         }
         SetDlgItemTextW(dialog, IDC_QUERY, L"Ungetestet");
-        check(SendMessageW(list, LB_GETCOUNT, 0, 0) == 27, "Untested effect labels missing.");
+        const auto untested=std::count_if(std::begin(kingdom::effect_catalog),std::end(kingdom::effect_catalog),[](const auto& effect) {
+            return kingdom::fold_card_search(effect.verification).find(L"ungetestet")!=std::wstring::npos;
+        });
+        check(SendMessageW(list, LB_GETCOUNT, 0, 0) == untested, "Untested effect labels missing.");
         SendMessageW(list,LB_SETSEL,TRUE,-1); SendMessageW(list,WM_COPY,0,0);
         const auto copied=kingdom::effect_table_detail::test_clipboard;
         check(copied.find(L"Effekt\tWirkung\tWann/wie\r\n")==0 && copied.find(L"Ungetestet")!=copied.npos,"Filtered table copy failed.");
-        check(std::count(copied.begin(),copied.end(),L'\n')==27,"Copy did not include all 27 filtered rows.");
+        check(std::count(copied.begin(),copied.end(),L'\n')==untested,"Copy did not include all filtered rows.");
         check(copied.find(L"twist_big_ideas")==copied.npos && copied.find(L'\u200B')==copied.npos,"Copy includes hidden rows or layout characters.");
         auto& table=*reinterpret_cast<kingdom::effect_table_detail::Model*>(GetWindowLongPtrW(list,GWLP_USERDATA));
         table.select(list,0,true);
@@ -166,16 +171,26 @@ BOOL CALLBACK inspect_online(HWND dialog, LPARAM) {
 void CALLBACK inspect_online_dialog(HWND, UINT, UINT_PTR, DWORD) { EnumThreadWindows(GetCurrentThreadId(),inspect_online,0); }
 BOOL CALLBACK inspect_picker(HWND dialog, LPARAM) {
     if (!GetDlgItem(dialog, IDC_CARD_TREE)) return TRUE;
+    if (!IsWindowVisible(dialog)) return FALSE;
     try {
         if (!picker_ticks++) {
             for (const auto query : {L"village", L"market", L"no-such-card", L"miser"}) SetDlgItemTextW(dialog, IDC_CARD_QUERY, query);
         }
-        if (!IsWindowVisible(GetDlgItem(dialog, IDC_CARD_IMAGE)) && picker_ticks<200) return FALSE;
-        check(IsWindowVisible(GetDlgItem(dialog, IDC_CARD_IMAGE)), "Async image did not arrive.");
+        auto& picker=*reinterpret_cast<kingdom::Picker*>(GetWindowLongPtrW(dialog,DWLP_USER));
+        // Text and image controls keep the same geometry before/after loading.
+        check(IsWindowVisible(GetDlgItem(dialog, IDC_CARD_RULES)), "Rules hidden while loading.");
+        if ((!missing_art && !picker.image || missing_art && picker.loader.counts().second==0) && picker_ticks<200) return FALSE;
+        check(missing_art ? !picker.image : bool(picker.image),"Async image/fallback state incorrect.");
+        check(IsWindowVisible(GetDlgItem(dialog, IDC_CARD_IMAGE)), "Image area hidden.");
         wchar_t name[128]{}; GetDlgItemTextW(dialog, IDC_CARD_IMAGE, name, 128);
         check(std::wstring_view(name)==L"Geizhals", "Stale preview published after navigation.");
-        SendMessageW(dialog, WM_COMMAND, IDC_CARD_TEXT, 0);
-        check(IsWindowVisible(GetDlgItem(dialog, IDC_CARD_RULES)), "Rules switch failed.");
+        check(IsWindowVisible(GetDlgItem(dialog, IDC_CARD_TITLE)) && IsWindowVisible(GetDlgItem(dialog, IDC_CARD_INFO)), "Text displaced by image.");
+        RECT before{},after{}; GetWindowRect(GetDlgItem(dialog,IDC_CARD_IMAGE),&before);
+        const auto counts=picker.loader.counts();
+        for(int i=0;i<100;++i) kingdom::preview(dialog,picker,picker.displayed);
+        GetWindowRect(GetDlgItem(dialog,IDC_CARD_IMAGE),&after);
+        check(EqualRect(&before,&after) && counts==picker.loader.counts(),"Repeated hover rebuilds the preview.");
+        check(kingdom::resource_cache_bytes()<=96u*1024u*1024u,"Shared cache limit exceeded.");
         SetDlgItemTextW(dialog, IDC_CARD_QUERY, L"city_quarter");
         picker_checked=true;
     } catch (const std::exception& error) { failure=error.what(); }
@@ -225,7 +240,16 @@ int main() {
         kingdom::pick_cards(nullptr,L"Ressourcentest",cards,{},kingdom::CardSelection::multiple,
             [&](const kingdom::CardTargets&,bool) { applied=true; return std::wstring{}; });
         KillTimer(nullptr,timer);
-        if (!picker_checked) failure="Picker check did not run.";
+        if (!picker_checked && failure.empty()) failure="Picker check did not run.";
+        if (failure.empty()) {
+            check(!kingdom::set_resource_package_for_test(std::filesystem::path(package).parent_path()/L"missing-test-resources.xpack"),"Missing resource fixture unexpectedly exists.");
+            missing_art=true; picker_checked=false; picker_ticks=0;
+            timer=SetTimer(nullptr,0,50,inspect_card_dialog);
+            kingdom::pick_cards(nullptr,L"Text ohne Spielgrafiken",cards,{},kingdom::CardSelection::multiple,
+                [&](const kingdom::CardTargets&,bool) { applied=true; return std::wstring{}; });
+            KillTimer(nullptr,timer);
+            if(!picker_checked && failure.empty()) failure="Missing-art check did not run.";
+        }
     }
     SetThreadDesktop(previous);
     CloseDesktop(desktop);

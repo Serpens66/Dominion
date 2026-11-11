@@ -351,12 +351,13 @@ bool set_resource_package_for_test(const std::filesystem::path& path) { auto& st
 
 struct CardPreviewLoader::State {
     std::mutex mutex; std::condition_variable ready; bool stop=false, pending=false, complete=false;
-    std::uint64_t generation=0; std::string requested,result_id; ResourceImage result; std::thread worker;
+    std::uint64_t generation=0, loads=0; std::string requested,result_id; ResourceImage result; std::thread worker;
     State():worker([this] {
         for (;;) {
             std::unique_lock<std::mutex> lock(mutex); ready.wait(lock,[this]{return stop||pending;}); if (stop) return;
             const auto id=requested; const auto serial=generation; pending=false; lock.unlock();
             auto image=game_card(id); lock.lock();
+            ++loads;
             if (!stop && serial==generation) { result_id=id; result=std::move(image); complete=true; }
         }
     }) {}
@@ -365,11 +366,15 @@ struct CardPreviewLoader::State {
 CardPreviewLoader::CardPreviewLoader():state_(std::make_unique<State>()) {}
 CardPreviewLoader::~CardPreviewLoader()=default;
 void CardPreviewLoader::request(std::string id) {
-    { std::lock_guard<std::mutex> lock(state_->mutex); ++state_->generation; state_->requested=std::move(id); state_->pending=true; state_->complete=false; state_->result.reset(); }
+    { std::lock_guard<std::mutex> lock(state_->mutex); if (state_->generation && id==state_->requested) return;
+      ++state_->generation; state_->requested=std::move(id); state_->pending=true; state_->complete=false; state_->result.reset(); }
     state_->ready.notify_one();
 }
 bool CardPreviewLoader::take(std::string& id,ResourceImage& image) {
     std::lock_guard<std::mutex> lock(state_->mutex); if (!state_->complete) return false;
     id=state_->result_id; image=std::move(state_->result); state_->complete=false; return true;
+}
+std::pair<std::uint64_t,std::uint64_t> CardPreviewLoader::counts() const {
+    std::lock_guard<std::mutex> lock(state_->mutex); return {state_->generation,state_->loads};
 }
 }

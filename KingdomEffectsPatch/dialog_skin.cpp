@@ -83,6 +83,11 @@ DialogSkin::DialogSkin(HWND dialog) : dialog_(dialog) {
                      SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
     }
     header_height_ = units({0, 0, 0, header_units}).bottom;
+    // Paint-time access must not wait for the background card renderer's lock.
+    for (const auto name : {"wood","panel","gold","seal","check","plus","checkbox",
+                           "coin","potion","debt","vp","sun","actions","attack","reaction",
+                           "duration","night","landscape","omen","favor_rules"})
+        art_.emplace(name, game_art(name));
     paper_brush_ = CreateSolidBrush(paper);
 
     LOGFONTW font{};
@@ -134,6 +139,7 @@ DialogSkin::DialogSkin(HWND dialog) : dialog_(dialog) {
 }
 
 DialogSkin::~DialogSkin() {
+    art_.clear();
     if (graphics_) Gdiplus::GdiplusShutdown(graphics_);
     if (paper_brush_) DeleteObject(paper_brush_);
     if (body_) DeleteObject(body_);
@@ -157,7 +163,9 @@ void DialogSkin::place(int control, RECT logical) const {
 }
 
 ResourceImage DialogSkin::art(std::string_view name) const {
-    return game_art(name);
+    const auto found = art_.find(name);
+    if (found != art_.end()) return found->second;
+    return art_.emplace(std::string(name), game_art(name)).first->second;
 }
 
 bool DialogSkin::draw_icon(HDC dc, std::string_view name, RECT bounds) const {

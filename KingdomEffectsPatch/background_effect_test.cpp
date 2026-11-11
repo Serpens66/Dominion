@@ -222,7 +222,7 @@ public:
     }
 
     template<std::size_t Size, std::size_t Count>
-    DWORD query(const std::array<BYTE, Size>& code, const std::array<DWORD, Count>& args) const {
+    DWORD query(const std::array<BYTE, Size>& code, const std::array<DWORD, Count>& args, DWORD timeout=3000) const {
         // Give the disposable child one data page and a separate executable page for the query.
         constexpr SIZE_T page = 4096;
         static_assert(Size < page && sizeof(args) < page);
@@ -238,7 +238,7 @@ public:
         Handle thread(CreateRemoteThread(info_.hProcess, nullptr, 0,
                                         reinterpret_cast<LPTHREAD_START_ROUTINE>(memory),
                                         reinterpret_cast<void*>(memory + page), 0, nullptr));
-        require(thread.valid() && WaitForSingleObject(thread.value, 3000) == WAIT_OBJECT_0,
+        require(thread.valid() && WaitForSingleObject(thread.value, timeout) == WAIT_OBJECT_0,
                 "The native query did not finish.");
         DWORD result;
         require(GetExitCodeThread(thread.value, &result) && alive(), "The native query failed.");

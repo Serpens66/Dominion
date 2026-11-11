@@ -52,3 +52,13 @@ Unter `%LOCALAPPDATA%\DominionKingdomEffectsPatch` liegt `letzter-start.log` mit
 Zum Entfernen Spiel und Starter schließen und den entpackten Modordner löschen. Optional den Mod-Datenordner unter `%LOCALAPPDATA%` entfernen, nachdem gewünschte Sicherungen aufbewahrt wurden. Die ursprüngliche Steam-Installation wird nicht verändert. Im normalen Profil gespeicherte Sets und Banns bleiben erhalten.
 
 Quellcode, Anleitung und Befunde: [Serpens66/Dominion](https://github.com/Serpens66/Dominion). Dies ist ein inoffizielles Projekt. Die verwendeten Spielgrafiken stammen aus Dominion und gehören ihren jeweiligen Rechteinhabern.
+
+## Kartenvorschau und Effektdiagnose
+
+Die Kartenauswahl zeigt Namen, Eigenschaften und scrollbaren Regeltext immer oberhalb der Karte. Der Bildbereich bleibt beim Laden leer und erhält anschließend die fertige Karte. Text und Bild behalten ihre Positionen. Wiederholtes Überfahren derselben Karte startet keinen neuen Ladeauftrag; vorhandene Kartenbilder werden aus dem gemeinsamen Speicher-Cache wiederverwendet.
+
+F8 zeigt die Effekte der geöffneten Königreich-Konfiguration, nicht eine Prüfung ihrer tatsächlichen Spielwirkung. Verwirft oder ersetzt das Spiel diese Konfiguration, kann ein Effekt anschließend auch in F8 fehlen. Der isolierte Prüfbericht im [Repository](https://github.com/Serpens66/Dominion/blob/main/Documentation/Effect_Roundtrip_Tests.md) unterscheidet deshalb Übernahme und Speicherung von bestätigter Spielwirkung.
+
+Das Patch-Protokoll enthält nun die angeforderten Effektbefehle, die eingelesenen Werte, die erneute Auflösung vor dem Speichern sowie die vorbereiteten und im lokalen Spiel angekommenen Effekte. Vollständige Profile werden nicht protokolliert. Bei einer unvollständigen F8-Übernahme bleibt die bisherige Auswahl erhalten; die Meldung nennt den betroffenen Effekt und Verarbeitungsschritt.
+
+Zur Untersuchung eines Verlusts nach einer Partie: Effekte in F8 festlegen, mit **Fertig** übernehmen, die Partie starten und anschließend auf dem üblichen Weg ins Königreich-Menü zurückkehren. F8 dort erneut öffnen und mit **Abbrechen** schließen, damit dieser Kontrollschritt keine Änderungen speichert. Danach Dominion schließen und den Starter fertig laufen lassen. `letzter-patch.log` enthält dann den Vergleich vor und nach der Partie. Alle 89 Effekte müssen dafür nicht gleichzeitig aktiviert werden.

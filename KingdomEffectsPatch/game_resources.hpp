@@ -3,6 +3,7 @@
 #include <objidl.h>
 #include <gdiplus.h>
 #include <filesystem>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -21,6 +22,7 @@ public:
     ~CardPreviewLoader();
     void request(std::string id);
     bool take(std::string& id, ResourceImage& image);
+    std::pair<std::uint64_t, std::uint64_t> counts() const;
 private:
     struct State;
     std::unique_ptr<State> state_;

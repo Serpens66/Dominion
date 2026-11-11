@@ -39,6 +39,7 @@ struct Draft {
     const std::function<bool(const EffectCommands&)>& apply;
     CardTargets fixed;
     EditorContext context;
+    const std::wstring* apply_error = nullptr;
     const EffectDefinition* selected = nullptr;
     const CardTarget* first = nullptr;
     const CardTarget* second = nullptr;
@@ -494,7 +495,8 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
                 return TRUE;
             }
             if (!draft.apply(draft.effects)) {
-                SetDlgItemTextW(dialog, IDC_STATUS, L"Dominion hat die Effektliste abgelehnt. Bitte prüfe die Ziele.");
+                  SetDlgItemTextW(dialog, IDC_STATUS, draft.apply_error && !draft.apply_error->empty()
+                      ? draft.apply_error->c_str() : L"Dominion hat die Effektliste abgelehnt. Bitte prüfe die Ziele.");
                 return TRUE;
             }
             if (draft.context == EditorContext::local)
@@ -515,13 +517,13 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
 }
 
 bool edit_effects(void* owner, std::string_view kingdom_text, const EffectCommands& effects, bool& automatic,
-                  const std::function<bool(const EffectCommands&)>& apply, EditorContext context) {
+                  const std::function<bool(const EffectCommands&)>& apply, EditorContext context, const std::wstring* apply_error) {
     if (context == EditorContext::none) return false;
     HMODULE module{};
     if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                            reinterpret_cast<LPCWSTR>(dialog_proc), &module)) return false;
     if (!register_effect_table(module)) return false;
-    Draft draft{effects, automatic, apply, fixed_targets(kingdom_text), context};
+    Draft draft{effects, automatic, apply, fixed_targets(kingdom_text), context, apply_error};
     const auto result = DialogBoxParamW(module, MAKEINTRESOURCEW(IDD_EFFECT_EDITOR),
                                        static_cast<HWND>(owner), dialog_proc, reinterpret_cast<LPARAM>(&draft));
     if (result == -1) {

@@ -54,7 +54,6 @@ struct Picker {
     CardPreviewLoader loader;
     bool rendering = false;
     bool first_render = true;
-    bool show_rules = false;
     std::unique_ptr<DialogSkin> skin{};
     HIMAGELIST expansion_images = nullptr;
     std::map<std::string, int, std::less<>> expansion_icons{};
@@ -87,20 +86,10 @@ std::string expansion_icon(const CardTarget& card) {
 }
 
 void layout_preview(HWND dialog, const Picker& picker) {
-    const auto* card = picker.displayed;
-    const bool can_switch = picker.image && card && *card->rules;
-    const bool show_face = picker.image && !(can_switch && picker.show_rules);
-    const int bottom = can_switch ? 204 : 222;
-    ShowWindow(GetDlgItem(dialog, IDC_CARD_TITLE), card && !show_face ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(dialog, IDC_CARD_INFO), card && !show_face ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(dialog, IDC_CARD_RULES), show_face ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(dialog, IDC_CARD_IMAGE), show_face ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(dialog, IDC_CARD_TEXT), can_switch ? SW_SHOW : SW_HIDE);
-    SetDlgItemTextW(dialog, IDC_CARD_TEXT, show_face ? L"Kartentext lesen" : L"Karte anzeigen");
-    picker.skin->place(IDC_CARD_IMAGE, {217, 29, 378, bottom});
-    picker.skin->place(IDC_CARD_RULES, {217, card ? 84 : 29, 378, bottom});
-    InvalidateRect(GetDlgItem(dialog, IDC_CARD_INFO), nullptr, TRUE);
-    InvalidateRect(GetDlgItem(dialog, IDC_CARD_IMAGE), nullptr, TRUE);
+    // Geometry is fixed before the first request, independent of loading state.
+    picker.skin->place(IDC_CARD_RULES, {217, 84, 378, 126});
+    picker.skin->place(IDC_CARD_IMAGE, {217, 129, 378, 222});
+    ShowWindow(GetDlgItem(dialog, IDC_CARD_TEXT), SW_HIDE);
 }
 
 void preview(HWND dialog, Picker& picker, const CardTarget* card) {
@@ -114,7 +103,8 @@ void preview(HWND dialog, Picker& picker, const CardTarget* card) {
         ? L"Keine passenden Karten." : L"Öffne eine Erweiterung für die Kartenvorschau.");
     picker.image.reset();
     picker.loader.request(card ? card->id : "");
-    layout_preview(dialog, picker);
+    InvalidateRect(GetDlgItem(dialog, IDC_CARD_INFO), nullptr, FALSE);
+    InvalidateRect(GetDlgItem(dialog, IDC_CARD_IMAGE), nullptr, FALSE);
 }
 
 void layout_list(HWND dialog, const Picker& picker, bool only_current) {
@@ -291,18 +281,28 @@ void change_order(HWND dialog, Picker& picker, unsigned command) {
 }
 
 void paint_preview(const DRAWITEMSTRUCT& draw, const Picker& picker) {
-    SetDCBrushColor(draw.hDC, DialogSkin::panel);
-    FillRect(draw.hDC, &draw.rcItem, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
-    if (!picker.image) return;
     const auto& rect = draw.rcItem;
+    const int area_width = rect.right - rect.left, area_height = rect.bottom - rect.top;
+    if (area_width <= 0 || area_height <= 0) return;
+    const auto buffer = CreateCompatibleDC(draw.hDC);
+    const auto bitmap = CreateCompatibleBitmap(draw.hDC, area_width, area_height);
+    if (!buffer || !bitmap) { if (buffer) DeleteDC(buffer); if (bitmap) DeleteObject(bitmap); return; }
+    const auto previous = SelectObject(buffer, bitmap);
+    RECT local{0,0,area_width,area_height};
+    SetDCBrushColor(buffer, DialogSkin::panel);
+    FillRect(buffer, &local, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+    if (picker.image) {
     const auto scale = (std::min)(static_cast<double>(rect.right - rect.left) / picker.image->GetWidth(),
                                   static_cast<double>(rect.bottom - rect.top) / picker.image->GetHeight());
     const auto width = static_cast<INT>(picker.image->GetWidth() * scale);
     const auto height = static_cast<INT>(picker.image->GetHeight() * scale);
-    Gdiplus::Graphics graphics(draw.hDC);
+    Gdiplus::Graphics graphics(buffer);
     graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
-    graphics.DrawImage(picker.image.get(), (rect.left + rect.right - width) / 2,
-                       (rect.top + rect.bottom - height) / 2, width, height);
+    graphics.DrawImage(picker.image.get(), (area_width - width) / 2,
+                       (area_height - height) / 2, width, height);
+    }
+    BitBlt(draw.hDC, rect.left, rect.top, area_width, area_height, buffer, 0, 0, SRCCOPY);
+    SelectObject(buffer, previous); DeleteObject(bitmap); DeleteDC(buffer);
 }
 
 void paint_card_info(const DRAWITEMSTRUCT& draw, const Picker& picker) {
@@ -384,6 +384,7 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             Gdiplus::GdiplusStartupInput input;
             if (Gdiplus::GdiplusStartup(&picker.graphics, &input, nullptr) != Gdiplus::Ok) picker.graphics = 0;
             SetTimer(dialog, 7634, 50, nullptr);
+            layout_preview(dialog, picker);
             render_cards(dialog, picker);
             return TRUE;
         }
@@ -394,8 +395,7 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             std::string id; ResourceImage image;
             if (picker.loader.take(id, image) && picker.displayed && id == picker.displayed->id) {
                 picker.image = std::move(image);
-                layout_preview(dialog, picker);
-                InvalidateRect(dialog, nullptr, FALSE);
+                InvalidateRect(GetDlgItem(dialog, IDC_CARD_IMAGE), nullptr, FALSE);
             }
             return TRUE;
         }
@@ -460,10 +460,7 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
         if (message != WM_COMMAND) return FALSE;
         const auto control = LOWORD(wparam);
         const auto event = HIWORD(wparam);
-        if (control == IDC_CARD_TEXT) {
-            picker.show_rules = !picker.show_rules;
-            layout_preview(dialog, picker);
-        } else if ((control == IDC_CARD_QUERY && event == EN_CHANGE) ||
+        if ((control == IDC_CARD_QUERY && event == EN_CHANGE) ||
             (control == IDC_CARD_SCOPE && event == CBN_SELCHANGE)) {
             SetTimer(dialog, 7634, 50, nullptr);
             render_cards(dialog, picker);

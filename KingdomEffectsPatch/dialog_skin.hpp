@@ -47,6 +47,7 @@ private:
     HFONT section_ = nullptr;
     HFONT heading_ = nullptr;
     ULONG_PTR graphics_ = 0;
+    mutable std::map<std::string, ResourceImage, std::less<>> art_;
 };
 
 }

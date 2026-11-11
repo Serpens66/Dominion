@@ -47,6 +47,21 @@ int wmain(int argc,wchar_t** argv) {
         }
         // A superseded request cannot become the currently published result.
         {
+            const auto cached=game_card("miser"); require(bool(cached));
+            require(game_card("miser")==cached);
+            CardPreviewLoader loader;
+            for (int i=0;i<100;++i) loader.request("miser");
+            std::string id; ResourceImage image; bool done=false;
+            for (int i=0;i<200;++i) { if(loader.take(id,image)){done=true;break;} Sleep(10); }
+            require(done && image==cached && id=="miser");
+            const auto before=loader.counts();
+            for (int i=0;i<100;++i) loader.request("miser");
+            require(before==loader.counts() && before.first==1 && before.second==1);
+            loader.request("not-a-card"); done=false;
+            for(int i=0;i<200;++i) { if(loader.take(id,image)){done=true;break;} Sleep(10); }
+            require(done && !image && id=="not-a-card");
+        }
+        {
             CardPreviewLoader loader;
             for (int i=0;i<30;++i) loader.request(i%2?"market":"village");
             std::string id; ResourceImage image; bool done=false;

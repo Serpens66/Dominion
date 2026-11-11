@@ -79,7 +79,7 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 
 | Registrierte Schreibweise | Ziel und Wirkung | Einmal | Mehrfach |
 | --- | --- | --- | --- |
-| `twist_beakers` | Nicht ausgegebene Tränke bleiben für spätere Züge erhalten. | Offen | Offen |
+| `twist_beakers` | Nicht ausgegebene Tränke bleiben für spätere Züge erhalten. | Laut Nutzertest nicht übernommen; Ursache offen | Offen |
 | `twist_big_ideas` | Zu Zugbeginn eine Karte mehr ziehen. | Ja | Bis 3× |
 | `twist_busy_busy` | Zu Zugbeginn eine zusätzliche Aktion. | Ja | Bis 3× |
 | `twist_cramped` | Die reguläre Handgröße beträgt vier Karten. | Ja | Bis 3× |
@@ -90,11 +90,11 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `twist_favored_landlords` | Beim Erhalten einer Siegkarte gibt es einen Gefallen. | Ja | Bis 3× |
 | `twist_favored_wealthy` | Beim Erhalten einer Geldkarte gibt es einen Gefallen. | Ja | Bis 3× |
 | `twist_forever_favored` | Zu Zugbeginn einen Gefallen erhalten. | Ja | Bis 3× |
-| `twist_from_the_throne` | Die erste Aktion des Zuges wird zweimal ausgespielt. | Offen | Offen |
-| `twist_garbage_heap` | Zu Zugbeginn darf eine Handkarte entsorgt werden. | Offen | Offen |
+| `twist_from_the_throne` | Die erste Aktion des Zuges wird zweimal ausgespielt. | Ja (Nutzertest, 1×) | Offen |
+| `twist_garbage_heap` | Zu Zugbeginn darf eine Handkarte entsorgt werden. | Laut Nutzertest nicht übernommen; Ursache offen | Offen |
 | `twist_head_start` | In der Kampagne erhält der Mensch zwei frühe Extrazüge und die KI zehn Siegpunktmarker. | Offen | Offen |
 | `twist_incoming` | Erhaltene Aktions- und Geldkarten kommen auf den Nachziehstapel. | Ja | Gleiche Wirkung |
-| `twist_landfill` | Beim Entsorgen einer eigenen Karte wird eine Karte gezogen. | Offen | Offen |
+| `twist_landfill` | Beim Entsorgen einer eigenen Karte wird eine Karte gezogen. | Ja (Nutzertest, 1×) | Offen |
 | `twist_mirror_loot` | Alle Karten des Loot-Stapels sind gleich. | Ja | Gleiche Wirkung |
 | `twist_pennies_saved` | Übrige Münzen werden am Ende der Kaufphase in Taler umgewandelt. | Offen | Offen |
 | `twist_penny_party` | Zu Zugbeginn ein Kupfer erhalten. | Ja | Bis 3× |
@@ -103,7 +103,7 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `twist_room_for_more(Königreichstapel)` | Fügt dem Vorrat einen weiteren Königreichstapel hinzu. | Ja | Einmal im F8-Editor |
 | `twist_sale` | Karten kosten eine Münze weniger. | Ja | Bis 3× |
 | `twist_shoppers` | Zu Zugbeginn ein zusätzlicher Kauf. Name und Beschreibung sind lokal belegt. | Ja | Bis 3× |
-| `twist_so_much_stuff` | Die erste ausgespielte Karte des Zuges gibt eine Kopie von außerhalb des Vorrats. | Offen | Offen |
+| `twist_so_much_stuff` | Die erste ausgespielte Karte des Zuges gibt eine Kopie von außerhalb des Vorrats. | Ja (Nutzertest, 1×) | Offen |
 | `twist_turn_turn_turn` | In der Kampagne rotieren geteilte Stapel zu Beginn der menschlichen Züge ab dem zweiten. | Offen | Offen |
 | `twist_typhoon(Karte, …)` | Ersetzt in der Kampagne nach und nach Königreichstapel. Eine Zielliste steht in eingebauten Vorlagen. | Offen | Offen |
 
@@ -331,3 +331,11 @@ Standardmäßig zählen die Eigenschaften der Hauptstapel. Mit „Zusatzkarten b
 Kosten und Erweiterungsquoten bleiben auf Hauptstapel beschränkt. „Ohne Aktionstyp“ verlangt im erweiterten Modus, dass die Quelle samt berücksichtigter Karten keine Aktion enthält. Schutz- und Angriffsreaktionsquoten werden auch von einem Angriff aus einer solchen Kartenfamilie aktiviert. Ein bekannter Zusatzstapel garantiert dabei nicht, dass seine passende Karte in der Partie tatsächlich gezogen wird.
 
 `generator_catalog.py` erzeugt gemeinsame gerichtete Verbindungen (`relatedGroups`, `related`) und deren kreisfreie transitive Auflösung (`propertyRelated`). `randomSetup` bezeichnet nicht verbindlich exportierte Zufallszuordnungen. Ergänzende Effekttags für Sonderkarten werden getrennt von den nativen Katalogdaten erzeugt, etwa Kartenzug beim Flüchtling, Entsorgen bei Ziege und sofortige Kaufmöglichkeiten bei Kugel und Amphore. Die Eigenschaftssuche verwendet dieselben Prüfungen wie die Ziehregeln. „Verbunden mit“ verwendet dieselben Verbindungen für die bei Bedarf aufgebauten Vorschauen.
+
+### Effektverlust nach Rückkehr aus einer Partie
+
+**Nutzertest, gemeldet am 11. November 2026:** `twist_from_the_throne`, `twist_landfill` und `twist_so_much_stuff` jeweils einmal wirksam. Bei `twist_garbage_heap` und `twist_beakers` fehlten laut Nutzer Hinweis, Wirkung und spätere F8-Anzeige; nachfolgende Effekte fehlten ebenfalls. Mehrfachwirkung der fünf Effekte ist damit nicht geprüft.
+
+F8 liest die aufgelöste Königreich-Konfiguration. Ein vom Spiel daraus verworfener Effekt kann folglich auch in F8 fehlen; das Menü selbst filtert nicht nach nachgewiesener Spielwirkung. Das zuletzt vorhandene Patch-Protokoll enthielt alle sechs gewählten Effektwerte bei `effect editor applied`. Dieser Eintrag belegt nur die damalige Übernahme, nicht die spätere Fortdauer.
+
+Der [isolierte Rundreise-Test](Effect_Roundtrip_Tests.md) untersucht Parser, Speicherung und erneutes Auflösen separat. Die Diagnose ergänzt die Konfiguration vor dem lokalen Start und die tatsächliche Effektliste des aufgebauten Spiels. Die Rückkehr nach einer Partie mit dem Nutzerprofil bleibt ein eigener offener Prüfpunkt; aus einem erfolgreichen Start wird keine Aussage über diesen späteren Übergang abgeleitet.
