@@ -2671,8 +2671,8 @@ function createBanExport(mount) {
   bindInterfaceLabel(label, () => tr("Bannlisten-Einträge für profiles.xml", "Ban-list entries for profiles.xml"));
   bindInterfaceLabel(button, () => tr("Bannliste kopieren", "Copy ban list"));
   bindInterfaceLabel(help, () => tr(
-    "Im aktiven Profil unter <localBans> für KI/Weitergeben oder unter <bans> für Online/Privates Spiel ergänzen. Dominion vorher schließen und die Datei sichern. Bereits vorhandene Zahlen nicht doppelt einfügen.",
-    "Append inside <localBans> for AI/Pass & Play or <bans> for Online/Private Game in the active profile. Close Dominion and back up the file first. Do not duplicate existing numbers."
+    "Dateipfad unter Windows: %APPDATA%\\TempleGates\\Dominion\\profiles.xml. Im aktiven Profil unter <localBans> für KI/Weitergeben oder unter <bans> für Online/Privates Spiel ergänzen. Dominion vorher schließen und die Datei sichern. Bereits vorhandene Zahlen nicht doppelt einfügen.",
+    "Windows file path: %APPDATA%\\TempleGates\\Dominion\\profiles.xml. Append inside <localBans> for AI/Pass & Play or <bans> for Online/Private Game in the active profile. Close Dominion and back up the file first. Do not duplicate existing numbers."
   ));
   button.addEventListener("click", () => copyText(field, message, tr("Bannlisten-Einträge kopiert.", "Ban-list entries copied.")));
   header.append(label, count, button);
