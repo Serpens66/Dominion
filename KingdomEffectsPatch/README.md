@@ -32,6 +32,10 @@ Zum Wiederherstellen Dominion und den Starter schließen, das aktuelle `%APPDATA
 
 Die Einstellungen und Profilsicherungen liegen unter `%LOCALAPPDATA%\DominionKingdomEffectsPatch`. Die Dateien der Steam-Installation werden nicht verändert; nach einem normalen Start über Steam ist der Patch nicht aktiv.
 
+## Startprotokolle
+
+Unter `%LOCALAPPDATA%\DominionKingdomEffectsPatch` liegt `letzter-start.log` mit den Startermeldungen, der gestarteten Prozess-ID und dem Ergebnis des Injectors. `vorheriger-start.log` enthält den vorherigen Lauf; es werden keine unbegrenzt vielen Startlogs angelegt. Nach Spielende wird ein vorhandenes DLL-Protokoll als `letzter-patch.log` dorthin kopiert. Die DLL schreibt ihr Prozessprotokoll zunächst unter `%TEMP%\DominionKingdomEffects-<PID>.log`. Fehlt es, kann die Aktivierung bereits vor dem Laden der DLL gescheitert sein. Der Starter gibt die Steam-App-ID ausschließlich in der Umgebung des gestarteten Spielprozesses mit.
+
 ## Grenzen und Entfernen
 
 - Für **Lokal spielen** und **Weitergeben**; nicht alle Effekte und Kombinationen sind abschließend geprüft.

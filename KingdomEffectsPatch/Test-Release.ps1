@@ -82,7 +82,8 @@ Assert-Throws { Assert-SupportedGame $source } 'Falscher EXE-Hash wurde akzeptie
 Copy-Item -LiteralPath (Join-Path $SourceGameDirectory 'Dominion.exe') -Destination (Join-Path $source 'Dominion.exe') -Force
 $starterText = [IO.File]::ReadAllText((Join-Path $PackageDirectory 'Start-Mod.ps1'))
 Assert-True ($starterText.Contains('--installed --apply')) 'Release startet nicht im Installationsmodus.'
-Assert-True ($starterText -notmatch 'Prepare-ModWorkingCopy|Start-TestProfile|Copy-Item') 'Release kopiert das Spiel oder wechselt das Profil.'
+Assert-True ($starterText -notmatch 'Prepare-ModWorkingCopy|Start-TestProfile') 'Release kopiert das Spiel oder wechselt das Profil.'
+Assert-True ($starterText.Contains("EnvironmentVariables['SteamAppId']")) 'Steam-App-ID fehlt im Kindprozess.'
 
 # Session lock behavior is independent of the foreground desktop.
 $lockPath = Join-Path $scratch 'session.lock'
