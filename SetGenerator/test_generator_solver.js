@@ -32,8 +32,17 @@ assert.equal(all.length,853);
 assert.equal(allPiles.length,498);
 assert.equal(base.length,26);
 const imageFiles = JSON.parse(readScript(html, "card-image-files"));
-assert.equal(Object.keys(imageFiles.images).length, 842);
+assert.equal(Object.keys(imageFiles.images).length, 845);
 assert.ok(allPiles.every(card => imageFiles.images[card.id]), "every Kingdom pile has an illustration");
+const entriesWithoutArt = ["black_market_deck", "boons", "exile", "hexes", "loot_pile", "prizes", "rewards", "shuffling"];
+assert.deepEqual(all.filter(card => !imageFiles.images[card.id]).map(card => card.id).sort(), entriesWithoutArt);
+for (const [id, value] of Object.entries({
+  copper: ["coin", "1"], silver: ["coin", "2"], gold: ["coin", "3"], platinum: ["coin", "5"],
+  colony: ["vp", "10"], curse: ["vp", "−1"], potion: ["potion", ""],
+})) {
+  assert.ok(imageFiles.images[id], "illustration for " + id);
+  assert.deepEqual(byId.get(id).printedValue, value, "printed value for " + id);
+}
 for (const images of [imageFiles.images, ...Object.values(imageFiles.cards)]) {
   for (const [id, filename] of Object.entries(images)) {
     assert.ok(byId.has(id), id);

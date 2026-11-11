@@ -10,6 +10,8 @@ import re
 import struct
 import sys
 
+from generator_catalog import VALUE_CARDS
+
 try:
     from PIL import Image, ImageDraw, ImageFont, ImageOps
 except ImportError:
@@ -225,12 +227,6 @@ COMBINED_FRAMES = (
         "curse_treasure", "ruins_treasure", "treasure_victory", "action_treasure", "action_victory")),
 )
 LANDSCAPE_NAMES = {"trait": "plun_name_trait", "ally": "allies_name_ally", "prophecy": "rising_sun_name_prophecy"}
-VALUE_CARDS = {
-    "copper": ("coin", "1"), "silver": ("coin", "2"), "gold": ("coin", "3"), "platinum": ("coin", "5"),
-    "estate": ("vp", "1"), "duchy": ("vp", "3"), "province": ("vp", "6"), "colony": ("vp", "10"),
-    "curse": ("vp", "−1"), "potion": ("potion", ""),
-}
-
 
 def decode_texture(resource: bytes) -> Image.Image:
     offset = struct.unpack_from("<Q", resource, IMAGE_POINTER_OFFSET)[0]
@@ -568,8 +564,9 @@ def add_expansion_images(path, entries, artwork, illustrations):
         names = (card_id, EXPANSION_ASSET_NAMES.get(card_id, card_id), card["text"]["en"][0])
         verified = VERIFIED_ART_RESOURCES.get(card_id)
         resource = f"res/card_gen/{verified}" if verified else next(
-            (resources[(expansion, normalize_image_name(name))]
-             for name in names if (expansion, normalize_image_name(name)) in resources), None
+            (resources[(group, normalize_image_name(name))]
+             for group in (expansion, "shared") for name in names
+             if (group, normalize_image_name(name)) in resources), None
         )
         if resource is None:
             print(f"Illustration fehlt: {card_id}", file=sys.stderr)

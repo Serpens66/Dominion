@@ -11,7 +11,11 @@ ROOT = Path(__file__).resolve().parent
 CATALOG = ROOT.parent / "Documentation" / "Card_Properties.json"
 XPACK_HASH = "e3cf4242c2756f9120901c28f2dbdbe636b1d7235cbec9616f0c622d65d90047"
 
-
+VALUE_CARDS = {
+    "copper": ("coin", "1"), "silver": ("coin", "2"), "gold": ("coin", "3"), "platinum": ("coin", "5"),
+    "estate": ("vp", "1"), "duchy": ("vp", "3"), "province": ("vp", "6"), "colony": ("vp", "10"),
+    "curse": ("vp", "−1"), "potion": ("potion", ""),
+}
 
 # Extra card ids which cannot be selected as ten separate kingdom piles.
 RELATED = {
@@ -57,6 +61,8 @@ def enrich_cards(cards):
     by_id = {card["id"]: card for card in cards}
     for card in cards:
         card_id = card["id"]
+        if card_id in VALUE_CARDS:
+            card["printedValue"] = VALUE_CARDS[card_id]
         power = card["text"]["en"][1].replace("//", " ")
         related = RELATED.get(card_id, "").split()
         pile_type = PILE_TYPES.get(card_id)
