@@ -56,6 +56,97 @@ GAIN_FILTERS = {
 }
 MIXED_PILES = set(PILE_TYPES) | {"sauna", "encampment", "patrician", "settlers", "catapult", "gladiator"}
 
+# Setup choices are deliberately separate from the fixed card family. Our Steam
+# export does not yet fix these choices, so their properties cannot be promised.
+RANDOM_SETUP = {
+    "young_witch": "bane", "ferryman": "ferryman", "riverboat": "riverboat",
+    "way_of_the_mouse": "mouse", "druid": "boons", "black_market": "black-market",
+    "approaching_army": "attack-pile",
+}
+TRAVELLER_CHAINS = [
+    "page treasure_hunter warrior hero champion".split(),
+    "peasant soldier fugitive disciple teacher".split(),
+]
+# Audited supplemental effects. Native randomizer tags omit some non-Supply
+# cards. Do not infer trashing from 'when you trash' or from an opponent's Hex.
+SUPPLEMENTAL_FILTERS = {
+    "ExtraActions": "courser demesne".split(),
+    "ExtraCards": "avanto fugitive imp mercenary warrior zombie_apprentice horse figurehead stronghold warlord housecarl the_winds_gift battle_plan old_map garrison will_o_wisp".split(),
+    "Trashing": "bat goat prize_goat spell_scroll small_castle zombie_apprentice zombie_mason the_flames_gift magic_lamp".split(),
+}
+
+
+def enrich_relations(cards):
+    """One directed relation model for previews, property quotas and setup help."""
+    by_id = {card["id"]: card for card in cards}
+    titles = {card["text"]["en"][0].lower(): card["id"] for card in cards}
+    named_gain = re.compile(r"\bgains? (?:an? |one |two |three |four |five |\d+ )?(" +
+                            "|".join(re.escape(title) for title in sorted(titles, key=len, reverse=True)) +
+                            r")(?:s)?\b", re.I)
+    for tag, ids in SUPPLEMENTAL_FILTERS.items():
+        for key in ids:
+            if tag not in by_id[key]["nativeFilters"]:
+                by_id[key]["nativeFilters"].append(tag)
+    # Both Loot cards offer +1 Buy immediately, though an alternative is allowed.
+    for key in ("orb", "amphora"):
+        by_id[key]["immediateBuys"] = 1
+    for card in cards:
+        key = card["id"]
+        power = card["text"]["en"][1].replace("//", " ").replace("`", "")
+        groups = []
+
+        def group(kind, ids):
+            ids = list(dict.fromkeys(value for value in ids if value in by_id and value != key
+                                     and value not in {"prizes", "rewards", "boons", "hexes", "loot_pile"}))
+            if ids:
+                groups.append({"kind": kind, "ids": ids})
+        for chain in TRAVELLER_CHAINS:
+            if key in chain:
+                group("traveller", chain[chain.index(key) + 1:])
+        group("cards", card["related"])
+        # Named gains are fixed links; generic 'gain an Action' is not one.
+        named = [titles[match[1].lower()] for match in named_gain.finditer(power)]
+        group("cards", named)
+        kinds = []
+        if (("fate" in card["types"] and key != "druid") or
+                re.search(r"\b(?:receive|receives) (?:a|the next) Boon\b", power)):
+            kinds.append("boon")
+        if "doom" in card["types"]:
+            kinds.append("hex")
+        if "looter" in card["types"]:
+            kinds.append("ruins")
+        if card["lootSource"]:
+            kinds.append("loot")
+        if "horse" in card["gainFilters"]:
+            group("cards", ["horse"])
+        for kind in kinds:
+            group(kind, [other["id"] for other in cards if kind in other["types"]])
+        if key in {"delusion", "envy", "misery"}:
+            group("cards", {"delusion": ["deluded"], "envy": ["envious"],
+                            "misery": ["miserable", "twice_miserable"]}[key])
+        # Present direct links once, in order; transitive expansion happens below.
+        seen = set()
+        for item in groups:
+            unique = [value for value in item["ids"] if value not in seen]
+            seen.update(unique)
+            item["ids"] = unique
+        card["relatedGroups"] = [item for item in groups if item["ids"]]
+        card["related"] = list(dict.fromkeys(value for item in groups for value in item["ids"]))
+        card["randomSetup"] = RANDOM_SETUP.get(key) or (
+            "ally" if "liaison" in card["types"] else "prophecy" if "omen" in card["types"] else None)
+    for card in cards:
+        visited = {card["id"]}
+        pending = list(card["related"])
+        family = []
+        while pending:
+            key = pending.pop(0)
+            if key in visited:
+                continue
+            visited.add(key)
+            family.append(key)
+            pending.extend(by_id[key]["related"])
+        card["propertyRelated"] = family
+
 
 def enrich_cards(cards):
     by_id = {card["id"]: card for card in cards}
@@ -147,6 +238,7 @@ def load_catalog(xpack):
         cards.append({"id": card_id, **data, "text": localized})
     assert len(cards) == 853 and sum(card["kingdomPile"] for card in cards) == 498
     enrich_cards(cards)
+    enrich_relations(cards)
     expansions = {}
     for card in cards:
         expansion = card["expansion"]

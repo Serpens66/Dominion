@@ -10,6 +10,8 @@
 
 Unter **Erweiterungen und Editionen** garantiert **Immer** mindestens einen Stapel aus dem Set. **Zufall** nimmt das Set in den Lostopf auf. Mit **Von** und **Bis** bestimmst du die Stapelzahl pro Set. Bei Zufall gelten diese Quoten, sobald das Set ausgelost wurde. Festgehaltene Karten machen ihre Herkunft erforderlich und belegen bei Zufallssets einen Lostopfplatz. Über **Einstellungen sichern oder laden** kannst du deine Auswahl in einen anderen Browser übertragen.
 
+Mit **Zusatzkarten bei Eigenschaften berücksichtigen** zählen feste Kartenreihen und bekannte Zusatzstapel bei den Eigenschaftsquoten mit. Zufällige Aufbaukarten wie beim Weg der Maus bleiben ausgenommen. **Verbunden mit** in der Kartenvorschau zeigt die zugehörigen Karten.
+
 ## Web-Namenslisten umwandeln
 
 Kopiere deine Auswahl aus dem Dominion Randomizer oder gib die Kartennamen selbst ein. Füge die Namen im Konverter ein und klicke auf **Kartenliste bestätigen**. Den erzeugten Code fügst du in Dominion ins Kartensuchfeld ein. [Dominion Randomizer](https://dominionrandomizer.com/) · [Konverter im Browser öffnen](https://serpens66.github.io/Dominion/Dominion-Konverter.html) · [HTML-Konverter herunterladen](https://github.com/Serpens66/Dominion/releases/latest/download/Dominion-Konverter.html)

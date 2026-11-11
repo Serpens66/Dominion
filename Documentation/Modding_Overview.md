@@ -230,3 +230,37 @@ Für eine Mod mit unveränderter Zufallsauswahl über alle Erweiterungen ist der
 ### Native Effektmessung ohne Fensterfokus
 
 **Im Spiel gemessen am 10. November 2026, Build 3315, Steam-Build 17683350.** Die geprüfte Arbeitskopie lässt sich mit einem temporären Profil auf einem separaten Windows-Desktop starten. Der Runner legt die lokale Partie über Dominions Startlogik an und misst den ersten Zug aus dem nativen Spielzustand. In lokalen Vergleichspartien mit zwei menschlichen Spielerplätzen wurden 55 Effekte bestätigt. Bei sechs weiteren Effekten sind Teilwirkungen gemessen. Bei den mehrfachen Projektsteinen und der Schuldenreduktion mit Triumph wurde ein Startabbruch beobachtet. Automatische Ereigniskäufe machen auch einige Kauf- und Erhaltensregeln im ersten Zug messbar. Die Tabellen geben den Stand für einfache und mehrfache Wirkung an. [Testergebnisse und Aufruf](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
+
+## Zusatzkarten und Weg der Maus: nativer Auswahlpfad
+
+**Prüfung vom 11. November 2026 für Spielbuild 3315, Steam-Build 17683350.** Die folgenden Codebefunde sind statisch geprüft, nicht durch eine gestartete Partie bestätigt. Modul: `Dominion.exe`, x86, ImageBase `0x00400000`. SHA-256:
+
+```text
+56e8d563320b7d6c0cf68ae11cdf2c0aa971dbff44bb296651b630815c548877
+```
+
+**Anzeige aus dem Spielpaket, lokal beobachtet.** Der Schlüssel `dom_ui_zoom_related` lautet auf Deutsch „Verbunden mit“, auf Englisch „Related Cards“. Die UI-Ressource `res/ui2/complex_zoom` enthält zugehörige Stapelgruppen (`tbl_zoom_extra`, `item_assoc_pile`, `tbl_assoc_pile`) und eine Erweiterungsschaltfläche (`btn_more_extras`). Deren Text kommt aus `dom_ui_complex_zoom_more_extras`: „Mehr“ / „More“. Das belegt die Struktur der Ressourcen; die Anzeige wurde für diesen Befund nicht live im Spiel bedient. [Quelle L05](Sources/Source_Register.md)
+
+**Maus-Auswahl, statisch geprüft.** Die Initialisierung der Definition `way_of_the_mouse` verknüpft ein Setup-Ereignis vom Typ `0x0D` mit der Zielprüfung bei RVA `0x13FD50`. Die Auswahlkette verwendet dieselbe Randomizer-Struktur wie die normalen Hauptstapel:
+
+| RVA | Befund |
+| --- | --- |
+| `0x045298` | Initialisierung von `way_of_the_mouse`; Setup-Ereignis und Verweis auf die Zielprüfung. |
+| `0x13FD50` | Prüfung auf reine Münzkosten von 2 oder 3, Aktion und keinen Dauer-Typ. Zusätzlich werden bestimmte Karten-IDs ausdrücklich abgelehnt, darunter Page und Kleinbauer. |
+| `0x18E890` | `RollKingdom_SetupPile`: Entnimmt Kandidaten aus dem Randomizer-Deck, ruft den Setup-Prüfer auf und speichert ein zulässiges Ziel in den Zusatzkartenfeldern. Abgelehnte Kandidaten werden vorübergehend zurückgestellt. |
+| `0x18DCC0` | Entnahme eines Kandidaten aus dem Randomizer-Deck. |
+| `0x190090` | Aufbau des Randomizer-Decks aus der Setup-Konfiguration. Bereits zugeordnete Hauptstapel, Landschaften und Zusatzkarten werden aus dem verbleibenden Pool entfernt. |
+| `0x18D7A0` | `AddExpansionCards`: Prüft eine nullterminierte Ausschlussliste ab Konfigurationsoffset `0xC04`, höchstens 700 Einträge. Ein darin enthaltener Kandidat wird nicht in das Deck aufgenommen. |
+| `0x1904D0` | `RollKingdom_MergeSpecificCards`: Bereitet die Auswahlstruktur vor, baut das gemeinsame Deck auf und verarbeitet auch Landschafts-Zusatzaufbauten. |
+
+Die Adressen sind **RVAs**, keine Dateioffsets und keine absoluten virtuellen Adressen. Zur Reproduktion zuerst den EXE-Hash vergleichen. In einer Arbeitskopie die Initialisierung von `way_of_the_mouse`, ihren Setup-Prüfer und die Aufrufe über `RollKingdom_SetupPile` bis zum Deckaufbau verfolgen. Die Ausschlussprüfung liegt vor der Aufnahme in das Deck. [Quelle L01](Sources/Source_Register.md)
+
+**Folgerung und Grenzen.** Der zufällige Maus-Pfad berücksichtigt die Ausschlüsse seiner nativen Setup-Konfiguration. Das belegt weder die Übertragung unserer Generator-Ausschlüsse noch die Wirksamkeit jeder Steam-UI-Bannoption in jedem Modus. Unser aktueller Hauptstapel-Export überträgt keine solche Ausschlussliste. Eine verbindliche Maus-Karte durch einen eigenen Import ist weiterhin nicht im Spiel bestätigt. Die vorhandenen Kampagnen-Zuordnungen sind ein eigener Belegstand. [Setup-Befunde](Kingdom_Sets.md#setup-abhängigkeiten-für-konkrete-karten), [offene Abnahme](Generator_Erweiterungen_Tests.md#zusatzkarten-modus-und-verbunden-mit)
+
+### Bedeutung im Generator
+
+Standardmäßig zählen die Eigenschaften der Hauptstapel. Mit „Zusatzkarten bei Eigenschaften berücksichtigen“ zählt jede Hauptstapel-Quelle je Eigenschaft einmal: etwa Kleinbauer einschließlich Soldat als Angriff und einschließlich Flüchtling als Mehrfachzieher. Feste Zusätze je Landschaft bilden eine weitere Quelle. Bekannte vollständige Zusatzstapel wie Kostbarkeiten, Gaben und Hexereien werden mit ihren möglichen Eigenschaften berücksichtigt. Die zufällige Auswahl einer einzelnen Aufbaukarte, eines Verbündeten, einer Prophezeiung oder der drei Druiden-Gaben zählt nicht mit.
+
+Kosten und Erweiterungsquoten bleiben auf Hauptstapel beschränkt. „Ohne Aktionstyp“ verlangt im erweiterten Modus, dass die Quelle samt berücksichtigter Karten keine Aktion enthält. Schutz- und Angriffsreaktionsquoten werden auch von einem Angriff aus einer solchen Kartenfamilie aktiviert. Ein bekannter Zusatzstapel garantiert dabei nicht, dass seine passende Karte in der Partie tatsächlich gezogen wird.
+
+`generator_catalog.py` erzeugt gemeinsame gerichtete Verbindungen (`relatedGroups`, `related`) und deren kreisfreie transitive Auflösung (`propertyRelated`). `randomSetup` bezeichnet nicht verbindlich exportierte Zufallszuordnungen. Ergänzende Effekttags für Sonderkarten werden getrennt von den nativen Katalogdaten erzeugt, etwa Kartenzug beim Flüchtling, Entsorgen bei Ziege und sofortige Kaufmöglichkeiten bei Kugel und Amphore. Die Eigenschaftssuche verwendet dieselben Prüfungen wie die Ziehregeln. „Verbunden mit“ verwendet dieselben Verbindungen für die bei Bedarf aufgebauten Vorschauen.

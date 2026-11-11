@@ -88,3 +88,8 @@ Die Kartendaten liegen teils initialisiert in der EXE und teils als Schreibzugri
 | W04 | [Community-Beispiele für Kampagneneffekte im TGG-Client](https://www.reddit.com/r/dominion/comments/1pnmsph/custom_campaign_features_in_your_kingdoms_tgg/) | **Von der Community berichtet.** Beispiele für `-x`-Parameter im normalen Kingdom-Setup. |
 | W05 | [KingdomCreator, Quellstand d9a802d](https://github.com/blakevanlan/KingdomCreator/tree/d9a802db2e41d52786eaa02097279cbf1b64c778) | **Website und Quellcode geprüft.** Namensliste aus der Kopierfunktion, Web-URL-Format sowie Auswahl- und Setup-Regeln. [Befund](../Kingdom_Sets.md#web-randomizer-von-kingdomcreator) |
 
+### Zusatzkartenanzeige und Maus-Auswahl aus L01 und L05
+
+**11. November 2026, Build 3315 / Steam-Build 17683350.** Der SHA-256 von L01 wurde erneut mit dem oben registrierten Wert abgeglichen. Die native Zielprüfung des Wegs der Maus und der gemeinsame Randomizer-Pool einschließlich seiner Setup-Ausschlussliste wurden anhand von Capstone und gezielter Rizin-/Ghidra-Dekompilierung einer EXE-Arbeitskopie statisch nachvollzogen. Einstiegspunkte, RVAs und Grenzen der Aussage stehen in der [technischen Referenz](../Modding_Overview.md#zusatzkarten-und-weg-der-maus-nativer-auswahlpfad).
+
+Aus L05 stammen `dom_ui_zoom_related` („Verbunden mit“ / „Related Cards“), `dom_ui_complex_zoom_more_extras` („Mehr“ / „More“) und die zugehörigen Gruppenelemente aus `res/ui2/complex_zoom`. Das sind Ressourcenbefunde. Die Zuordnung einer bestimmten Maus-Karte durch unseren Import und die Wirkung der Steam-UI-Banns beim Maus-Setup bleiben Spieltests. Generator-Ausschlüsse werden aktuell nicht als native Setup-Banns exportiert.

@@ -230,4 +230,189 @@ assert.ok(out.result);
 assert.equal(out.result.randomExpansions.length, 0);
 assert.ok(out.result.main.every(id => byId.get(id).expansion === "base"));
 
-console.log("Katalog, exakte Zählung, 6+4, Abwehr, Sonderzuordnungen, Prophezeiung, Landschaftsquoten, bedingte Zufallsset-Quoten und Zeitlimit geprüft.");
+// Run the actual frontend predicates, rather than a second classification copy.
+const propertyContext = {
+  catalog, allCards: all, cards: allPiles, cardById: byId, standardKingdomSize: 10,
+  landscapeLimit: 4, kingdomSize: 10, includeRelated: { checked: true }, poolChoices: new Map(),
+  expansions: Object.keys(catalog.expansions), cardTypeIcons: {}, resourceIcons: {},
+};
+const predicateSource = html.slice(html.indexOf("const landscapeTypes ="), html.indexOf("function makeGameIcon("));
+const solverCardSource = html.match(/function solverCard\(card\) \{[\s\S]*?\n\}/)[0];
+const rangeValidationSource = html.match(/function validRangePair\([\s\S]*?\n\}/)[0];
+const propertyAPI = vm.runInNewContext(predicateSource + "\n" + solverCardSource + "\n" +
+  "const isValidRangeBound = (v, max) => Number.isInteger(v) && v >= 0 && v <= max;\n" +
+  rangeValidationSource + "\n({countRules,propertyFamily,solverCard,rangeLimit,validRangePair})", propertyContext);
+const propertyRules = new Map(propertyAPI.countRules.map(rule => [rule.id, rule]));
+const matchesProperty = (id, card) => propertyRules.get(id).matches(byId.get(card));
+assert.ok(matchesProperty("attack", "peasant"));
+assert.ok(matchesProperty("cards", "peasant"));
+assert.ok(matchesProperty("attack", "page"));
+assert.ok(matchesProperty("defense", "page"));
+assert.ok(matchesProperty("trash", "pixie")); // Goat and the Flame's Gift.
+assert.ok(matchesProperty("trash", "vampire")); // Bat; its backlink must not loop.
+assert.ok(matchesProperty("cards", "foray")); // The Loot deck includes Figurehead.
+assert.ok(matchesProperty("attack", "foray")); // Sword.
+assert.ok(matchesProperty("defense", "foray")); // Shield.
+assert.ok(!matchesProperty("non-action", "foray")); // Spell Scroll is an Action.
+assert.ok(!matchesProperty("non-action", "pixie"));
+assert.ok(matchesProperty("non-action", "flag"));
+assert.ok(!matchesProperty("attack", "way_of_the_mouse"));
+assert.equal(byId.get("way_of_the_mouse").randomSetup, "mouse");
+assert.ok(byId.get("way_of_the_mouse").propertyRelated.length === 0);
+assert.ok(byId.get("druid").propertyRelated.every(id => !byId.get(id).types.includes("boon")));
+assert.ok(matchesProperty("cost-2", "peasant")); // Own cost remains 2, not Soldier's 3.
+assert.ok(!matchesProperty("cost-3", "peasant"));
+assert.ok(!matchesProperty("exp-prosperity", "peasant"));
+for (const card of all) {
+  assert.ok(card.related.every(id => byId.has(id)), card.id);
+  assert.equal(new Set(card.propertyRelated).size, card.propertyRelated.length, card.id);
+  assert.ok(!card.propertyRelated.includes(card.id), card.id);
+  assert.equal(new Set(card.relatedGroups.flatMap(group => group.ids)).size, card.related.length, card.id);
+}
+assert.deepEqual(byId.get("soldier").relatedGroups[0].ids, ["fugitive", "disciple", "teacher"]);
+assert.ok(byId.get("treasurer").propertyRelated.includes("key"));
+assert.ok(byId.get("the_swamps_gift").propertyRelated.includes("will_o_wisp"));
+assert.ok(byId.get("the_flames_gift").nativeFilters.includes("Trashing"));
+assert.ok(byId.get("zombie_apprentice").nativeFilters.includes("Trashing"));
+assert.ok(byId.get("fugitive").nativeFilters.includes("ExtraCards"));
+assert.ok(byId.get("goat").nativeFilters.includes("Trashing"));
+
+const sourceRule = (id, min, max) => {
+  const source = propertyRules.get(id);
+  return rule(allPiles.filter(source.matches), min, max, {
+    property: true, whenAttacked: source.whenAttacked,
+    landscapeIds: all.filter(card => isLandscapeCard(card) && source.matches(card)).map(card => card.id),
+  });
+};
+function isLandscapeCard(card) { return ["event", "landmark", "project", "way", "trait"].some(type => card.types.includes(type)); }
+const relatedRequest = (fixed, candidates, updates = {}) => {
+  const req = request(fixed, candidates, { ...updates, includeRelated: propertyContext.includeRelated.checked });
+  for (const key of ["fixed", "candidates", "extras", "components", "landscapePool"]) req[key] = req[key].map(propertyAPI.solverCard);
+  return req;
+};
+const filler = get("cellar", "chapel", "merchant", "mine", "remodel", "workshop", "vassal", "harbinger", "poacher");
+const travellerMain = [...filler, ...get("peasant")];
+out = api.analyzeKingdom(relatedRequest(travellerMain, [], { rules: [sourceRule("attack", 0, 0)] }), () => {});
+assert.equal(out.total, 0n);
+out = api.analyzeKingdom(relatedRequest(travellerMain, [], { rules: [sourceRule("cards", 1, 1)] }), () => {});
+assert.equal(out.total, 1n, "Fugitive makes one matching source, not a separate pile");
+out = api.analyzeKingdom(relatedRequest(travellerMain, [], { rules: [sourceRule("cards", 2, 2)] }), () => {});
+assert.equal(out.total, 0n);
+out = api.analyzeKingdom(relatedRequest(travellerMain, [], { rules: [sourceRule("defense", 1, 2)] }), () => {});
+assert.equal(out.total, 0n, "Soldier activates the defense quota");
+out = api.analyzeKingdom(relatedRequest(travellerMain, [], { rules: [sourceRule("attack-reaction", 1, 2)] }), () => {});
+assert.equal(out.total, 0n, "Soldier activates the Attack Reaction quota");
+
+const plainMain = [...filler, ...get("village")];
+out = api.analyzeKingdom(relatedRequest(plainMain, [], {
+  landscapePool: get("demand"), landscapeCount: {min: 1, max: 1}, rules: [sourceRule("cards", 1, 1)],
+}), () => {});
+assert.equal(out.total, 1n, "a fixed Landscape extra can satisfy a property minimum");
+out = api.analyzeKingdom(relatedRequest(plainMain, [], {
+  landscapePool: get("demand"), landscapeCount: {min: 1, max: 1}, rules: [sourceRule("cards", 0, 0)],
+}), () => {});
+assert.equal(out.total, 0n, "a fixed Landscape extra is also checked against the maximum");
+out = api.analyzeKingdom(relatedRequest(plainMain, [], {
+  landscapePool: get("foray"), landscapeCount: {min: 1, max: 1}, rules: [sourceRule("defense", 0, 0)],
+}), () => {});
+assert.equal(out.total, 0n, "Loot's Sword activates the conditional quota and Shield matches it");
+out = api.analyzeKingdom(relatedRequest(plainMain, [], {
+  landscapePool: get("way_of_the_mouse"), landscapeCount: {min: 1, max: 1},
+  extras: [...plainMain, ...get("militia", "smithy", "witch", "moat")], rules: [sourceRule("cards", 0, 0), sourceRule("attack", 0, 0)],
+}), () => {});
+assert.equal(out.total, 1n, "uncontrolled random setup targets do not affect property quotas");
+assert.deepEqual(Array.from(out.result.ignoredRandomSources), ["way_of_the_mouse"]);
+
+// Compare full enumeration of a small pool with the source-based solver counts.
+const smallPool = get("peasant", "page", "village", "smithy", "moat", "urchin");
+const smallRule = sourceRule("attack", 1, 1);
+let exhaustive = 0n;
+for (let a=0; a<smallPool.length; a++) for (let b=a+1; b<smallPool.length; b++) {
+  if ([smallPool[a],smallPool[b]].filter(card => propertyRules.get("attack").matches(card)).length === 1) exhaustive++;
+}
+out = api.analyzeKingdom(relatedRequest([], smallPool, {kingdomSize: 2, rules: [smallRule]}), () => {});
+assert.equal(out.total, exhaustive);
+const withVampire = [...filler, ...get("vampire")];
+out = api.analyzeKingdom(relatedRequest(withVampire, []), () => {});
+assert.equal(out.total, 1n);
+assert.ok(out.result.components.includes("bat"));
+assert.ok(!out.result.components.includes("vampire"), "a backlink must not add the main pile a second time");
+propertyContext.includeRelated.checked = false;
+assert.ok(!matchesProperty("attack", "peasant"));
+assert.ok(!matchesProperty("cards", "peasant"));
+out = api.analyzeKingdom(relatedRequest(travellerMain, [], { rules: [sourceRule("attack", 0, 0)] }), () => {});
+assert.equal(out.total, 1n, "default mode retains the existing primary-pile behavior");
+assert.equal(propertyAPI.validRangePair(propertyRules.get("attack"), ["0", "14"], 10, true), true);
+assert.equal(propertyAPI.validRangePair(propertyRules.get("attack"), ["0", "14"], 10, false), false);
+assert.equal(propertyAPI.validRangePair(propertyRules.get("cost-2"), ["0", "14"], 10, true), false);
+
+const sourceFunction = name => html.match(new RegExp("function " + name + "\\([\\s\\S]*?\\n\\}"))[0];
+const validationContext = {
+  ...propertyContext, allowedKingdomSizes: [10, 11, 12, 13],
+  countRules: propertyAPI.countRules, landRules: [], expansionModes: new Map(),
+  expansions: Object.keys(catalog.expansions),
+  tr: (de) => de, ruleLabel: rule => rule.label,
+  validRangePair: propertyAPI.validRangePair,
+  isValidRangeBound: (value, max) => Number.isInteger(value) && value >= 0 && value <= max,
+};
+const parseSettings = vm.runInNewContext(sourceFunction("readSettings") + "\nreadSettings", validationContext);
+const legacySettings = {version: 1, ranges: {}, cardChoices: {}, setName: "Test"};
+assert.equal(parseSettings(JSON.stringify(legacySettings)).includeRelated, undefined);
+assert.equal(parseSettings(JSON.stringify({...legacySettings, includeRelated: true, ranges: {attack: ["0", "14"]}})).includeRelated, true);
+assert.throws(() => parseSettings(JSON.stringify({...legacySettings, includeRelated: "true"})), /ungültige/);
+assert.throws(() => parseSettings(JSON.stringify({...legacySettings, ranges: {attack: ["0", "14"]}})), /Angriff/);
+const settingsToggle = {checked: true};
+const applyContext = {
+  includeRelated: settingsToggle, standardKingdomSize: 10, countRules: [], landRules: [],
+  poolChoices: new Map(), editionInputs: new Map(), requireLoot: {}, coloniesMode: {}, sheltersMode: {},
+  uiLanguage: "de", setName: {},
+  setKingdomSize: () => {}, applyRangeSettings: () => {}, applyExpansionModes: () => {},
+  refreshPreviews: () => {}, refreshPoolSearch: () => {}, updateEffectSet: () => {},
+};
+const applyStoredSettings = vm.runInNewContext(sourceFunction("applySettings") + "\napplySettings", applyContext);
+applyStoredSettings(legacySettings);
+assert.equal(settingsToggle.checked, false, "old settings default the new mode to off");
+applyStoredSettings({...legacySettings, includeRelated: true});
+assert.equal(settingsToggle.checked, true);
+applyStoredSettings({ranges: {}, cardChoices: {}, setName: "Reset"});
+assert.equal(settingsToggle.checked, false, "a reset returns the new mode to off");
+
+// Exercise the real nested-preview state logic without a browser/renderer.
+class TooltipNode {
+  constructor(parentElement = null) { this.parentElement = parentElement; this.hidden = true; this.attributes = new Map(); }
+  contains(node) { for (let item = node; item; item = item.parentElement) if (item === this) return true; return false; }
+  setAttribute(key, value) { this.attributes.set(key, value); }
+  removeAttribute(key) { this.attributes.delete(key); }
+}
+const rootNode = new TooltipNode();
+const parentPreview = {button: new TooltipNode(rootNode), panel: new TooltipNode(rootNode)};
+const childPreview = {button: new TooltipNode(parentPreview.panel), panel: new TooltipNode(parentPreview.panel)};
+const tooltipState = {
+  previews: new Set([parentPreview, childPreview]), pinnedTooltips: new Map(), tooltipTriggers: new WeakMap(),
+  activePreview: null, clearTimeout, previewCloseTimer: undefined,
+  updatePreview: () => {}, positionRelatedPreview: () => {},
+};
+for (const preview of tooltipState.previews) tooltipState.tooltipTriggers.set(preview.panel, preview.button);
+const tooltipAPI = vm.runInNewContext(["pinTooltip", "releaseTooltipPins", "closeCardPreview", "canOpenPreview", "setPreview"]
+  .map(sourceFunction).join("\n") + "\n({setPreview,closeCardPreview,canOpenPreview})", tooltipState);
+tooltipAPI.setPreview(parentPreview, true);
+assert.ok(tooltipAPI.canOpenPreview(childPreview.button));
+tooltipAPI.setPreview(childPreview, true);
+assert.equal(parentPreview.panel.hidden, false, "opening a nested card leaves the parent open");
+assert.ok(tooltipState.pinnedTooltips.has(parentPreview.panel));
+assert.ok(tooltipState.pinnedTooltips.has(childPreview.panel));
+tooltipAPI.closeCardPreview(childPreview);
+assert.equal(parentPreview.panel.hidden, false);
+assert.equal(tooltipState.activePreview, parentPreview);
+tooltipAPI.setPreview(childPreview, true);
+tooltipAPI.closeCardPreview(parentPreview);
+assert.equal(parentPreview.panel.hidden, true);
+assert.equal(childPreview.panel.hidden, true);
+assert.equal(tooltipState.pinnedTooltips.size, 0);
+
+// Catch syntax failures in every executable inline script.
+for (const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
+  if (/type="(?:application\/json|text\/plain)"/.test(match[0].slice(0,match[0].indexOf('>')))) continue;
+  new vm.Script(match[1]);
+}
+console.log("Katalog, exakte Zählung, Abwehr, Sonderzuordnungen, Zufallssets, Zusatzkarten-Eigenschaften, Landschaftszusätze, kleine vollständige Vergleichspools und Zeitlimit geprüft.");

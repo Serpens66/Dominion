@@ -59,3 +59,24 @@ Die erweiterte Aufbauhilfe und die neuen Hinweise wurden in Firefox und Edge bei
 Der reproduzierbare Solver-Test läuft aus dem Projektordner mit `node SetGenerator/test_generator_solver.js`.
 
 Die Bilddateien aus der installierten Dominion.xpack umfassen 845 Illustrationen und 52 vollständige Basisspiel-Vorderseiten mit insgesamt 18.992.237 Bytes. Die übrigen acht Definitionen sind Sammelbegriffe oder interne Einträge und verwenden die Textvorschau. Der Generator verwaltet die Dateizuordnungen im HTML-Block `card-image-files`.
+
+## Zusatzkarten-Modus und Verbunden mit
+
+Stand 11. November 2026. Die folgenden technischen Prüfungen beziehen sich auf den neu ergänzten Modus; frühere Browser-Abnahmen oben ersetzen seine erneute visuelle Abnahme nicht.
+
+| Status | Fall und Ergebnis |
+| --- | --- |
+| Technisch geprüft | Modus aus: Kleinbauer bleibt bei Angriff 0–0 zulässig. Modus an: Soldat aktiviert den Angriffsfilter und bedingte Abwehr-/Angriffsreaktionsquoten. |
+| Technisch geprüft | Flüchtling macht die Kleinbauer-Reihe zu genau einer Kartenzug-Quelle. Mindestwert 1 gelingt, Mindestwert 2 bei dieser einzigen Quelle nicht. |
+| Technisch geprüft | Reisenden-Reihen, Champion, Schild, Artefakte, Erbstücke, Gaben, Kostbarkeiten und die Vampir/Fledermaus-Rückverbindung. Verweise zeigen auf gültige IDs; transitive Familien sind eindeutig und enthalten ihre eigene Quelle nicht erneut. |
+| Technisch geprüft | Feste Landschaftszusätze: ein Pferd aus Demand erfüllt Kartenzug 1–1 und verletzt 0–0. Kostbarkeiten aus Foray aktivieren über Schwert die Abwehrquote und enthalten Schild. |
+| Technisch geprüft | Zufällige Maus-Ziele erfüllen und verletzen keine Eigenschaftsquote. Das Ergebnis enthält den Hinweis auf unberücksichtigte Zufallszuordnungen. |
+| Technisch geprüft | Reine Münzkosten und Erweiterungsquoten bleiben auf Hauptstapel bezogen. Ohne Aktionstyp trifft bei einer Familie mit Aktionskarte nicht zu. |
+| Technisch geprüft | Kleine Hauptstapel-Pools vollständig durchgezählt und mit den erweiterten Solver-Quoten verglichen. Bestehende Suite, Zeitlimit, Inline-JavaScript-Syntax und eingebetteter Worker-Abgleich laufen erfolgreich. |
+| Technisch geprüft | Einstellungsvalidierung akzeptiert den neuen booleschen Modus und passende erweiterte Grenzen. Alte Dateien und Reset setzen ihn aus. Die gemeinsame Tooltip-Steuerung erhält die Elternvorschau beim Öffnen und Schließen eines Kindes; das Schließen des Elternteils schließt beide. |
+| Offen | Firefox und Edge: neue Checkbox, Export/Import alter und neuer Einstellungen, Speichern nach Neuladen, Gesamtreset und Ziehfilter-Reset prüfen. Filteränderungen müssen die letzte Ziehung und ihren Export erhalten. |
+| Offen | Deutsch/Englisch, Maus/Tab/Enter/Esc, schmale/breite Ansicht: Verbunden mit öffnen, Reisende und Artefakte ansehen, verschachtelte Vorschau festhalten und per Außenklick schließen. Lange Zusatzstapel, Bildfehler und Fensterrand prüfen. |
+| Offen | Steam: Maus-Ziel mit und ohne nativen Kartenbann vergleichen. Jeweils Spielbuild, Steam-Build, Modus, Banneinstellung, Kingdom-Eingabe, Soll und gewählte Zusatzkarte notieren. |
+| Offen | Steam: gezielter Import einer Maus-Karte. Kampagnenvorlagen getrennt behandeln; erst nach bestätigtem Import eine festgelegte Zufallszuordnung für Filtergarantien verwenden. |
+
+Die Browseroberfläche konnte in diesem Durchlauf die lokale Testseite nicht erreichen; direkte file-URLs werden vom Browserwerkzeug gesperrt. Deshalb sind die neuen Browserfälle ausdrücklich offen. Die Steam-Installation und profiles.xml wurden nicht verändert.

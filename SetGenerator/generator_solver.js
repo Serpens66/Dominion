@@ -8,6 +8,7 @@ const setupTargets = {
 };
 const requiresAssignment = new Set([...Object.keys(setupTargets), "druid", "black_market", "obelisk"]);
 const has = (card, type) => card.types.includes(type);
+const hasAttack = card => card.propertyAttack ?? has(card, "attack");
 const costs = (card, values) => card.cost && !card.cost.potions && !card.cost.debt && values.includes(card.cost.coins);
 
 function shuffled(items) {
@@ -28,6 +29,16 @@ function fits(cards, rules, attack = false) {
   return rules.every(rule => {
     if (rule.whenAttacked && !attack) return true;
     const count = matching(cards, rule);
+    return count >= rule.min && count <= rule.max;
+  });
+}
+
+function fitsPropertySources(main, landscapes, request) {
+  const attack = [...main, ...landscapes].some(hasAttack);
+  return request.rules.every(rule => {
+    if (rule.whenAttacked && !attack) return true;
+    const count = matching(main, rule) + (rule.property
+      ? landscapes.filter(card => rule.landscapeIds.has(card.id)).length : 0);
     return count >= rule.min && count <= rule.max;
   });
 }
@@ -115,11 +126,15 @@ function assignSetup(main, landscapes, request, random, tick) {
     const deck = order(unused.filter(card => !taken.extra.has(card.id))).slice(0, 60);
     assignments.push({ source: blackMarket.id, role: "Schwarzmarkt-Deck", targets: deck.map(card => card.id) });
   }
+  const allSetupCards = new Map([...extras, ...components].map(card => [card.id, card]));
   const setupCards = [...main, ...landscapes, ...extras.filter(card => assigned.has(card.id)),
     ...components.filter(card => assigned.has(card.id))];
+  const visitedSetup = new Set();
   const landscapeIds = new Set(landscapes.map(card => card.id));
   for (const card of setupCards) {
     tick();
+    if (visitedSetup.has(card.id)) continue;
+    visitedSetup.add(card.id);
     if (card.lootSource) loot = true;
     if (card.cost?.potions) material.add("Tränke");
     if (card.cost?.debt || card.mechanics.includes("debt")) material.add("Schuldenmarker");
@@ -138,7 +153,11 @@ function assignSetup(main, landscapes, request, random, tick) {
     if (mechanics.includes("exile")) material.add("Exil Tableau");
     if (mechanics.includes("journey")) material.add("Reise-Marker");
     if (card.mechanics.includes("trade_route")) material.add("Handelsrouten-Tableau und Geldmarker");
-    for (const id of card.related) assigned.add(id);
+    for (const id of card.related) {
+      if (main.some(pile => pile.id === id) || landscapeIds.has(id)) continue;
+      assigned.add(id);
+      if (allSetupCards.has(id) && !visitedSetup.has(id)) setupCards.push(allSetupCards.get(id));
+    }
   }
   if (requireLoot && ![...main, ...landscapes].some(card => card.lootSource)) return null;
   if (loot) componentGroups.add("loot");
@@ -159,6 +178,9 @@ function assignSetup(main, landscapes, request, random, tick) {
     main: main.map(card => card.id), landscapes: [...landscapeIds], assignments,
     components: [...assigned], material: [...material], withColonies, withShelters,
     needsSteamCheck: [...needsSteamCheck],
+    includeRelated: Boolean(request.includeRelated),
+    ignoredRandomSources: request.includeRelated
+      ? [...main, ...landscapes].filter(card => card.randomSetup).map(card => card.id) : [],
   };
 }
 
@@ -178,7 +200,8 @@ function chooseLandscapes(main, request, random, tick) {
       const count = matching(selected, rule);
       if (count > rule.max || count + left < rule.min) return null;
     }
-    if (!left) return fits(selected, landscapeRules) ? assignSetup(main, selected, request, random, tick) : null;
+    if (!left) return fits(selected, landscapeRules) && fitsPropertySources(main, selected, request)
+      ? assignSetup(main, selected, request, random, tick) : null;
     for (let next = index; next <= ordered.length - left; next++) {
       selected.push(ordered[next]);
       const result = search(next + 1, left - 1);
@@ -198,13 +221,16 @@ function chooseLandscapes(main, request, random, tick) {
 const timedOut = Symbol("Zeitlimit");
 
 function analyzeKingdom(input, onFound, deadline = Date.now() + 4800, sampleOnly = false) {
-  const compile = rules => rules.map(rule => ({ ...rule, ids: new Set(rule.ids) }));
+  const compile = rules => rules.map(rule => ({ ...rule, ids: new Set(rule.ids), landscapeIds: new Set(rule.landscapeIds ?? []) }));
   const request = { ...input, rules: compile(input.rules), landscapeRules: compile(input.landscapeRules) };
   const { fixed, candidates, rules } = request;
   const slots = (request.kingdomSize ?? 10) - fixed.length;
   const mainPool = [...fixed, ...candidates];
+  const landscapeCapacities = new Map(rules.map(rule => [rule, rule.property ? Math.min(request.landscapeCount.max,
+    request.landscapePool.filter(card => rule.landscapeIds.has(card.id)).length) : 0]));
+  const landscapeCapacity = rule => landscapeCapacities.get(rule);
   if (slots < 0 || candidates.length < slots ||
-      rules.some(rule => !rule.whenAttacked && rule.min > matching(mainPool, rule)) ||
+      rules.some(rule => !rule.whenAttacked && rule.min > matching(mainPool, rule) + landscapeCapacity(rule)) ||
       request.landscapeCount.min > request.landscapePool.length ||
       request.landscapeRules.some(rule => rule.min > matching(request.landscapePool, rule))) {
     return { total: 0n, result: null };
@@ -231,11 +257,11 @@ function analyzeKingdom(input, onFound, deadline = Date.now() + 4800, sampleOnly
         const matchingLeft = remaining[index][n] ?? 0;
         const room = Math.min(left, matchingLeft);
         const forced = rule.distinct ? 0 : Math.max(0, left - (order.length - index - matchingLeft));
-        return counts[n] + forced <= rule.max && counts[n] + room >= rule.min;
+        return counts[n] + forced <= rule.max && counts[n] + room + landscapeCapacity(rule) >= rule.min;
       });
     }
     const seedCounts = rules.map(rule => matching(fixed, rule));
-    const seedAttack = fixed.some(card => has(card, "attack"));
+    const seedAttack = fixed.some(hasAttack);
     const update = (card, counts) => rules.map((rule, n) =>
       counts[n] + Number(rule.ids.has(card.id) && (!rule.distinct ||
         !chosen.some(other => other.expansion === card.expansion && rule.ids.has(other.id)))));
@@ -252,7 +278,7 @@ function analyzeKingdom(input, onFound, deadline = Date.now() + 4800, sampleOnly
       const card = order[index];
       const next = update(card, counts);
       chosen.push(card);
-      const withCard = count(index + 1, left - 1, next, attack || has(card, "attack"));
+      const withCard = count(index + 1, left - 1, next, attack || hasAttack(card));
       chosen.pop();
       const total = withCard + count(index + 1, left, counts, attack);
       if (memo.size >= 250000) throw timedOut;
@@ -282,7 +308,7 @@ function analyzeKingdom(input, onFound, deadline = Date.now() + 4800, sampleOnly
         const card = order[next];
         const after = update(card, counts);
         chosen.push(card);
-        const stop = enumerate(next + 1, left - 1, after, attack || has(card, "attack"), visit);
+        const stop = enumerate(next + 1, left - 1, after, attack || hasAttack(card), visit);
         chosen.pop();
         if (stop) return true;
       }
@@ -324,7 +350,7 @@ function analyzeKingdom(input, onFound, deadline = Date.now() + 4800, sampleOnly
       for (let index = 0; left; index++) {
         const card = order[index];
         const next = update(card, counts);
-        const nextAttack = attack || has(card, "attack");
+        const nextAttack = attack || hasAttack(card);
         chosen.push(card);
         const completions = count(index + 1, left - 1, next, nextAttack);
         if (rank < completions) {
