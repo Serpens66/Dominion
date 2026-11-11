@@ -31,7 +31,8 @@ Spielbuild 3315, Steam-Build 17683350. Bei jedem Steam-Test Eingabe, Modus, Soll
 | Technisch geprüft | Exakte Anzahl gegen Kombinatorik und vollständige Suche im kleinen Pool. Laufzeitgrenze des Solvers mit vollem Katalog und Abbruch eines ersetzten Auftrags. |
 | Offen | Fünf-Sekunden-Grenze, rasche Eingaben und Anzeige im echten Browser bei großen Pools prüfen. |
 | Technisch geprüft | Einstellungen aus Version 1, Ausschlüsse, Reset, zweisprachige Suche, gekennzeichneter Teilcode und Verdopplungs-XML zur Ziehung. |
-| Offen | Browser-Sichtprüfung der Kartenvorschauen mit und ohne Bildpaket. |
+| Technisch geprüft | Kartenvorschauen mit Bilddateien und lesbare Textansicht bei fehlenden Bildern in Firefox und Edge. |
+| Technisch geprüft | 894 Bilddateien lassen sich dekodieren. Alle 498 Hauptstapel haben eine Illustration. Die 26 Basisspielkarten haben vollständige Vorderseiten auf Deutsch und Englisch. |
 
 ## Browser-Abnahme der Release-Überarbeitung
 
@@ -49,6 +50,8 @@ Die unveränderte Pages-Ausgabe wurde in Firefox und Edge unter dem lokalen Pfad
 
 Die bedingten Quoten der Zufallssets wurden am 11. November 2026 in Firefox und Edge auf Deutsch und Englisch geprüft. Einstellungsdateien der Version 2, gespeicherte Werte nach dem Neuladen, wiederholte Ziehungen und die letzte sichtbare Ziehung bei einem Konflikt wurden dabei mitgeprüft.
 
+Die einzelnen Bilddateien wurden über den Pages-Pfad `/Dominion/` und beim direkten Öffnen der HTML-Datei geprüft. Beim Start lädt die Seite keine Kartenbilder. Die erste Vorschau lädt genau ihr Bild. Der Sprachwechsel lädt die passende Vorderseite. Bei einer fehlenden Vorderseite werden Illustration und Regeltext verwendet. Fehlen beide Bilder, bleibt der Text sichtbar. Ziehung und Export funktionieren dabei weiter. Die erneute Erzeugung der Bilddateien und Bildpfade ergab dieselben Inhalte.
+
 Der reproduzierbare Solver-Test läuft aus dem Projektordner mit `node SetGenerator/test_generator_solver.js`.
 
-**Technisch geprüft:** Das optionale Bildpaket aus der installierten Dominion.xpack enthält 676 Illustrationen und 26 zweisprachige Basisspiel-Vorderseiten. Für 177 Definitionen konnte das Werkzeug keine eindeutige Illustration zuordnen. Deren Vorschau verwendet den Spieltext. Ressourcenbefund und Eingabeprüfung ersetzen den Browser-Sichttest und den Import im Steam-Client nicht.
+Die Bilddateien aus der installierten Dominion.xpack umfassen 842 Illustrationen und 52 vollständige Basisspiel-Vorderseiten mit insgesamt 18.929.329 Bytes. Die übrigen elf Definitionen verwenden die Textvorschau. Der Generator verwaltet die Dateizuordnungen im HTML-Block `card-image-files`.

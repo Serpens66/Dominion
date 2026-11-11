@@ -30,14 +30,15 @@ Die Profilstruktur ist lokal belegt. Der erste Spieltest soll zeigen, ob ein ext
 
 ## Kartenbilder erstellen
 
-Installiere Python und Pillow. Führe den Befehl im Projektordner aus und passe den Pfad zu Dominion an. Mit `--all-expansions` nimmt das Werkzeug auch Bilder aus den Erweiterungen auf.
+Die Bilddateien liegen unter `SetGenerator/card-images`. Die HTML-Datei enthält ihre Zuordnung zu den Karten. Für neue Bilder installiere Python und Pillow und führe die Befehle im Projektordner aus. Passe den Steam-Pfad bei Bedarf an und wähle für das neue JSON-Paket einen noch unbenutzten Dateinamen.
 
 ```powershell
 python -m pip install Pillow
 python .\SetGenerator\extract_card_images.py "E:\ProgrammeE\Steam\steamapps\common\Dominion\Dominion.xpack" ".\SetGenerator\Dominion-Kartenbilder.json" --all-expansions
+python .\SetGenerator\export_card_images.py .\SetGenerator\Dominion-Kartenbilder.json
 ```
 
-Lege das Bildpaket als Dominion-Kartenbilder.json neben die HTML-Datei. Für die automatische Bildladung starte im Projektordner `python -m http.server 8000 --bind 127.0.0.1 --directory SetGenerator` und öffne den Generator über [localhost](http://127.0.0.1:8000/Dominion-Generator.html).
+Das Exportwerkzeug erzeugt die einzelnen PNG-/WebP-Dateien und aktualisiert die Bildpfade in der HTML-Datei. Geänderte Bilder erhalten neue Dateinamen für den Browsercache. Das JSON-Paket dient als lokale Zwischenstufe. Die Bilder werden erst beim Öffnen einer Kartenvorschau geladen. Lokal kannst du die HTML-Datei direkt öffnen, wenn der Ordner `card-images` danebenliegt.
 
 ## Generator pflegen
 
@@ -50,4 +51,4 @@ python .\SetGenerator\generator_catalog.py "E:\ProgrammeE\Steam\steamapps\common
 node .\SetGenerator\test_generator_solver.js
 ```
 
-Bei Änderungen am Generator auf `main` veröffentlicht GitHub Actions die HTML-Datei unverändert als `index.html` und legt `Dominion-Konverter.html` daneben. Das optionale Kartenbildpaket bleibt lokal. Du kannst die Veröffentlichung auch über **Actions → Publish Dominion Generator → Run workflow** starten. [Workflow](https://github.com/Serpens66/Dominion/actions/workflows/generator-pages.yml)
+Bei Änderungen am Generator auf `main` veröffentlicht GitHub Actions die HTML-Datei unverändert als `index.html` und legt `Dominion-Konverter.html` sowie den Ordner `card-images` daneben. Du kannst die Veröffentlichung auch über **Actions → Publish Dominion Generator → Run workflow** starten. [Workflow](https://github.com/Serpens66/Dominion/actions/workflows/generator-pages.yml)

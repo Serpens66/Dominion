@@ -1,11 +1,12 @@
 const fs=require("node:fs"), assert=require("node:assert/strict"),vm=require("node:vm");
 const path=require("node:path");
+const { createHash } = require("node:crypto");
 const html=fs.readFileSync(path.join(__dirname,"Dominion-Generator.html"),"utf8");
 const worker=fs.readFileSync(path.join(__dirname,"generator_solver.js"),"utf8");
 const readScript = (page, id) => page.match(new RegExp('id="' + id + '">([\\s\\S]+?)</script>'))?.[1];
 const normalize = source => source.replace(/\r\n/g, "\n").trim();
 assert.equal(normalize(readScript(html, "generator-solver")), normalize(worker), "embedded worker must match the solver source");
-assert.equal(readScript(html, "embedded-image-pack"), undefined, "the generator uses an optional external image pack");
+assert.equal(readScript(html, "embedded-image-pack"), undefined, "preview images are stored in separate files");
 const api=vm.runInNewContext(worker+"\n({analyzeKingdom,assignSetup,chooseLandscapes})");
 const catalog=JSON.parse(html.match(/id="catalog">([\s\S]+?)<\/script>/)[1]);
 const all=catalog.cards, byId=new Map(all.map(c=>[c.id,c])), get=(...ids)=>ids.map(id=>{assert.ok(byId.has(id),id);return byId.get(id);});
@@ -30,6 +31,27 @@ const components=all.filter(c=>!c.kingdomPile);
 assert.equal(all.length,853);
 assert.equal(allPiles.length,498);
 assert.equal(base.length,26);
+const imageFiles = JSON.parse(readScript(html, "card-image-files"));
+assert.equal(Object.keys(imageFiles.images).length, 842);
+assert.ok(allPiles.every(card => imageFiles.images[card.id]), "every Kingdom pile has an illustration");
+for (const images of [imageFiles.images, ...Object.values(imageFiles.cards)]) {
+  for (const [id, filename] of Object.entries(images)) {
+    assert.ok(byId.has(id), id);
+    assert.match(filename, /^card-images\/(illustrations|de|en)\/[a-z0-9_]+-[a-f0-9]{12}\.(png|webp)$/);
+    const bytes = fs.readFileSync(path.join(__dirname, filename));
+    const digest = createHash("sha256").update(bytes).digest("hex").slice(0, 12);
+    assert.ok(filename.endsWith("-" + digest + path.extname(filename)), "image content matches its filename");
+    if (filename.endsWith(".png")) assert.equal(bytes.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+    else {
+      assert.equal(bytes.subarray(0, 4).toString(), "RIFF");
+      assert.equal(bytes.subarray(8, 12).toString(), "WEBP");
+    }
+  }
+}
+for (const language of ["de", "en"]) {
+  assert.equal(Object.keys(imageFiles.cards[language]).length, 26);
+  assert.ok(base.every(card => imageFiles.cards[language][card.id]), "complete Base cards in " + language);
+}
 assert.ok(all.every(c=>c.text.de[0]&&c.text.en[0]&&c.related.every(id=>byId.has(id))));
 assert.ok(!byId.has("harem")&&byId.has("farm"));
 const request=(fixed,candidates,updates={})=>({

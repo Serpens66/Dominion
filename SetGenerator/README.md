@@ -20,4 +20,4 @@ Der Konverter erstellt im Abschnitt **Stapel verdoppeln** einen XML-Eintrag für
 
 ## Generator offline nutzen
 
-Speichere die HTML-Datei und öffne sie lokal im Browser. Für Kartenbilder kannst du den Generator über einen lokalen Server öffnen. [HTML-Datei](Dominion-Generator.html) · [Bildpaket aus Steam erstellen](../Documentation/README.md#kartenbilder-erstellen)
+Speichere die HTML-Datei und öffne sie lokal im Browser. Für die Kartenvorschau mit Bildern gehört der Ordner `card-images` daneben. Auf der Website werden die Bilder beim Öffnen einer Vorschau automatisch geladen. [HTML-Datei](Dominion-Generator.html) · [Bilddateien](card-images) · [Bilder aktualisieren](../Documentation/README.md#kartenbilder-erstellen)

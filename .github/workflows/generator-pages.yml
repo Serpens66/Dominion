@@ -31,6 +31,7 @@ jobs:
           mkdir -p _site
           cp SetGenerator/Dominion-Generator.html _site/index.html
           cp SetGenerator/Dominion-Konverter.html _site/Dominion-Konverter.html
+          cp -R SetGenerator/card-images _site/card-images
           cmp SetGenerator/Dominion-Generator.html _site/index.html
       - uses: actions/upload-pages-artifact@v4
         with:
