@@ -11,7 +11,7 @@ import struct
 import sys
 
 try:
-    from PIL import Image, ImageDraw, ImageFont
+    from PIL import Image, ImageDraw, ImageFont, ImageOps
 except ImportError:
     raise SystemExit("Pillow fehlt. Installiere es mit: python -m pip install Pillow") from None
 
@@ -211,7 +211,25 @@ VERIFIED_ART_RESOURCES = {
 INDEX_ENTRY_SIZE = 168
 IMAGE_POINTER_OFFSET = 128
 CARD_SIZE = (344, 524)
-RULE_TOKEN = re.compile(r"\||\x60|\[(\d+)\]|\{(\d+)\}|\s+|[^\s|\x60\[\]{}]+|.")
+RULE_TOKEN = re.compile(r"\||\x60|\[(!?\d*)([DPS]?)\]|\{(!?[+-]?\d*)\}|\s+|[^\s|\x60\[\]{}]+|.")
+SYMBOLS = {"": "coin", "D": "debt", "P": "potion", "S": "sun"}
+LANDSCAPE_TYPES = {"event", "landmark", "project", "way", "trait", "boon", "hex", "state",
+                   "artifact", "ally", "prophecy"}
+# Same priority as cardFrameStyle in the SetGenerator.
+COMBINED_FRAMES = (
+    ("duration_victory_treasure", ("duration", "victory", "treasure")),
+    ("reaction_treasure_duration", ("reaction", "treasure", "duration")),
+    *((frame, tuple(frame.split("_"))) for frame in (
+        "duration_reaction", "duration_victory", "duration_treasure", "reserve_victory", "reserve_treasure",
+        "treasure_reaction", "victory_reaction", "shelter_reaction", "shelter_victory", "action_shelter",
+        "curse_treasure", "ruins_treasure", "treasure_victory", "action_treasure", "action_victory")),
+)
+LANDSCAPE_NAMES = {"trait": "plun_name_trait", "ally": "allies_name_ally", "prophecy": "rising_sun_name_prophecy"}
+VALUE_CARDS = {
+    "copper": ("coin", "1"), "silver": ("coin", "2"), "gold": ("coin", "3"), "platinum": ("coin", "5"),
+    "estate": ("vp", "1"), "duchy": ("vp", "3"), "province": ("vp", "6"), "colony": ("vp", "10"),
+    "curse": ("vp", "−1"), "potion": ("potion", ""),
+}
 
 
 def decode_texture(resource: bytes) -> Image.Image:
@@ -273,8 +291,13 @@ def rules_layout(text: str, size: int, max_width: int) -> list:
                     continue
                 if value == chr(96):
                     continue
-                symbol = "coin" if match[1] else "vp" if match[2] else ""
-                value = (match[1] or match[2]) if symbol else value
+                if match[1] is not None:
+                    symbol = SYMBOLS[match[2]]
+                    value = match[1].lstrip("!")
+                elif match[3] is not None:
+                    symbol, value = "vp", match[3].lstrip("!").replace("-", "−")
+                else:
+                    symbol = ""
                 font = card_font(size, bold)
                 advance = symbol_diameter(symbol, size) + 2 if symbol else font.getlength(value)
                 run.append((word_width, value, font, symbol))
@@ -292,63 +315,93 @@ def rules_layout(text: str, size: int, max_width: int) -> list:
     return rows
 
 
-def render_card(art: Image.Image, sprites: dict, title: str, text: str,
-                cost: int, card_type: str, language: str) -> Image.Image:
-    face = Image.new("RGBA", CARD_SIZE)
+def render_card(art, sprites, title, text, costs, type_line, *, landscape=False, dark=False, value=None):
+    width, height = CARD_SIZE[::-1] if landscape else CARD_SIZE
+    face = Image.new("RGBA", (width, height))
     draw = ImageDraw.Draw(face)
-    draw.rounded_rectangle((1, 1, 342, 522), radius=15, fill="#171512")
+    draw.rounded_rectangle((1, 1, width - 2, height - 2), radius=15, fill="#171512")
 
-    def place(sprite: Image.Image, x: int, y: int, width: int, height: int) -> None:
-        face.alpha_composite(sprite.resize((width, height), Image.Resampling.LANCZOS), (x, y))
+    def place(name, x, y, w, h):
+        if sprite := sprites.get(name):
+            face.alpha_composite(sprite.resize((w, h), Image.Resampling.LANCZOS), (x, y))
 
-    frame = card_type if card_type in ("vp", "reaction") else "action"
-    place(art, 19, 47, 306, 229)
-    place(sprites["txt_back"], 19, 274, 306, 206)
-    place(sprites["text_back_lip"], 19, 272, 306, 9)
-    for x in (13, 320):
-        place(sprites["univ_pole"], x, 15, 10, 486)
-        place(sprites["univ_topclip"], x - 3, 2, 18, 12)
-        place(sprites["univ_baseclip"], x - 3, 504, 18, 7)
-    place(sprites[f"frame_{frame}_ribl"], 8, 48, 22, 184)
-    place(sprites[f"frame_{frame}_ribr"], 313, 48, 24, 184)
-    place(sprites[f"frame_{frame}_top"], 5, 7, 334, 57)
-    place(sprites[f"frame_{frame}_bot"], 5, 456, 334, 59)
-    place(sprites["exp_base"], 296, 481, 29, 29)
+    art_top = 39 if landscape else 47
+    footer = height - (48 if landscape else 68)
+    full_art = value and not text
+    art_height = footer + 18 - art_top if full_art else (146 if landscape else 229)
+    rules_top = art_top + art_height if art else art_top
+    place("txt_back", 19, art_top, width - 38, footer + 24 - art_top)
+    if art:
+        fitted = ImageOps.fit(art.convert("RGBA"), (width - 38, art_height), Image.Resampling.LANCZOS)
+        face.alpha_composite(fitted, (19, art_top))
+    if art and not full_art:
+        place("text_back_lip", 19, rules_top - 4, width - 38, 9)
 
-    title = title.upper()
-    size = 35
-    while card_font(size).getlength(title) > 303 and size > 14:
-        size -= 1
-    draw.text((172, 34), title, font=card_font(size), fill="#16120e", anchor="mm")
-    draw.text((172, 490), TYPE_LABELS[language][card_type].upper(), font=card_font(23), fill="#16120e", anchor="mm")
-
-    def draw_value(symbol: str, value: str, x: int, y: int, diameter: int) -> None:
-        place(sprites[symbol], x, y, diameter, diameter)
-        ink = "#16120e" if symbol == "coin" else "#fffdf3"
-        draw.text((x + diameter / 2, y + diameter / 2), value, font=card_font(int(diameter * .81), True),
-                  fill=ink, anchor="mm", stroke_width=int(symbol == "vp"), stroke_fill="#201825")
-
-    for size in range(25, 11, -1):
-        rows = rules_layout(text, size, 284)
-        height = sum(row[2] for row in rows)
-        if height <= 172 and max(row[0] for row in rows) <= 284:
-            break
+    if landscape:
+        place("left", 6, 31, 15, height - 67)
+        place("right", width - 21, 31, 15, height - 67)
+        place("top", 5, 7, width - 10, 43)
+        place("bottom", 5, footer, width - 10, 40)
     else:
-        raise ValueError(f"Der Regeltext von {title} passt nicht auf die Karte.")
-    y = (281 + 453 - height) / 2
-    for width, fragments, row_height, separator in rows:
-        center = y + row_height / 2
-        if separator:
-            draw.line((114, center, 230, center), fill="#453c35")
-        for offset, value, font, symbol in fragments:
-            x = (344 - width) / 2 + offset
-            if symbol:
-                diameter = symbol_diameter(symbol, size)
-                draw_value(symbol, value, round(x), round(center - diameter / 2), diameter)
-            else:
-                draw.text((x, center), value, font=font, fill="#151311", anchor="lm")
-        y += row_height
-    draw_value("coin", str(cost), 1, 447, 70)
+        for x in (13, width - 24):
+            place("univ_pole", x, 15, 10, height - 38)
+            place("univ_topclip", x - 3, 2, 18, 12)
+            place("univ_baseclip", x - 3, height - 20, 18, 7)
+        place("left", 8, art_top + 1, 22, 184)
+        place("right", width - 31, art_top + 1, 24, 184)
+        place("top", 5, 7, width - 10, 57)
+        place("bottom", 5, footer, width - 10, 59)
+    place("expansion", width - 48, height - (37 if landscape else 43), 29, 29)
+
+    def centered(label, x, y, size, limit, ink):
+        while card_font(size).getlength(label) > limit and size > 10:
+            size -= 1
+        draw.text((x, y), label, font=card_font(size), fill=ink, anchor="mm")
+
+    ink = "#fff8eb" if dark else "#16120e"
+    centered(title.upper(), width / 2, 28 if landscape else 34, 35, width - 41, ink)
+    cost_size = (54 if landscape else 70) if len(costs) == 1 else (41 if landscape else 43)
+    cost_end = cost_size + 5 if len(costs) == 1 else len(costs) * (cost_size - 5) + 10
+    footer_start = max(57, cost_end)
+    centered(type_line.upper(), (footer_start + width - 52) / 2, height - (26 if landscape else 34),
+             23, width - 54 - footer_start, ink)
+
+    def draw_value(symbol, label, x, y, diameter):
+        place(symbol, x, y, diameter, diameter)
+        if label:
+            draw.text((x + diameter / 2, y + diameter / 2), label,
+                      font=card_font(int(diameter * (.62 if len(label) > 1 else .81)), True),
+                      fill="#16120e" if symbol in ("coin", "sun") else "#fffdf3",
+                      anchor="mm", stroke_width=int(symbol == "vp"), stroke_fill="#201825")
+
+    if value:
+        draw_value(*value, width // 2 - 44, art_top + 8, 88)
+    if text:
+        text = re.sub(r"-//(?=[a-zäöüß])", "", text).replace("{br}", "//").replace("{coin_2}", "[2]")
+        text = re.sub(r"%([^%]+)%", r"\1", text)
+        text_width = width - 60
+        for size in range(25, 10, -1):
+            rows = rules_layout(text, size, text_width)
+            rules_height = sum(row[2] for row in rows)
+            if rules_height <= footer - rules_top - 11 and max(row[0] for row in rows) <= text_width:
+                break
+        else:
+            raise ValueError(f"Der Regeltext von {title} passt nicht auf die Karte.")
+        y = (rules_top + 5 + footer - 3 - rules_height) / 2
+        for row_width, fragments, row_height, separator in rows:
+            center = y + row_height / 2
+            if separator:
+                draw.line((width / 3, center, width * 2 / 3, center), fill="#453c35")
+            for offset, label, font, symbol in fragments:
+                x = (width - row_width) / 2 + offset
+                if symbol:
+                    diameter = symbol_diameter(symbol, size)
+                    draw_value(symbol, label, round(x), round(center - diameter / 2), diameter)
+                else:
+                    draw.text((x, center), label, font=font, fill="#151311", anchor="lm")
+            y += row_height
+    for i, (symbol, label) in enumerate(costs):
+        draw_value(symbol, label, 1 + i * (cost_size - 5), height - cost_size - (6 if landscape else 9), cost_size)
     return face
 
 
@@ -370,6 +423,59 @@ def decode_artwork(read, atlas, path: str) -> Image.Image:
     if not (0 < width <= texture.width - x and 0 < height <= texture.height - y):
         raise ValueError(f"Ungültiger Ausschnitt in der Textur {name}.")
     return texture.crop((x, y, x + width, y + height))
+
+
+def render_catalog_card(card, types, art, sprite, expansion_icon):
+    """Compose a localized face using the same shared textures as the image pack."""
+    kinds = card["types"]
+    landscape = next((kind for kind in kinds if kind in LANDSCAPE_TYPES), None)
+    combined = next((frame for frame, required in COMBINED_FRAMES if all(kind in kinds for kind in required)), None)
+    basic = next((kind for kind in ("night", "curse", "ruins", "duration", "reserve", "reaction", "treasure", "victory")
+                  if kind in kinds), "action")
+    basic = "vp" if basic == "victory" else basic
+    frame = combined or basic
+
+    sprites = {name: sprite(name) for name in
+               ("txt_back", "text_back_lip", "univ_pole", "univ_topclip", "univ_baseclip", "vp")}
+    sprites.update(coin=sprite("ico_coin_smaller"), debt=sprite("ico_debt"),
+                   potion=sprite("ico_potion"), sun=sprite("ico_sun"))
+    if landscape:
+        name = LANDSCAPE_NAMES.get(landscape, f"name_{landscape}")
+        sprites["top"] = sprites["bottom"] = sprite(name) or sprite("name_event")
+        side = sprite("landscape_frame_side_detail")
+        if side:
+            sprites["left"], sprites["right"] = side, ImageOps.mirror(side)
+    else:
+        for key, part in (("top", "top"), ("bottom", "bot"), ("left", "ribl"), ("right", "ribr")):
+            names = [f"frame_{frame}_{part}"]
+            if part == "top" and "treasure" in frame:
+                names.append(f"frame_{frame}_frame_treasuretop")
+            if part.startswith("rib") and frame == "treasure":
+                names.append(f"frame_treasure_nonstandard_{part}")
+            names.extend((f"frame_{basic}_{part}", f"frame_action_{part}"))
+            sprites[key] = next((asset for name in names if (asset := sprite(name))), None)
+
+    expansion = card["expansion"]
+    expansion = {"basic": "base", "promos": "promo", "plunder": "plun_plunder", "allies": "14_allies"}.get(expansion, expansion)
+    edition = "_1e" if card.get("edition") == "first" and expansion in ("base", "intrigue") else ""
+    emblem = sprite(f"exp_{expansion}{edition}") or expansion_icon
+    dark = "night" in kinds and not landscape
+    if emblem:
+        sprites["expansion"] = Image.new("RGBA", emblem.size, "#fff8eb" if dark else "#1f1b14")
+        sprites["expansion"].putalpha(emblem.getchannel("A"))
+
+    costs = []
+    if cost := card.get("cost"):
+        if cost["coins"] or not (cost["potions"] or cost["debt"]):
+            costs.append(("coin", str(cost["coins"])))
+        if cost["potions"]:
+            costs.append(("potion", str(cost["potions"]) if cost["potions"] > 1 else ""))
+        if cost["debt"]:
+            costs.append(("debt", str(cost["debt"])))
+    title, rules = card["text"]["de"]
+    type_line = " – ".join(types.get(kind, kind) for kind in kinds)
+    return render_card(art, sprites, title, rules, costs, type_line,
+                       landscape=bool(landscape), dark=dark, value=VALUE_CARDS.get(card["id"]))
 
 
 def read_image_pack(path: Path, expansion_images: bool = False) -> dict:
@@ -411,7 +517,7 @@ def read_image_pack(path: Path, expansion_images: bool = False) -> dict:
         sprites["coin"] = sprites.pop("ico_coin_smaller")
         expansion = Image.new("RGBA", sprites["exp_base"].size, "#1f1b14")
         expansion.putalpha(sprites["exp_base"].getchannel("A"))
-        sprites["exp_base"] = expansion
+        sprites["expansion"] = expansion
         for frame in ("action", "reaction", "vp"):
             for part in ("top", "bot", "ribl", "ribr"):
                 name = f"frame_{frame}_{part}"
@@ -427,9 +533,13 @@ def read_image_pack(path: Path, expansion_images: bool = False) -> dict:
                 raise ValueError(f"Unerwartete Bildgröße für {card_id}.")
             illustrations[card_id] = image_url(art, "PNG")
             for language, strings in translations.items():
-                face = render_card(art, sprites, strings[f"dom_card_title_{card_id}"],
-                                   strings[f"dom_card_power_{card_id}"], cost,
-                                   CARD_TYPES.get(card_id, "action"), language)
+                card_type = CARD_TYPES.get(card_id, "action")
+                frame = card_type if card_type in ("vp", "reaction") else "action"
+                assets = sprites | {key: sprites[f"frame_{frame}_{part}"] for key, part in
+                                    (("top", "top"), ("bottom", "bot"), ("left", "ribl"), ("right", "ribr"))}
+                face = render_card(art, assets, strings[f"dom_card_title_{card_id}"],
+                                   strings[f"dom_card_power_{card_id}"], [("coin", str(cost))],
+                                   TYPE_LABELS[language][card_type])
                 complete_cards[language][card_id] = image_url(face, "WEBP", quality=94)
         if expansion_images:
             add_expansion_images(path, entries, artwork, illustrations)

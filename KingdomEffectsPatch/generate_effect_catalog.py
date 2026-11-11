@@ -138,42 +138,83 @@ def read_targets(catalog, aliases):
     return sorted(targets, key=lambda row: (search_key(row[2]), search_key(row[1]), row[0]))
 
 
-def prepare_images(output, xpack, targets):
+def prepare_images(output, xpack, cards, types):
     source = GENERATOR / "Dominion-Kartenbilder.json"
-    folder = output.parent / "card-previews"
+    folder = output.parent / "card-faces"
     folder.mkdir(exist_ok=True)
     stamp = folder / "source.sha256"
     try:
         from PIL import Image
+        from extract_card_images import decode_artwork, decode_texture, read_image_pack, render_catalog_card
+
         source_data = source.read_bytes() if source.is_file() else None
         digest = hashlib.sha256(Path(__file__).read_bytes() + (GENERATOR / "extract_card_images.py").read_bytes())
-        digest.update(source_data if source_data is not None else b"Dominion.xpack build 3315")
-        digest.update("\n".join(sorted(targets)).encode("ascii"))
-        version = digest.hexdigest()
-        if stamp.is_file() and stamp.read_text(encoding="ascii") == version:
-            return
+        digest.update(XPACK_HASH.encode("ascii"))
         if source_data is not None:
-            pack = json.loads(source_data)
-        else:
-            from extract_card_images import read_image_pack
-            pack = read_image_pack(xpack, True)
+            digest.update(source_data)
+        digest.update(json.dumps((cards, types), sort_keys=True).encode("utf-8"))
+        version = digest.hexdigest()
+        if stamp.is_file() and stamp.read_text(encoding="ascii") == version and all(
+                (folder / f"{card['id']}.png").is_file() for card in cards):
+            return
+        pack = json.loads(source_data) if source_data is not None else read_image_pack(xpack, True)
         if pack["format"] != "dominion-card-images" or pack["version"] != 1:
             raise ValueError("Unbekanntes Bildpaketformat")
-        count = 0
-        for card_id, encoded in pack["images"].items():
-            if card_id not in targets or not re.fullmatch(r"[a-z0-9_]+", card_id):
-                continue
-            try:
-                with Image.open(BytesIO(base64.b64decode(encoded.split(",", 1)[1], validate=True))) as image:
-                    image.thumbnail((320, 240), Image.Resampling.LANCZOS)
-                    temporary = folder / (card_id + ".tmp")
-                    image.save(temporary, "PNG")
-                    temporary.replace(folder / (card_id + ".png"))
-                count += 1
-            except (OSError, ValueError, IndexError) as error:
-                print(f"Kartenvorschau für {card_id}: {error}", file=sys.stderr)
-        stamp.write_text(version, encoding="ascii")
-        print(f"{count} lokale Kartenvorschauen vorbereitet.")
+
+        def decode(encoded):
+            with Image.open(BytesIO(base64.b64decode(encoded.split(",", 1)[1], validate=True))) as image:
+                return image.convert("RGBA")
+
+        full = pack.get("cards", {}).get("de", {})
+        with xpack.open("rb") as package:
+            entries = read_index(package)
+
+            def read(key):
+                return read_resource(package, entries, key)
+
+            @lru_cache(maxsize=None)
+            def atlas(key):
+                return decode_texture(read(key))
+
+            @lru_cache(maxsize=None)
+            def sprite(name):
+                key = f"res/card_gen/shared/{name}"
+                return decode_artwork(read, atlas, key) if key in entries else None
+
+            @lru_cache(maxsize=None)
+            def expansion_icon(expansion):
+                path = output.parent / "menu-art" / f"exp-{expansion}.png"
+                if not path.is_file():
+                    return None
+                with Image.open(path) as image:
+                    return image.convert("RGBA")
+
+            count = missing_art = 0
+            for card in cards:
+                card_id = card["id"]
+                if not re.fullmatch(r"[a-z0-9_]+", card_id):
+                    raise ValueError(f"Ungültige Karten-ID {card_id}")
+                path = folder / f"{card_id}.png"
+                try:
+                    if card_id in full:
+                        face = decode(full[card_id])
+                    else:
+                        encoded = pack["images"].get(card_id)
+                        art = decode(encoded) if encoded else None
+                        if art is None and card["expansion"] == "basic":
+                            art = sprite(card_id)
+                        face = render_catalog_card(card, types, art, sprite, expansion_icon(card["expansion"]))
+                        missing_art += int(art is None)
+                    temporary = path.with_suffix(".tmp")
+                    face.save(temporary, "PNG", compress_level=1)
+                    temporary.replace(path)
+                    count += 1
+                except (OSError, ValueError, IndexError, KeyError) as error:
+                    path.unlink(missing_ok=True)
+                    print(f"Kartenvorschau für {card_id}: {error}", file=sys.stderr)
+        if count == len(cards):
+            stamp.write_text(version, encoding="ascii")
+        print(f"{count} lokale Kartenvorderseiten vorbereitet, davon {missing_art} ohne Illustration.")
     except (ImportError, OSError, ValueError, KeyError, TypeError) as error:
         print(f"Kartenvorschauen verwenden Text, wenn Bilder fehlen: {error}", file=sys.stderr)
 
@@ -261,7 +302,9 @@ def main(output, xpack):
     rows.append("};")
     output.write_text("\n".join(rows) + "\n", encoding="utf-8")
     prepare_menu(output, xpack)
-    prepare_images(output, xpack, {entry[0] for entry in targets})
+    target_ids = {entry[0] for entry in targets}
+    prepare_images(output, xpack, [card for card in catalog["cards"] if card["id"] in target_ids],
+                   catalog["types"]["de"])
 
 
 if __name__ == "__main__":

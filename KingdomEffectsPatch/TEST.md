@@ -114,7 +114,9 @@ Die daraus erwarteten Effektbefehle wurden separat im nativen Spielstart mit zwe
 
 **Layoutprüfung am 11. November 2026, Spielbuild 3315, Steam-Build 17683350.** Auf einem separaten Windows-Desktop maßen Effektdialog und Kartenauswahl bei 96 DPI **700 × 458** und **676 × 463** Pixel. Gegenüber den vorherigen Dialogvorlagen sind das jeweils knapp 28 % weniger Fläche. Größere Testschriften mit 11, 14 und 24 Punkt prüften Schaltflächenbreiten und die Begrenzung auf die Bildschirmfläche. Der Dialogtest prüfte auch die Vorschau ohne Auswahl, fehlende Bilder, leere Suche, scrollbaren Regeltext, die Kartenauswahl per Leertaste und das Bestätigen oder Abbrechen per Tastatur.
 
-Die sichtbare Abnahme des neuen Layouts erfolgt bei 100 %, 125 % und 150 % Windows-Skalierung in **Lokal spielen** und **Weitergeben**. In **Karte wählen** jeweils ein Einzelziel, mehrere Stapel und die geordnete Taifun-Liste öffnen. Mit Tab und den Pfeiltasten durch die Bedienelemente gehen, die Fokusmarkierung prüfen und in einem langen Regeltext scrollen. Den Dialog auch am Bildschirmrand öffnen.
+Die Vorschau verwendet 773 lokal vorbereitete Kartenvorderseiten aus dem Bildpaket und den Spieltexturen. Drei Vorderseiten wurden ohne Illustration erzeugt. Im isolierten Dialog erschienen **Geizhals** im Hochformat und **Hochzeit** im Querformat. Der Wechsel zum scrollbaren Regeltext, die Rückkehr zur Karte und der Rückfall auf Text bei fehlender Bilddatei wurden geprüft.
+
+Die sichtbare Abnahme des neuen Layouts erfolgt bei 100 %, 125 % und 150 % Windows-Skalierung in **Lokal spielen** und **Weitergeben**. In **Karte wählen** jeweils ein Einzelziel, mehrere Stapel und die geordnete Taifun-Liste öffnen. Mit Tab und den Pfeiltasten durch die Bedienelemente gehen und die Fokusmarkierung prüfen. In der Vorschau über **Kartentext lesen** einen langen Regeltext öffnen, scrollen und mit **Karte anzeigen** zur Vorderseite zurückkehren. Den Dialog auch am Bildschirmrand öffnen.
 
 ## Automatisierte lokale Effektprüfung im Hintergrund
 

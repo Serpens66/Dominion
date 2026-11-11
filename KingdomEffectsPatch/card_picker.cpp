@@ -54,6 +54,7 @@ struct Picker {
     std::unique_ptr<Gdiplus::Image> image{};
     bool rendering = false;
     bool first_render = true;
+    bool show_rules = false;
     std::unique_ptr<DialogSkin> skin{};
     HIMAGELIST expansion_images = nullptr;
     std::map<std::string, int, std::less<>> expansion_icons{};
@@ -85,10 +86,28 @@ std::string expansion_icon(const CardTarget& card) {
     return std::string("exp-") + (std::string_view(card.expansion_id) == "basic" ? "base" : card.expansion_id);
 }
 
+void layout_preview(HWND dialog, const Picker& picker) {
+    const auto* card = picker.displayed;
+    const bool can_switch = picker.image && card && *card->rules;
+    const bool show_face = picker.image && !(can_switch && picker.show_rules);
+    const int bottom = can_switch ? 204 : 222;
+    ShowWindow(GetDlgItem(dialog, IDC_CARD_TITLE), card && !show_face ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(dialog, IDC_CARD_INFO), card && !show_face ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(dialog, IDC_CARD_RULES), show_face ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(dialog, IDC_CARD_IMAGE), show_face ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(dialog, IDC_CARD_TEXT), can_switch ? SW_SHOW : SW_HIDE);
+    SetDlgItemTextW(dialog, IDC_CARD_TEXT, show_face ? L"Kartentext lesen" : L"Karte anzeigen");
+    picker.skin->place(IDC_CARD_IMAGE, {217, 29, 378, bottom});
+    picker.skin->place(IDC_CARD_RULES, {217, card ? 84 : 29, 378, bottom});
+    InvalidateRect(GetDlgItem(dialog, IDC_CARD_INFO), nullptr, TRUE);
+    InvalidateRect(GetDlgItem(dialog, IDC_CARD_IMAGE), nullptr, TRUE);
+}
+
 void preview(HWND dialog, Picker& picker, const CardTarget* card) {
     if (card && picker.displayed == card) return;
     picker.displayed = card;
     SetDlgItemTextW(dialog, IDC_CARD_TITLE, card ? card->title : L"");
+    SetDlgItemTextW(dialog, IDC_CARD_IMAGE, card ? card->title : L"");
     const auto info = card ? std::wstring(card->expansion) + L"\r\n" + card->types + L"\r\n" + card->cost : L"";
     SetDlgItemTextW(dialog, IDC_CARD_INFO, info.c_str());
     SetDlgItemTextW(dialog, IDC_CARD_RULES, card ? card->rules : picker.visible.empty()
@@ -100,11 +119,7 @@ void preview(HWND dialog, Picker& picker, const CardTarget* card) {
         if (image->GetLastStatus() == Gdiplus::Ok && image->GetWidth() && image->GetHeight())
             picker.image = std::move(image);
     }
-    ShowWindow(GetDlgItem(dialog, IDC_CARD_INFO), card ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(dialog, IDC_CARD_IMAGE), picker.image ? SW_SHOW : SW_HIDE);
-    picker.skin->place(IDC_CARD_RULES, {217, picker.image ? 154 : card ? 84 : 42, 378, 222});
-    InvalidateRect(GetDlgItem(dialog, IDC_CARD_INFO), nullptr, TRUE);
-    InvalidateRect(GetDlgItem(dialog, IDC_CARD_IMAGE), nullptr, TRUE);
+    layout_preview(dialog, picker);
 }
 
 void layout_list(HWND dialog, const Picker& picker, bool only_current) {
@@ -281,7 +296,7 @@ void change_order(HWND dialog, Picker& picker, unsigned command) {
 }
 
 void paint_preview(const DRAWITEMSTRUCT& draw, const Picker& picker) {
-    SetDCBrushColor(draw.hDC, DialogSkin::paper);
+    SetDCBrushColor(draw.hDC, DialogSkin::panel);
     FillRect(draw.hDC, &draw.rcItem, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
     if (!picker.image) return;
     const auto& rect = draw.rcItem;
@@ -439,7 +454,10 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
         if (message != WM_COMMAND) return FALSE;
         const auto control = LOWORD(wparam);
         const auto event = HIWORD(wparam);
-        if ((control == IDC_CARD_QUERY && event == EN_CHANGE) ||
+        if (control == IDC_CARD_TEXT) {
+            picker.show_rules = !picker.show_rules;
+            layout_preview(dialog, picker);
+        } else if ((control == IDC_CARD_QUERY && event == EN_CHANGE) ||
             (control == IDC_CARD_SCOPE && event == CBN_SELCHANGE)) {
             render_cards(dialog, picker);
         } else if (control == IDC_CARD_ALL && current_scope(dialog) && picker.mode == CardSelection::multiple) {
@@ -482,7 +500,7 @@ void pick_cards(HWND owner, const wchar_t* title, const CardTargets& cards, cons
     std::array<wchar_t, 32768> path{};
     const auto length = GetModuleFileNameW(module, path.data(), static_cast<DWORD>(path.size()));
     std::filesystem::path previews;
-    if (length && length < path.size()) previews = std::filesystem::path(path.data()).parent_path() / L"card-previews";
+    if (length && length < path.size()) previews = std::filesystem::path(path.data()).parent_path() / L"card-faces";
     Picker picker{title, cards, current_kingdom, mode, accept, std::move(previews)};
     if (DialogBoxParamW(module, MAKEINTRESOURCEW(IDD_CARD_PICKER), owner, picker_proc,
                         reinterpret_cast<LPARAM>(&picker)) == -1) {

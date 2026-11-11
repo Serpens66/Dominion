@@ -142,7 +142,7 @@ function Invoke-TestSession {
         $newestSource = ($sources | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1).LastWriteTimeUtc
         $binaries = Get-Item -LiteralPath $attach, $dll -ErrorAction SilentlyContinue
         if (@($binaries).Count -ne 2 -or @($binaries | Where-Object { $_.LastWriteTimeUtc -lt $newestSource }).Count -or
-            !(Test-Path -LiteralPath (Join-Path $PSScriptRoot 'out\card-previews') -PathType Container) -or
+            !(Test-Path -LiteralPath (Join-Path $PSScriptRoot 'out\card-faces') -PathType Container) -or
             !(Test-Path -LiteralPath (Join-Path $PSScriptRoot 'out\menu-art') -PathType Container)) {
             & (Join-Path $PSScriptRoot 'build.cmd')
             if ($LASTEXITCODE -ne 0) { throw 'Die Patch-Dateien konnten nicht gebaut werden.' }
