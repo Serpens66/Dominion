@@ -121,7 +121,7 @@ Die zusätzliche Galerie-Erweiterung für Online-Banns verwendet die nativen Ban
 | RVA | PE-Dateioffset | Originalbytes | Verwendung |
 | --- | --- | --- | --- |
 | `0x1FFF35` | `0x1FF335` | `E8 96 4A EE FF` | Die Königreich-Oberfläche ruft `0x0E49D0` auf und kopiert das Ergebnis. Die Hülle lässt den Aufruf zuerst laufen und öffnet den Dialog bei F8 mit der bereits aufgelösten Auswahl. |
-| `0x0BBDB0` bis `0x0BBDCF` | – | – | Die lokale Königreich-Einrichtung liegt beim aktiven Profil plus `0x10`. Der Dialog prüft diese Identität und öffnet sich vor dem Partiestart. Dominions Verbindungsstatus ist dafür unerheblich. |
+| `0x0BBDB0` bis `0x0BBDCF` | – | – | Die profilgebundene Königreich-Einrichtung liegt bei Auswahlmodus 0 am aktiven Profil plus `0x10`. Modus 1 verwendet je nach Flagbit 0 Profil plus `0x11B8` oder `0x2360`. Der Dialog prüft die zum aktuellen Modus und Flag passende Identität und öffnet sich nur vor dem Partiestart. Modus und Flag stehen bei RVA `0x4DBF38` und `0x4DBF40`. Die Online-Anzeige des Editors ändert die Serververarbeitung nicht. |
 | `0x0DDBB0`, `0x0E0FF0`, `0x23D850` | – | – | Der Editor lässt den Effekttext nativ parsen, ersetzt die Liste im temporären Setup und prüft die Rückausgabe. Der Spielstring im lokalen Setup wird über die native Zuweisung übernommen. |
 | `0x1F70B5`, `0x1F70C7`, `0x1F70CE` | – | – | Der native Wechsel zur eigenen Auswahl löst die Bindung an das zuvor ausgewählte Profilset. Der Editor verwendet dieselben Felder, damit die geänderte Liste erhalten bleibt. |
 

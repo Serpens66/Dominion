@@ -124,8 +124,19 @@ inline void replace_effects(Setup& destination, const Setup& parsed) {
     write_effects(destination.data(), next);
 }
 
+enum class EditorContext { none, local, online };
+
+// Build 3315: native configuration selector at RVA 0x0BBDB0.
+inline EditorContext editor_context(const std::byte* profile, const std::byte* config,
+                                    std::uint32_t screen, std::uint32_t flags) {
+    if (!profile || !config) return EditorContext::none;
+    if (screen == 0 && config == profile + 0x10) return EditorContext::local;
+    if (screen == 1 && config == profile + ((flags & 1) ? 0x2360 : 0x11B8)) return EditorContext::online;
+    return EditorContext::none;
+}
+
 // Returns true only after the user accepts the draft.
 bool edit_effects(void* owner, std::string_view kingdom_text, const EffectCommands& effects, bool& automatic,
-                  const std::function<bool(const EffectCommands&)>& apply);
+                  const std::function<bool(const EffectCommands&)>& apply, EditorContext context = EditorContext::local);
 
 }

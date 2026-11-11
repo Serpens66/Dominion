@@ -8,9 +8,11 @@ Vorabversion für die Windows-Steam-Version von Dominion, **Spielbuild 3315** (S
 2. **Dominion-mit-Mod-starten.cmd** doppelklicken. Dominion muss vorher geschlossen sein.
 3. Der Starter findet Dominion in den Steam-Bibliotheken. Falls nötig, den Spielordner eingeben. Eine spätere Änderung ist über `Dominion-mit-Mod-starten.cmd -GameDirectory "D:\SteamLibrary\steamapps\common\Dominion"` möglich.
 4. Der Starter startet Dominion direkt aus deiner Steam-Installation und aktiviert den Patch nur im Arbeitsspeicher. Es werden keine Spielkopie und kein Testprofil angelegt. Python und Visual Studio werden nicht benötigt.
-5. Auf **Bereit** warten. In **Lokal spielen** oder **Weitergeben** die Königreich-Auswahl öffnen und **F8** drücken.
+5. Auf **Bereit** warten. In **Lokal spielen**, **Weitergeben** oder beim Erstellen eines **Online-Spiels / Privaten Spiels** die Königreich-Auswahl öffnen und **F8** drücken.
 
 Steam und Internet können eingeschaltet bleiben. Kampagneneffekte werden in privaten Online-Partien nicht übernommen. Die erweiterten Online-Banns verwenden dagegen die normale Sammlung und Bannliste des Spiels.
+
+Der Online-Editor trägt den Hinweis **Online – Wirkung serverabhängig**. Du kannst dort Effekte auswählen und für das betreffende Online-Königreich speichern. Lokal und online verwenden getrennte Spielkonfigurationen. Ob die Effekte in der Partie ankommen und wirken, entscheidet weiterhin der Server. Die automatische Verdopplung erst lokal gezogener Zufallsstapel ist online deaktiviert; explizite Verdopplungseffekte auf gewählte Stapel sind auswählbar. Deine lokale Automatik-Einstellung bleibt erhalten.
 
 ## Effekte bearbeiten
 
@@ -38,7 +40,7 @@ Unter `%LOCALAPPDATA%\DominionKingdomEffectsPatch` liegt `letzter-start.log` mit
 
 ## Grenzen und Entfernen
 
-- Für **Lokal spielen** und **Weitergeben**; nicht alle Effekte und Kombinationen sind abschließend geprüft.
+- Die Effektwirkung wird in **Lokal spielen** und **Weitergeben** geprüft; nicht alle Effekte und Kombinationen sind abschließend getestet. Der Online-Editor bereitet die Auswahl vor, die Wirkung hängt vom Server ab.
 - Online-Banns können über das vorhandene Spielmenü über fünf Einträge hinaus bearbeitet werden. Die native gemeinsame Kapazität beträgt 700 Einträge. Größere Listen wurden in privaten Partien geprüft; Matchmaking und die volle Kapazität sind offen. Der ursprüngliche Hilfetext nennt weiterhin fünf Banns.
 - Bei einem Fehler der Patch-Initialisierung das Spiel schließen und den Starter erneut öffnen. Nicht mit einem fehlgeschlagenen Patch weiterspielen.
 - Nach einem Dominion-Update kann der Patch bis zu einer angepassten Version nicht mehr starten.

@@ -36,6 +36,7 @@ struct Draft {
     bool automatic;
     const std::function<bool(const EffectCommands&)>& apply;
     CardTargets fixed;
+    EditorContext context;
     const EffectDefinition* selected = nullptr;
     const CardTarget* first = nullptr;
     const CardTarget* second = nullptr;
@@ -398,7 +399,9 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
         if (message == WM_INITDIALOG) {
             auto& draft = *reinterpret_cast<Draft*>(lparam);
             SetWindowLongPtrW(dialog, DWLP_USER, lparam);
-            SetWindowTextW(dialog, menu_text::kingdom);
+            const bool online = draft.context == EditorContext::online;
+            const auto title = std::wstring(menu_text::kingdom) + (online ? L" – Online – Wirkung serverabhängig" : L"");
+            SetWindowTextW(dialog, title.c_str());
             draft.skin = std::make_unique<DialogSkin>(dialog);
             SetDlgItemTextW(dialog, IDC_EFFECT_LABEL, menu_text::features);
             SetDlgItemTextW(dialog, IDOK, menu_text::done);
@@ -408,7 +411,9 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
                 SendDlgItemMessageW(dialog, IDC_CATEGORY, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(category));
             }
             SendDlgItemMessageW(dialog, IDC_CATEGORY, CB_SETCURSEL, 0, 0);
-            CheckDlgButton(dialog, IDC_AUTOMATIC, draft.automatic ? BST_CHECKED : BST_UNCHECKED);
+            CheckDlgButton(dialog, IDC_AUTOMATIC, !online && draft.automatic ? BST_CHECKED : BST_UNCHECKED);
+            EnableWindow(GetDlgItem(dialog, IDC_AUTOMATIC), !online);
+            if (online) SetDlgItemTextW(dialog, IDC_AUTOMATIC, L"Automatische Verdopplung nur lokal");
             filter_catalog(dialog, draft);
             update_active(dialog, draft);
             return TRUE;
@@ -464,7 +469,8 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
                 SetDlgItemTextW(dialog, IDC_STATUS, L"Dominion hat die Effektliste abgelehnt. Bitte prüfe die Ziele.");
                 return TRUE;
             }
-            draft.automatic = IsDlgButtonChecked(dialog, IDC_AUTOMATIC) == BST_CHECKED;
+            if (draft.context == EditorContext::local)
+                draft.automatic = IsDlgButtonChecked(dialog, IDC_AUTOMATIC) == BST_CHECKED;
             EndDialog(dialog, IDOK);
         } else if (control == IDCANCEL) {
             EndDialog(dialog, IDCANCEL);
@@ -481,11 +487,12 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
 }
 
 bool edit_effects(void* owner, std::string_view kingdom_text, const EffectCommands& effects, bool& automatic,
-                  const std::function<bool(const EffectCommands&)>& apply) {
+                  const std::function<bool(const EffectCommands&)>& apply, EditorContext context) {
+    if (context == EditorContext::none) return false;
     HMODULE module{};
     if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                            reinterpret_cast<LPCWSTR>(dialog_proc), &module)) return false;
-    Draft draft{effects, automatic, apply, fixed_targets(kingdom_text)};
+    Draft draft{effects, automatic, apply, fixed_targets(kingdom_text), context};
     const auto result = DialogBoxParamW(module, MAKEINTRESOURCEW(IDD_EFFECT_EDITOR),
                                        static_cast<HWND>(owner), dialog_proc, reinterpret_cast<LPARAM>(&draft));
     if (result == -1) {

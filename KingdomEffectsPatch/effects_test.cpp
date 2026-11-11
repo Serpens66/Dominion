@@ -158,6 +158,19 @@ void editor_selection() {
 }
 
 int main() {
+    std::array<std::byte, 0x3508> profile{};
+    using kingdom::EditorContext;
+    const auto base = profile.data();
+    assert(kingdom::editor_context(base, base + 0x10, 0, 0) == EditorContext::local);
+    assert(kingdom::editor_context(base, base + 0x11B8, 1, 0) == EditorContext::online);
+    assert(kingdom::editor_context(base, base + 0x2360, 1, 1) == EditorContext::online);
+    assert(kingdom::editor_context(base, base + 0x11B8, 1, 1) == EditorContext::none);
+    assert(kingdom::editor_context(base, base + 0x2360, 1, 0) == EditorContext::none);
+    assert(kingdom::editor_context(base, base + 0x10, 1, 0) == EditorContext::none);
+    assert(kingdom::editor_context(base, base + 0x11B8, 0, 0) == EditorContext::none);
+    assert(kingdom::editor_context(base, base + 0x11B8, 2, 0) == EditorContext::none);
+    assert(kingdom::editor_context(base, base + 0x11B8, 3, 0) == EditorContext::none);
+    assert(kingdom::editor_context(nullptr, base + 0x10, 0, 0) == EditorContext::none);
     distinct_targets_and_multiplicity();
     capacity();
     automatic_doublings();

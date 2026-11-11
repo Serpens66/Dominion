@@ -8,6 +8,8 @@ std::string failure;
 bool checked = false;
 bool picker_checked = false;
 unsigned picker_ticks = 0;
+bool online_checked = false;
+bool online_cancel = false;
 UINT_PTR timer = 0;
 void check(bool condition, const char* message) { if (!condition) throw std::runtime_error(message); }
 
@@ -45,6 +47,28 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
     return FALSE;
 }
 void CALLBACK inspect_dialog(HWND, UINT, UINT_PTR, DWORD) { EnumThreadWindows(GetCurrentThreadId(), inspect, 0); }
+BOOL CALLBACK inspect_online(HWND dialog, LPARAM) {
+    if (!GetDlgItem(dialog, IDC_CATALOG)) return TRUE;
+    KillTimer(nullptr, timer);
+    try {
+        wchar_t caption[256]{}; GetWindowTextW(dialog,caption,256);
+        check(std::wstring_view(caption).find(L"Online – Wirkung serverabhängig") != std::wstring_view::npos, "Online context missing from title.");
+        check(!IsWindowEnabled(GetDlgItem(dialog,IDC_AUTOMATIC)), "Online automation is enabled.");
+        check(IsDlgButtonChecked(dialog,IDC_AUTOMATIC)==BST_UNCHECKED, "Local automation shown as active online.");
+        auto& draft=*reinterpret_cast<kingdom::Draft*>(GetWindowLongPtrW(dialog,DWLP_USER));
+        const kingdom::EffectCommands pair{"start_double_pile(village)","start_double_pile(market)"};
+        check(kingdom::add_commands(dialog,draft,pair,true).empty(), "Online multi-target append failed.");
+        check(draft.effects==pair, "Online selection mismatch.");
+        check(kingdom::add_commands(dialog,draft,{pair.front()},false).empty() && draft.effects.size()==3, "Online repeat failed.");
+        while (draft.effects.size()<32) check(kingdom::add_commands(dialog,draft,{pair.front()},false).empty(), "Online capacity fill failed.");
+        const auto saved=draft.effects;
+        check(!kingdom::add_commands(dialog,draft,{pair.front()},false).empty() && draft.effects==saved, "Online capacity rejection lost draft.");
+        online_checked=true;
+    } catch (const std::exception& error) { failure=error.what(); }
+    PostMessageW(dialog,WM_COMMAND,online_cancel?IDCANCEL:IDOK,0);
+    return FALSE;
+}
+void CALLBACK inspect_online_dialog(HWND, UINT, UINT_PTR, DWORD) { EnumThreadWindows(GetCurrentThreadId(),inspect_online,0); }
 BOOL CALLBACK inspect_picker(HWND dialog, LPARAM) {
     if (!GetDlgItem(dialog, IDC_CARD_TREE)) return TRUE;
     try {
@@ -85,6 +109,20 @@ int main() {
     const bool saved = kingdom::edit_effects(nullptr, "-k village, market", effects, automatic,
         [&](const kingdom::EffectCommands&) { applied = true; return true; });
     KillTimer(nullptr, timer);
+    // Each profile-backed online configuration supplies its own apply callback.
+    std::array<kingdom::EffectCommands,3> configurations{effects,{}, {"twist_big_ideas"}};
+    const auto local_before=configurations[0];
+    bool local_automatic=true;
+    for (std::size_t target=1;target<=2;++target) {
+        online_checked=false; online_cancel=false; timer=SetTimer(nullptr,0,150,inspect_online_dialog);
+        const auto other=configurations[3-target];
+        check(kingdom::edit_effects(nullptr,"-k village, market",{},local_automatic,
+            [&](const kingdom::EffectCommands& value) { configurations[target]=value; return true; },kingdom::EditorContext::online), "Online accept failed.");
+        check(online_checked && local_automatic && configurations[target].size()==32 && configurations[3-target]==other && configurations[0]==local_before, "Online change affected another configuration or automation.");
+    }
+    online_cancel=true; online_checked=false; timer=SetTimer(nullptr,0,150,inspect_online_dialog);
+    check(!kingdom::edit_effects(nullptr,"-k village, market",{},local_automatic,
+        [&](const kingdom::EffectCommands&) { applied=true; return true; },kingdom::EditorContext::online) && online_checked && !applied && local_automatic, "Online cancel changed the saved selection.");
     if (*package) {
         kingdom::CardTargets cards;
         for (const auto& card:kingdom::target_catalog) cards.push_back(&card);
@@ -100,6 +138,6 @@ int main() {
         std::fprintf(stderr, "Editor test failed: %s\n", failure.c_str());
         return 1;
     }
-    std::puts("PASS: real native F8 dialog, catalog labels, ID/timing search, empty result and Cancel.");
+    std::puts("PASS: native local/online dialogs, isolated apply callbacks, automation preserved, 32-entry limit, search, preview and Cancel.");
     return 0;
 }

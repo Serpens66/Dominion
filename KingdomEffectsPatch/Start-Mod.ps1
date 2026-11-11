@@ -48,7 +48,7 @@ function Invoke-ModRelease {
             } finally { $ErrorActionPreference = $savedPreference }
             Write-Host "Injector-Ergebnis: $attachResult"
             if ($attachResult -ne 0) { throw 'Der Patch wurde nicht erfolgreich aktiviert. Bitte Dominion schliessen und den Starter erneut oeffnen.' }
-            Write-Host 'Bereit. In Lokal spielen oder Weitergeben die Koenigreich-Auswahl oeffnen und F8 druecken.'
+            Write-Host 'Bereit. In Lokal spielen, Weitergeben oder Online/Privates Spiel die Koenigreich-Auswahl oeffnen und F8 druecken.'
             Write-Host 'Erweiterte Online-Banns stehen in der normalen Sammlung zur Verfuegung.'
             $process.WaitForExit()
         } finally {

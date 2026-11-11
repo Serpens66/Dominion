@@ -4,7 +4,9 @@
 
 int wmain(int argc, wchar_t** argv) {
     try {
-        require(argc == 5, "Usage: release_game_test.exe <copy Dominion.exe> <package bin> <original Dominion.exe> <0..3>");
+        require(argc == 5 || argc == 6, "Usage: release_game_test.exe <copy Dominion.exe> <package bin> <original Dominion.exe> <0..3> [--online-diagnostic]");
+        const bool diagnostic = argc == 6 && std::wcscmp(argv[5], L"--online-diagnostic") == 0;
+        require(argc == 5 || diagnostic, "Unexpected test option.");
         const std::filesystem::path path = std::filesystem::canonical(argv[1]);
         const auto package = std::filesystem::canonical(argv[2]);
         Handle original(CreateFileW(argv[3], FILE_READ_ATTRIBUTES,
@@ -94,9 +96,9 @@ int wmain(int argc, wchar_t** argv) {
         wait_for_menu(process.value, child.dwProcessId);
         require(std::filesystem::exists(scratch / L"log.txt"), "Game did not write its log to disposable folder.");
         std::puts("The actual Dominion engine reached its main menu without using the foreground desktop.");
-        const auto invoke_launcher = [&](const std::filesystem::path& source, bool installed = false) {
+        const auto invoke_launcher = [&](const std::filesystem::path& source, bool installed = false, bool online = false) {
             const auto exe = package / L"attach.exe";
-            std::wstring command = L"\"" + exe.wstring() + (installed ? L"\" --installed --apply " : L"\" --local --apply ") +
+            std::wstring command = L"\"" + exe.wstring() + (online ? L"\" --online --apply " : installed ? L"\" --installed --apply " : L"\" --local --apply ") +
                 std::to_wstring(child.dwProcessId) + L" \"" + path.wstring() + L"\" \"" + source.wstring() + L"\"";
             STARTUPINFOW info{sizeof info};
             PROCESS_INFORMATION attached{};
@@ -114,11 +116,17 @@ int wmain(int argc, wchar_t** argv) {
         require(invoke_launcher(path) != 0, "Injector did not reject original/copy identity collision.");
         require(invoke_launcher(std::filesystem::canonical(argv[3]), true) != 0,
                 "Installed mode did not reject a different executable identity.");
-        require(invoke_launcher(path, true) == 0, "Packaged installed-mode injector failed.");
+        require(diagnostic ? invoke_launcher(std::filesystem::canonical(argv[3]),false,true) == 0 :
+                            invoke_launcher(path,true) == 0, "Packaged injector failed.");
         unsigned char limit = 0xFF;
         require(ReadProcessMemory(process.value, reinterpret_cast<void*>(base + 0x208EA4), &limit, 1, &amount) &&
                 amount == 1 && limit == 0, "Online ban patch is not installed.");
         std::wprintf(L"Scratch: %ls\n", scratch.c_str());
+        constexpr std::array<unsigned char,5> original_editor{0xE8,0x96,0x4A,0xEE,0xFF};
+        std::array<unsigned char,5> editor{};
+        require(ReadProcessMemory(process.value,reinterpret_cast<void*>(base+0x1FFF35),editor.data(),editor.size(),&amount) &&
+                amount==editor.size() && editor[0]==0xE8 && editor!=original_editor, "F8 hook missing.");
+        if (diagnostic) { std::puts("PASS: online diagnostic mode installs F8 and extended bans."); return 0; }
         constexpr std::array<unsigned char, 5> native_start{0xC7,0x87,0x44,0x50,0x00};
         std::array<unsigned char, 5> start_check{};
         require(ReadProcessMemory(process.value, reinterpret_cast<void*>(base + 0x0B24BF),

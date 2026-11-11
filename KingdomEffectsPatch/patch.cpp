@@ -361,9 +361,22 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
 
     const HWND owner = GetActiveWindow();
     const auto* profile = active_profile();
-    if (!owner || owner != GetForegroundWindow() || !profile || config != profile + 0x10) return;
+    if (!owner || owner != GetForegroundWindow() || !profile) return;
+    const auto screen = *reinterpret_cast<const DWORD*>(image_base + 0x4DBF38);
+    const auto flags = *reinterpret_cast<const DWORD*>(image_base + 0x4DBF40);
+    const auto context = kingdom::editor_context(profile, config, screen, flags);
+    if (context == kingdom::EditorContext::none) {
+        char event[160];
+        std::snprintf(event, sizeof event, "effect editor blocked: screen=%lu flags=%lX local=%d online1=%d online2=%d",
+                      screen, flags, int(config == profile + 0x10), int(config == profile + 0x11B8), int(config == profile + 0x2360));
+        log(event);
+        return;
+    }
     const auto* client = *reinterpret_cast<const std::byte* const*>(image_base + 0x8C8D5C);
-    if (!client || *reinterpret_cast<const DWORD*>(client + 0x5068)) return;
+    if (!client || *reinterpret_cast<const DWORD*>(client + 0x5068)) {
+        log("effect editor blocked: no idle client");
+        return;
+    }
     try {
         const DWORD version = *reinterpret_cast<const DWORD*>(config + 0x28);
         const NativeSetupText original(*current, version);
@@ -403,8 +416,9 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
             log("effect editor applied", &list);
             return true;
         };
-        log("effect editor opened");
-        if (kingdom::edit_effects(owner, original.view(), effects, automatic, apply)) {
+        log(context == kingdom::EditorContext::online ? "effect editor opened: online" : "effect editor opened: local");
+        if (kingdom::edit_effects(owner, original.view(), effects, automatic, apply, context) &&
+            context == kingdom::EditorContext::local) {
             automatic_enabled = automatic;
         }
     } catch (...) {
@@ -830,7 +844,7 @@ const Site sites[] = {
     {0x20FB27, "\xE8\x84\x51\xED\xFF", 5, set_hook},
     {0x1FCD6D, "\xE8\xAE\x2D\xEE\xFF", 5, save_played_hook},
     {0x1FCDAE, "\xE8\x7D\x3B\xEE\xFF", 5, save_prepared_hook},
-    {0x1FFF35, "\xE8\x96\x4A\xEE\xFF", 5, effect_editor_hook, false, local_modes},
+    {0x1FFF35, "\xE8\x96\x4A\xEE\xFF", 5, effect_editor_hook, false, local_modes | online_mode},
     {0x0B24BF, "\xC7\x87\x44\x50\x00\x00\x00\x00\x00\x00", 10, local_dispatch_hook, true, local_modes},
     {0x0B1EC6, "\xE8\xA5\x21\x17\x00", 5, local_load_hook, false, local_modes},
     {0x1E9F57, "\xE8\x14\xB4\xEF\xFF", 5, automatic_extras_hook, false, local_modes},
