@@ -4,6 +4,8 @@
 #include "effect_editor.hpp"
 #include "effect_editor_ids.h"
 #include "card_picker.hpp"
+#include "dialog_skin.hpp"
+#include "menu_labels.generated.hpp"
 
 namespace kingdom {
 namespace {
@@ -35,6 +37,7 @@ struct Draft {
     const EffectDefinition* selected = nullptr;
     const CardTarget* first = nullptr;
     const CardTarget* second = nullptr;
+    std::unique_ptr<DialogSkin> skin{};
 };
 
 std::wstring widen(std::string_view value) {
@@ -113,17 +116,40 @@ std::wstring active_label(std::string_view command) {
     return label;
 }
 
+void set_list_width(HWND list, LRESULT count) {
+    const auto dc = GetDC(list);
+    if (!dc) return;
+    const auto font = reinterpret_cast<HFONT>(SendMessageW(list, WM_GETFONT, 0, 0));
+    const auto previous = font ? SelectObject(dc, font) : nullptr;
+    LONG width = 0;
+    std::wstring text;
+    for (LRESULT row = 0; row < count; ++row) {
+        const auto length = SendMessageW(list, LB_GETTEXTLEN, row, 0);
+        if (length <= 0) continue;
+        text.resize(static_cast<std::size_t>(length) + 1);
+        SendMessageW(list, LB_GETTEXT, row, reinterpret_cast<LPARAM>(text.data()));
+        SIZE extent{};
+        if (GetTextExtentPoint32W(dc, text.data(), static_cast<int>(length), &extent))
+            width = (std::max)(width, extent.cx + 8);
+    }
+    if (previous) SelectObject(dc, previous);
+    ReleaseDC(list, dc);
+    SendMessageW(list, LB_SETHORIZONTALEXTENT, width, 0);
+}
+
 void update_active(HWND dialog, const Draft& draft, LRESULT selection = -1) {
-    SendDlgItemMessageW(dialog, IDC_ACTIVE, LB_RESETCONTENT, 0, 0);
+    const auto list = GetDlgItem(dialog, IDC_ACTIVE);
+    SendMessageW(list, LB_RESETCONTENT, 0, 0);
     for (const auto& command : draft.effects) {
         const auto label = active_label(command);
-        SendDlgItemMessageW(dialog, IDC_ACTIVE, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
+        SendMessageW(list, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
     }
+    set_list_width(list, SendMessageW(list, LB_GETCOUNT, 0, 0));
     if (selection >= 0 && !draft.effects.empty()) {
         SendDlgItemMessageW(dialog, IDC_ACTIVE, LB_SETCURSEL,
                             (std::min)(selection, static_cast<LRESULT>(draft.effects.size() - 1)), 0);
     }
-    const auto status = std::to_wstring(draft.effects.size()) + L" / 32 Effektplätze belegt";
+    const auto status = std::to_wstring(draft.effects.size()) + L" / 32 Effekte";
     SetDlgItemTextW(dialog, IDC_EFFECT_COUNT, status.c_str());
 }
 
@@ -136,11 +162,15 @@ void update_targets(HWND dialog, const Draft& draft) {
     ShowWindow(GetDlgItem(dialog, IDC_SECOND_TARGET), needs_second ? SW_SHOW : SW_HIDE);
     ShowWindow(GetDlgItem(dialog, IDC_ADD), effect && (!needs_first || needs_second) ? SW_SHOW : SW_HIDE);
     EnableWindow(GetDlgItem(dialog, IDC_ADD), effect && (!needs_second || (draft.first && draft.second)));
-    if (needs_first)
+    if (needs_first) {
+        draft.skin->place(IDC_TARGET, {8, 189, needs_second ? 77 : 129, 204});
         SetDlgItemTextW(dialog, IDC_TARGET, draft.first ? draft.first->title :
-                       multiple ? L"Ziele wählen…" : L"Ziel wählen…");
+                       multiple ? L"Ziele wählen…" : menu_text::choose_card);
+    }
     if (needs_second)
-        SetDlgItemTextW(dialog, IDC_SECOND_TARGET, draft.second ? draft.second->title : L"Zweites Ziel wählen…");
+        SetDlgItemTextW(dialog, IDC_SECOND_TARGET, draft.second ? draft.second->title : L"Zweites Ziel…");
+    if (effect && (!needs_first || needs_second))
+        draft.skin->place(IDC_ADD, needs_second ? RECT{140, 189, 219, 204} : RECT{8, 189, 102, 204});
 }
 
 void select_effect(HWND dialog, Draft& draft) {
@@ -178,6 +208,8 @@ void filter_catalog(HWND dialog, Draft& draft) {
                                           reinterpret_cast<LPARAM>(&effect));
         if (&effect == draft.selected && row >= 0) selection = row;
     }
+    const auto list = GetDlgItem(dialog, IDC_CATALOG);
+    set_list_width(list, SendMessageW(list, LB_GETCOUNT, 0, 0));
     SendDlgItemMessageW(dialog, IDC_CATALOG, LB_SETCURSEL, selection, 0);
     select_effect(dialog, draft);
 }
@@ -259,6 +291,12 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
         if (message == WM_INITDIALOG) {
             auto& draft = *reinterpret_cast<Draft*>(lparam);
             SetWindowLongPtrW(dialog, DWLP_USER, lparam);
+            SetWindowTextW(dialog, menu_text::kingdom);
+            draft.skin = std::make_unique<DialogSkin>(dialog);
+            SetDlgItemTextW(dialog, IDC_EFFECT_LABEL, menu_text::features);
+            SetDlgItemTextW(dialog, IDOK, menu_text::done);
+            SetDlgItemTextW(dialog, IDCANCEL, menu_text::cancel);
+            SendDlgItemMessageW(dialog, IDC_QUERY, EM_SETCUEBANNER, FALSE, reinterpret_cast<LPARAM>(L"Effekt suchen"));
             for (const auto* category : {L"Alle Kategorien", L"Spielvariationen", L"Stempel", L"Spielaufbau"}) {
                 SendDlgItemMessageW(dialog, IDC_CATEGORY, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(category));
             }
@@ -268,10 +306,18 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             update_active(dialog, draft);
             return TRUE;
         }
-        if (message != WM_COMMAND) return FALSE;
         const auto state = GetWindowLongPtrW(dialog, DWLP_USER);
         if (!state) return FALSE;
         auto& draft = *reinterpret_cast<Draft*>(state);
+        if (draft.skin) {
+            const auto handled = draft.skin->handle(message, wparam, lparam);
+            if (handled) return handled;
+        }
+        if (message == WM_CLOSE) {
+            EndDialog(dialog, IDCANCEL);
+            return TRUE;
+        }
+        if (message != WM_COMMAND) return FALSE;
         const auto control = LOWORD(wparam);
         const auto event = HIWORD(wparam);
         if ((control == IDC_QUERY && event == EN_CHANGE) ||

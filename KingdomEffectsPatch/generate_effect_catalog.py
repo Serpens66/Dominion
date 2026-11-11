@@ -38,7 +38,6 @@ MENU_LABELS = {
     "kingdom": "dom_ui_create_game_tab_kingdom", "choose_card": "dom_ui_create_game_cards_input",
     "expansions": "dom_ui_create_game_expansions", "done": "dom_ui_score_done",
     "cancel": "dom_ui_create_game_dismiss", "features": "dom_ui_campaign_features",
-    "kingdom_cards": "dom_ui_gallery_kingdom_cards",
 }
 
 
@@ -183,9 +182,14 @@ def prepare_menu(output, xpack):
     folder = output.parent / "menu-art"
     folder.mkdir(exist_ok=True)
     stamp = folder / "source.sha256"
-    source = (GENERATOR / "Dominion-Generator.html").read_text(encoding="utf-8")
-    match = re.search(r'<script type="application/json" id="game-icons">\s*(.*?)</script>', source, re.S)
-    icon_json = match[1] if match else "{}"
+    try:
+        source = (GENERATOR / "Dominion-Generator.html").read_text(encoding="utf-8")
+        match = re.search(r'<script type="application/json" id="game-icons">\s*(.*?)</script>', source, re.S)
+        icon_json = match[1] if match else "{}"
+        icons = json.loads(icon_json)
+    except (OSError, ValueError) as error:
+        print(f"Menü verwendet Text für fehlende SetGenerator-Symbole: {error}", file=sys.stderr)
+        icon_json, icons = "{}", {}
     with xpack.open("rb") as package:
         entries = read_index(package)
 
@@ -221,7 +225,7 @@ def prepare_menu(output, xpack):
             except (OSError, ValueError, KeyError) as error:
                 print(f"Menügrafik {name}: {error}", file=sys.stderr)
                 complete = False
-        for name, data in json.loads(icon_json).items():
+        for name, data in icons.items():
             if not re.fullmatch(r"[a-z0-9_-]+", name) or name in MENU_ASSETS:
                 continue
             try:

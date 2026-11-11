@@ -28,6 +28,7 @@ public:
     int add_icon(HIMAGELIST images, std::string_view name) const;
     HIMAGELIST checks() const;
     static constexpr COLORREF paper = RGB(248, 238, 212);
+    static constexpr COLORREF panel = RGB(229, 209, 165);
     static constexpr COLORREF ink = RGB(56, 35, 20);
 
 private:
@@ -42,6 +43,7 @@ private:
     int header_height_ = 0;
     HBRUSH paper_brush_ = nullptr;
     HFONT body_ = nullptr;
+    HFONT section_ = nullptr;
     HFONT heading_ = nullptr;
     ULONG_PTR graphics_ = 0;
     std::filesystem::path assets_;

@@ -4,7 +4,7 @@
 
 **Inhaltsverzeichnis / Contents**
 
-- **Deutsch:** [Königreich speichern und teilen](#königreich-speichern-und-teilen) · [Kampagneneffekte eingeben](#kampagneneffekte-eingeben) · [Effektkatalog](#katalog-der-kampagneneffekte)
+- **Deutsch:** [Königreich speichern und teilen](#königreich-speichern-und-teilen) · [Kampagneneffekte eingeben](#kampagneneffekte-eingeben) · [Effektkatalog](#katalog-der-kampagneneffekte) · [F8-Effektdialog](#f8-effektdialog-mit-dem-lokalen-patch)
 - **English:** [Save and share a Kingdom](#save-and-share-a-kingdom) · [Enter campaign effects](#enter-campaign-effects) · [Effect catalog](#campaign-effect-catalog)
 
 ## Dominion auf Steam ohne Mods
@@ -175,6 +175,12 @@ Für die drei Eigenschaftsvarianten ist die Übernahme in eigene Sets offen. [Qu
 | `landmod_ally_forever_favored` | Kombiniert einen Verbündeten mit **Für immer Verbündet**. Für eine eigene Auswahl den Verbündeten hinter `-k` und `twist_forever_favored` hinter `-x` angeben. |
 
 Eine Kampagnenvorlage weist dem Einsamen Schrein sowohl **Inspirierend** als auch **Waghalsig** zu. Beide Eigenschaften stehen hinter `-k`, jeweils mit derselben Stapel-ID in Klammern. Die Schreibweise lautet `inspiring(secluded_shrine), reckless(secluded_shrine)`. [Technische Referenz zur Kingdom-Syntax](Modding_Overview.md#bestandteile-des-kingdom-texts)
+
+## F8-Effektdialog mit dem lokalen Patch
+
+Öffne mit dem Patch-Starter in **Lokal spielen** oder **Weitergeben** die Königreich-Auswahl und drücke **F8**. Links findest du Suche, Kategorien und die Wirkung des gewählten Effekts. Rechts stehen die aktiven Effekte in ihrer Ausführungsreihenfolge. Unten findest du die automatische Verdopplung gezogener Stapel und die belegten Plätze von insgesamt 32.
+
+Wähle für mehrere doppelte Stapel **Doppelter Vorratsstapel** und dann **Ziele wählen**. Hake in **Karte wählen** die gewünschten Namen an oder nutze **Alle angezeigten auswählen** im Bereich **Königreich**. **Alle Karten** öffnet den gesamten passenden Katalog. Mit den Pfeiltasten erreichst du die Vorschau rechts und mit der Leertaste setzt du ein Häkchen. Aktiviere **Weitere Kopie hinzufügen**, wenn ein bereits eingetragener Effekt erneut wirken soll. Drücke **Fertig** in der Kartenauswahl und anschließend im Effektdialog. [Starter und Testablauf](../KingdomEffectsPatch/TEST.md#effektdialog-in-der-lokalen-königreich-auswahl)
 
 ## Dominion on Steam without mods
 

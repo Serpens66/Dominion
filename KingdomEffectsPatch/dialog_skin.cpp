@@ -16,7 +16,6 @@ constexpr COLORREF wood = RGB(63, 36, 23);
 constexpr COLORREF gold = RGB(164, 107, 38);
 constexpr COLORREF muted = RGB(116, 91, 60);
 constexpr COLORREF accent = RGB(117, 48, 25);
-constexpr COLORREF parchment = RGB(229, 209, 165);
 
 void fill(HDC dc, const RECT& rect, COLORREF color) {
     const auto brush = CreateSolidBrush(color);
@@ -67,10 +66,14 @@ DialogSkin::DialogSkin(HWND dialog) : dialog_(dialog) {
 
     const auto owner = GetWindow(dialog, GW_OWNER);
     MONITORINFO monitor{sizeof monitor};
-    RECT original{};
-    GetWindowRect(dialog, &original);
-    const auto width = original.right - original.left;
-    const auto height = original.bottom - original.top;
+    RECT client{};
+    GetClientRect(dialog, &client);
+    const auto width = client.right;
+    const auto height = client.bottom;
+    const auto window_style = GetWindowLongPtrW(dialog, GWL_STYLE);
+    SetWindowLongPtrW(dialog, GWL_STYLE, (window_style & ~(WS_CAPTION | WS_THICKFRAME | WS_SYSMENU)) | WS_CLIPCHILDREN);
+    const auto extended = GetWindowLongPtrW(dialog, GWL_EXSTYLE);
+    SetWindowLongPtrW(dialog, GWL_EXSTYLE, extended & ~(WS_EX_WINDOWEDGE | WS_EX_DLGMODALFRAME));
     if (width > 0 && height > 0 &&
         GetMonitorInfoW(MonitorFromWindow(owner ? owner : dialog, MONITOR_DEFAULTTONEAREST), &monitor)) {
         const auto& work = monitor.rcWork;
@@ -82,7 +85,10 @@ DialogSkin::DialogSkin(HWND dialog) : dialog_(dialog) {
         const auto h = static_cast<LONG>(height * scale_);
         const auto x = std::clamp((anchor.left + anchor.right - w) / 2, work.left, work.right - w);
         const auto y = std::clamp((anchor.top + anchor.bottom - h) / 2, work.top, work.bottom - h);
-        SetWindowPos(dialog, nullptr, x, y, w, h, SWP_NOZORDER | SWP_NOACTIVATE);
+        SetWindowPos(dialog, nullptr, x, y, w, h, SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+    } else {
+        SetWindowPos(dialog, nullptr, 0, 0, width, height,
+                     SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
     }
     header_height_ = units({0, 0, 0, header_units}).bottom;
     paper_brush_ = CreateSolidBrush(paper);
@@ -94,27 +100,29 @@ DialogSkin::DialogSkin(HWND dialog) : dialog_(dialog) {
             font.lfHeight = static_cast<LONG>(std::lround(font.lfHeight * scale_));
             body_ = CreateFontIndirectW(&font);
         }
-        font.lfHeight = static_cast<LONG>(std::lround(font.lfHeight * 1.45));
         font.lfWeight = FW_BOLD;
+        section_ = CreateFontIndirectW(&font);
+        font.lfHeight = static_cast<LONG>(std::lround(font.lfHeight * 1.45));
         wcscpy_s(font.lfFaceName, L"Georgia");
         heading_ = CreateFontIndirectW(&font);
     }
 
     for (auto child = GetWindow(dialog, GW_CHILD); child; child = GetWindow(child, GW_HWNDNEXT)) {
+        wchar_t name[24]{};
+        GetClassNameW(child, name, static_cast<int>(std::size(name)));
         if (scale_ < 1) {
             RECT rect{};
             GetWindowRect(child, &rect);
             MapWindowPoints(HWND_DESKTOP, dialog, reinterpret_cast<POINT*>(&rect), 2);
             RECT dropped{};
-            if (SendMessageW(child, CB_GETDROPPEDCONTROLRECT, 0, reinterpret_cast<LPARAM>(&dropped)) != CB_ERR &&
+            if (_wcsicmp(name, L"ComboBox") == 0 &&
+                SendMessageW(child, CB_GETDROPPEDCONTROLRECT, 0, reinterpret_cast<LPARAM>(&dropped)) != CB_ERR &&
                 dropped.bottom > dropped.top) rect.bottom = rect.top + dropped.bottom - dropped.top;
             SetWindowPos(child, nullptr, static_cast<int>(rect.left * scale_), static_cast<int>(rect.top * scale_),
                          static_cast<int>((rect.right - rect.left) * scale_),
                          static_cast<int>((rect.bottom - rect.top) * scale_), SWP_NOZORDER | SWP_NOACTIVATE);
             if (body_) SendMessageW(child, WM_SETFONT, reinterpret_cast<WPARAM>(body_), FALSE);
         }
-        wchar_t name[24]{};
-        GetClassNameW(child, name, static_cast<int>(std::size(name)));
         if (_wcsicmp(name, L"Button") != 0) continue;
         const auto style = GetWindowLongPtrW(child, GWL_STYLE);
         const auto type = style & BS_TYPEMASK;
@@ -122,6 +130,12 @@ DialogSkin::DialogSkin(HWND dialog) : dialog_(dialog) {
             SetWindowSubclass(child, checkbox_proc, 1, reinterpret_cast<DWORD_PTR>(this));
         } else if (type == BS_PUSHBUTTON || type == BS_DEFPUSHBUTTON) {
             SetWindowLongPtrW(child, GWL_STYLE, (style & ~BS_TYPEMASK) | BS_OWNERDRAW);
+        }
+    }
+    if (section_) {
+        for (const auto id : {IDC_EFFECT_LABEL, IDC_ACTIVE_LABEL, IDC_CARD_EXPANSIONS, IDC_CARD_TITLE}) {
+            if (const auto label = GetDlgItem(dialog, id))
+                SendMessageW(label, WM_SETFONT, reinterpret_cast<WPARAM>(section_), FALSE);
         }
     }
     SendMessageW(dialog, DM_SETDEFID, IDOK, 0);
@@ -132,6 +146,7 @@ DialogSkin::~DialogSkin() {
     if (graphics_) Gdiplus::GdiplusShutdown(graphics_);
     if (paper_brush_) DeleteObject(paper_brush_);
     if (body_) DeleteObject(body_);
+    if (section_) DeleteObject(section_);
     if (heading_) DeleteObject(heading_);
 }
 
@@ -171,6 +186,7 @@ bool DialogSkin::draw_icon(HDC dc, std::string_view name, RECT bounds) const {
     bounds.top += (bounds.bottom - bounds.top - height) / 2;
     bounds.right = bounds.left + width;
     bounds.bottom = bounds.top + height;
+    if (name.substr(0, 4) == "exp-") fill(dc, bounds, wood);
     image_at(dc, *icon, bounds);
     return true;
 }
@@ -181,7 +197,8 @@ int DialogSkin::add_icon(HIMAGELIST images, std::string_view name) const {
     Gdiplus::Bitmap tile_image(width, height, PixelFormat32bppARGB);
     {
         Gdiplus::Graphics graphics(&tile_image);
-        graphics.Clear(Gdiplus::Color(0, 0, 0, 0));
+        graphics.Clear(name.substr(0, 4) == "exp-" ? Gdiplus::Color(255, 63, 36, 23) :
+                       Gdiplus::Color(0, 0, 0, 0));
         auto* icon = art(name);
         const double scale = (std::min)(static_cast<double>(width) / icon->GetWidth(),
                                        static_cast<double>(height) / icon->GetHeight());
@@ -199,9 +216,11 @@ int DialogSkin::add_icon(HIMAGELIST images, std::string_view name) const {
 HIMAGELIST DialogSkin::checks() const {
     if (!art("checkbox") || !art("check")) return nullptr;
     const auto size = units({0, 0, 10, 9}).right;
-    const auto images = ImageList_Create(size, size, ILC_COLOR32, 2, 0);
+    const auto images = ImageList_Create(size, size, ILC_COLOR32, 3, 0);
     if (!images) return nullptr;
-    if (add_icon(images, "checkbox") == 0 && add_icon(images, "check") == 1) return images;
+    // The tree draws no image for state 0 and uses image indices 1 and 2 for checkboxes.
+    if (add_icon(images, "checkbox") == 0 && add_icon(images, "checkbox") == 1 &&
+        add_icon(images, "check") == 2) return images;
     ImageList_Destroy(images);
     return nullptr;
 }
@@ -209,16 +228,19 @@ HIMAGELIST DialogSkin::checks() const {
 void DialogSkin::paint_background(HDC dc) const {
     RECT full{};
     GetClientRect(dialog_, &full);
-    fill(dc, full, parchment);
+    fill(dc, full, panel);
     RECT body = full;
     body.top = header_height_;
-    if (auto* panel = art("panel")) {
-        tile(dc, *panel, body, static_cast<float>(header_height_) / 42.0f);
+    if (auto* texture = art("panel")) {
+        tile(dc, *texture, body, static_cast<float>(header_height_) / 42.0f);
         Gdiplus::Graphics graphics(dc);
         Gdiplus::SolidBrush tint(Gdiplus::Color(214, 234, 216, 178));
         graphics.FillRectangle(&tint, static_cast<int>(body.left), static_cast<int>(body.top),
                                static_cast<int>(body.right - body.left), static_cast<int>(body.bottom - body.top));
     }
+    const auto margin = units({0, 0, 5, 4});
+    RECT content{margin.right, header_height_ + margin.bottom, full.right - margin.right, full.bottom - margin.bottom};
+    fill(dc, content, panel);
     RECT header = full;
     header.bottom = header_height_;
     fill(dc, header, wood);
@@ -227,7 +249,7 @@ void DialogSkin::paint_background(HDC dc) const {
     RECT line{0, header.bottom - 1, full.right, header.bottom + 1};
     fill(dc, line, gold);
     const auto inset = units({0, 0, 8, 0}).right;
-    const auto side = (std::max)(1, header_height_ - 2 * inset / 3);
+    const auto side = (std::max)(1L, header_height_ - 2 * inset / 3);
     RECT emblem{inset, (header_height_ - side) / 2, inset + side, (header_height_ + side) / 2};
     draw_icon(dc, "seal", emblem);
     header.left = emblem.right + inset / 2;
@@ -246,10 +268,9 @@ void DialogSkin::paint_button(const DRAWITEMSTRUCT& item) const {
     const bool pressed = item.itemState & ODS_SELECTED;
     const bool primary = item.CtlID == IDOK || item.CtlID == IDC_ADD || item.CtlID == IDC_TARGET ||
                          item.CtlID == IDC_SECOND_TARGET;
+    auto* texture = primary && enabled ? art("gold") : nullptr;
     fill(item.hDC, rect, enabled ? (primary ? RGB(215, 168, 81) : paper) : RGB(220, 201, 162));
-    if (primary && enabled) {
-        if (auto* texture = art("gold")) image_at(item.hDC, *texture, rect);
-    }
+    if (texture) image_at(item.hDC, *texture, rect);
     if (pressed) {
         Gdiplus::Graphics graphics(item.hDC);
         Gdiplus::SolidBrush shade(Gdiplus::Color(48, 63, 36, 23));
@@ -257,7 +278,7 @@ void DialogSkin::paint_button(const DRAWITEMSTRUCT& item) const {
                                static_cast<int>(rect.right - rect.left), static_cast<int>(rect.bottom - rect.top));
     }
     frame(item.hDC, rect, enabled ? gold : muted);
-    const auto inset = units({0, 0, 4, 0}).right;
+    const auto inset = units({0, 0, 2, 0}).right;
     InflateRect(&rect, -inset, -2);
     if (enabled && (item.CtlID == IDOK || item.CtlID == IDC_ADD)) {
         RECT icon = rect;
@@ -268,7 +289,13 @@ void DialogSkin::paint_button(const DRAWITEMSTRUCT& item) const {
     const auto font = reinterpret_cast<HFONT>(SendMessageW(item.hwndItem, WM_GETFONT, 0, 0));
     const auto previous = font ? SelectObject(item.hDC, font) : nullptr;
     SetBkMode(item.hDC, TRANSPARENT);
-    SetTextColor(item.hDC, enabled ? ink : muted);
+    if (texture) {
+        auto shadow = rect;
+        OffsetRect(&shadow, 0, 1);
+        SetTextColor(item.hDC, RGB(41, 25, 15));
+        DrawTextW(item.hDC, text.data(), -1, &shadow, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
+    }
+    SetTextColor(item.hDC, texture ? RGB(255, 240, 201) : enabled ? ink : muted);
     DrawTextW(item.hDC, text.data(), -1, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
     if (previous) SelectObject(item.hDC, previous);
     if (item.itemState & ODS_FOCUS) {
@@ -281,7 +308,7 @@ void DialogSkin::paint_button(const DRAWITEMSTRUCT& item) const {
 void DialogSkin::paint_checkbox(HWND button, HDC dc) const {
     RECT rect{};
     GetClientRect(button, &rect);
-    fill(dc, rect, parchment);
+    fill(dc, rect, panel);
     const auto size = (std::min)(rect.bottom, units({0, 0, 10, 0}).right);
     RECT box{0, (rect.bottom - size) / 2, size, (rect.bottom + size) / 2};
     const bool checked = SendMessageW(button, BM_GETCHECK, 0, 0) == BST_CHECKED;
@@ -336,9 +363,11 @@ INT_PTR DialogSkin::handle(UINT message, WPARAM wparam, LPARAM lparam) const {
         const auto control = GetDlgCtrlID(reinterpret_cast<HWND>(lparam));
         SetTextColor(dc, control == IDC_STATUS || control == IDC_CARD_STATUS ? accent : ink);
         SetBkColor(dc, paper);
-        if (message == WM_CTLCOLORSTATIC && control != IDC_DESCRIPTION && control != IDC_CARD_RULES) {
-            SetBkMode(dc, TRANSPARENT);
-            return reinterpret_cast<INT_PTR>(GetStockObject(HOLLOW_BRUSH));
+        if (message == WM_CTLCOLORSTATIC && control != IDC_DESCRIPTION && control != IDC_EFFECT_EVIDENCE &&
+            control != IDC_CARD_RULES) {
+            SetBkColor(dc, panel);
+            SetDCBrushColor(dc, panel);
+            return reinterpret_cast<INT_PTR>(GetStockObject(DC_BRUSH));
         }
         return reinterpret_cast<INT_PTR>(paper_brush_);
     }
