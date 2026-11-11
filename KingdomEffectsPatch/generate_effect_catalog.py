@@ -89,6 +89,36 @@ def verification_label(status):
     return ""
 
 
+TIMING_FILTERS = (
+    "Spielaufbau", "Zugbeginn", "Beim Spielen einer Karte", "Beim Spielen der gewählten Karte",
+    "Beim Nehmen einer Karte", "Beim Kaufen", "Beim Entsorgen", "Beim Ablegen oder Einmischen",
+    "Kaufphase", "Zugende/Aufräumphase", "Dauerhaft", "Wertung", "Besondere Auslöser",
+)
+
+
+def timing_mask(timing):
+    # Compile the documented German conditions into language-independent flags.
+    text = search_key(timing)
+    tests = (
+        "spielaufbau" in text or "beginn der kampagnenpartie" in text,
+        "zugbeginn" in text or "beginn jedes menschlichen zuges" in text or "beginn menschlicher zuge" in text or "nachsten zug" in text,
+        "ausspielen" in text or "spielbar" in text,
+        ("ausspielen" in text or "spielbar" in text) and any(word in text for word in ("gewahlte karte", "gewahlten karte", "gewahlten stapel")),
+        bool(re.search(r"\bnehmen\b", text)),
+        "kaufen" in text or "kauf des" in text,
+        "entsorgen" in text,
+        "ablegen" in text or "einmischen" in text,
+        "kaufphase" in text or "trank-guthaben" in text or "bezahlen" in text,
+        "zugende" in text or ("aufraumphase" in text and "ausserhalb der aufraumphase" not in text) or "normalen neuen hand" in text,
+        "dauerhaft" in text or "kostenermittlung" in text or "ermittlung von kartenkosten" in text or "trank-guthaben" in text or "wahrend der partie" in text,
+        "wertung" in text or "siegpunkte vergibt" in text,
+        "prophezeiung" in text or "gabe" in text or "siegpunktmarkern" in text or "provinz" in text or "goldes" in text or "wahrend der partie" in text,
+    )
+    mask = sum(1 << index for index, active in enumerate(tests) if active)
+    if not mask: raise ValueError(f"No trigger category for: {timing}")
+    return mask
+
+
 def rule_text(text):
     text = re.sub(r"-//(?=[a-zäöüß])", "", text)
     text = text.replace("//", "\n").replace("{br}", "\n").replace("{coin_2}", "[2]")
@@ -231,8 +261,10 @@ def main(output, xpack):
     rows = ["// Generated from Documentation by generate_effect_catalog.py.",
             "constexpr EffectDefinition effect_catalog[] = {"]
     for command, name, description, timing, status, first, second in read_effects():
-        rows.append(f"    {{{literal(command)}, {literal(name, True)}, {literal(description, True)}, {literal(timing, True)}, {literal(status, True)}, {literal(verification_label(status), True)}, "
+        rows.append(f"    {{{literal(command)}, {literal(name, True)}, {literal(description, True)}, {literal(timing, True)}, {literal(status, True)}, {literal(verification_label(status), True)}, {timing_mask(timing)}, "
                     f"TargetKind::{first}, TargetKind::{second}}},")
+    rows.extend(("};", "", "constexpr const wchar_t* timing_filters[] = {"))
+    rows.extend(f"    {literal(label, True)}," for label in TIMING_FILTERS)
     rows.extend(("};", "", "constexpr CardTarget target_catalog[] = {"))
     for card_id, *metadata, expansion_id, icons, costs, kinds in targets:
         mask = " | ".join(f"kind_mask(TargetKind::{kind})" for kind in kinds)

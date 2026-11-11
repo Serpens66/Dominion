@@ -18,6 +18,8 @@ Der Online-Editor trägt den Hinweis **Online – Wirkung serverabhängig**. Du 
 
 Die Tabelle zeigt Effektname und interne ID, Wirkung und Auslösezeitpunkt. Die Suche findet auch IDs wie `twist_mirror_loot`, `stamp_two_for_one` und `start_trash_curses`.
 
+Das Kategorien-Dropdown enthält **Effektart** und **Wann/wie**. Du kannst beispielsweise nach **Zugbeginn**, **Spielaufbau**, **Dauerhaft** oder **Beim Spielen der gewählten Karte** filtern. Suche und Kategorie wirken gemeinsam. Effekte mit mehreren Auslösern erscheinen in mehreren passenden Kategorien. Alle Listeneinträge und ihre Zeilenhöhen werden sofort berechnet; der Scrollbereich wächst beim Herunterscrollen nicht nachträglich. Pfeiltasten, Bild auf/ab, Pos1 und Ende bedienen die Tabelle, Buchstaben springen zu passenden Effektnamen.
+
 **Ungetestet** bedeutet, dass die Wirkung noch nicht im Spiel bestätigt wurde. Diese Effekte können gewählt werden. **Teilweise geprüft** und **Mehrfach ungetestet** unterscheiden verbleibende Prüflücken; darunter steht der genauere Prüfstand für einmalige und wiederholte Anwendung. Bekannte Startabbrüche werden mit einer konkreten Meldung verhindert.
 
 Für **Doppelter Vorratsstapel** unter **Ziele wählen…** mehrere Stapel anhaken und mit **Fertig** übernehmen. **Weitere Kopie hinzufügen** erlaubt eine bewusste Wiederholung. Rechts stehen die aktiven Effekte in Ausführungsreihenfolge. Höchstens **32 Effekte** sind möglich. **Abbrechen** verwirft den Entwurf.

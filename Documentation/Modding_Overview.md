@@ -221,6 +221,10 @@ Ein Effektset ist damit unabhängig von der Kartenauswahl wiederverwendbar. Jede
 
 Für eine Mod mit unveränderter Zufallsauswahl über alle Erweiterungen ist der relevante Eingriffspunkt der Aufbau der bereits gezogenen Königreichstapel. Die Schleife ab `0x18CC16` initialisiert die zehn Hauptstapel anhand der aufgelösten Auswahl. Der Effektpfad wird anschließend bei `0x18CD70` bis `0x18CD8A` aufgerufen. Der implementierte Patch ergänzt die zehn nativen Verdopplungseffekte beim Auflösen einer neuen lokalen Zufallspartie. Der Einzelspieler-Test bestätigte die Automatik. Gezielte Spieltests für Sonderstapel und Wiederaufnahme stehen aus. [Testprotokoll](../KingdomEffectsPatch/TEST.md#automatische-verdopplung-im-einzelspieler)
 
+### F8-Effektliste und Zeitpunktfilter
+
+Die F8-Effekttabelle berechnet alle Zeilenhöhen vor der Anzeige und verwendet einen pixelbasierten Scrollbereich. Alle 89 Effekte stehen sofort zur Verfügung. Das bestehende Kategorien-Dropdown enthält drei Effektarten und 13 Zeitpunktgruppen, die mit der Textsuche kombiniert werden. Die Zuordnung stammt aus den dokumentierten „Wann/wie“-Bedingungen und erlaubt mehrere Gruppen pro Effekt. Ungeklärte Bedingungen bleiben im Katalog gekennzeichnet. Die Änderung betrifft die Oberfläche; Automatik, Ziehung und Online-Verarbeitung bleiben unverändert. Prüfungen stehen im [Testprotokoll](../KingdomEffectsPatch/TEST.md).
+
 ### Kampagneneffekte im privaten Online-Spiel
 
 **Editor-Erweiterung, 11. November 2026:** F8 ist jetzt auch für die beiden profilgebundenen Online-Konfigurationen freigegeben. Der Dialog zeigt „Online – Wirkung serverabhängig“, speichert in die gerade bearbeitete Konfiguration und deaktiviert nur die lokale Zufallsstapel-Automatik. Der Netzwerkfilter und die Verarbeitung gestarteter Online-Partien bleiben unverändert. Die Dialog- und Kontexterkennung sind automatisiert geprüft; die native Speicherung nach Neustart und die sichtbare Online-/Privates-Spiel-Auswahl sind noch durch den Nutzer abzunehmen.

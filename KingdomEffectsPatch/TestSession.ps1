@@ -133,7 +133,7 @@ function Invoke-TestSession {
         $attach = Join-Path $PSScriptRoot 'out\attach.exe'
         $dll = Join-Path $PSScriptRoot 'out\KingdomEffectsPatch.dll'
         $sources = 'patch.cpp', 'attach.cpp', 'working_copy.hpp', 'effects.hpp', 'effect_editor.cpp', 'effect_editor.hpp',
-            'effect_editor.rc', 'effect_editor_ids.h', 'card_picker.cpp', 'card_picker.hpp', 'generate_effect_catalog.py', 'build.cmd',
+            'effect_editor.rc', 'effect_editor_ids.h', 'effect_table.hpp', 'card_picker.cpp', 'card_picker.hpp', 'generate_effect_catalog.py', 'build.cmd',
             '..\Documentation\Steam_Spielanleitung.md', '..\Documentation\Card_Properties.json',
             'dialog_skin.cpp', 'dialog_skin.hpp', 'game_resources.cpp', 'game_resources.hpp', 'launcher_test.cpp', 'release_game_test.cpp', 'editor_release_test.cpp', '..\SetGenerator\Dominion-Generator.html',
             '..\SetGenerator\generator_catalog.py', '..\SetGenerator\extract_card_images.py' |

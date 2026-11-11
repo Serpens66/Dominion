@@ -6,6 +6,7 @@
 #include "card_picker.hpp"
 #include "dialog_skin.hpp"
 #include "menu_labels.generated.hpp"
+#include "effect_table.hpp"
 
 namespace kingdom {
 namespace {
@@ -25,6 +26,7 @@ struct EffectDefinition {
     const wchar_t* timing;
     const wchar_t* status;
     const wchar_t* verification;
+    unsigned timing_mask;
     TargetKind first;
     TargetKind second;
 };
@@ -295,12 +297,14 @@ void filter_catalog(HWND dialog, Draft& draft) {
     const auto filter = fold_card_search(input(dialog, IDC_QUERY));
     const auto category = SendDlgItemMessageW(dialog, IDC_CATEGORY, CB_GETCURSEL, 0, 0);
     const std::array<std::string_view, 4> prefixes{"", "twist_", "stamp_", "start_"};
-    const auto prefix = category >= 0 ? prefixes[category] : prefixes[0];
+    const auto prefix = category >= 0 && category < 4 ? prefixes[category] : prefixes[0];
+    const unsigned timing = category >= 4 && category < 4 + std::size(timing_filters) ? 1u << (category - 4) : 0;
+    SendDlgItemMessageW(dialog, IDC_CATALOG, WM_SETREDRAW, FALSE, 0);
     SendDlgItemMessageW(dialog, IDC_CATALOG, LB_RESETCONTENT, 0, 0);
     LRESULT selection = 0;
     for (const auto& effect : effect_catalog) {
         const std::string_view id(effect.id);
-        if (id.substr(0, prefix.size()) != prefix) continue;
+        if (id.substr(0, prefix.size()) != prefix || (timing && !(effect.timing_mask & timing))) continue;
         if (fold_card_search(effect.title).find(filter) == filter.npos &&
             fold_card_search(widen(id)).find(filter) == filter.npos &&
             fold_card_search(effect.description).find(filter) == filter.npos &&
@@ -314,6 +318,7 @@ void filter_catalog(HWND dialog, Draft& draft) {
         if (&effect == draft.selected && row >= 0) selection = row;
     }
     measure_rows(dialog, draft);
+    SendDlgItemMessageW(dialog, IDC_CATALOG, WM_SETREDRAW, TRUE, 0);
     SendDlgItemMessageW(dialog, IDC_CATALOG, LB_SETCURSEL, selection, 0);
     select_effect(dialog, draft);
 }
@@ -392,10 +397,6 @@ void add_effect(HWND dialog, Draft& draft) {
 
 INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lparam) {
     try {
-        if (message == WM_MEASUREITEM && wparam == IDC_CATALOG) {
-            reinterpret_cast<MEASUREITEMSTRUCT*>(lparam)->itemHeight = 24;
-            return TRUE;
-        }
         if (message == WM_INITDIALOG) {
             auto& draft = *reinterpret_cast<Draft*>(lparam);
             SetWindowLongPtrW(dialog, DWLP_USER, lparam);
@@ -407,9 +408,25 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             SetDlgItemTextW(dialog, IDOK, menu_text::done);
             SetDlgItemTextW(dialog, IDCANCEL, menu_text::cancel);
             SendDlgItemMessageW(dialog, IDC_QUERY, EM_SETCUEBANNER, FALSE, reinterpret_cast<LPARAM>(L"Name oder Effekt-ID"));
-            for (const auto* category : {L"Alle Kategorien", L"Spielvariationen", L"Stempel", L"Spielaufbau"}) {
+            for (const auto* category : {L"Alle Kategorien", L"Effektart: Spielvariationen", L"Effektart: Stempel", L"Effektart: Spielaufbau"}) {
                 SendDlgItemMessageW(dialog, IDC_CATEGORY, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(category));
             }
+            for (const auto* label : timing_filters) {
+                const auto name = std::wstring(L"Wann/wie: ") + label;
+                SendDlgItemMessageW(dialog, IDC_CATEGORY, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(name.c_str()));
+            }
+            const auto category = GetDlgItem(dialog, IDC_CATEGORY);
+            const auto dc = GetDC(category);
+            const auto old_font = SelectObject(dc, reinterpret_cast<HFONT>(SendMessageW(category, WM_GETFONT, 0, 0)));
+            LONG width = 0;
+            for (LRESULT row = 0; row < SendMessageW(category, CB_GETCOUNT, 0, 0); ++row) {
+                std::array<wchar_t, 256> label{}; SendMessageW(category, CB_GETLBTEXT, row, reinterpret_cast<LPARAM>(label.data()));
+                SIZE extent{}; GetTextExtentPoint32W(dc, label.data(), lstrlenW(label.data()), &extent);
+                width = (std::max)(width, extent.cx + 2 * GetSystemMetrics(SM_CXVSCROLL));
+            }
+            SelectObject(dc, old_font); ReleaseDC(category, dc);
+            SendMessageW(category, CB_SETDROPPEDWIDTH, width, 0);
+            SendMessageW(category, CB_SETMINVISIBLE, 14, 0);
             SendDlgItemMessageW(dialog, IDC_CATEGORY, CB_SETCURSEL, 0, 0);
             CheckDlgButton(dialog, IDC_AUTOMATIC, !online && draft.automatic ? BST_CHECKED : BST_UNCHECKED);
             EnableWindow(GetDlgItem(dialog, IDC_AUTOMATIC), !online);
@@ -421,6 +438,12 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
         const auto state = GetWindowLongPtrW(dialog, DWLP_USER);
         if (!state) return FALSE;
         auto& draft = *reinterpret_cast<Draft*>(state);
+        if (message == effect_table_layout && draft.skin) {
+            SendDlgItemMessageW(dialog, IDC_CATALOG, WM_SETREDRAW, FALSE, 0);
+            measure_rows(dialog, draft);
+            SendDlgItemMessageW(dialog, IDC_CATALOG, WM_SETREDRAW, TRUE, 0);
+            return TRUE;
+        }
         if (message == WM_DRAWITEM && (wparam == IDC_CATALOG || wparam == IDC_CATALOG_HEADER)) {
             paint_table(dialog, draft, *reinterpret_cast<const DRAWITEMSTRUCT*>(lparam));
             SetWindowLongPtrW(dialog, DWLP_MSGRESULT, TRUE);
@@ -492,6 +515,7 @@ bool edit_effects(void* owner, std::string_view kingdom_text, const EffectComman
     HMODULE module{};
     if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                            reinterpret_cast<LPCWSTR>(dialog_proc), &module)) return false;
+    if (!register_effect_table(module)) return false;
     Draft draft{effects, automatic, apply, fixed_targets(kingdom_text), context};
     const auto result = DialogBoxParamW(module, MAKEINTRESOURCEW(IDD_EFFECT_EDITOR),
                                        static_cast<HWND>(owner), dialog_proc, reinterpret_cast<LPARAM>(&draft));
