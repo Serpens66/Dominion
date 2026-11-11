@@ -180,6 +180,8 @@ Eine Kampagnenvorlage weist dem Einsamen Schrein sowohl **Inspirierend** als auc
 
 Öffne mit dem Patch-Starter in **Lokal spielen** oder **Weitergeben** die Königreich-Auswahl und drücke **F8**. Links findest du Suche, Kategorien und die Wirkung des gewählten Effekts. Rechts stehen die aktiven Effekte in ihrer Ausführungsreihenfolge. Unten findest du die automatische Verdopplung gezogener Stapel und die belegten Plätze von insgesamt 32.
 
+In der linken Effektliste steht die originale Effekt-ID in Klammern hinter dem deutschen Namen, beispielsweise **Gespiegelte Kostbarkeiten (twist_mirror_loot)**. Das Suchfeld **Name oder Effekt-ID** findet auch vollständige IDs und Teilbegriffe wie `two_for_one`. Lange Listeneinträge kannst du horizontal scrollen.
+
 Wähle für mehrere doppelte Stapel **Doppelter Vorratsstapel** und dann **Ziele wählen**. Hake in **Karte wählen** die gewünschten Namen an oder nutze **Alle angezeigten auswählen** im Bereich **Königreich**. **Alle Karten** öffnet den gesamten passenden Katalog. Mit den Pfeiltasten erreichst du die Kartenvorschau rechts und mit der Leertaste setzt du ein Häkchen. **Kartentext lesen** zeigt die Regeln in einer scrollbaren Textansicht. Aktiviere **Weitere Kopie hinzufügen**, wenn ein bereits eingetragener Effekt erneut wirken soll. Drücke **Fertig** in der Kartenauswahl und anschließend im Effektdialog. [Starter und Testablauf](../KingdomEffectsPatch/TEST.md#effektdialog-in-der-lokalen-königreich-auswahl)
 
 ## Dominion on Steam without mods

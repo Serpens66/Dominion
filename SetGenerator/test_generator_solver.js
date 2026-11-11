@@ -133,4 +133,70 @@ assert.equal(drawLottery({
   ...lottery, expansionLottery: { ...lottery.expansionLottery, required: optional, optional: [] },
 }, () => {}).total, 0n);
 
-console.log("Katalog, exakte Zählung, 6+4, Abwehr, Sonderzuordnungen, Prophezeiung, Landschaftsquoten und Zeitlimit geprüft.");
+const randomGroups = [
+  get("raze", "ranger", "magpie"),
+  get("supplies", "stockpile", "village_green"),
+  get("monastery", "conclave", "devils_workshop"),
+  get("church", "sauna", "dismantle"),
+  get("acting_troupe", "research", "cargo_ship"),
+];
+const randomSets = randomGroups.map(group => group[0].expansion);
+assert.equal(new Set(randomSets).size, 5);
+const randomQuotas = (min, max) => randomGroups.map(group =>
+  rule(group, min, max, { conditionalExpansion: group[0].expansion }));
+const randomRequest = request(base.slice(0, 8), randomGroups.flat(), {
+  rules: randomQuotas(1, 3),
+  expansionLottery: { always: ["base"], required: [], optional: randomSets, count: 2, autoLandscapes: [] },
+});
+function assertRandomQuotas(result, min, max) {
+  assert.ok(result);
+  assert.equal(result.main.length, 10);
+  assert.equal(new Set(result.randomExpansions).size, 2);
+  for (const expansion of randomSets) {
+    const count = result.main.filter(id => byId.get(id).expansion === expansion).length;
+    if (result.randomExpansions.includes(expansion)) assert.ok(count >= min && count <= max);
+    else assert.equal(count, 0);
+  }
+}
+out = drawLottery(randomRequest, result => assertRandomQuotas(result, 1, 3));
+assertRandomQuotas(out.result, 1, 3);
+
+// Only the two selected minimums apply, even when all five would exceed the Kingdom size.
+out = drawLottery({
+  ...randomRequest, fixed: base.slice(0, 4), rules: randomQuotas(3, 3),
+}, result => assertRandomQuotas(result, 3, 3));
+assertRandomQuotas(out.result, 3, 3);
+assert.equal(drawLottery({
+  ...randomRequest, fixed: base.slice(0, 4), rules: randomQuotas(6, 6),
+}, () => {}).total, 0n);
+
+// An unavailable quota rules out that candidate, while another candidate remains usable.
+const menagerie = get("supplies", "stockpile", "village_green", "paddock", "barge", "coven");
+out = drawLottery(request(base.slice(0, 4), [...randomGroups[0], ...menagerie], {
+  rules: [rule(randomGroups[0], 6, 6, { conditionalExpansion: "adventures" }),
+    rule(menagerie, 6, 6, { conditionalExpansion: "menagerie" })],
+  expansionLottery: { always: ["base"], required: [], optional: ["adventures", "menagerie"], count: 1, autoLandscapes: [] },
+}), () => {});
+assert.equal(out.result.randomExpansions.join(), "menagerie");
+assert.equal(out.result.main.filter(id => byId.get(id).expansion === "menagerie").length, 6);
+
+out = drawLottery({
+  ...randomRequest,
+  fixed: [...base.slice(0, 7), randomGroups[2][0]],
+  candidates: randomGroups.flat().filter(card => card !== randomGroups[2][0]),
+  expansionLottery: { ...randomRequest.expansionLottery, required: ["nocturne"],
+    optional: randomSets.filter(id => id !== "nocturne") },
+}, () => {});
+assertRandomQuotas(out.result, 1, 3);
+assert.ok(out.result.randomExpansions.includes("nocturne"));
+assert.ok(out.result.main.includes("monastery"));
+
+out = drawLottery({
+  ...randomRequest, fixed: base.slice(0, 10), candidates: [],
+  expansionLottery: { ...randomRequest.expansionLottery, count: 0 },
+}, () => {});
+assert.ok(out.result);
+assert.equal(out.result.randomExpansions.length, 0);
+assert.ok(out.result.main.every(id => byId.get(id).expansion === "base"));
+
+console.log("Katalog, exakte Zählung, 6+4, Abwehr, Sonderzuordnungen, Prophezeiung, Landschaftsquoten, bedingte Zufallsset-Quoten und Zeitlimit geprüft.");

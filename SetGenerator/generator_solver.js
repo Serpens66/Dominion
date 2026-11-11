@@ -375,6 +375,7 @@ function analyzeExpansionLottery(request, onFound, deadline = Date.now() + 4800)
     const inPool = card => selected.has(card.expansion);
     const trial = {
       ...request,
+      rules: request.rules.filter(rule => !rule.conditionalExpansion || selected.has(rule.conditionalExpansion)),
       candidates: request.candidates.filter(inPool),
       extras: request.extras.filter(inPool),
       landscapePool: request.landscapePool.filter(card => !inherited.has(card.expansion) || inPool(card)),

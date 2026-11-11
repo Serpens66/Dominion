@@ -200,7 +200,7 @@ void filter_catalog(HWND dialog, Draft& draft) {
         if (fold_card_search(effect.title).find(filter) == filter.npos &&
             fold_card_search(widen(id)).find(filter) == filter.npos &&
             fold_card_search(effect.description).find(filter) == filter.npos) continue;
-        std::wstring name(effect.title);
+        std::wstring name = std::wstring(effect.title) + L" (" + widen(id) + L")";
         if (effect.first != TargetKind::none) name += L" · " + std::wstring(target_label(effect.first));
         const auto row = SendDlgItemMessageW(dialog, IDC_CATALOG, LB_ADDSTRING, 0,
                                              reinterpret_cast<LPARAM>(name.c_str()));
@@ -296,7 +296,7 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             SetDlgItemTextW(dialog, IDC_EFFECT_LABEL, menu_text::features);
             SetDlgItemTextW(dialog, IDOK, menu_text::done);
             SetDlgItemTextW(dialog, IDCANCEL, menu_text::cancel);
-            SendDlgItemMessageW(dialog, IDC_QUERY, EM_SETCUEBANNER, FALSE, reinterpret_cast<LPARAM>(L"Effekt suchen"));
+            SendDlgItemMessageW(dialog, IDC_QUERY, EM_SETCUEBANNER, FALSE, reinterpret_cast<LPARAM>(L"Name oder Effekt-ID"));
             for (const auto* category : {L"Alle Kategorien", L"Spielvariationen", L"Stempel", L"Spielaufbau"}) {
                 SendDlgItemMessageW(dialog, IDC_CATEGORY, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(category));
             }

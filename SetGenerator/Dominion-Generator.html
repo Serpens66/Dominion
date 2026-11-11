@@ -829,7 +829,7 @@
             <button type="button" id="enable-random-expansions" class="secondary" data-en="Add remaining expansions to the lottery">Übrige für Zufall freigeben</button>
             <button type="button" id="reset-expansions" class="secondary" data-en="Reset expansions">Erweiterungen zurücksetzen</button>
           </div>
-          <p class="muted" id="expansion-lottery-help" data-en="Always guarantees at least one Kingdom pile from the set. Random enters the set in the lottery. From and To set the number of piles per set.">'Immer' garantiert mindestens einen Königreichstapel aus dem Set. 'Zufall' legt das Set in den Lostopf. Mit Von und Bis legst du die Stapelzahl pro Set fest.</p>
+          <p class="muted" id="expansion-lottery-help" data-en="Always guarantees at least one Kingdom pile from the set. Random enters the set in the lottery. From and To set the number of piles per set. For Random, these quotas apply once the set is drawn.">'Immer' garantiert mindestens einen Königreichstapel aus dem Set. 'Zufall' legt das Set in den Lostopf. Mit Von und Bis legst du die Stapelzahl pro Set fest. Bei Zufall gelten Von und Bis, sobald das Set ausgelost wurde.</p>
           <div id="exp-ranges" class="quota-columns"></div>
         </div>
       </details>
@@ -1489,6 +1489,7 @@ function analyzeExpansionLottery(request, onFound, deadline = Date.now() + 4800)
     const inPool = card => selected.has(card.expansion);
     const trial = {
       ...request,
+      rules: request.rules.filter(rule => !rule.conditionalExpansion || selected.has(rule.conditionalExpansion)),
       candidates: request.candidates.filter(inPool),
       extras: request.extras.filter(inPool),
       landscapePool: request.landscapePool.filter(card => !inherited.has(card.expansion) || inPool(card)),
@@ -2453,15 +2454,16 @@ function solverCard(card) {
     choice: poolChoices.get(id)?.value };
 }
 
-function serializeRule(rule, range, pool, count) {
+function serializeRule(rule, range, pool, count, conditionalExpansion) {
   const matching = pool.filter(rule.matches);
   const largest = rule.distinct ? new Set(matching.map(card => card.expansion)).size : matching.length;
-  if (!rule.whenAttacked && range.min > Math.min(count, largest)) {
+  if (!rule.whenAttacked && !conditionalExpansion && range.min > Math.min(count, largest)) {
     throw new Error(tr("Für „" + ruleLabel(rule) + "“ sind höchstens " + Math.min(count, largest) + " passende Einträge verfügbar.",
       "At most " + Math.min(count, largest) + " matching entries are available for “" + ruleLabel(rule) + ".”"));
   }
   if (!range.min && range.max >= Math.min(count, largest)) return null;
-  return { ...range, ids: matching.map(card => card.id), distinct: rule.distinct, whenAttacked: rule.whenAttacked };
+  return { ...range, ids: matching.map(card => card.id), distinct: rule.distinct,
+    whenAttacked: rule.whenAttacked, conditionalExpansion };
 }
 
 function allowsEdition(card) {
@@ -2502,12 +2504,12 @@ function readDrawRequest() {
     ...fixed.map(card => card.expansion),
     ...landPinned.filter(card => autoLandscapes.includes(card.expansion)).map(card => card.expansion),
   ]);
-  const required = random.filter(id => ranges.get(id).min > 0 || pinnedSources.has(id));
+  const required = random.filter(id => pinnedSources.has(id));
   if (required.length > count) {
     const names = required.map(expansionName).join(", ");
     throw new Error(tr(
-      `Die Mindestquoten oder festgehaltenen Karten benötigen ${required.length} Zufallssets (${names}). Eingestellt sind ${count} zusätzliche Erweiterungen.`,
-      `Minimum quotas or pinned cards require ${required.length} random sets (${names}). The number of additional expansions is ${count}.`
+      `Die festgehaltenen Karten benötigen ${required.length} Zufallssets (${names}). Eingestellt sind ${count} zusätzliche Erweiterungen.`,
+      `Pinned cards require ${required.length} random sets (${names}). The number of additional expansions is ${count}.`
     ));
   }
   if (count > random.length) {
@@ -2517,7 +2519,7 @@ function readDrawRequest() {
   const expansionQuotas = new Map(expansions.map(id => [
     id, expansionInPossiblePool(id) ? ranges.get(id) : { min: 0, max: 0 },
   ]));
-  const minTotal = [...expansionQuotas.values()].reduce((sum, range) => sum + range.min, 0);
+  const minTotal = [...always, ...required].reduce((sum, id) => sum + ranges.get(id).min, 0);
   if (minTotal > kingdomSize) throw new Error(tr(`Die Mindestzahlen der Erweiterungen brauchen mehr als ${kingdomSize} Königreichstapel.`, `The expansion minimums require more than ${kingdomSize} Kingdom piles.`));
   const allowed = card => expansionQuotas.get(card.expansion).max > 0 && allowsEdition(card);
   const disabled = fixed.find(card => !allowed(card));
@@ -2535,8 +2537,10 @@ function readDrawRequest() {
     sum + Math.min(range.max, pool.filter(card => card.expansion === id).length), 0);
   if (capacity < kingdomSize) throw new Error(tr(`Erweiterungsquoten und Kartenauswahl lassen weniger als ${kingdomSize} Königreichstapel zu.`, `The expansion quotas and card choices allow fewer than ${kingdomSize} Kingdom piles.`));
   const rules = countRules.map(rule => {
-    const range = rule.group === "exp" ? expansionQuotas.get(rule.id.slice(4)) : readRange(rule);
-    return serializeRule(rule, range, pool, kingdomSize);
+    const expansion = rule.group === "exp" ? rule.id.slice(4) : undefined;
+    const range = expansion ? expansionQuotas.get(expansion) : readRange(rule);
+    const conditionalExpansion = random.includes(expansion) && !required.includes(expansion) ? expansion : undefined;
+    return serializeRule(rule, range, pool, kingdomSize, conditionalExpansion);
   }).filter(Boolean);
   const landscapeCount = readRange(landRules[0]);
   const landPool = landscapes.filter(card => {
