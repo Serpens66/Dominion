@@ -45,13 +45,13 @@ struct Picker {
     const CardTargets& current;
     CardSelection mode;
     const AcceptCards& accept;
-    std::filesystem::path previews;
     CardTargets selected{};
     std::vector<std::pair<HTREEITEM, const CardTarget*>> visible{};
     std::set<std::wstring, std::less<>> expanded{};
     const CardTarget* displayed = nullptr;
     ULONG_PTR graphics = 0;
-    std::unique_ptr<Gdiplus::Image> image{};
+    ResourceImage image{};
+    CardPreviewLoader loader;
     bool rendering = false;
     bool first_render = true;
     bool show_rules = false;
@@ -113,12 +113,7 @@ void preview(HWND dialog, Picker& picker, const CardTarget* card) {
     SetDlgItemTextW(dialog, IDC_CARD_RULES, card ? card->rules : picker.visible.empty()
         ? L"Keine passenden Karten." : L"Öffne eine Erweiterung für die Kartenvorschau.");
     picker.image.reset();
-    if (card && picker.graphics) {
-        const auto path = picker.previews / (std::string(card->id) + ".png");
-        auto image = std::make_unique<Gdiplus::Image>(path.c_str());
-        if (image->GetLastStatus() == Gdiplus::Ok && image->GetWidth() && image->GetHeight())
-            picker.image = std::move(image);
-    }
+    picker.loader.request(card ? card->id : "");
     layout_preview(dialog, picker);
 }
 
@@ -388,12 +383,22 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
                     : L"Zufällig gezogene Stapel lassen sich im Effektdialog automatisch verdoppeln.");
             Gdiplus::GdiplusStartupInput input;
             if (Gdiplus::GdiplusStartup(&picker.graphics, &input, nullptr) != Gdiplus::Ok) picker.graphics = 0;
+            SetTimer(dialog, 7634, 50, nullptr);
             render_cards(dialog, picker);
             return TRUE;
         }
         auto* state = reinterpret_cast<Picker*>(GetWindowLongPtrW(dialog, DWLP_USER));
         if (!state) return FALSE;
         auto& picker = *state;
+        if (message == WM_TIMER && wparam == 7634) {
+            std::string id; ResourceImage image;
+            if (picker.loader.take(id, image) && picker.displayed && id == picker.displayed->id) {
+                picker.image = std::move(image);
+                layout_preview(dialog, picker);
+                InvalidateRect(dialog, nullptr, FALSE);
+            }
+            return TRUE;
+        }
         if (message == WM_DRAWITEM && (wparam == IDC_CARD_IMAGE || wparam == IDC_CARD_INFO)) {
             const auto& draw = *reinterpret_cast<const DRAWITEMSTRUCT*>(lparam);
             if (wparam == IDC_CARD_IMAGE) paint_preview(draw, picker);
@@ -410,6 +415,7 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             return TRUE;
         }
         if (message == WM_DESTROY) {
+            KillTimer(dialog, 7634);
             const auto tree = GetDlgItem(dialog, IDC_CARD_TREE);
             RemoveWindowSubclass(tree, tree_proc, 1);
             if (picker.multiple()) {
@@ -459,6 +465,7 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             layout_preview(dialog, picker);
         } else if ((control == IDC_CARD_QUERY && event == EN_CHANGE) ||
             (control == IDC_CARD_SCOPE && event == CBN_SELCHANGE)) {
+            SetTimer(dialog, 7634, 50, nullptr);
             render_cards(dialog, picker);
         } else if (control == IDC_CARD_ALL && current_scope(dialog) && picker.mode == CardSelection::multiple) {
             const auto tree = GetDlgItem(dialog, IDC_CARD_TREE);
@@ -497,11 +504,7 @@ void pick_cards(HWND owner, const wchar_t* title, const CardTargets& cards, cons
     if (!InitCommonControlsEx(&controls) ||
         !GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                             reinterpret_cast<LPCWSTR>(picker_proc), &module)) return;
-    std::array<wchar_t, 32768> path{};
-    const auto length = GetModuleFileNameW(module, path.data(), static_cast<DWORD>(path.size()));
-    std::filesystem::path previews;
-    if (length && length < path.size()) previews = std::filesystem::path(path.data()).parent_path() / L"card-faces";
-    Picker picker{title, cards, current_kingdom, mode, accept, std::move(previews)};
+    Picker picker{title, cards, current_kingdom, mode, accept};
     if (DialogBoxParamW(module, MAKEINTRESOURCEW(IDD_CARD_PICKER), owner, picker_proc,
                         reinterpret_cast<LPARAM>(&picker)) == -1) {
         MessageBoxW(owner, L"Die Kartenauswahl konnte nicht geöffnet werden.", title, MB_OK | MB_ICONWARNING);

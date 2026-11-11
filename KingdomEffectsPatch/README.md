@@ -20,7 +20,7 @@ Die Tabelle zeigt Effektname und interne ID, Wirkung und Auslösezeitpunkt. Die 
 
 Für **Doppelter Vorratsstapel** unter **Ziele wählen…** mehrere Stapel anhaken und mit **Fertig** übernehmen. **Weitere Kopie hinzufügen** erlaubt eine bewusste Wiederholung. Rechts stehen die aktiven Effekte in Ausführungsreihenfolge. Höchstens **32 Effekte** sind möglich. **Abbrechen** verwirft den Entwurf.
 
-Die Kartenauswahl zeigt zunächst die bereits festgelegten Königreichstapel. **Alle Karten** öffnet den passenden Katalog. Eine offene Zufallsauswahl wird durch F8 nicht gezogen. Kartenbilder fehlen vereinzelt; Text und Auswahl bleiben verfügbar.
+Die Kartenauswahl zeigt zunächst die bereits festgelegten Königreichstapel. **Alle Karten** öffnet den passenden Katalog. Eine offene Zufallsauswahl wird durch F8 nicht gezogen. Die Grafiken für Karten und Oberfläche werden bei Bedarf direkt aus `Dominion.xpack` deiner laufenden Spielinstallation gelesen. Im Download sind keine Spielgrafiken enthalten. Es gibt keine Bilderzeugung beim ersten Start und keinen Grafik-Cache auf der Festplatte. Der gemeinsame Speicher-Cache ist auf 96 MiB begrenzt. Bei fehlenden Ressourcen bleiben Text und Auswahl verfügbar.
 
 ## Profil und Sicherungen
 

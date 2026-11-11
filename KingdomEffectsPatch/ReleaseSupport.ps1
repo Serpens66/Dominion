@@ -148,8 +148,4 @@ function Assert-ModPackage {
             throw "Release-Datei fehlt oder wurde veraendert: $name. Bitte das ZIP erneut entpacken."
         }
     }
-    foreach ($folder in 'card-faces', 'menu-art') {
-        $path = Join-Path $PackageRoot "bin\$folder"
-        if (!(Test-Path -LiteralPath $path -PathType Container)) { throw "Vorschaugrafiken fehlen: $folder" }
-    }
 }

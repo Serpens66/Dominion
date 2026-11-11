@@ -4,6 +4,7 @@
 #include <commctrl.h>
 #include <objidl.h>
 #include <gdiplus.h>
+#include "game_resources.hpp"
 
 #include <filesystem>
 #include <map>
@@ -23,7 +24,7 @@ public:
     RECT units(RECT logical) const;
     void place(int control, RECT logical) const;
     INT_PTR handle(UINT message, WPARAM wparam, LPARAM lparam) const;
-    Gdiplus::Image* art(std::string_view name) const;
+    ResourceImage art(std::string_view name) const;
     bool draw_icon(HDC dc, std::string_view name, RECT bounds) const;
     int add_icon(HIMAGELIST images, std::string_view name) const;
     HIMAGELIST checks() const;
@@ -46,8 +47,6 @@ private:
     HFONT section_ = nullptr;
     HFONT heading_ = nullptr;
     ULONG_PTR graphics_ = 0;
-    std::filesystem::path assets_;
-    mutable std::map<std::string, std::unique_ptr<Gdiplus::Image>, std::less<>> images_;
 };
 
 }

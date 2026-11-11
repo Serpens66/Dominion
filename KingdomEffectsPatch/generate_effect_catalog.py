@@ -1,9 +1,5 @@
 """Build the editor's C++ catalog from the project's German game reference."""
 
-import base64
-import hashlib
-from io import BytesIO
-from functools import lru_cache
 import json
 from pathlib import Path
 import re
@@ -14,7 +10,7 @@ import unicodedata
 DOCS = Path(__file__).resolve().parents[1] / "Documentation"
 GENERATOR = DOCS.parent / "SetGenerator"
 sys.path.insert(0, str(GENERATOR))
-from generator_catalog import load_catalog, read_index, read_resource, read_strings, XPACK_HASH
+from generator_catalog import load_catalog, read_index, read_resource, read_strings
 
 ARGUMENTS = {
     "Karten-ID": "card",
@@ -149,145 +145,81 @@ def read_targets(catalog, aliases):
     return sorted(targets, key=lambda row: (search_key(row[2]), search_key(row[1]), row[0]))
 
 
-def prepare_images(output, xpack, cards, types):
-    source = GENERATOR / "Dominion-Kartenbilder.json"
-    folder = output.parent / "card-faces"
-    folder.mkdir(exist_ok=True)
-    stamp = folder / "source.sha256"
-    try:
-        from PIL import Image
-        from extract_card_images import decode_artwork, decode_texture, read_image_pack, render_catalog_card
-
-        source_data = source.read_bytes() if source.is_file() else None
-        digest = hashlib.sha256(Path(__file__).read_bytes() + (GENERATOR / "extract_card_images.py").read_bytes())
-        digest.update(XPACK_HASH.encode("ascii"))
-        if source_data is not None:
-            digest.update(source_data)
-        digest.update(json.dumps((cards, types), sort_keys=True).encode("utf-8"))
-        version = digest.hexdigest()
-        if stamp.is_file() and stamp.read_text(encoding="ascii") == version and all(
-                (folder / f"{card['id']}.png").is_file() for card in cards):
-            return
-        pack = json.loads(source_data) if source_data is not None else read_image_pack(xpack, True)
-        if pack["format"] != "dominion-card-images" or pack["version"] != 1:
-            raise ValueError("Unbekanntes Bildpaketformat")
-
-        def decode(encoded):
-            with Image.open(BytesIO(base64.b64decode(encoded.split(",", 1)[1], validate=True))) as image:
-                return image.convert("RGBA")
-
-        full = pack.get("cards", {}).get("de", {})
-        with xpack.open("rb") as package:
-            entries = read_index(package)
-
-            def read(key):
-                return read_resource(package, entries, key)
-
-            @lru_cache(maxsize=None)
-            def atlas(key):
-                return decode_texture(read(key))
-
-            @lru_cache(maxsize=None)
-            def sprite(name):
-                key = f"res/card_gen/shared/{name}"
-                return decode_artwork(read, atlas, key) if key in entries else None
-
-            @lru_cache(maxsize=None)
-            def expansion_icon(expansion):
-                path = output.parent / "menu-art" / f"exp-{expansion}.png"
-                if not path.is_file():
-                    return None
-                with Image.open(path) as image:
-                    return image.convert("RGBA")
-
-            count = missing_art = 0
-            for card in cards:
-                card_id = card["id"]
-                if not re.fullmatch(r"[a-z0-9_]+", card_id):
-                    raise ValueError(f"Ungültige Karten-ID {card_id}")
-                path = folder / f"{card_id}.png"
-                try:
-                    if card_id in full:
-                        face = decode(full[card_id])
-                    else:
-                        encoded = pack["images"].get(card_id)
-                        art = decode(encoded) if encoded else None
-                        if art is None and card["expansion"] == "basic":
-                            art = sprite(card_id)
-                        face = render_catalog_card(card, types, art, sprite, expansion_icon(card["expansion"]))
-                        missing_art += int(art is None)
-                    temporary = path.with_suffix(".tmp")
-                    face.save(temporary, "PNG", compress_level=1)
-                    temporary.replace(path)
-                    count += 1
-                except (OSError, ValueError, IndexError, KeyError) as error:
-                    path.unlink(missing_ok=True)
-                    print(f"Kartenvorschau für {card_id}: {error}", file=sys.stderr)
-        if count == len(cards):
-            stamp.write_text(version, encoding="ascii")
-        print(f"{count} lokale Kartenvorderseiten vorbereitet, davon {missing_art} ohne Illustration.")
-    except (ImportError, OSError, ValueError, KeyError, TypeError) as error:
-        print(f"Kartenvorschauen verwenden Text, wenn Bilder fehlen: {error}", file=sys.stderr)
-
-
-def prepare_menu(output, xpack):
-    folder = output.parent / "menu-art"
-    folder.mkdir(exist_ok=True)
-    stamp = folder / "source.sha256"
-    try:
-        source = (GENERATOR / "Dominion-Generator.html").read_text(encoding="utf-8")
-        match = re.search(r'<script type="application/json" id="game-icons">\s*(.*?)</script>', source, re.S)
-        icon_json = match[1] if match else "{}"
-        icons = json.loads(icon_json)
-    except (OSError, ValueError) as error:
-        print(f"Menü verwendet Text für fehlende SetGenerator-Symbole: {error}", file=sys.stderr)
-        icon_json, icons = "{}", {}
+def prepare_resources(output, xpack, cards, load_types):
+    from extract_card_images import (ASSET_NAMES, EXPANSION_ASSET_NAMES, VERIFIED_ART_RESOURCES,
+        normalize_image_name, COMBINED_FRAMES, LANDSCAPE_TYPES, LANDSCAPE_NAMES)
+    from generator_catalog import VALUE_CARDS
     with xpack.open("rb") as package:
         entries = read_index(package)
-
-        def read(key):
-            return read_resource(package, entries, key)
-
-        de = read_strings(read("res/translation/de"))
-        lines = ["#pragma once", "namespace kingdom::menu_text {"]
-        lines.extend(f"inline constexpr wchar_t {name}[] = {literal(de[key], True)};"
-                     for name, key in MENU_LABELS.items())
-        lines.append("}")
-        (output.parent / "menu_labels.generated.hpp").write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-        version = hashlib.sha256(Path(__file__).read_bytes() + (GENERATOR / "extract_card_images.py").read_bytes()
-                                 + (XPACK_HASH + icon_json).encode("utf-8")).hexdigest()
-        if stamp.is_file() and stamp.read_text(encoding="ascii") == version:
-            return
-        try:
-            from PIL import Image
-            from extract_card_images import decode_artwork, decode_texture
-        except ImportError as error:
-            print(f"Menü verwendet die Ersatzfarben: {error}", file=sys.stderr)
-            return
-
-        @lru_cache(maxsize=None)
-        def atlas(key):
-            return decode_texture(read(key))
-
-        complete = True
-        for name, key in MENU_ASSETS.items():
-            try:
-                decode_artwork(read, atlas, f"res/ui_art/{key}").save(folder / f"{name}.png")
-            except (OSError, ValueError, KeyError) as error:
-                print(f"Menügrafik {name}: {error}", file=sys.stderr)
-                complete = False
-        for name, data in icons.items():
-            if not re.fullmatch(r"[a-z0-9_-]+", name) or name in MENU_ASSETS:
-                continue
-            try:
-                with Image.open(BytesIO(base64.b64decode(data.split(",", 1)[1], validate=True))) as icon:
-                    icon.save(folder / f"{name}.png")
-            except (OSError, ValueError, IndexError) as error:
-                print(f"Menüsymbol {name}: {error}", file=sys.stderr)
-                complete = False
-        if complete:
-            stamp.write_text(version, encoding="ascii")
+        strings = read_strings(read_resource(package, entries, "res/translation/de"))
+    labels = ["#pragma once", "namespace kingdom::menu_text {"]
+    labels.extend(f"inline constexpr wchar_t {name}[] = {literal(strings[key], True)};" for name, key in MENU_LABELS.items())
+    (output.parent / "menu_labels.generated.hpp").write_text("\n".join(labels + ["}"]), encoding="utf-8")
+    def sprite(name):
+        path = "res/card_gen/shared/" + name
+        return path if path in entries else ""
+    def first(*names):
+        return next((sprite(n) for n in names if sprite(n)), "")
+    resources = {}
+    for key in entries:
+        parts = key.split("/")
+        if len(parts) == 4 and parts[:2] == ["res", "card_gen"]:
+            name = re.sub(r"^[a-z]+2e_", "", parts[3])
+            if parts[2] == "promo": name = name.removesuffix("art")
+            resources.setdefault((parts[2], normalize_image_name(name)), key)
+    rows = ["// Resource paths and layout metadata only; no image bytes.", "constexpr ResourceCard resource_cards[] = {"]
+    for card in cards:
+        cid, kinds = card["id"], card["types"]
+        expansion = {"basic":"base", "promos":"promo"}.get(card["expansion"], card["expansion"])
+        verified = VERIFIED_ART_RESOURCES.get(cid)
+        art = "res/card_gen/" + verified if verified else next((resources[(group, normalize_image_name(name))]
+            for group in (expansion, "shared") for name in (ASSET_NAMES.get(cid,cid), EXPANSION_ASSET_NAMES.get(cid,cid),card["text"]["en"][0])
+            if (group,normalize_image_name(name)) in resources), "")
+        landscape = next((k for k in kinds if k in LANDSCAPE_TYPES), "")
+        basic = next((k for k in ("night","curse","ruins","duration","reserve","reaction","treasure","victory") if k in kinds), "action")
+        basic = "vp" if basic == "victory" else basic
+        frame = next((f for f, required in COMBINED_FRAMES if all(k in kinds for k in required)), basic)
+        if landscape:
+            top = bottom = first(LANDSCAPE_NAMES.get(landscape, "name_"+landscape), "name_event")
+            left = right = sprite("landscape_frame_side_detail")
+        else:
+            parts=[]
+            for part in ("top","bot","ribl","ribr"):
+                parts.append(first(f"frame_{frame}_{part}",
+                    f"frame_{frame}_frame_treasuretop" if part=="top" and "treasure" in frame else "",
+                    f"frame_treasure_nonstandard_{part}" if part.startswith("rib") and frame=="treasure" else "",
+                    f"frame_{basic}_{part}", f"frame_action_{part}"))
+            top,bottom,left,right=parts
+        exp = {"plunder":"plun_plunder","allies":"14_allies"}.get(expansion,expansion)
+        edition = "_1e" if card.get("edition")=="first" and exp in ("base","intrigue") else ""
+        emblem = first("exp_"+exp+edition, "exp_"+exp)
+        title,rules = card["text"]["de"]
+        rules = re.sub(r"-//(?=[a-zäöüß])", "", rules).replace("{br}","//").replace("{coin_2}","[2]")
+        rules = re.sub(r"%([^%]+)%",r"\1",rules)
+        types = " – ".join(load_types.get(k,k) for k in kinds)
+        cost=card.get("cost") or {"coins":-1,"debt":0,"potions":0}
+        value=VALUE_CARDS.get(cid,("",""))
+        fields=[literal(v) for v in (cid,art,top,bottom,left,right,emblem)]
+        fields += [literal(v,True) for v in (title,rules,types)]
+        fields += [str(cost[k]) for k in ("coins","potions","debt")]
+        fields += [str(bool(landscape)).lower(), str("night" in kinds and not landscape).lower(),literal(value[0]),literal(value[1],True)]
+        rows.append("    {" + ", ".join(fields) + "},")
+    rows += ["};", "constexpr ResourceAlias resource_aliases[] = {"]
+    aliases={name:"res/ui_art/"+key for name,key in MENU_ASSETS.items()}
+    aliases.update({"coin":sprite("ico_coin_smaller"),"potion":sprite("ico_potion"),"debt":sprite("ico_debt"),"sun":sprite("ico_sun"),"vp":sprite("vp"),
+        "actions":"res/ui_art/ico_action","attack":"res/ui_art/ico_modifier_requireattacks","reaction":"res/ui_art/ico_modifier_reaction","night":"res/ui_art/ico_night"})
+    for name in ("duration","landscape","omen","favor_rules"):
+        aliases[name] = first(name, "ico_"+name)
+    aliases["duration"] = sprite("ico_pile_duration")
+    aliases["favor_rules"] = sprite("ico_exp14_favor")
+    for card in cards:
+        exp=card["expansion"]
+        key={"basic":"base","nocturne":"nocturne_white"}.get(exp,exp)
+        aliases["exp-"+key if exp=="basic" else "exp-"+exp]="res/ui_art/exp_"+key+"_big"
+    for name,key in aliases.items():
+        if key in entries: rows.append("    {"+literal(name)+", "+literal(key)+"},")
+    rows.append("};")
+    (output.parent / "resource_catalog.generated.hpp").write_text("\n".join(rows)+"\n",encoding="utf-8")
 
 
 def main(output, xpack):
@@ -312,10 +244,9 @@ def main(output, xpack):
         rows.append(f"    {{{literal(alias)}, {literal(canonical)}}},")
     rows.append("};")
     output.write_text("\n".join(rows) + "\n", encoding="utf-8")
-    prepare_menu(output, xpack)
     target_ids = {entry[0] for entry in targets}
-    prepare_images(output, xpack, [card for card in catalog["cards"] if card["id"] in target_ids],
-                   catalog["types"]["de"])
+    prepare_resources(output, xpack, [card for card in catalog["cards"] if card["id"] in target_ids], catalog["types"]["de"])
+
 
 
 if __name__ == "__main__":

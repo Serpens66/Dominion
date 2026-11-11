@@ -19,6 +19,7 @@ function Assert-Throws {
 }
 Assert-SupportedGame $SourceGameDirectory
 Assert-ModPackage $PackageDirectory
+Assert-True (!@(Get-ChildItem -LiteralPath $PackageDirectory -Recurse -File | Where-Object { $_.Extension -match '^\.(png|jpe?g|webp|bmp|gif|ico|svg)$' }).Count) 'Das Release darf keine Grafikdateien enthalten.'
 
 # Check every shipped file, not just the runtime binary check.
 $manifest = [IO.File]::ReadAllText((Join-Path $PackageDirectory 'package.json')) | ConvertFrom-Json

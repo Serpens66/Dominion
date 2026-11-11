@@ -21,13 +21,6 @@ foreach ($file in 'Start-Mod.ps1', 'ReleaseSupport.ps1', 'Dominion-mit-Mod-start
 foreach ($file in 'attach.exe', 'KingdomEffectsPatch.dll') {
     Copy-Item -LiteralPath (Join-Path $build $file) -Destination (Join-Path $package 'bin')
 }
-foreach ($folder in 'card-faces', 'menu-art') {
-    $destination = Join-Path $package "bin\$folder"
-    New-Item -ItemType Directory -Path $destination | Out-Null
-    $images = @(Get-ChildItem -LiteralPath (Join-Path $build $folder) -File -Filter '*.png')
-    if (!$images.Count) { throw "Grafiken fehlen: $folder" }
-    foreach ($image in $images) { Copy-Item -LiteralPath $image.FullName -Destination $destination }
-}
 $files = [ordered]@{}
 foreach ($file in Get-ChildItem -LiteralPath $package -File -Recurse | Sort-Object FullName) {
     $name = $file.FullName.Substring($package.Length + 1).Replace('\', '/')

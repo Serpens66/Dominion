@@ -6,6 +6,8 @@
 namespace {
 std::string failure;
 bool checked = false;
+bool picker_checked = false;
+unsigned picker_ticks = 0;
 UINT_PTR timer = 0;
 void check(bool condition, const char* message) { if (!condition) throw std::runtime_error(message); }
 
@@ -43,9 +45,31 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
     return FALSE;
 }
 void CALLBACK inspect_dialog(HWND, UINT, UINT_PTR, DWORD) { EnumThreadWindows(GetCurrentThreadId(), inspect, 0); }
+BOOL CALLBACK inspect_picker(HWND dialog, LPARAM) {
+    if (!GetDlgItem(dialog, IDC_CARD_TREE)) return TRUE;
+    try {
+        if (!picker_ticks++) {
+            for (const auto query : {L"village", L"market", L"no-such-card", L"miser"}) SetDlgItemTextW(dialog, IDC_CARD_QUERY, query);
+        }
+        if (!IsWindowVisible(GetDlgItem(dialog, IDC_CARD_IMAGE)) && picker_ticks<200) return FALSE;
+        check(IsWindowVisible(GetDlgItem(dialog, IDC_CARD_IMAGE)), "Async image did not arrive.");
+        wchar_t name[128]{}; GetDlgItemTextW(dialog, IDC_CARD_IMAGE, name, 128);
+        check(std::wstring_view(name)==L"Geizhals", "Stale preview published after navigation.");
+        SendMessageW(dialog, WM_COMMAND, IDC_CARD_TEXT, 0);
+        check(IsWindowVisible(GetDlgItem(dialog, IDC_CARD_RULES)), "Rules switch failed.");
+        SetDlgItemTextW(dialog, IDC_CARD_QUERY, L"city_quarter");
+        picker_checked=true;
+    } catch (const std::exception& error) { failure=error.what(); }
+    KillTimer(nullptr,timer); PostMessageW(dialog,WM_COMMAND,IDCANCEL,0); return FALSE;
+}
+void CALLBACK inspect_card_dialog(HWND, UINT, UINT_PTR, DWORD) { EnumThreadWindows(GetCurrentThreadId(),inspect_picker,0); }
 }
 
 int main() {
+    wchar_t package[32768]{};
+    if (GetEnvironmentVariableW(L"DOMINION_RESOURCE_TEST_PACKAGE",package,32768)) {
+        if (!kingdom::set_resource_package_for_test(package)) return 1;
+    }
     const auto name = L"DominionEditorReleaseTest_" + std::to_wstring(GetCurrentProcessId());
     const auto previous = GetThreadDesktop(GetCurrentThreadId());
     const auto desktop = CreateDesktopW(name.c_str(), nullptr, nullptr, 0, GENERIC_ALL, nullptr);
@@ -61,6 +85,15 @@ int main() {
     const bool saved = kingdom::edit_effects(nullptr, "-k village, market", effects, automatic,
         [&](const kingdom::EffectCommands&) { applied = true; return true; });
     KillTimer(nullptr, timer);
+    if (*package) {
+        kingdom::CardTargets cards;
+        for (const auto& card:kingdom::target_catalog) cards.push_back(&card);
+        timer=SetTimer(nullptr,0,50,inspect_card_dialog);
+        kingdom::pick_cards(nullptr,L"Ressourcentest",cards,{},kingdom::CardSelection::multiple,
+            [&](const kingdom::CardTargets&,bool) { applied=true; return std::wstring{}; });
+        KillTimer(nullptr,timer);
+        if (!picker_checked) failure="Picker check did not run.";
+    }
     SetThreadDesktop(previous);
     CloseDesktop(desktop);
     if (!checked || !failure.empty() || saved || applied || automatic) {

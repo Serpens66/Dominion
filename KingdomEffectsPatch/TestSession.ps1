@@ -135,15 +135,13 @@ function Invoke-TestSession {
         $sources = 'patch.cpp', 'attach.cpp', 'working_copy.hpp', 'effects.hpp', 'effect_editor.cpp', 'effect_editor.hpp',
             'effect_editor.rc', 'effect_editor_ids.h', 'card_picker.cpp', 'card_picker.hpp', 'generate_effect_catalog.py', 'build.cmd',
             '..\Documentation\Steam_Spielanleitung.md', '..\Documentation\Card_Properties.json',
-            'dialog_skin.cpp', 'dialog_skin.hpp', 'launcher_test.cpp', 'release_game_test.cpp', 'editor_release_test.cpp', '..\SetGenerator\Dominion-Generator.html',
+            'dialog_skin.cpp', 'dialog_skin.hpp', 'game_resources.cpp', 'game_resources.hpp', 'launcher_test.cpp', 'release_game_test.cpp', 'editor_release_test.cpp', '..\SetGenerator\Dominion-Generator.html',
             '..\SetGenerator\generator_catalog.py', '..\SetGenerator\extract_card_images.py' |
             ForEach-Object { Get-Item -LiteralPath (Join-Path $PSScriptRoot $_) }
         $sources += @(Get-Item -LiteralPath (Join-Path $PSScriptRoot '..\SetGenerator\Dominion-Kartenbilder.json') -ErrorAction SilentlyContinue)
         $newestSource = ($sources | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1).LastWriteTimeUtc
         $binaries = Get-Item -LiteralPath $attach, $dll -ErrorAction SilentlyContinue
-        if (@($binaries).Count -ne 2 -or @($binaries | Where-Object { $_.LastWriteTimeUtc -lt $newestSource }).Count -or
-            !(Test-Path -LiteralPath (Join-Path $PSScriptRoot 'out\card-faces') -PathType Container) -or
-            !(Test-Path -LiteralPath (Join-Path $PSScriptRoot 'out\menu-art') -PathType Container)) {
+        if (@($binaries).Count -ne 2 -or @($binaries | Where-Object { $_.LastWriteTimeUtc -lt $newestSource }).Count) {
             & (Join-Path $PSScriptRoot 'build.cmd')
             if ($LASTEXITCODE -ne 0) { throw 'Die Patch-Dateien konnten nicht gebaut werden.' }
         }

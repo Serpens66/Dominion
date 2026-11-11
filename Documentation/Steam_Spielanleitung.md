@@ -180,7 +180,7 @@ Eine Kampagnenvorlage weist dem Einsamen Schrein sowohl **Inspirierend** als auc
 
 ## F8-Effektdialog mit dem lokalen Patch
 
-Der Release-Starter **Dominion-mit-Mod-starten.cmd** im entpackten Paket verwendet das normale Profil und hält höchstens drei Profilsicherungen vor. Es werden keine Buildwerkzeuge benötigt. Der bisherige **Lokal-Test-starten.cmd** bleibt ein Diagnose-Starter mit getrenntem Testprofil. [Installation und Sicherungen](../KingdomEffectsPatch/README.md)
+Der Release-Starter **Dominion-mit-Mod-starten.cmd** im entpackten Paket verwendet das normale Profil und hält höchstens drei Profilsicherungen vor. Karten- und Menügrafiken liest der Patch direkt aus der installierten `Dominion.xpack`; es werden keine Spielgrafiken mitgeliefert oder vorher extrahiert. Es werden keine Buildwerkzeuge benötigt. Der bisherige **Lokal-Test-starten.cmd** bleibt ein Diagnose-Starter mit getrenntem Testprofil. [Installation und Sicherungen](../KingdomEffectsPatch/README.md)
 
 Öffne mit dem Patch-Starter in **Lokal spielen** oder **Weitergeben** die Königreich-Auswahl und drücke **F8**. Links findest du Suche, Kategorien und eine Tabelle mit **Effekt**, **Wirkung** und **Wann/wie**. Die Zeilen zeigen ihren vollständigen Text mit Zeilenumbruch. Unter der Tabelle stehen Teststand und Zielwahl des gewählten Effekts. Rechts stehen die aktiven Effekte in ihrer Ausführungsreihenfolge. Unten findest du die automatische Verdopplung gezogener Stapel und die belegten Plätze von insgesamt 32.
 

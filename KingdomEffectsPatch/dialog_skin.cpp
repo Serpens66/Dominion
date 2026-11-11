@@ -56,14 +56,6 @@ std::array<wchar_t, 256> caption(HWND window) {
 DialogSkin::DialogSkin(HWND dialog) : dialog_(dialog) {
     Gdiplus::GdiplusStartupInput startup;
     if (Gdiplus::GdiplusStartup(&graphics_, &startup, nullptr) != Gdiplus::Ok) graphics_ = 0;
-    HMODULE module{};
-    if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                           reinterpret_cast<LPCWSTR>(checkbox_proc), &module)) {
-        std::array<wchar_t, MAX_PATH> path{};
-        const auto size = GetModuleFileNameW(module, path.data(), static_cast<DWORD>(path.size()));
-        if (size && size < path.size()) assets_ = std::filesystem::path(path.data()).parent_path() / L"menu-art";
-    }
-
     const auto owner = GetWindow(dialog, GW_OWNER);
     MONITORINFO monitor{sizeof monitor};
     RECT client{};
@@ -142,7 +134,6 @@ DialogSkin::DialogSkin(HWND dialog) : dialog_(dialog) {
 }
 
 DialogSkin::~DialogSkin() {
-    images_.clear();
     if (graphics_) Gdiplus::GdiplusShutdown(graphics_);
     if (paper_brush_) DeleteObject(paper_brush_);
     if (body_) DeleteObject(body_);
@@ -165,18 +156,12 @@ void DialogSkin::place(int control, RECT logical) const {
                  rect.bottom - rect.top, SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
-Gdiplus::Image* DialogSkin::art(std::string_view name) const {
-    if (!graphics_ || assets_.empty() || name.empty()) return nullptr;
-    const auto existing = images_.find(name);
-    if (existing != images_.end()) return existing->second.get();
-    const auto path = assets_ / (std::string(name) + ".png");
-    auto image = std::make_unique<Gdiplus::Image>(path.c_str());
-    if (image->GetLastStatus() != Gdiplus::Ok || !image->GetWidth() || !image->GetHeight()) image.reset();
-    return images_.emplace(std::string(name), std::move(image)).first->second.get();
+ResourceImage DialogSkin::art(std::string_view name) const {
+    return game_art(name);
 }
 
 bool DialogSkin::draw_icon(HDC dc, std::string_view name, RECT bounds) const {
-    auto* icon = art(name);
+    auto icon = art(name);
     if (!icon || bounds.right <= bounds.left || bounds.bottom <= bounds.top) return false;
     const double ratio = (std::min)(static_cast<double>(bounds.right - bounds.left) / icon->GetWidth(),
                                     static_cast<double>(bounds.bottom - bounds.top) / icon->GetHeight());
@@ -199,12 +184,12 @@ int DialogSkin::add_icon(HIMAGELIST images, std::string_view name) const {
         Gdiplus::Graphics graphics(&tile_image);
         graphics.Clear(name.substr(0, 4) == "exp-" ? Gdiplus::Color(255, 63, 36, 23) :
                        Gdiplus::Color(0, 0, 0, 0));
-        auto* icon = art(name);
+        auto icon = art(name);
         const double scale = (std::min)(static_cast<double>(width) / icon->GetWidth(),
                                        static_cast<double>(height) / icon->GetHeight());
         const auto w = static_cast<int>(std::lround(icon->GetWidth() * scale));
         const auto h = static_cast<int>(std::lround(icon->GetHeight() * scale));
-        graphics.DrawImage(icon, (width - w) / 2, (height - h) / 2, w, h);
+        graphics.DrawImage(icon.get(), (width - w) / 2, (height - h) / 2, w, h);
     }
     HBITMAP bitmap{};
     if (tile_image.GetHBITMAP(Gdiplus::Color(0, 0, 0, 0), &bitmap) != Gdiplus::Ok) return I_IMAGENONE;
@@ -231,7 +216,7 @@ void DialogSkin::paint_background(HDC dc) const {
     fill(dc, full, panel);
     RECT body = full;
     body.top = header_height_;
-    if (auto* texture = art("panel")) {
+    if (auto texture = art("panel")) {
         tile(dc, *texture, body, static_cast<float>(header_height_) / 42.0f);
         Gdiplus::Graphics graphics(dc);
         Gdiplus::SolidBrush tint(Gdiplus::Color(214, 234, 216, 178));
@@ -244,7 +229,7 @@ void DialogSkin::paint_background(HDC dc) const {
     RECT header = full;
     header.bottom = header_height_;
     fill(dc, header, wood);
-    if (auto* texture = art("wood")) tile(dc, *texture, header, static_cast<float>(header_height_) / texture->GetHeight());
+    if (auto texture = art("wood")) tile(dc, *texture, header, static_cast<float>(header_height_) / texture->GetHeight());
     frame(dc, full, gold);
     RECT line{0, header.bottom - 1, full.right, header.bottom + 1};
     fill(dc, line, gold);
@@ -268,7 +253,7 @@ void DialogSkin::paint_button(const DRAWITEMSTRUCT& item) const {
     const bool pressed = item.itemState & ODS_SELECTED;
     const bool primary = item.CtlID == IDOK || item.CtlID == IDC_ADD || item.CtlID == IDC_TARGET ||
                          item.CtlID == IDC_SECOND_TARGET;
-    auto* texture = primary && enabled ? art("gold") : nullptr;
+    auto texture = primary && enabled ? art("gold") : nullptr;
     fill(item.hDC, rect, enabled ? (primary ? RGB(215, 168, 81) : paper) : RGB(220, 201, 162));
     if (texture) image_at(item.hDC, *texture, rect);
     if (pressed) {
