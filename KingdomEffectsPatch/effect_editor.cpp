@@ -22,6 +22,7 @@ struct EffectDefinition {
     const char* id;
     const wchar_t* title;
     const wchar_t* description;
+    const wchar_t* timing;
     const wchar_t* status;
     TargetKind first;
     TargetKind second;
@@ -137,6 +138,107 @@ void set_list_width(HWND list, LRESULT count) {
     SendMessageW(list, LB_SETHORIZONTALEXTENT, width, 0);
 }
 
+std::array<RECT, 3> table_cells(HWND dialog, RECT row) {
+    RECT client{};
+    GetClientRect(GetDlgItem(dialog, IDC_CATALOG), &client);
+    const LONG first = row.left + client.right * 30 / 100;
+    const LONG second = row.left + client.right * 73 / 100;
+    return {RECT{row.left, row.top, first, row.bottom},
+            RECT{first, row.top, second, row.bottom},
+            RECT{second, row.top, row.left + client.right, row.bottom}};
+}
+
+std::wstring table_name(const EffectDefinition& effect) {
+    std::wstring name = std::wstring(effect.title) + L" (" + widen(effect.id) + L")";
+    if (effect.first != TargetKind::none) name += L" · " + std::wstring(target_label(effect.first));
+    return name;
+}
+
+std::array<std::wstring, 3> table_text(const EffectDefinition& effect) {
+    auto name = table_name(effect);
+    // Allow the native text renderer to wrap long IDs at their underscores.
+    for (std::size_t at = 0; (at = name.find(L'_', at)) != name.npos; at += 2)
+        name.insert(at + 1, 1, L'\u200B');
+    return {std::move(name), effect.description, effect.timing};
+}
+
+constexpr UINT table_text_flags = DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL;
+
+void measure_rows(HWND dialog, const Draft& draft) {
+    const auto list = GetDlgItem(dialog, IDC_CATALOG);
+    const auto dc = GetDC(list);
+    if (!dc) return;
+    const auto font = reinterpret_cast<HFONT>(SendMessageW(list, WM_GETFONT, 0, 0));
+    const auto previous = SelectObject(dc, font);
+    const auto padding = draft.skin->units({0, 0, 4, 3});
+    // Updating row heights can make the vertical scrollbar appear.
+    LONG previous_width = -1;
+    for (int pass = 0; pass < 2; ++pass) {
+        RECT client{};
+        GetClientRect(list, &client);
+        if (client.right == previous_width) break;
+        previous_width = client.right;
+        const auto cells = table_cells(dialog, client);
+        const auto count = SendMessageW(list, LB_GETCOUNT, 0, 0);
+        for (LRESULT row = 0; row < count; ++row) {
+            const auto* effect = reinterpret_cast<const EffectDefinition*>(SendMessageW(list, LB_GETITEMDATA, row, 0));
+            const auto text = table_text(*effect);
+            LONG height = 0;
+            for (std::size_t column = 0; column < cells.size(); ++column) {
+                RECT bounds{0, 0, cells[column].right - cells[column].left - 2 * padding.right, 0};
+                DrawTextW(dc, text[column].c_str(), -1, &bounds, table_text_flags | DT_CALCRECT);
+                height = (std::max)(height, bounds.bottom);
+            }
+            SendMessageW(list, LB_SETITEMHEIGHT, row, height + 2 * padding.bottom + 1);
+        }
+    }
+    SelectObject(dc, previous);
+    ReleaseDC(list, dc);
+    InvalidateRect(GetDlgItem(dialog, IDC_CATALOG_HEADER), nullptr, TRUE);
+}
+
+void paint_table(HWND dialog, const Draft& draft, const DRAWITEMSTRUCT& draw) {
+    const bool header = draw.CtlID == IDC_CATALOG_HEADER;
+    if (!header && draw.itemID == static_cast<UINT>(-1)) return;
+    const bool selected = !header && (draw.itemState & ODS_SELECTED);
+    const auto background = header ? RGB(213, 185, 131) : selected ? RGB(231, 205, 148) : DialogSkin::paper;
+    SetDCBrushColor(draw.hDC, background);
+    FillRect(draw.hDC, &draw.rcItem, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+    const auto font_window = GetDlgItem(dialog, header ? IDC_EFFECT_LABEL : IDC_CATALOG);
+    const auto previous = SelectObject(draw.hDC, reinterpret_cast<HFONT>(SendMessageW(font_window, WM_GETFONT, 0, 0)));
+    SetTextColor(draw.hDC, DialogSkin::ink);
+    SetBkMode(draw.hDC, TRANSPARENT);
+    const auto text = header ? std::array<std::wstring, 3>{L"Effekt", L"Wirkung", L"Wann/wie"} :
+        table_text(*reinterpret_cast<const EffectDefinition*>(SendDlgItemMessageW(dialog, IDC_CATALOG,
+                                                                                  LB_GETITEMDATA, draw.itemID, 0)));
+    const auto cells = table_cells(dialog, draw.rcItem);
+    const auto padding = draft.skin->units({0, 0, 4, 3});
+    const auto pen = CreatePen(PS_SOLID, 1, RGB(198, 174, 126));
+    const auto previous_pen = SelectObject(draw.hDC, pen);
+    for (std::size_t column = 0; column < cells.size(); ++column) {
+        auto bounds = cells[column];
+        const int saved = SaveDC(draw.hDC);
+        IntersectClipRect(draw.hDC, bounds.left, bounds.top, bounds.right, bounds.bottom);
+        InflateRect(&bounds, -padding.right, -padding.bottom);
+        DrawTextW(draw.hDC, text[column].c_str(), -1, &bounds, table_text_flags);
+        RestoreDC(draw.hDC, saved);
+        if (column) {
+            MoveToEx(draw.hDC, cells[column].left, draw.rcItem.top, nullptr);
+            LineTo(draw.hDC, cells[column].left, draw.rcItem.bottom);
+        }
+    }
+    MoveToEx(draw.hDC, draw.rcItem.left, draw.rcItem.bottom - 1, nullptr);
+    LineTo(draw.hDC, draw.rcItem.right, draw.rcItem.bottom - 1);
+    SelectObject(draw.hDC, previous_pen);
+    DeleteObject(pen);
+    if ((draw.itemState & ODS_FOCUS) && !(draw.itemState & ODS_NOFOCUSRECT)) {
+        RECT focus = draw.rcItem;
+        InflateRect(&focus, -2, -2);
+        DrawFocusRect(draw.hDC, &focus);
+    }
+    SelectObject(draw.hDC, previous);
+}
+
 void update_active(HWND dialog, const Draft& draft, LRESULT selection = -1) {
     const auto list = GetDlgItem(dialog, IDC_ACTIVE);
     SendMessageW(list, LB_RESETCONTENT, 0, 0);
@@ -163,14 +265,14 @@ void update_targets(HWND dialog, const Draft& draft) {
     ShowWindow(GetDlgItem(dialog, IDC_ADD), effect && (!needs_first || needs_second) ? SW_SHOW : SW_HIDE);
     EnableWindow(GetDlgItem(dialog, IDC_ADD), effect && (!needs_second || (draft.first && draft.second)));
     if (needs_first) {
-        draft.skin->place(IDC_TARGET, {8, 189, needs_second ? 77 : 129, 204});
+        draft.skin->place(IDC_TARGET, {8, 298, 135, 314});
         SetDlgItemTextW(dialog, IDC_TARGET, draft.first ? draft.first->title :
                        multiple ? L"Ziele wählen…" : menu_text::choose_card);
     }
     if (needs_second)
         SetDlgItemTextW(dialog, IDC_SECOND_TARGET, draft.second ? draft.second->title : L"Zweites Ziel…");
     if (effect && (!needs_first || needs_second))
-        draft.skin->place(IDC_ADD, needs_second ? RECT{140, 189, 219, 204} : RECT{8, 189, 102, 204});
+        draft.skin->place(IDC_ADD, needs_second ? RECT{270, 298, 397, 314} : RECT{8, 298, 135, 314});
 }
 
 void select_effect(HWND dialog, Draft& draft) {
@@ -182,7 +284,6 @@ void select_effect(HWND dialog, Draft& draft) {
         draft.first = draft.second = nullptr;
         SetDlgItemTextW(dialog, IDC_STATUS, L"");
     }
-    SetDlgItemTextW(dialog, IDC_DESCRIPTION, selection ? selection->description : L"");
     SetDlgItemTextW(dialog, IDC_EFFECT_EVIDENCE, selection ? selection->status : L"");
     update_targets(dialog, draft);
 }
@@ -199,17 +300,16 @@ void filter_catalog(HWND dialog, Draft& draft) {
         if (id.substr(0, prefix.size()) != prefix) continue;
         if (fold_card_search(effect.title).find(filter) == filter.npos &&
             fold_card_search(widen(id)).find(filter) == filter.npos &&
-            fold_card_search(effect.description).find(filter) == filter.npos) continue;
-        std::wstring name = std::wstring(effect.title) + L" (" + widen(id) + L")";
-        if (effect.first != TargetKind::none) name += L" · " + std::wstring(target_label(effect.first));
+            fold_card_search(effect.description).find(filter) == filter.npos &&
+            fold_card_search(effect.timing).find(filter) == filter.npos) continue;
+        const auto name = table_name(effect);
         const auto row = SendDlgItemMessageW(dialog, IDC_CATALOG, LB_ADDSTRING, 0,
                                              reinterpret_cast<LPARAM>(name.c_str()));
         if (row >= 0) SendDlgItemMessageW(dialog, IDC_CATALOG, LB_SETITEMDATA, row,
                                           reinterpret_cast<LPARAM>(&effect));
         if (&effect == draft.selected && row >= 0) selection = row;
     }
-    const auto list = GetDlgItem(dialog, IDC_CATALOG);
-    set_list_width(list, SendMessageW(list, LB_GETCOUNT, 0, 0));
+    measure_rows(dialog, draft);
     SendDlgItemMessageW(dialog, IDC_CATALOG, LB_SETCURSEL, selection, 0);
     select_effect(dialog, draft);
 }
@@ -288,6 +388,10 @@ void add_effect(HWND dialog, Draft& draft) {
 
 INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lparam) {
     try {
+        if (message == WM_MEASUREITEM && wparam == IDC_CATALOG) {
+            reinterpret_cast<MEASUREITEMSTRUCT*>(lparam)->itemHeight = 24;
+            return TRUE;
+        }
         if (message == WM_INITDIALOG) {
             auto& draft = *reinterpret_cast<Draft*>(lparam);
             SetWindowLongPtrW(dialog, DWLP_USER, lparam);
@@ -309,6 +413,11 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
         const auto state = GetWindowLongPtrW(dialog, DWLP_USER);
         if (!state) return FALSE;
         auto& draft = *reinterpret_cast<Draft*>(state);
+        if (message == WM_DRAWITEM && (wparam == IDC_CATALOG || wparam == IDC_CATALOG_HEADER)) {
+            paint_table(dialog, draft, *reinterpret_cast<const DRAWITEMSTRUCT*>(lparam));
+            SetWindowLongPtrW(dialog, DWLP_MSGRESULT, TRUE);
+            return TRUE;
+        }
         if (draft.skin) {
             const auto handled = draft.skin->handle(message, wparam, lparam);
             if (handled) return handled;

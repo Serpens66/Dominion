@@ -55,19 +55,21 @@ Die Tabellen erfassen 89 Befehle und sechs Varianten der Kampagnenerzeugung in S
 
 Die Angaben **Einmal** und **Mehrfach** in der Wirkungszelle beziehen sich auf gemessene lokale Partien in Build 3315. **Bis 3×** heißt, dass jede Kopie bis zur dritten eine zusätzliche Wirkung zeigte. **Gleiche Wirkung** heißt, dass zwei und drei Kopien denselben Messwert wie eine Kopie lieferten. **Offen** steht für eine ausstehende oder unvollständige Prüfung. [Messwerte](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
 
+**Wann/wie** beschreibt die vorgesehenen Auslöser und Ziele anhand der Spieltexte und dokumentierten Befunde. Offene Bedingungen sind ausdrücklich vermerkt. Der gemessene Prüfstand steht weiterhin bei **Einmal** und **Mehrfach**.
+
 #### Alle 27 Spielvariationen mit `twist_`
 
 Eine **Nicht-Vorrats-Kopie** ist ein zusätzliches Exemplar der Karte, das du von außerhalb des Vorrats nimmst.
 
-| Name im Spiel | Befehl | Wirkung  Wann/wie |
+| Name im Spiel | Befehl | Wirkung | Wann/wie |
 | --- | --- | --- | --- |
-| Große Ideen | `twist_big_ideas` | Zu Beginn deines Zuges **+1 Karte**. *Einmal – Ja · Mehrfach – Bis 3×* | Zu Beginn deines Zuges (Zugbeginn). |
-| Gut beschäftigt | `twist_busy_busy` | Zu Beginn deines Zuges **+1 Aktion**. *Einmal – Ja · Mehrfach – Bis 3×* | Zu Beginn deines Zuges (Zugbeginn). |
-| Das gewisse Etwas | `twist_extra_oomph` | Zu Beginn deines Zuges +![1 Geld](Spielzeichen/geld-1.png). *Einmal – Ja · Mehrfach – Bis 3×* | Zu Beginn deines Zuges (Zugbeginn). |
-| Für immer Verbündet | `twist_forever_favored` | Zu Beginn deines Zuges **+1 Gefallen**. *Einmal – Ja · Mehrfach – Bis 3×* | Zu Beginn deines Zuges (Zugbeginn). |
-| Müllhaufen | `twist_garbage_heap` | Zu Beginn deines Zuges darfst du eine Handkarte entsorgen. *Einmal – Offen · Mehrfach – Offen* | Zu Beginn deines Zuges (Zugbeginn). |
-| Penny-Party | `twist_penny_party` | Nimm zu Beginn deines Zuges ein Kupfer. *Einmal – Ja · Mehrfach – Bis 3×* | Zu Beginn deines Zuges (Zugbeginn). |
-| Kauflaune | `twist_shoppers` | Zu Beginn deines Zuges **+1 Kauf**. *Einmal – Ja · Mehrfach – Bis 3×* | Zu Beginn deines Zuges (Zugbeginn). |
+| Große Ideen | `twist_big_ideas` | Zu Beginn deines Zuges **+1 Karte**. *Einmal – Ja · Mehrfach – Bis 3×* | Bei deinem Zugbeginn. |
+| Gut beschäftigt | `twist_busy_busy` | Zu Beginn deines Zuges **+1 Aktion**. *Einmal – Ja · Mehrfach – Bis 3×* | Bei deinem Zugbeginn. |
+| Das gewisse Etwas | `twist_extra_oomph` | Zu Beginn deines Zuges +![1 Geld](Spielzeichen/geld-1.png). *Einmal – Ja · Mehrfach – Bis 3×* | Bei deinem Zugbeginn. |
+| Für immer Verbündet | `twist_forever_favored` | Zu Beginn deines Zuges **+1 Gefallen**. *Einmal – Ja · Mehrfach – Bis 3×* | Bei deinem Zugbeginn. |
+| Müllhaufen | `twist_garbage_heap` | Zu Beginn deines Zuges darfst du eine Handkarte entsorgen. *Einmal – Offen · Mehrfach – Offen* | Bei deinem Zugbeginn. |
+| Penny-Party | `twist_penny_party` | Nimm zu Beginn deines Zuges ein Kupfer. *Einmal – Ja · Mehrfach – Bis 3×* | Bei deinem Zugbeginn. |
+| Kauflaune | `twist_shoppers` | Zu Beginn deines Zuges **+1 Kauf**. *Einmal – Ja · Mehrfach – Bis 3×* | Bei deinem Zugbeginn. |
 | Eingepfercht | `twist_cramped` | Du ziehst deine normale Hand mit 4 statt 5 Karten. *Einmal – Ja · Mehrfach – Bis 3×* | Beim Ziehen der normalen neuen Hand. |
 | Vom Thron | `twist_from_the_throne` | Die erste Aktionskarte, die du pro Zug spielst, wird automatisch zweimal gespielt. *Einmal – Offen · Mehrfach – Offen* | Beim Ausspielen deiner ersten Aktionskarte pro Zug. |
 | Deponie | `twist_landfill` | Wenn du eine deiner Karten entsorgst, **+1 Karte**. Das gilt auch für Karten, die du von einem anderen Ort als deiner Hand entsorgst. *Einmal – Offen · Mehrfach – Offen* | Beim Entsorgen einer eigenen Karte, unabhängig von ihrem Ort. |
@@ -91,7 +93,7 @@ Eine **Nicht-Vorrats-Kopie** ist ein zusätzliches Exemplar der Karte, das du vo
 
 #### Alle 34 Stempel mit `stamp_`
 
-| Name im Spiel | Befehl | Wirkung  Wann/wie |
+| Name im Spiel | Befehl | Wirkung | Wann/wie |
 | --- | --- | --- | --- |
 | Plus Aktion | `stamp_plus_action(Karten-ID)` | Wenn du eine Karte von diesem Stapel spielst, **+1 Aktion**. *Einmal – Offen · Mehrfach – Offen* | Beim Ausspielen einer Karte vom gewählten Stapel. |
 | Plus Karte | `stamp_plus_card(Karten-ID)` | Wenn du eine Karte von diesem Stapel spielst, **+1 Karte**. *Einmal – Offen · Mehrfach – Offen* | Beim Ausspielen einer Karte vom gewählten Stapel. |
@@ -130,7 +132,7 @@ Eine **Nicht-Vorrats-Kopie** ist ein zusätzliches Exemplar der Karte, das du vo
 
 #### Alle 28 Änderungen beim Spielaufbau mit `start_`
 
-| Was sich ändert | Befehl | Wirkung und Anwendung  Wann/wie |
+| Was sich ändert | Befehl | Wirkung und Anwendung | Wann/wie |
 | --- | --- | --- | --- |
 | Gefallen | `start_10_favor` | Jeder Spieler startet mit 10 Gefallen. *Einmal – Ja · Mehrfach – Bis 3×* | Einmal beim Spielaufbau. |
 | Dorfbewohner | `start_10_villagers` | Jeder Spieler startet mit 10 Dorfbewohnern. *Einmal – Ja · Mehrfach – Bis 3×* | Einmal beim Spielaufbau. |
@@ -178,9 +180,9 @@ Eine Kampagnenvorlage weist dem Einsamen Schrein sowohl **Inspirierend** als auc
 
 ## F8-Effektdialog mit dem lokalen Patch
 
-Öffne mit dem Patch-Starter in **Lokal spielen** oder **Weitergeben** die Königreich-Auswahl und drücke **F8**. Links findest du Suche, Kategorien und die Wirkung des gewählten Effekts. Rechts stehen die aktiven Effekte in ihrer Ausführungsreihenfolge. Unten findest du die automatische Verdopplung gezogener Stapel und die belegten Plätze von insgesamt 32.
+Öffne mit dem Patch-Starter in **Lokal spielen** oder **Weitergeben** die Königreich-Auswahl und drücke **F8**. Links findest du Suche, Kategorien und eine Tabelle mit **Effekt**, **Wirkung** und **Wann/wie**. Die Zeilen zeigen ihren vollständigen Text mit Zeilenumbruch. Unter der Tabelle stehen Teststand und Zielwahl des gewählten Effekts. Rechts stehen die aktiven Effekte in ihrer Ausführungsreihenfolge. Unten findest du die automatische Verdopplung gezogener Stapel und die belegten Plätze von insgesamt 32.
 
-In der linken Effektliste steht die originale Effekt-ID in Klammern hinter dem deutschen Namen, beispielsweise **Gespiegelte Kostbarkeiten (twist_mirror_loot)**. Das Suchfeld **Name oder Effekt-ID** findet auch vollständige IDs und Teilbegriffe wie `two_for_one`. Lange Listeneinträge kannst du horizontal scrollen.
+In der linken Tabelle steht die originale Effekt-ID in Klammern hinter dem deutschen Namen, beispielsweise **Gespiegelte Kostbarkeiten (twist_mirror_loot)**. Das Suchfeld **Name oder Effekt-ID** findet auch vollständige IDs, Teilbegriffe wie `two_for_one` und Zeitpunkte wie **Zugbeginn** oder **Spielaufbau**. Mit den Pfeiltasten wählst du einen Effekt, mit Bild auf und Bild ab blätterst du in der Tabelle.
 
 Wähle für mehrere doppelte Stapel **Doppelter Vorratsstapel** und dann **Ziele wählen**. Hake in **Karte wählen** die gewünschten Namen an oder nutze **Alle angezeigten auswählen** im Bereich **Königreich**. **Alle Karten** öffnet den gesamten passenden Katalog. Mit den Pfeiltasten erreichst du die Kartenvorschau rechts und mit der Leertaste setzt du ein Häkchen. **Kartentext lesen** zeigt die Regeln in einer scrollbaren Textansicht. Aktiviere **Weitere Kopie hinzufügen**, wenn ein bereits eingetragener Effekt erneut wirken soll. Drücke **Fertig** in der Kartenauswahl und anschließend im Effektdialog. [Starter und Testablauf](../KingdomEffectsPatch/TEST.md#effektdialog-in-der-lokalen-königreich-auswahl)
 
@@ -232,11 +234,13 @@ The tables cover 89 commands and six campaign generation variants in game build 
 
 The **Once** and **Repeated** notes in the effect cell report measurements from local games in build 3315. **Up to 3×** means each copy through the third had an additional effect. **Same result** means two and three copies matched one copy in the test. **Untested** marks a pending or inconclusive test. [Measurements](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
 
+**When/how** describes the intended triggers and targets from the game text and documented findings. Unverified conditions are explicitly marked. The **Once** and **Repeated** notes report the measured test status.
+
 #### All 27 twists with `twist_`
 
 A **non-Supply copy** is an extra copy of the card that you gain from outside the Supply.
 
-| In-game name | Command | Effect  When/how |
+| In-game name | Command | Effect | When/how |
 | --- | --- | --- | --- |
 | Big Ideas | `twist_big_ideas` | At the start of your turn, **+1 Card**. *Once – Yes · Repeated – Up to 3×* | At the start of your turn. |
 | Busy Busy | `twist_busy_busy` | At the start of your turn, **+1 Action**. *Once – Yes · Repeated – Up to 3×* | At the start of your turn. |
@@ -268,7 +272,7 @@ A **non-Supply copy** is an extra copy of the card that you gain from outside th
 
 #### All 34 stamps with `stamp_`
 
-| In-game name | Command | Effect  When/how |
+| In-game name | Command | Effect | When/how |
 | --- | --- | --- | --- |
 | Plus Action | `stamp_plus_action(card-ID)` | When you play a card from this pile, **+1 Action**. *Once – Untested · Repeated – Untested* | When playing a card from the chosen pile. |
 | Plus Card | `stamp_plus_card(card-ID)` | When you play a card from this pile, **+1 Card**. *Once – Untested · Repeated – Untested* | When playing a card from the chosen pile. |
@@ -307,7 +311,7 @@ A **non-Supply copy** is an extra copy of the card that you gain from outside th
 
 #### All 28 setup changes with `start_`
 
-| What changes | Command | Effect and use  When/how |
+| What changes | Command | Effect and use | When/how |
 | --- | --- | --- | --- |
 | Favors | `start_10_favor` | Each player starts with 10 Favors. *Once – Yes · Repeated – Up to 3×* | Once during setup. |
 | Villagers | `start_10_villagers` | Each player starts with 10 Villagers. *Once – Yes · Repeated – Up to 3×* | Once during setup. |

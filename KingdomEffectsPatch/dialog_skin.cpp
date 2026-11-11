@@ -363,7 +363,7 @@ INT_PTR DialogSkin::handle(UINT message, WPARAM wparam, LPARAM lparam) const {
         const auto control = GetDlgCtrlID(reinterpret_cast<HWND>(lparam));
         SetTextColor(dc, control == IDC_STATUS || control == IDC_CARD_STATUS ? accent : ink);
         SetBkColor(dc, paper);
-        if (message == WM_CTLCOLORSTATIC && control != IDC_DESCRIPTION && control != IDC_EFFECT_EVIDENCE &&
+        if (message == WM_CTLCOLORSTATIC && control != IDC_EFFECT_EVIDENCE &&
             control != IDC_CARD_RULES) {
             SetBkColor(dc, panel);
             SetDCBrushColor(dc, panel);

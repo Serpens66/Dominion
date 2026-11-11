@@ -1,8 +1,8 @@
 # Patch für kombinierbare Dominion Effekte
 
-Entwurf vom 10. November 2026 für Dominion auf Steam, Spielbuild **3315**, Steam-Build **17683350**. Ziel ist ein Set, das beim ersten Laden seine eigenen Effekte enthält und sich danach über **Privates Spiel** verwenden lässt. Die erste Version übernimmt bis zu **32 aktive Effekte im nativen Kingdom-Format**. Zehn Einträge genügen für die Verdopplung eines normalen Königreichs.
+Stand vom 11. November 2026 für Dominion auf Steam, Spielbuild **3315**, Steam-Build **17683350**. Der lokale Patch übernimmt bis zu **32 aktive Effekte im nativen Kingdom-Format** und bietet einen F8-Editor für **Lokal spielen** und **Weitergeben**. Zehn Einträge genügen für die Verdopplung eines normalen Königreichs. Die geprüften lokalen Abläufe und offenen Effektprüfungen stehen im Testprotokoll. Der frühere Ansatz für **Privates Spiel** führte zum weiter unten dokumentierten Befund einer fehlenden Effektliste in der aufgelösten Online-Konfiguration.
 
-## Umfang und Reihenfolge
+## Ursprüngliche Untersuchungsreihenfolge
 
 1. **Import und Set-Auswahl reparieren.** Mehrere Effekte mit unterschiedlichen Zielen direkt übernehmen. Beim Wechsel von Set A zu Set B die Regeln von B aktivieren. Das zunächst mit festen Königreichen offline abnehmen.
 2. **Automatische Verdopplung ergänzen.** Beim Erstellen eines Sets mit der Option „Gezogene Königreichstapel verdoppeln“ zehn konkrete Effekte aus der nativen Ziehung erzeugen. Diese Phase beginnt nach der Abnahme des festen Sets. Ist die endgültige Ziehung vor dem Versand nicht verlässlich verfügbar, bleibt der Schalter für private Partien deaktiviert, bis der Client ein vollständig festgelegtes natives Setup erzeugen kann.
@@ -114,7 +114,7 @@ Der lokale Modus **Weitergeben** ist in den deutschen Ressourcen unter `dom_ui_c
 
 ## Effektdialog für lokale Partien
 
-**Implementiert und statisch geprüft für Dominion.exe 3315, Steam-Build 17683350.** Der SHA-256 entspricht dem oben dokumentierten Modul. Der x86-Build und Tests der Listenlogik sind erfolgreich. Die Laufzeitabnahme in Dominions Oberfläche steht aus.
+**Implementiert für Dominion.exe 3315, Steam-Build 17683350.** Der SHA-256 entspricht dem oben dokumentierten Modul. Lokale Spieltests bestätigen den Editor und die mehrfach gewählten Stapel. Die Dialogtests prüfen zusätzlich Suche, Zielwahl, Reihenfolge, Abbrechen und Kapazitätsgrenzen. Sichtbare Abnahmen neuer Layoutfassungen und weitere Effektprüfungen werden im Testprotokoll getrennt erfasst.
 
 | RVA | PE-Dateioffset | Originalbytes | Verwendung |
 | --- | --- | --- | --- |
@@ -123,9 +123,9 @@ Der lokale Modus **Weitergeben** ist in den deutschen Ressourcen unter `dom_ui_c
 | `0x0DDBB0`, `0x0E0FF0`, `0x23D850` | – | – | Der Editor lässt den Effekttext nativ parsen, ersetzt die Liste im temporären Setup und prüft die Rückausgabe. Der Spielstring im lokalen Setup wird über die native Zuweisung übernommen. |
 | `0x1F70B5`, `0x1F70C7`, `0x1F70CE` | – | – | Der native Wechsel zur eigenen Auswahl löst die Bindung an das zuvor ausgewählte Profilset. Der Editor verwendet dieselben Felder, damit die geänderte Liste erhalten bleibt. |
 
-Der Katalog wird beim Build aus den 89 deutschen Tabelleneinträgen der Spielanleitung und dem Kartenkatalog erzeugt. Die Zielauswahl verwendet kanonische IDs mit deutschen Namen und filtert nach Zieltyp. Bei Platz für Mehr und Taifun werden die gemeinsamen Zielfelder mit der Effektliste ersetzt oder beim Entfernen geleert. Auf dem Host bleibt die Automatik beim lokalen Spielstart verfügbar. Die Dialogoption gilt pro Testsitzung, die ausdrücklich gewählte Effektliste lässt sich als Set speichern.
+Der Katalog wird beim Build aus den 89 deutschen Tabelleneinträgen der Spielanleitung und dem Kartenkatalog erzeugt. Die Tabelle zeigt den deutschen Namen mit Effekt-ID, die vollständige Wirkung und den Auslösezeitpunkt aus **Wann/wie**. Ihre Zeilenhöhen richten sich nach dem umbrochenen Inhalt. Teststand und Zielwahl stehen darunter, die aktiven Effekte rechts in Ausführungsreihenfolge. Die Suche berücksichtigt auch die Zeitpunkte. Die Zielauswahl verwendet kanonische IDs mit deutschen Namen und filtert nach Zieltyp. Bei Platz für Mehr und Taifun werden die gemeinsamen Zielfelder mit der Effektliste ersetzt oder beim Entfernen geleert. Die Automatik ist beim lokalen Spielstart verfügbar. Die Dialogoption gilt pro Testsitzung, die ausdrücklich gewählte Effektliste lässt sich als Set speichern.
 
-Die Kartenauswahl verwendet die Erweiterungsgruppen, deutschen und englischen Namen, Kartentypen, Kosten und Regeltexte des SetGenerators. Die Vorschau lädt lokale Illustrationen aus `out/card-previews`. Der Build bereitet sie aus dem Bildpaket des SetGenerators oder der geprüften `Dominion.xpack` vor. Die aktuell festgelegten Stapel stammen aus dem serialisierten `-k`-Abschnitt desselben Setups, das der Editor öffnet. Mehrfachauswahl und Wiederholungen erzeugen einzelne native `-x`-Einträge. Taifun erzeugt einen Eintrag mit einer geordneten Zielliste. [Dialogtest](TEST.md#effektdialog-in-der-lokalen-königreich-auswahl)
+Die Kartenauswahl verwendet die Erweiterungsgruppen, deutschen und englischen Namen, Kartentypen, Kosten und Regeltexte des SetGenerators. Die Vorschau lädt vollständige lokale Kartenvorderseiten aus `out/card-faces`, Landschaften im Querformat. Der Build übernimmt vorhandene Vorderseiten aus dem Bildpaket und setzt weitere mit dem gemeinsamen Renderer aus den Spieltexturen zusammen. **Kartentext lesen** öffnet die scrollbare Textansicht. Die aktuell festgelegten Stapel stammen aus dem serialisierten `-k`-Abschnitt desselben Setups, das der Editor öffnet. Mehrfachauswahl und Wiederholungen erzeugen einzelne native `-x`-Einträge. Taifun erzeugt einen Eintrag mit einer geordneten Zielliste. [Dialogtest](TEST.md#effektdialog-in-der-lokalen-königreich-auswahl)
 
 ### Schutz vor bekannten lokalen Startabbrüchen
 
