@@ -62,3 +62,11 @@ F8 zeigt die Effekte der geöffneten Königreich-Konfiguration, nicht eine Prüf
 Das Patch-Protokoll enthält nun die angeforderten Effektbefehle, die eingelesenen Werte, die erneute Auflösung vor dem Speichern sowie die vorbereiteten und im lokalen Spiel angekommenen Effekte. Vollständige Profile werden nicht protokolliert. Bei einer unvollständigen F8-Übernahme bleibt die bisherige Auswahl erhalten; die Meldung nennt den betroffenen Effekt und Verarbeitungsschritt.
 
 Zur Untersuchung eines Verlusts nach einer Partie: Effekte in F8 festlegen, mit **Fertig** übernehmen, die Partie starten und anschließend auf dem üblichen Weg ins Königreich-Menü zurückkehren. F8 dort erneut öffnen und mit **Abbrechen** schließen, damit dieser Kontrollschritt keine Änderungen speichert. Danach Dominion schließen und den Starter fertig laufen lassen. `letzter-patch.log` enthält dann den Vergleich vor und nach der Partie. Alle 89 Effekte müssen dafür nicht gleichzeitig aktiviert werden.
+
+## Erweiterungsbezug und korrigierter lokaler Start
+
+F8 nennt bei jedem Effekt den **Erweiterungsbezug** aus dem Spielcode; auch Erweiterungsnamen sind suchbar. Das ist eine native Filtervorgabe, keine bestätigte zwingende Voraussetzung der Wirkung. **Keine native Vorgabe** bedeutet lediglich, dass die Effektdefinition keine solche Bedingung enthält. Verfügbare Zielkarten und besondere Spielsituationen gelten zusätzlich.
+
+Der Patch verhindert beim lokalen Start, dass dieser Erweiterungsfilter einen Effekt und alle nachfolgenden Einträge entfernt. Er schaltet keine Erweiterungskarten frei und verändert den Online-Startpfad nicht. Die größere Kartenauswahl zeigt beim Öffnen alle Erweiterungen geschlossen. Erst Hover über einen Kartennamen, Anklicken oder Tastaturauswahl lädt eine Vorschau; Leerflächen ändern sie nicht. Die Karte nutzt bei ausreichender Bildschirmhöhe die rechte Spaltenbreite, der Text bleibt darüber stehen.
+
+Nach einem erfolgreichen Start wurden auch natives Schließen/Neustarten und erneutes Auflösen der F8-Konfiguration geprüft. Die abschließende sichtbare Kontrolle erfolgt mit deinem normalen Starter: Achterfolge setzen, starten, zurück ins Königreich-Menü und F8 erneut öffnen. Für die drei bislang übersprungenen Effekte sind Ankunft und Spielwirkung getrennte Befunde.

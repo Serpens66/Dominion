@@ -283,3 +283,11 @@ Im Messmodus blieb die sechste Karte abgelehnt, beide Aufrufstellen und das Zäh
 - Zusätzliche Negativfälle: vertauschte IDs bei gleicher Anzahl, abweichendes Kartenziel und unbekannte ID zwischen gültigen Effekten. Fehlermeldung muss auf den ersten betroffenen Eintrag zeigen.
 - Separater Spielaufbau mit Müllhaufen, Vom Thron, Deponie, So viel Zeugs, Bechergläser und Große Ideen prüft die installierte Reihenfolge. Das bestätigt nicht alle sechs Spielwirkungen.
 - Offen bleibt die sichtbare Kontrolle des Flackerns und die gemeldete Änderung nach Rückkehr aus einer Partie mit dem Nutzerprofil. Die Diagnose protokolliert die F8-Konfiguration beim Öffnen, vor dem lokalen Start und beim nächsten Öffnen nach der Partie.
+
+## Setup-Startpfad und Erweiterungsbezug, 12. November 2026
+
+Die vollständigen Befunde stehen in [Effect_Startup_Tests.md](../Documentation/Effect_Startup_Tests.md). Zwölf Startfälle mit Patch aus `setupData` sowie zwölf aus `kingdomData` erhalten alle erwarteten Effekte. Der ungepatchte setupData-Vergleich reproduziert die Verluste. Natives Schließen/Neustarten über Dispatcher-Aktion 9 und die erneute F8-Konfigurationsauflösung erhalten die acht Effekte.
+
+Kartenauswahl: anfänglich geschlossene Erweiterungen, keine automatisch geladene Karte, Hover über Text gegenüber Leerfläche, Suche mit Wiederherstellung der manuellen Gruppen, große feste Vorschau, Text ohne Grafiken, unveränderte Geometrie bei wiederholtem Hover und eine auf 520 Pixel begrenzte Fensterhöhe. Die Testschriften 9/11/14 Punkt simulieren die größere Typografie bei 100/125/150 Prozent. Dies ersetzt keine Änderung der tatsächlichen Windows-DPI-Einstellung; die sichtbare Kontrolle bleibt offen.
+
+Der native Erweiterungsbezug aller 89 Effekte ist dokumentiert; 45 Vorgaben, darunter OR-Alternativen. Suche nach Alchemisten und Kopieren der mehrzeiligen Wirkungsspalte sind geprüft. Beim Kopieren ganzer Zeilen werden interne Zellumbrüche zu Leerzeichen, einzelne Textmarkierungen behalten ihren Inhalt.

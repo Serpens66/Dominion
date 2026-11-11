@@ -84,7 +84,10 @@ struct Model {
             if (!text.empty() && text.back()!=L'\n') text+=L"\r\n";
             for (std::size_t column=0;column<3;++column) {
                 if (column) text+=L'\t';
-                text+=rows[row].cells[column];
+                auto value=rows[row].cells[column];
+                value.erase(std::remove(value.begin(),value.end(),L'\r'),value.end());
+                std::replace(value.begin(),value.end(),L'\n',L' ');
+                text+=value;
             }
         }
         return plain_copy(std::move(text));

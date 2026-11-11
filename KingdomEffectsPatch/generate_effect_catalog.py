@@ -52,7 +52,7 @@ def read_effects():
     catalog = catalog.split("#### Weitere Varianten aus der Kampagnenerzeugung", 1)[0]
     pattern = (
         r"^\| ([^|]+) \| `((?:twist|stamp|start)_[a-z0-9_]+)(?:\(([^)]+)\))?`"
-        r" \| ([^|\n]*?) \*Einmal – ([^|\n]*?) · Mehrfach – ([^|\n]*?)\* \| ([^|\n]+) \|$"
+        r" \| ([^|\n]*?) \*Einmal – ([^|\n]*?) · Mehrfach – ([^|\n]*?)\* \| ([^|\n]+) \|(?: [^|\n]+ \|)?$"
     )
     effects = []
     for name, command, args, description, once, repeated, timing in re.findall(pattern, catalog, re.MULTILINE | re.IGNORECASE):
@@ -255,13 +255,17 @@ def prepare_resources(output, xpack, cards, load_types):
 def main(output, xpack):
     output, xpack = Path(output), Path(xpack)
     catalog = load_catalog(xpack)
+    references=json.loads((DOCS/'Effect_Expansion_References.json').read_text(encoding='utf-8'))
+    assert references['exeSha256']==catalog['nativeIds']['exeSha256']
+    assert set(references['effects'])=={row[0] for row in read_effects()}
     properties = json.loads((DOCS / "Card_Properties.json").read_text(encoding="utf-8"))
     aliases = {key: data["aliasFor"] for key, data in properties["cards"].items() if data and "aliasFor" in data}
     targets = read_targets(catalog, aliases)
     rows = ["// Generated from Documentation by generate_effect_catalog.py.",
             "constexpr EffectDefinition effect_catalog[] = {"]
     for command, name, description, timing, status, first, second in read_effects():
-        rows.append(f"    {{{literal(command)}, {literal(name, True)}, {literal(description, True)}, {literal(timing, True)}, {literal(status, True)}, {literal(verification_label(status), True)}, {timing_mask(timing)}, "
+        expansion=' oder '.join(catalog['expansions'].get(key,key) for group in references['effects'][command] for key in group)
+        rows.append(f"    {{{literal(command)}, {literal(name, True)}, {literal(description, True)}, {literal(timing, True)}, {literal(status, True)}, {literal(verification_label(status), True)}, {literal(expansion,True)}, {timing_mask(timing)}, "
                     f"TargetKind::{first}, TargetKind::{second}}},")
     rows.extend(("};", "", "constexpr const wchar_t* timing_filters[] = {"))
     rows.extend(f"    {literal(label, True)}," for label in TIMING_FILTERS)

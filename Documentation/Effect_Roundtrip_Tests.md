@@ -8,7 +8,7 @@ Zusätzlich besteht der Negativtest für vertauschte IDs bei gleicher Anzahl, ei
 
 Ein echter lokaler Spielaufbau enthält in dieser Reihenfolge Müllhaufen, Vom Thron, Deponie, So viel Zeugs, Bechergläser und Große Ideen; die sechs internen IDs stimmen ohne und mit Patch überein. Dies bestätigt die Ankunft der Effekte, nicht jede ihrer Spielwirkungen.
 
-**Offen:** Der Nutzer meldet verlorene Effekte und fehlende F8-Einträge nach einer Partie. Dieser vollständige Rückweg mit dem Nutzerprofil ist nicht durch die Parserprüfung abgedeckt. F8 zeigt die aufgelöste Königreich-Konfiguration; verändert das Spiel diese, kann die spätere F8-Liste entsprechend abweichen. Ein grundsätzliches Fehlen der Registrierung von Müllhaufen oder Bechergläsern ist durch diese Tests nicht belegt.
+**Ergänzung vom 12. November:** Der Verlust ist inzwischen im zusätzlichen `setupData`-Startpfad reproduziert und gezielt korrigiert. Siehe [Startpfad, Erweiterungsfilter und Vergleichstests](Effect_Startup_Tests.md). Die folgende Tabelle belegt weiterhin die Parser-Rundreise; die tatsächliche Spielwirkung bleibt getrennt zu bewerten.
 
 ## Ergebnisse je Effekt
 

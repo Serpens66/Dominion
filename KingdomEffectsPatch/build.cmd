@@ -33,6 +33,7 @@ cl /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT /I "%PATCH_OUT%" "%~dp0editor_rel
 :probes
 cl /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT /LD /I "%PATCH_OUT%" "%~dp0roundtrip_probe.cpp" "%~dp0effect_editor.cpp" "%~dp0card_picker.cpp" "%~dp0dialog_skin.cpp" "%~dp0game_resources.cpp" effect_editor.res /link /OUT:roundtrip_probe.dll user32.lib gdi32.lib comctl32.lib gdiplus.lib || goto fail
 cl /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0roundtrip_test.cpp" /link /OUT:roundtrip_test.exe bcrypt.lib user32.lib || goto fail
+cl /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0startup_effect_test.cpp" /link /OUT:startup_effect_test.exe bcrypt.lib user32.lib || goto fail
 goto done
 :background
 cl /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0background_effect_test.cpp" /link /OUT:background_effect_test.exe bcrypt.lib user32.lib || goto fail

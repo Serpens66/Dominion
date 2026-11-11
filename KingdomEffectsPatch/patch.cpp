@@ -14,6 +14,9 @@ static_assert(sizeof(void*) == 4, "Dominion build 3315 uses x86");
 namespace {
 
 std::uintptr_t native_parser;
+std::uintptr_t native_local_normalize;
+std::uintptr_t native_effect_requirements;
+std::uintptr_t native_effect_advance;
 std::uintptr_t native_clipboard;
 std::uintptr_t native_merge;
 std::uintptr_t native_serializer;
@@ -56,6 +59,10 @@ thread_local const std::byte* automatic_save;
 thread_local const wchar_t* automatic_failure;
 thread_local kingdom::Effects expected_local_effects{};
 thread_local bool expected_local_valid=false;
+thread_local unsigned local_normalize_depth=0;
+void __cdecl begin_local_normalize() { ++local_normalize_depth; }
+void __cdecl end_local_normalize() { --local_normalize_depth; }
+bool __cdecl keep_explicit_local_effects() { return local_normalize_depth!=0; }
 void log_commands(const char*, const kingdom::EffectCommands&);
 void trace_local_prepared(const std::byte*);
 bool validate_native_import(const char*);
@@ -271,6 +278,8 @@ void __cdecl begin_automatic(const std::byte* save) {
 }
 
 void __cdecl append_automatic(void* native_extras, const void* rolled_piles, const std::byte* save) {
+    kingdom::Effects generated{}; std::memcpy(&generated,native_extras,sizeof generated);
+    log("generator effects before text output",&generated);
     if (!automatic_save || automatic_save != save) return;
     automatic_save = nullptr;
     kingdom::KingdomPiles piles{};
@@ -954,6 +963,46 @@ __declspec(naked) void online_effects_hook() {
     }
 }
 
+// Only the local start caller enables this scope. Native card and target
+// validation runs unchanged; only campaign-effect expansion metadata is skipped.
+__declspec(naked) void local_normalize_hook() {
+    __asm {
+        pushfd
+        pushad
+        call begin_local_normalize
+        popad
+        popfd
+        push dword ptr [esp+8]
+        push dword ptr [esp+8]
+        call dword ptr [native_local_normalize]
+        add esp,8
+        pushfd
+        pushad
+        call end_local_normalize
+        popad
+        popfd
+        ret
+    }
+}
+__declspec(naked) void effect_requirements_hook() {
+    __asm {
+        pushfd
+        pushad
+        call keep_explicit_local_effects
+        test al,al
+        jnz keep_effect
+        popad
+        popfd
+        mov ecx,[ebp-19A8h]
+        mov ecx,[ecx]
+        jmp dword ptr [native_effect_requirements]
+    keep_effect:
+        popad
+        popfd
+        jmp dword ptr [native_effect_advance]
+    }
+}
+
 struct Site {
     std::uintptr_t rva;
     const char* original;
@@ -968,6 +1017,8 @@ constexpr unsigned local_modes = (1u << 2) | (1u << 3);
 constexpr unsigned online_mode = 1u << 4;
 
 const Site sites[] = {
+    {0x0B1E6B,"\xE8\x80\xA0\x02\x00",5,local_normalize_hook,false,local_modes},
+    {0x0DC2CD,"\x8B\x8D\x58\xE6\xFF\xFF\x8B\x09",8,effect_requirements_hook,true,local_modes},
     {0x1F6F17, "\xE8\x94\x6C\xEE\xFF", 5, search_parser_hook},
     {0x1FDFF0, "\xE8\xAB\xDE\x02\x00", 5, clipboard_hook},
     {0x22BF93, "\xE8\x18\x1C\xEB\xFF", 5, clipboard_parser_hook},
@@ -1111,6 +1162,9 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
     const auto image = reinterpret_cast<std::uintptr_t>(base);
     image_base = base;
     native_parser = image + 0x0DDBB0;
+    native_local_normalize = image + 0x0DBEF0;
+    native_effect_requirements = image + 0x0DC2D5;
+    native_effect_advance = image + 0x0DC2F6;
     native_clipboard = image + 0x22BEA0;
     native_merge = image + 0x1F6A90;
     native_serializer = image + 0x0E4CB0;

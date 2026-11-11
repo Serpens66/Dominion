@@ -7,8 +7,9 @@ Erste herunterladbare Windows-Version des Dominion Kingdom Effects Patch für **
 - Markierbarer, kopierbarer Tabellentext sowie Rechtsklick-Aktionen für eine Effektzeile oder alle gefilterten Effekte. Kopierte Namen und IDs enthalten keine unsichtbaren Layoutzeichen.
 - F8 auch bei der Königreich-Auswahl für Online-Spiele und Privates Spiel. Getrennte Konfigurationen, sichtbarer Hinweis auf die Serverabhängigkeit und deaktivierte lokale Zufallsstapel-Automatik im Online-Editor. Die tatsächliche Online-Wirkung ist weiterhin nicht nachgewiesen.
 - Stabile Kartenvorschau mit dauerhaft sichtbarem Text über dem Bild, gepufferter Bildausgabe und zusammengefassten identischen Ladeanfragen.
-- Strengere Effektprüfung vor Übernahme und erweiterte Diagnose vom F8-Entwurf bis zum lokalen Spielaufbau; Bericht für alle 89 Effekte. Ein gemeldeter Verlust nach Rückkehr aus einer Partie bleibt in Untersuchung.
-- Kartenauswahl nach Erweiterungen mit vollständiger Kartenvorschau und gemeinsamer Auswahl mehrerer Zielstapel.
+- Strengere Effektprüfung vor Übernahme und erweiterte Diagnose vom F8-Entwurf bis zum lokalen Spielaufbau; Bericht für alle 89 Effekte. Der im lokalen setupData-Startpfad nachgewiesene Effektverlust durch den nativen Erweiterungsfilter ist korrigiert.
+- Höhere Kartenauswahl mit großer Vorschau, anfangs geschlossenen Erweiterungen und Hover ausschließlich über Kartennamen.
+- Erweiterungsbezug aus dem Spielcode für alle 89 Effekte, sichtbar und suchbar in F8; 45 Effekte besitzen eine native Vorgabe. Diese ist vom Nachweis einer tatsächlichen Spielvoraussetzung getrennt.
 - Karten- und Menügrafiken direkt aus der vorhandenen Dominion.xpack; keine mitgelieferten Spielbilder, keine vorherige Extraktion und kein Grafik-Cache auf der Festplatte. Asynchrone Vorschau mit gemeinsamem 96-MiB-Speicher-Cache.
 - Korrekturen für die Kombination, Wiederholung und Speicherung von Effekten in Lokal spielen und Weitergeben, bis zur nativen Grenze von 32 Einträgen.
 - Erweiterte Online-Bannlisten über das vorhandene Spielmenü; private Partien mit größeren Listen wurden beobachtet.

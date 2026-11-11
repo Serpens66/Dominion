@@ -269,7 +269,7 @@ void check_bytes(const Child& child, std::uintptr_t address, const std::array<un
     require(actual == expected, "The mapped Dominion code differs from build 3315.");
 }
 
-void write_profile(const fs::path& folder, const Probe& probe, unsigned copies) {
+void write_profile(const fs::path& folder, const Probe& probe, unsigned copies, const char* field="kingdomData") {
     std::string kingdom = probe.kingdom;
     if (probe.purchase) {
         kingdom += " -x ";
@@ -284,7 +284,7 @@ void write_profile(const fs::path& folder, const Probe& probe, unsigned copies) 
                "<forceOffline>1</forceOffline><profileId>1</profileId><gameSetup>"
                "<players><playerType>Local</playerType><playerName>Effekttest</playerName></players>"
                "<players><playerType>Local</playerType><playerName>Vergleich</playerName></players>"
-               "<config><version>23</version><kingdomData>" << kingdom << "</kingdomData></config></gameSetup>"
+               "<config><version>23</version><" << field << ">" << kingdom << "</" << field << "></config></gameSetup>"
                "</profiles><lastProfileID>1</lastProfileID></ProfileSettings_Save>";
     profile.close();
     require(profile.good(), "Cannot create a disposable test profile.");

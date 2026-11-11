@@ -55,3 +55,7 @@ $env:SteamGameId = '1131620'
 ```
 
 Der Runner verweigert die Original-EXE als Testkopie und prüft deren Build-3315-Hash. Zwei isolierte Spielprozesse verwenden temporäre Profile und einen unsichtbaren Desktop. Der eigentliche Test läuft auf dem Spielthread, ohne Maus-/Tastatureingaben. `effect-roundtrip.tsv` entsteht neben der Test-DLL. Beide Testdateien und der Rohbericht bleiben aus dem Release-Paket ausgeschlossen. Der veröffentlichte Bericht enthält nur Effektbefehle und Prüfergebnisse.
+
+## Zusätzlicher Startpfad-Test
+
+`startup_effect_test.exe <Testkopie> <roundtrip_probe.dll> setupData 1` prüft die zwölf dokumentierten Startfälle einschließlich Achterfolge und nativem Schließen/Neustarten. `kingdomData` vergleicht den bisherigen Weg; `0` statt `1` protokolliert den ungepatchten Referenzlauf. Der Runner bleibt aus dem Release ausgeschlossen. Erweiterungsdaten stammen aus `Documentation/Effect_Expansion_References.json`; deren IDs und EXE-Hash werden beim Katalogbau geprüft.

@@ -26,6 +26,7 @@ struct EffectDefinition {
     const wchar_t* timing;
     const wchar_t* status;
     const wchar_t* verification;
+    const wchar_t* expansion_reference;
     unsigned timing_mask;
     TargetKind first;
     TargetKind second;
@@ -165,7 +166,9 @@ std::array<std::wstring, 3> table_text(const EffectDefinition& effect) {
     // Allow the native text renderer to wrap long IDs at their underscores.
     for (std::size_t at = 0; (at = name.find(L'_', at)) != name.npos; at += 2)
         name.insert(at + 1, 1, L'\u200B');
-    return {std::move(name), effect.description, effect.timing};
+    auto description=std::wstring(effect.description)+L"\r\nErweiterungsbezug: "+
+        (*effect.expansion_reference ? effect.expansion_reference : L"keine native Vorgabe");
+    return {std::move(name), std::move(description), effect.timing};
 }
 
 constexpr UINT table_text_flags = DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL;
@@ -291,7 +294,10 @@ void select_effect(HWND dialog, Draft& draft) {
         draft.first = draft.second = nullptr;
         SetDlgItemTextW(dialog, IDC_STATUS, L"");
     }
-    SetDlgItemTextW(dialog, IDC_EFFECT_EVIDENCE, selection ? selection->status : L"");
+    const auto evidence=selection ? std::wstring(selection->status)+L"\r\nErweiterungsbezug im Spielcode: "+
+        (*selection->expansion_reference ? selection->expansion_reference : L"keine Vorgabe")+
+        L". Kein Nachweis einer zwingenden Spielvoraussetzung; Zielkarten zusätzlich beachten." : std::wstring{};
+    SetDlgItemTextW(dialog, IDC_EFFECT_EVIDENCE,evidence.c_str());
     update_targets(dialog, draft);
 }
 
@@ -311,6 +317,7 @@ void filter_catalog(HWND dialog, Draft& draft) {
             fold_card_search(widen(id)).find(filter) == filter.npos &&
             fold_card_search(effect.description).find(filter) == filter.npos &&
             fold_card_search(effect.timing).find(filter) == filter.npos &&
+            fold_card_search(effect.expansion_reference).find(filter) == filter.npos &&
             fold_card_search(effect.verification).find(filter) == filter.npos) continue;
         const auto name = table_name(effect);
         const auto row = SendDlgItemMessageW(dialog, IDC_CATALOG, LB_ADDSTRING, 0,

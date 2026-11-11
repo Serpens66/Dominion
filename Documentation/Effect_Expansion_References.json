@@ -1,0 +1,280 @@
+{
+  "gameBuild": 3315,
+  "exeSha256": "56e8d563320b7d6c0cf68ae11cdf2c0aa971dbff44bb296651b630815c548877",
+  "source": "Native effect definition: requirement kind 7, block stride 0x26c; resolver RVA 0x116F30; local filter RVA 0x0DC2CD. Values within a group are alternatives. This is native filter metadata, not proof of a necessary gameplay dependency.",
+  "effects": {
+    "twist_big_ideas": [],
+    "twist_busy_busy": [],
+    "twist_extra_oomph": [],
+    "twist_forever_favored": [
+      [
+        "allies"
+      ]
+    ],
+    "twist_garbage_heap": [
+      [
+        "dark_ages"
+      ]
+    ],
+    "twist_penny_party": [],
+    "twist_shoppers": [],
+    "twist_cramped": [
+      [
+        "renaissance"
+      ]
+    ],
+    "twist_from_the_throne": [
+      [
+        "intrigue"
+      ]
+    ],
+    "twist_landfill": [],
+    "twist_so_much_stuff": [],
+    "twist_double_up": [
+      [
+        "menagerie"
+      ]
+    ],
+    "twist_fast_track": [
+      [
+        "adventures"
+      ]
+    ],
+    "twist_favored_landlords": [
+      [
+        "allies"
+      ]
+    ],
+    "twist_favored_wealthy": [
+      [
+        "allies"
+      ]
+    ],
+    "twist_incoming": [
+      [
+        "hinterlands"
+      ]
+    ],
+    "twist_rebates": [],
+    "twist_beakers": [
+      [
+        "alchemy"
+      ]
+    ],
+    "twist_delayed_joy": [
+      [
+        "nocturne"
+      ]
+    ],
+    "twist_pennies_saved": [
+      [
+        "guilds"
+      ]
+    ],
+    "twist_real_estate_barons": [
+      [
+        "empires"
+      ]
+    ],
+    "twist_sale": [
+      [
+        "prosperity"
+      ]
+    ],
+    "twist_head_start": [
+      [
+        "seaside"
+      ]
+    ],
+    "twist_mirror_loot": [
+      [
+        "plunder"
+      ]
+    ],
+    "twist_room_for_more": [
+      [
+        "cornucopia"
+      ]
+    ],
+    "twist_turn_turn_turn": [
+      [
+        "allies"
+      ]
+    ],
+    "twist_typhoon": [
+      [
+        "rising_sun"
+      ]
+    ],
+    "stamp_plus_action": [],
+    "stamp_plus_card": [],
+    "stamp_plus_buy": [],
+    "stamp_plus_coin": [],
+    "stamp_chameleonize": [
+      [
+        "menagerie"
+      ]
+    ],
+    "stamp_discounted": [],
+    "stamp_pay_later": [
+      [
+        "empires",
+        "rising_sun"
+      ]
+    ],
+    "stamp_two_for_one": [],
+    "stamp_offers_insight": [],
+    "stamp_with_horse": [
+      [
+        "menagerie"
+      ]
+    ],
+    "stamp_with_spoils": [
+      [
+        "dark_ages"
+      ]
+    ],
+    "stamp_with_villager": [
+      [
+        "renaissance"
+      ]
+    ],
+    "stamp_durationified": [],
+    "stamp_treasurified": [],
+    "stamp_victorified": [],
+    "stamp_reactionified": [],
+    "stamp_shadowified": [
+      [
+        "rising_sun"
+      ]
+    ],
+    "stamp_cost_2_less": [],
+    "stamp_cost_2D_less": [],
+    "stamp_cost_zero": [],
+    "stamp_bonus_money": [],
+    "stamp_also_silver": [],
+    "stamp_motivational": [],
+    "stamp_got_it_already": [],
+    "stamp_one_track_mind": [],
+    "stamp_fawning_service": [],
+    "stamp_perks_of_wealth": [],
+    "stamp_double_vp": [
+      [
+        "empires"
+      ]
+    ],
+    "stamp_action_way": [],
+    "stamp_coin_way": [],
+    "stamp_also_debt": [
+      [
+        "rising_sun"
+      ]
+    ],
+    "stamp_also_gold": [
+      [
+        "rising_sun"
+      ]
+    ],
+    "stamp_also_plague": [
+      [
+        "rising_sun"
+      ]
+    ],
+    "stamp_also_respect": [
+      [
+        "rising_sun"
+      ]
+    ],
+    "start_10_favor": [
+      [
+        "allies"
+      ]
+    ],
+    "start_10_villagers": [
+      [
+        "renaissance"
+      ]
+    ],
+    "start_5_coffers": [
+      [
+        "guilds",
+        "renaissance"
+      ]
+    ],
+    "start_add_card": [],
+    "start_add_each_pile": [],
+    "start_allow_second_cube": [
+      [
+        "renaissance"
+      ]
+    ],
+    "start_curse_cost_3": [],
+    "start_double_deck": [],
+    "start_double_heirloom": [
+      [
+        "nocturne"
+      ]
+    ],
+    "start_double_pile": [],
+    "start_double_vp_tokens": [
+      [
+        "empires"
+      ]
+    ],
+    "start_in_play": [],
+    "start_journey_facedown": [
+      [
+        "adventures"
+      ]
+    ],
+    "start_make_split_pile": [
+      [
+        "empires",
+        "allies"
+      ]
+    ],
+    "start_native_village": [
+      [
+        "seaside"
+      ]
+    ],
+    "start_plus_2_vp_tokens": [
+      [
+        "empires"
+      ]
+    ],
+    "start_plus_8_vp_tokens": [
+      [
+        "empires"
+      ]
+    ],
+    "start_replace_copper": [],
+    "start_replace_copper_from_pile": [],
+    "start_replace_estate": [],
+    "start_replace_estate_from_pile": [],
+    "start_same_reward": [
+      [
+        "cornucopia"
+      ]
+    ],
+    "start_shuffle_pile": [
+      [
+        "empires",
+        "allies"
+      ]
+    ],
+    "start_tavern": [
+      [
+        "adventures"
+      ]
+    ],
+    "start_trash_curses": [],
+    "start_trash_pile": [],
+    "start_triple_pile": [],
+    "start_with_cube": [
+      [
+        "renaissance"
+      ]
+    ]
+  }
+}

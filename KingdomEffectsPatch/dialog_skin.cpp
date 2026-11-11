@@ -53,7 +53,7 @@ std::array<wchar_t, 256> caption(HWND window) {
 
 }
 
-DialogSkin::DialogSkin(HWND dialog) : dialog_(dialog) {
+DialogSkin::DialogSkin(HWND dialog, bool fit_height) : dialog_(dialog) {
     Gdiplus::GdiplusStartupInput startup;
     if (Gdiplus::GdiplusStartup(&graphics_, &startup, nullptr) != Gdiplus::Ok) graphics_ = 0;
     const auto owner = GetWindow(dialog, GW_OWNER);
@@ -70,11 +70,11 @@ DialogSkin::DialogSkin(HWND dialog) : dialog_(dialog) {
         GetMonitorInfoW(MonitorFromWindow(owner ? owner : dialog, MONITOR_DEFAULTTONEAREST), &monitor)) {
         const auto& work = monitor.rcWork;
         scale_ = (std::min)({1.0, static_cast<double>(work.right - work.left) / width,
-                            static_cast<double>(work.bottom - work.top) / height});
+                            fit_height ? 1.0 : static_cast<double>(work.bottom - work.top) / height});
         RECT anchor = work;
         if (owner) GetWindowRect(owner, &anchor);
         const auto w = static_cast<LONG>(width * scale_);
-        const auto h = static_cast<LONG>(height * scale_);
+        const auto h = (std::min)(static_cast<LONG>(height * scale_),work.bottom-work.top);
         const auto x = std::clamp((anchor.left + anchor.right - w) / 2, work.left, work.right - w);
         const auto y = std::clamp((anchor.top + anchor.bottom - h) / 2, work.top, work.bottom - h);
         SetWindowPos(dialog, nullptr, x, y, w, h, SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
@@ -154,6 +154,11 @@ RECT DialogSkin::units(RECT rect) const {
     rect.right = static_cast<LONG>(std::lround(rect.right * scale_));
     rect.bottom = static_cast<LONG>(std::lround(rect.bottom * scale_));
     return rect;
+}
+
+int DialogSkin::logical_height() const {
+    RECT client{},unit{0,0,0,1000};GetClientRect(dialog_,&client);MapDialogRect(dialog_,&unit);
+    return static_cast<int>(std::lround(client.bottom*1000.0/unit.bottom/scale_));
 }
 
 void DialogSkin::place(int control, RECT logical) const {

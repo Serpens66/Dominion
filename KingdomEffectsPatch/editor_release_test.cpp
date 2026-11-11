@@ -1,4 +1,5 @@
 // Actual native dialog controls on a separate desktop; no foreground input.
+#define UNICODE
 #define EFFECT_TABLE_TEST_CLIPBOARD
 #include "effect_editor.cpp"
 #include "card_picker.cpp"
@@ -109,6 +110,9 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
             check(SendMessageW(list, LB_GETCOUNT, 0, 0) == 1, "ID search mismatch.");
         }
         SetDlgItemTextW(dialog, IDC_QUERY, L"Ungetestet");
+        SetDlgItemTextW(dialog, IDC_QUERY, L"Alchemisten");
+        check(SendMessageW(list,LB_GETCOUNT,0,0)>0,"Expansion reference search failed.");
+        SetDlgItemTextW(dialog, IDC_QUERY, L"Ungetestet");
         const auto untested=std::count_if(std::begin(kingdom::effect_catalog),std::end(kingdom::effect_catalog),[](const auto& effect) {
             return kingdom::fold_card_search(effect.verification).find(L"ungetestet")!=std::wstring::npos;
         });
@@ -173,10 +177,26 @@ BOOL CALLBACK inspect_picker(HWND dialog, LPARAM) {
     if (!GetDlgItem(dialog, IDC_CARD_TREE)) return TRUE;
     if (!IsWindowVisible(dialog)) return FALSE;
     try {
-        if (!picker_ticks++) {
-            for (const auto query : {L"village", L"market", L"no-such-card", L"miser"}) SetDlgItemTextW(dialog, IDC_CARD_QUERY, query);
-        }
         auto& picker=*reinterpret_cast<kingdom::Picker*>(GetWindowLongPtrW(dialog,DWLP_USER));
+        if (!picker_ticks++) {
+            const auto tree=GetDlgItem(dialog,IDC_CARD_TREE);
+            for(auto group=TreeView_GetRoot(tree);group;group=TreeView_GetNextSibling(tree,group))
+                check(!(TreeView_GetItemState(tree,group,TVIS_EXPANDED)&TVIS_EXPANDED),"An expansion opens automatically.");
+            check(!picker.displayed && !picker.image && picker.loader.counts().second==0,"Initial card preview should be empty.");
+            const auto group=TreeView_GetRoot(tree); TreeView_Expand(tree,group,TVE_EXPAND);
+            check(!picker.expanded.empty(),"Manual expansion not recorded.");
+            check(!picker.displayed,"Expanding a group changes preview.");
+            const auto child=TreeView_GetChild(tree,group); RECT label{},bounds{};TreeView_GetItemRect(tree,child,&label,TRUE);GetClientRect(tree,&bounds);
+            SendMessageW(tree,WM_MOUSEMOVE,0,MAKELPARAM(bounds.right-4,(label.top+label.bottom)/2));
+            check(!picker.displayed,"Empty row space changes preview.");
+            SetDlgItemTextW(dialog,IDC_CARD_QUERY,L"miser");SetDlgItemTextW(dialog,IDC_CARD_QUERY,L"");
+            check(TreeView_GetItemState(tree,TreeView_GetRoot(tree),TVIS_EXPANDED)&TVIS_EXPANDED,"Search loses manual expansion state.");
+            TreeView_Expand(tree,TreeView_GetRoot(tree),TVE_COLLAPSE);
+            for (const auto query : {L"village", L"market", L"no-such-card", L"miser"}) SetDlgItemTextW(dialog, IDC_CARD_QUERY, query);
+            const auto row=TreeView_GetChild(tree,TreeView_GetRoot(tree));TreeView_GetItemRect(tree,row,&label,TRUE);
+            SendMessageW(tree,WM_MOUSEMOVE,0,MAKELPARAM(label.left+3,(label.top+label.bottom)/2));
+            check(picker.displayed && std::string_view(picker.displayed->id)=="miser","Text hover did not select preview.");
+        }
         // Text and image controls keep the same geometry before/after loading.
         check(IsWindowVisible(GetDlgItem(dialog, IDC_CARD_RULES)), "Rules hidden while loading.");
         if ((!missing_art && !picker.image || missing_art && picker.loader.counts().second==0) && picker_ticks<200) return FALSE;
@@ -186,10 +206,19 @@ BOOL CALLBACK inspect_picker(HWND dialog, LPARAM) {
         check(std::wstring_view(name)==L"Geizhals", "Stale preview published after navigation.");
         check(IsWindowVisible(GetDlgItem(dialog, IDC_CARD_TITLE)) && IsWindowVisible(GetDlgItem(dialog, IDC_CARD_INFO)), "Text displaced by image.");
         RECT before{},after{}; GetWindowRect(GetDlgItem(dialog,IDC_CARD_IMAGE),&before);
+        if(picker.skin->logical_height()>=385) check(before.bottom-before.top>=(before.right-before.left)*1.5,"Card area is too short to use column width.");
         const auto counts=picker.loader.counts();
         for(int i=0;i<100;++i) kingdom::preview(dialog,picker,picker.displayed);
         GetWindowRect(GetDlgItem(dialog,IDC_CARD_IMAGE),&after);
         check(EqualRect(&before,&after) && counts==picker.loader.counts(),"Repeated hover rebuilds the preview.");
+        RECT window{},client{};GetWindowRect(dialog,&window);
+        SetWindowPos(dialog,nullptr,0,0,window.right-window.left,520,SWP_NOMOVE|SWP_NOZORDER);
+        kingdom::layout_preview(dialog,picker);kingdom::layout_list(dialog,picker,kingdom::current_scope(dialog));
+        GetClientRect(dialog,&client);
+        for(const auto control:{IDOK,IDCANCEL,IDC_CARD_TREE,IDC_CARD_IMAGE}) {
+            RECT rect{};GetWindowRect(GetDlgItem(dialog,control),&rect);MapWindowPoints(nullptr,dialog,reinterpret_cast<POINT*>(&rect),2);
+            check(rect.top>=0 && rect.bottom<=client.bottom && rect.bottom>rect.top,"Limited-height layout clips controls.");
+        }
         check(kingdom::resource_cache_bytes()<=96u*1024u*1024u,"Shared cache limit exceeded.");
         SetDlgItemTextW(dialog, IDC_CARD_QUERY, L"city_quarter");
         picker_checked=true;
@@ -241,6 +270,20 @@ int main() {
             [&](const kingdom::CardTargets&,bool) { applied=true; return std::wstring{}; });
         KillTimer(nullptr,timer);
         if (!picker_checked && failure.empty()) failure="Picker check did not run.";
+        if(failure.empty()) for(WORD points:{WORD(11),WORD(14)}) {
+            const auto resource=FindResourceW(nullptr,MAKEINTRESOURCEW(IDD_CARD_PICKER),RT_DIALOG);
+            const auto size=SizeofResource(nullptr,resource); const auto data=LockResource(LoadResource(nullptr,resource));
+            std::vector<WORD> layout((size+1)/2);std::memcpy(layout.data(),data,size);
+            std::size_t at=13;
+            for(int field=0;field<3;++field) {if(layout[at]==0xffff)at+=2;else {while(layout[at])++at;++at;}}
+            layout[at]=points;
+            picker_checked=false;picker_ticks=0;timer=SetTimer(nullptr,0,50,inspect_card_dialog);
+            // The callback must outlive the modal picker (Picker stores a reference).
+            const kingdom::AcceptCards accept=[](const kingdom::CardTargets&,bool){return std::wstring{};};
+            kingdom::Picker stable{L"Skalierungsprüfung",cards,{},kingdom::CardSelection::multiple,accept};
+            DialogBoxIndirectParamW(GetModuleHandleW(nullptr),reinterpret_cast<const DLGTEMPLATE*>(layout.data()),nullptr,kingdom::picker_proc,reinterpret_cast<LPARAM>(&stable));
+            KillTimer(nullptr,timer);if(!picker_checked && failure.empty())failure="Scaled picker check did not run.";
+        }
         if (failure.empty()) {
             check(!kingdom::set_resource_package_for_test(std::filesystem::path(package).parent_path()/L"missing-test-resources.xpack"),"Missing resource fixture unexpectedly exists.");
             missing_art=true; picker_checked=false; picker_ticks=0;

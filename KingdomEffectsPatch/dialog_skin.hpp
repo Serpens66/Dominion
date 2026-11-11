@@ -16,13 +16,14 @@ namespace kingdom {
 
 class DialogSkin {
 public:
-    explicit DialogSkin(HWND dialog);
+    explicit DialogSkin(HWND dialog, bool fit_height=false);
     ~DialogSkin();
     DialogSkin(const DialogSkin&) = delete;
     DialogSkin& operator=(const DialogSkin&) = delete;
 
     RECT units(RECT logical) const;
     void place(int control, RECT logical) const;
+    int logical_height() const;
     INT_PTR handle(UINT message, WPARAM wparam, LPARAM lparam) const;
     ResourceImage art(std::string_view name) const;
     bool draw_icon(HDC dc, std::string_view name, RECT bounds) const;

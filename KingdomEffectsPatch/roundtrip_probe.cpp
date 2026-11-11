@@ -9,7 +9,7 @@ enum class TargetKind { none,card,pile,kingdom_pile,event,landmark,way,prophecy,
 constexpr unsigned kind_mask(TargetKind kind) { return 1u << unsigned(kind); }
 using kingdom::CardTarget;
 struct EffectDefinition {
-    const char* id; const wchar_t *title,*description,*timing,*status,*verification;
+    const char* id; const wchar_t *title,*description,*timing,*status,*verification,*expansion_reference;
     unsigned timing_mask; TargetKind first,second;
 };
 #include "effect_catalog.generated.hpp"
@@ -39,8 +39,15 @@ DWORD run_roundtrip(void* argument) {
     wchar_t path[32768]{}; GetModuleFileNameW(self,path,32768);
     const auto phase=reinterpret_cast<std::uintptr_t>(argument);
     if (phase==1) return install_patch(reinterpret_cast<void*>(2));
+    if (phase==3) {
+        const auto* profile=active_profile(); if(!profile) return 205;
+        const auto reopened=resolve_config(profile+0x10);
+        return static_cast<DWORD>(kingdom::count(kingdom::read_effects(reopened.data())));
+    }
     std::ofstream report(std::filesystem::path(path).parent_path()/L"effect-roundtrip.tsv",std::ios::binary|(phase?std::ios::app:std::ios::trunc));
     report << std::unitbuf;
+    std::ofstream requirements;
+    if(!phase) {requirements.open(std::filesystem::path(path).parent_path()/L"effect-requirements.tsv",std::ios::binary);requirements<<"effect\tgroups\n";}
     if (!phase) report << "phase\teffect\tcase\tparsed\tserialized\treparsed\tresult\n";
     using Parse=void (__fastcall*)(const char*,kingdom::Setup*);
     const auto parse=reinterpret_cast<Parse>(native_parser);
@@ -59,6 +66,20 @@ DWORD run_roundtrip(void* argument) {
                 kingdom::Setup first{},second{};
                 const auto input=std::string("-k cellar,market,merchant,militia,mine,moat,remodel,smithy,village,workshop ")+kingdom::effect_command_text(wanted);
                 parse(input.c_str(),&first);
+                if(!phase && !sequence) {
+                    const auto id=kingdom::read_effects(first.data())[0][0];
+                    using Lookup=const DWORD*(__fastcall*)(DWORD);
+                    const auto* definition_data=reinterpret_cast<Lookup>(base+0x116F30)(id);
+                    requirements<<definition.id<<'\t'; bool group_written=false;
+                    for(unsigned block=0;block<4;++block) {
+                        const auto* data=reinterpret_cast<const DWORD*>(reinterpret_cast<const std::byte*>(definition_data)+block*0x26c);
+                        if(data[3]!=7) continue;
+                        const auto n=data[0x270/4];if(n>152) return 206;
+                        if(group_written)requirements<<';';group_written=true;
+                        for(unsigned i=0;i<n;++i) {if(i)requirements<<',';requirements<<data[4+i];}
+                    }
+                    requirements<<'\n';
+                }
                 const NativeSetupText serialized(first,23);
                 kingdom::EffectCommands emitted;
                 const bool readable=kingdom::read_effect_commands(serialized.view(),emitted);

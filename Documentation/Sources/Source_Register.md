@@ -117,3 +117,13 @@ Die zwei Online-Aufrufstellen und die allein referenzierte Formatzeichenkette de
 **Build 3315 / EXE-Hash wie L01, statisch abgeglichen und isoliert dynamisch geprüft.** Der Effekt-Test verwendet den Parser RVA `0x0DDBB0`, die Ausgabe `0x0E0FF0`, den versionsabhängigen Decoder `0x0DEEB0`, den Konfigurationsauflöser `0x0E49D0` und die native Stringzuweisung `0x23D850`. Die gültigen Effektregistrierungen einschließlich `twist_garbage_heap` (ID `0x17DA`) und `twist_beakers` (`0x17D6`) sind in der EXE vorhanden. Die Routine `0x0E5DB0` vergleicht Effektbezeichnungen mit dem registrierten Bestand; daraus folgt keine geprüfte Spielwirkung.
 
 Der Patch verwendet für die verschärfte Übernahmeprüfung ausschließlich bereits vorhandene Parser-/Auflöseradressen und installiert dafür keine weiteren nativen Patchstellen. Die Test-DLL läuft nicht im Release. Ergebnis und Grenzen: [89 Effekte / 356 Prüfungen](../Effect_Roundtrip_Tests.md). Ein Effektverlust bei Rückkehr nach einer Partie mit dem Nutzerprofil bleibt ungeklärt. Neue Markdown-Dateien sind UTF-8 ohne BOM mit CRLF.
+
+### Lokaler Erweiterungsfilter und Effektverlust, 12. November 2026
+
+**L01, Hash unverändert, Spielbuild 3315 / Steam 17683350, statisch und isoliert dynamisch geprüft.** Die lokale Normalisierung `0x0DBEF0` wird von `0x0B1E6B`, `0x0B3CA6`, `0x0E3A21`, `0x1F6D53`, `0x1FE062` und `0x1FFA03` aufgerufen. Der Filter liest bei `0x0DC2CD` bis `0x0DC480` Anforderungen vom Typ 7 aus Effektdefinitionen (vier Blöcke, Abstand `0x26C`; Auflösung über `0x116F30`). `0x0DC488` setzt die erste nicht passende Effekt-ID auf null, ohne die Liste zu verdichten. Die Ausgabe endet an diesem Nulleintrag; gültige Folgeeffekte gehen verloren.
+
+Nur der lokale Aufruf `0x0B1E6B` aktiviert den Kontext des neuen Hooks bei `0x0DC2CD`; Zielkartenprüfungen davor und alle anderen Aufrufer bleiben unverändert. Originalbytes: `0x0B1E6B` = `E8 80 A0 02 00`, `0x0DC2CD` = `8B 8D 58 E6 FF FF 8B 09`. Angaben sind RVAs, keine Dateioffsets.
+
+Die 89 Erweiterungsbezüge wurden auf dem initialisierten Spielthread ausgelesen und mit der nativen Gruppentabelle bei RVA `0x380878` abgeglichen. 45 Definitionen besitzen solche Metadaten. Innerhalb einer Anforderungsgruppe gelten Alternativen. Der Befund belegt einen nativen Filter, keine zwingende Voraussetzung jeder einzelnen Spielwirkung. Daten und Testergebnisse: [Effect_Startup_Tests.md](../Effect_Startup_Tests.md).
+
+Der Test für natives Schließen/Neustarten verwendet ausschließlich im isolierten Spiel Dispatcher-Aktion 9, die `0x0B1F60` und anschließend `0x0B1E20` aufruft. Der Produktionspatch fügt dafür keine Hookstelle hinzu.

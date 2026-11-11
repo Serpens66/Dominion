@@ -3,7 +3,14 @@ from generate_effect_catalog import read_effects, verification_label, timing_mas
 
 
 def main():
+    import json
+    from pathlib import Path
+    refs=json.loads((Path(__file__).resolve().parents[1]/'Documentation'/'Effect_Expansion_References.json').read_text(encoding='utf-8'))
     effects = read_effects()
+    assert set(refs['effects'])=={row[0] for row in effects}
+    assert refs['effects']['twist_beakers']==[['alchemy']]
+    assert refs['effects']['twist_pennies_saved']==[['guilds']]
+    assert refs['effects']['start_5_coffers']==[['guilds','renaissance']]
     assert len(effects) == 89
     by_id = {row[0]: row for row in effects}
     assert len(TIMING_FILTERS) == 13

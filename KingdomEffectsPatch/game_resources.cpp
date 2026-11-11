@@ -367,7 +367,7 @@ CardPreviewLoader::CardPreviewLoader():state_(std::make_unique<State>()) {}
 CardPreviewLoader::~CardPreviewLoader()=default;
 void CardPreviewLoader::request(std::string id) {
     { std::lock_guard<std::mutex> lock(state_->mutex); if (state_->generation && id==state_->requested) return;
-      ++state_->generation; state_->requested=std::move(id); state_->pending=true; state_->complete=false; state_->result.reset(); }
+      ++state_->generation; state_->requested=std::move(id); state_->pending=!state_->requested.empty(); state_->complete=false; state_->result.reset(); }
     state_->ready.notify_one();
 }
 bool CardPreviewLoader::take(std::string& id,ResourceImage& image) {

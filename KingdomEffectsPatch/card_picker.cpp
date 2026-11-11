@@ -53,7 +53,6 @@ struct Picker {
     ResourceImage image{};
     CardPreviewLoader loader;
     bool rendering = false;
-    bool first_render = true;
     std::unique_ptr<DialogSkin> skin{};
     HIMAGELIST expansion_images = nullptr;
     std::map<std::string, int, std::less<>> expansion_icons{};
@@ -88,7 +87,11 @@ std::string expansion_icon(const CardTarget& card) {
 void layout_preview(HWND dialog, const Picker& picker) {
     // Geometry is fixed before the first request, independent of loading state.
     picker.skin->place(IDC_CARD_RULES, {217, 84, 378, 126});
-    picker.skin->place(IDC_CARD_IMAGE, {217, 129, 378, 222});
+    const auto extra=picker.skin->logical_height()-247;
+    picker.skin->place(IDC_CARD_IMAGE, {217, 129, 378, 222+extra});
+    picker.skin->place(IDC_CARD_STATUS,{8,226+extra,264,243+extra});
+    picker.skin->place(IDOK,{271,227+extra,323,243+extra});
+    picker.skin->place(IDCANCEL,{326,227+extra,378,243+extra});
     ShowWindow(GetDlgItem(dialog, IDC_CARD_TEXT), SW_HIDE);
 }
 
@@ -100,7 +103,7 @@ void preview(HWND dialog, Picker& picker, const CardTarget* card) {
     const auto info = card ? std::wstring(card->expansion) + L"\r\n" + card->types + L"\r\n" + card->cost : L"";
     SetDlgItemTextW(dialog, IDC_CARD_INFO, info.c_str());
     SetDlgItemTextW(dialog, IDC_CARD_RULES, card ? card->rules : picker.visible.empty()
-        ? L"Keine passenden Karten." : L"Öffne eine Erweiterung für die Kartenvorschau.");
+        ? L"Keine passenden Karten." : L"Öffne eine Erweiterung. Zeige auf einen Kartennamen oder wähle ihn mit den Pfeiltasten.");
     picker.image.reset();
     picker.loader.request(card ? card->id : "");
     InvalidateRect(GetDlgItem(dialog, IDC_CARD_INFO), nullptr, FALSE);
@@ -119,7 +122,15 @@ void layout_list(HWND dialog, const Picker& picker, bool only_current) {
     ShowWindow(GetDlgItem(dialog, IDC_CARD_HINT), hint ? SW_SHOW : SW_HIDE);
     for (const auto id : {IDC_CARD_SELECTION, IDC_CARD_UP, IDC_CARD_DOWN, IDC_CARD_REMOVE})
         ShowWindow(GetDlgItem(dialog, id), ordered ? SW_SHOW : SW_HIDE);
-    const int bottom = ordered ? 166 : bulk ? (hint ? 184 : 203) : 222;
+    const auto extra=picker.skin->logical_height()-247;
+    const int bottom = (ordered ? 166 : bulk ? (hint ? 184 : 203) : 222)+extra;
+    if(ordered) {
+        picker.skin->place(IDC_CARD_SELECTION,{8,170+extra,157,222+extra});
+        picker.skin->place(IDC_CARD_UP,{161,170+extra,210,185+extra});
+        picker.skin->place(IDC_CARD_DOWN,{161,188+extra,210,203+extra});
+        picker.skin->place(IDC_CARD_REMOVE,{161,207+extra,210,222+extra});
+    }
+    picker.skin->place(IDC_CARD_HINT,{8,208+extra,210,223+extra});
     picker.skin->place(IDC_CARD_TREE, {8, 59, 210, bottom});
     if (bulk) {
         const int actions = bottom + 3;
@@ -176,14 +187,6 @@ HTREEITEM insert_row(HWND tree, HTREEITEM parent, const wchar_t* title, const Ca
     return item;
 }
 
-const CardTarget* first_open_card(HWND tree, const Picker& picker) {
-    for (const auto& [item, card] : picker.visible) {
-        if (TreeView_GetItemState(tree, TreeView_GetParent(tree, item), TVIS_EXPANDED) & TVIS_EXPANDED)
-            return card;
-    }
-    return nullptr;
-}
-
 void render_cards(HWND dialog, Picker& picker) {
     const auto tree = GetDlgItem(dialog, IDC_CARD_TREE);
     const bool only_current = current_scope(dialog);
@@ -198,11 +201,8 @@ void render_cards(HWND dialog, Picker& picker) {
     if (!picker.multiple()) picker.selected.clear();
     HTREEITEM group = nullptr, focus = nullptr;
     std::wstring_view expansion;
-    if (picker.first_render && !only_current && !picker.cards.empty())
-        picker.expanded.insert(picker.cards.front()->expansion);
-    picker.first_render = false;
     const auto expand_group = [&] {
-        if (group && (only_current || !query.empty() || picker.expanded.find(expansion) != picker.expanded.end()))
+        if (group && (!query.empty() || picker.expanded.find(expansion) != picker.expanded.end()))
             TreeView_Expand(tree, group, TVE_EXPAND);
     };
     for (const auto* card : only_current ? picker.current : picker.cards) {
@@ -220,13 +220,14 @@ void render_cards(HWND dialog, Picker& picker) {
         if (card == focused) focus = item;
     }
     expand_group();
+    if (focus && !(TreeView_GetItemState(tree,TreeView_GetParent(tree,focus),TVIS_EXPANDED)&TVIS_EXPANDED)) focus=nullptr;
     if (focus) TreeView_SelectItem(tree, focus);
     picker.rendering = false;
     SendMessageW(tree, WM_SETREDRAW, TRUE, 0);
     InvalidateRect(tree, nullptr, TRUE);
     layout_list(dialog, picker, only_current);
     EnableWindow(GetDlgItem(dialog, IDC_CARD_ALL), !picker.visible.empty());
-    preview(dialog, picker, focus ? card_at(tree, focus) : first_open_card(tree, picker));
+    preview(dialog, picker, focus ? card_at(tree, focus) : nullptr);
     selection_status(dialog, picker);
 }
 
@@ -241,7 +242,9 @@ LRESULT CALLBACK tree_proc(HWND tree, UINT message, WPARAM wparam, LPARAM lparam
             const auto item = TreeView_HitTest(tree, &hit);
             const auto* card = card_at(tree, item);
             if (message == WM_MOUSEMOVE) {
-                if (card) preview(dialog, picker, card);
+                RECT label{};
+                if (card && (hit.flags&TVHT_ONITEMLABEL) && TreeView_GetItemRect(tree,item,&label,TRUE) && PtInRect(&label,hit.pt))
+                    preview(dialog, picker, card);
             } else if (picker.multiple() && card && (hit.flags & TVHT_ONITEMSTATEICON)) {
                 if (message == WM_LBUTTONDOWN) {
                     SetFocus(tree);
@@ -353,7 +356,7 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             SetWindowLongPtrW(dialog, DWLP_USER, lparam);
             const auto title = std::wstring(menu_text::choose_card) + L" · " + picker.title;
             SetWindowTextW(dialog, title.c_str());
-            picker.skin = std::make_unique<DialogSkin>(dialog);
+            picker.skin = std::make_unique<DialogSkin>(dialog,true);
             SetDlgItemTextW(dialog, IDC_CARD_EXPANSIONS, menu_text::expansions);
             SetDlgItemTextW(dialog, IDOK, menu_text::done);
             SetDlgItemTextW(dialog, IDCANCEL, menu_text::cancel);
@@ -438,7 +441,7 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
                     if (card) picker.selected.push_back(card);
                 }
                 if (!picker.rendering) {
-                    preview(dialog, picker, card ? card : first_open_card(change.hdr.hwndFrom, picker));
+                    if(card) preview(dialog, picker, card);
                     if (!picker.multiple()) selection_status(dialog, picker);
                 }
             } else if (change.hdr.code == TVN_ITEMEXPANDEDW && !picker.rendering && !change.itemNew.lParam) {
@@ -449,10 +452,10 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
                 item.pszText = name.data();
                 item.cchTextMax = static_cast<int>(name.size());
                 if (TreeView_GetItem(change.hdr.hwndFrom, &item)) {
-                    if (change.action == TVE_EXPAND) picker.expanded.insert(name.data());
-                    else picker.expanded.erase(name.data());
-                    if (!card_at(change.hdr.hwndFrom, TreeView_GetSelection(change.hdr.hwndFrom)))
-                        preview(dialog, picker, first_open_card(change.hdr.hwndFrom, picker));
+                    if(GetWindowTextLengthW(GetDlgItem(dialog,IDC_CARD_QUERY))==0) {
+                        if (change.action == TVE_EXPAND) picker.expanded.insert(name.data());
+                        else picker.expanded.erase(name.data());
+                    }
                 }
             }
             return FALSE;
