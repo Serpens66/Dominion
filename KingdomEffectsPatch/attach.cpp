@@ -54,7 +54,7 @@ void wait_for_menu(HANDLE process, DWORD pid) {
     std::fflush(stdout);
     do {
         require(WaitForSingleObject(process, 0) == WAIT_TIMEOUT,
-                "The test copy exited before the patch could attach.");
+                "Dominion exited before the patch could attach.");
         if (!image) image = find_remote_module(pid, L"Dominion.exe");
         std::uintptr_t client = 0;
         SIZE_T read = 0;
@@ -68,7 +68,7 @@ void wait_for_menu(HANDLE process, DWORD pid) {
         }
         Sleep(200);
     } while (GetTickCount64() < deadline);
-    throw std::runtime_error("Main menu not ready. Close any active game and restart the test copy.");
+    throw std::runtime_error("Main menu not ready. Close any active game and restart Dominion through the mod launcher.");
 }
 
 class InitializationPending : public std::runtime_error {
@@ -118,7 +118,7 @@ void attach(HANDLE process, DWORD pid, DWORD mode, const std::filesystem::path& 
     const auto result = remote_call(process, remote_base + offset,
                                     reinterpret_cast<void*>(static_cast<std::uintptr_t>(mode)));
     if (result) {
-        std::fprintf(stderr, "InstallPatch returned %lu. Restart the test copy before retrying.\n", result);
+        std::fprintf(stderr, "InstallPatch returned %lu. Restart Dominion before retrying.\n", result);
         throw std::runtime_error("The patch did not initialize.");
     }
 }
@@ -130,11 +130,13 @@ int wmain(int argc, wchar_t** argv) {
         : std::wcscmp(argv[2], L"--apply") == 0 ? 2
         : std::wcscmp(argv[2], L"--apply-auto") == 0 ? 3 : 0;
     const bool online = requested_mode && std::wcscmp(argv[1], L"--online") == 0;
+    const bool installed = requested_mode == 2 && std::wcscmp(argv[1], L"--installed") == 0;
     const bool local = requested_mode &&
         (std::wcscmp(argv[1], L"--local") == 0 || std::wcscmp(argv[1], L"--offline") == 0);
-    if (!local && (!online || requested_mode != 2)) {
+    if (!local && !installed && (!online || requested_mode != 2)) {
         std::fputs("Usage: attach.exe --local --measure|--apply|--apply-auto <PID> <copy Dominion.exe> <original Dominion.exe>\n"
-                   "       attach.exe --online --apply <PID> <copy Dominion.exe> <original Dominion.exe>\n", stderr);
+                   "       attach.exe --online --apply <PID> <copy Dominion.exe> <original Dominion.exe>\n"
+                   "       attach.exe --installed --apply <PID> <installed Dominion.exe> <installed Dominion.exe>\n", stderr);
         return 2;
     }
     const DWORD mode = online ? 4 : requested_mode;
@@ -147,20 +149,22 @@ int wmain(int argc, wchar_t** argv) {
         constexpr auto access = PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION |
                                 PROCESS_VM_WRITE | PROCESS_VM_READ | PROCESS_CREATE_THREAD | SYNCHRONIZE;
         Handle process(OpenProcess(access, FALSE, pid));
-        require(process.valid(), "Cannot open the Dominion test process.");
+        require(process.valid(), "Cannot open the Dominion process.");
         const auto actual = std::filesystem::canonical(process_path(process.value));
-        require(_wcsicmp(actual.c_str(), wanted.c_str()) == 0, "PID does not belong to the specified copy.");
+        require(_wcsicmp(actual.c_str(), wanted.c_str()) == 0, "PID does not belong to the specified executable.");
         Handle executable(CreateFileW(actual.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
                                      FILE_ATTRIBUTE_NORMAL, nullptr));
-        require(executable.valid(), "Cannot open the test executable.");
+        require(executable.valid(), "Cannot open the executable.");
         const auto source = std::filesystem::canonical(argv[5]);
         require(_wcsicmp(source.filename().c_str(), L"Dominion.exe") == 0, "Expected original Dominion.exe.");
         Handle original(CreateFileW(source.c_str(),
                                     FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                                     nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
-        require(original.valid(), "Cannot verify that the working copy is separate from Steam's original.");
-        require(!same_file(identify(executable.value), identify(original.value)),
-                "Use a separate working copy. The process is running the original Steam executable.");
+        require(original.valid(), "Cannot verify the installed executable's identity.");
+        const bool matches_source = same_file(identify(executable.value), identify(original.value));
+        require(installed ? matches_source : !matches_source,
+                installed ? "The process does not match the selected installed executable."
+                          : "Diagnostic mode requires a separate working copy.");
         verify_executable(executable.value);
 
         wchar_t self[MAX_PATH];

@@ -2,6 +2,10 @@
 
 ## Release-Kandidat v0.1.0, 11. November 2026
 
+**Korrektur des Release-Aufbaus:** Der Release-Starter startet jetzt direkt die originale Steam-Installation mit dem normalen Profil. Er legt weder eine Spielkopie noch ein Testprofil an. Der neue Injector-Modus `--installed --apply` verlangt, dass der gestartete Prozess dieselbe Datei wie die gewählte Installation verwendet. Der Diagnose-Modus behält seine getrennte Kopie. Die unten protokollierten Kopiertests beschreiben den verworfenen ersten Kandidaten, nicht den aktuellen Release-Starter.
+
+Der korrigierte Installationsmodus wurde im isolierten nativen Entwickler-Test geprüft: unterschiedliche Prozess- und Quelldateien werden abgelehnt, dieselbe Datei wird erfolgreich gepatcht. Die Bann-Erweiterung ist installiert; Große Ideen wirkt dreifach mit acht Handkarten. Build, Effektprüfungen, Initialisierungsprüfung und PowerShell-Syntaxprüfung bestehen. Der Release-Code enthält keine Kopierfunktion mehr.
+
 Der neue Release-Starter ist **Dominion-mit-Mod-starten.cmd im entpackten Release-Paket**. Er verwendet das normale Profil; der unten beschriebene bisherige Test-Starter verwendet weiterhin sein getrenntes Testprofil. Anleitung und sichtbare Schlussabnahme stehen in [README](README.md) und [RELEASING](RELEASING.md).
 
 **Automatisiert geprüft, Spielbuild 3315 / Steam-Build 17683350, EXE-Hash wie Quellenregister:**

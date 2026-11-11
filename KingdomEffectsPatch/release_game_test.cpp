@@ -94,9 +94,9 @@ int wmain(int argc, wchar_t** argv) {
         wait_for_menu(process.value, child.dwProcessId);
         require(std::filesystem::exists(scratch / L"log.txt"), "Game did not write its log to disposable folder.");
         std::puts("The actual Dominion engine reached its main menu without using the foreground desktop.");
-        const auto invoke_launcher = [&](const std::filesystem::path& source) {
+        const auto invoke_launcher = [&](const std::filesystem::path& source, bool installed = false) {
             const auto exe = package / L"attach.exe";
-            std::wstring command = L"\"" + exe.wstring() + L"\" --local --apply " +
+            std::wstring command = L"\"" + exe.wstring() + (installed ? L"\" --installed --apply " : L"\" --local --apply ") +
                 std::to_wstring(child.dwProcessId) + L" \"" + path.wstring() + L"\" \"" + source.wstring() + L"\"";
             STARTUPINFOW info{sizeof info};
             PROCESS_INFORMATION attached{};
@@ -112,7 +112,9 @@ int wmain(int argc, wchar_t** argv) {
             return result;
         };
         require(invoke_launcher(path) != 0, "Injector did not reject original/copy identity collision.");
-        require(invoke_launcher(std::filesystem::canonical(argv[3])) == 0, "Packaged injector failed.");
+        require(invoke_launcher(std::filesystem::canonical(argv[3]), true) != 0,
+                "Installed mode did not reject a different executable identity.");
+        require(invoke_launcher(path, true) == 0, "Packaged installed-mode injector failed.");
         unsigned char limit = 0xFF;
         require(ReadProcessMemory(process.value, reinterpret_cast<void*>(base + 0x208EA4), &limit, 1, &amount) &&
                 amount == 1 && limit == 0, "Online ban patch is not installed.");

@@ -134,41 +134,6 @@ function Backup-ModProfile {
     Move-Item -LiteralPath $pending -Destination $slots[0] -Force
 }
 
-function Prepare-ModWorkingCopy {
-    param([string]$Source, [string]$WorkRoot)
-    Assert-SupportedGame $Source
-    New-Item -ItemType Directory -Path $WorkRoot -Force | Out-Null
-    Assert-NormalDirectory $WorkRoot
-    $target = Join-Path $WorkRoot 'game'
-    if (Test-Path -LiteralPath $target) {
-        Assert-NormalDirectory $target
-        Assert-SupportedGame $target
-        # Original files are never written. The native injector additionally checks file identities.
-        if ([string]::Equals((Get-Item -LiteralPath $Source).FullName, (Get-Item -LiteralPath $target).FullName,
-                             [StringComparison]::OrdinalIgnoreCase)) { throw 'Spielkopie und Original sind identisch.' }
-        foreach ($file in Get-ChildItem -LiteralPath $Source -File -Force) {
-            $copy = Get-Item -LiteralPath (Join-Path $target $file.Name) -Force -ErrorAction Stop
-            if ($copy.PSIsContainer -or ($copy.Attributes -band [IO.FileAttributes]::ReparsePoint) -or $copy.Length -ne $file.Length) {
-                throw 'Spielkopie unvollstaendig. Bitte den game-Ordner im Mod-Datenordner umbenennen und erneut starten.'
-            }
-        }
-    } else {
-        $staging = Join-Path $WorkRoot 'game.preparing'
-        if (Test-Path -LiteralPath $staging) {
-            throw "Eine unvollstaendige Spielkopie liegt unter $staging. Bitte diesen Ordner umbenennen und erneut starten."
-        }
-        # Copying symlinks/junctions recursively is deliberately not supported.
-        if (Get-ChildItem -LiteralPath $Source -Recurse -Force | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint } | Select-Object -First 1) {
-            throw 'Die Spielinstallation enthaelt Verknuepfungen. Bitte eine normale Steam-Installation verwenden.'
-        }
-        New-Item -ItemType Directory -Path $staging | Out-Null
-        Get-ChildItem -LiteralPath $Source -Force | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $staging -Recurse }
-        Assert-SupportedGame $staging
-        Rename-Item -LiteralPath $staging -NewName 'game'
-    }
-    Join-Path $target 'Dominion.exe'
-}
-
 function Assert-ModPackage {
     param([string]$PackageRoot)
     $manifestPath = Join-Path $PackageRoot 'package.json'

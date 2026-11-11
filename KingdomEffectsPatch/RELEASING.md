@@ -1,6 +1,6 @@
 # Release v0.1.0
 
-Der Release-Starter ist vom bisherigen Test-Starter getrennt. Er verwendet das normale Profil und keine Profilordner-Umschaltung. Der Test-Starter bleibt für Diagnosezwecke erhalten. Ein begonnenes altes Profil-Swapping muss zuerst über diesen Test-Starter abgeschlossen werden.
+Der Release-Starter ist vom bisherigen Test-Starter getrennt. Er startet die originale Steam-Installation mit dem normalen Profil. Keine Spielkopie und keine Profilordner-Umschaltung. Der Test-Starter bleibt für Diagnosezwecke erhalten. Ein begonnenes altes Profil-Swapping muss zuerst über diesen Test-Starter abgeschlossen werden.
 
 ## Bauen und prüfen
 
@@ -14,14 +14,14 @@ Die Prüfprogramme werden nicht mitgeliefert:
 - `launcher_test.exe`: erfolgreiche Initialisierung, Initialisierungsfehler und begrenztes Warten ohne Beenden des Remote-Threads.
 - `editor_release_test.exe`: echter F8-Dialog auf eigenem unsichtbaren Desktop; 89 Einträge, Prüfkennzeichnungen, Suche nach IDs und Zeitpunkt, leere Suche und Abbrechen.
 - `test_release_catalog.py`: Vollständigkeit und Zuordnung aller 89 Effekte und Prüfkennzeichnungen.
-- `Test-Release.ps1 -ArchivePath <ZIP> -SourceGameDirectory <Spielordner>`: unter Windows PowerShell 5.1 außerhalb des Projektordners entpacken und alle Paketdateien prüfen; ausschließlich erzeugte Testprofile, Sicherungsrotation, abweichender Steam-Pfad, Leerzeichen/Umlaut, Wiederverwendung der Kopie, falscher Build/Hash, fehlende Dateien und exklusive Sitzungssperre.
-- `release_game_test.exe <Spielkopie/Dominion.exe> <entpacktes-Paket/bin> <Original/Dominion.exe> <0..3>`: tatsächlichen Paket-Injector und die DLL auf unsichtbarem Desktop prüfen. Der Test verwendet ein temporäres Offline-Profil und prüft bei zwei lokalen Spielern die erste Hand ohne bzw. mit mehreren Große-Ideen-Kopien. Er lehnt Original/Kopie-Identität ab und prüft den installierten Bann-Patch. Kein Test verwendet das Nutzerprofil oder simuliert Eingaben am aktiven Desktop.
+- `Test-Release.ps1 -ArchivePath <ZIP> -SourceGameDirectory <Spielordner>`: unter Windows PowerShell 5.1 außerhalb des Projektordners entpacken und alle Paketdateien prüfen; ausschließlich erzeugte Testprofile, Sicherungsrotation, abweichender Steam-Pfad, Leerzeichen/Umlaut, direkter Installationsmodus, falscher Build/Hash, fehlende Dateien und exklusive Sitzungssperre.
+- `release_game_test.exe <Spielkopie/Dominion.exe> <entpacktes-Paket/bin> <Original/Dominion.exe> <0..3>`: tatsächlichen Paket-Injector und die DLL auf unsichtbarem Desktop prüfen. Der Test verwendet ein temporäres Offline-Profil und prüft bei zwei lokalen Spielern die erste Hand ohne bzw. mit mehreren Große-Ideen-Kopien. Er prüft den direkten Installationsmodus mit identischer Prozess- und Quelldatei, die Identitätsprüfung und den installierten Bann-Patch. Nur dieser Entwickler-Test nutzt eine vorhandene Testkopie und ein temporäres Profil; der Release-Starter tut das nicht. Kein Test verwendet das Nutzerprofil oder simuliert Eingaben am aktiven Desktop.
 
 Vor nativen Tests Spielbuild, Steam-Build und EXE-Hash gegen das Quellenregister prüfen. Durch die Sandbox verweigerte Desktop-Erstellung oder Dateiumbenennung ist kein bestandener Test. Solche Prüfungen mit entsprechender Ausführungsfreigabe wiederholen.
 
 ## Sichtbare Schlussabnahme
 
-Das zu veröffentlichende Paket über **Dominion-mit-Mod-starten.cmd** starten. Es darf keinen Compiler und keine Bilderzeugung aufrufen. Der erste Start erstellt seine eigene Spielkopie; weitere Starts verwenden sie erneut.
+Das zu veröffentlichende Paket über **Dominion-mit-Mod-starten.cmd** starten. Es darf keinen Compiler und keine Bilderzeugung aufrufen. Das Spiel muss direkt aus der gewählten Steam-Installation starten. Weder eine Spielkopie noch ein Testprofil darf angelegt werden.
 
 Dieses Königreich in die Kartensuche kopieren:
 

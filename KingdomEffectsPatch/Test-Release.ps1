@@ -55,7 +55,7 @@ try { Assert-Throws { Backup-ModProfile $profile $backups } 'Gesperrte Sicherung
 finally { $held.Dispose() }
 Assert-True ([IO.File]::ReadAllText($newest) -eq '<test>8</test>') 'Fehler hat die neueste Sicherung veraendert.'
 
-# Discovery and copying on alternate paths, including a Unicode directory name.
+# Discovery and validation on alternate paths, including a Unicode directory name.
 $unicodeName = 'Steam Bibliothek ' + [char]0x00E4
 $steamRoot = Join-Path $scratch 'Steam'
 $library = Join-Path $scratch $unicodeName
@@ -63,7 +63,7 @@ $source = Join-Path $library 'steamapps\common\Dominion'
 New-Item -ItemType Directory -Path $source, (Join-Path $steamRoot 'steamapps') -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $SourceGameDirectory 'Dominion.exe') -Destination $source
 [IO.File]::WriteAllText((Join-Path $source 'build_number.txt'), '3315')
-# This fixture only tests copying and validation; it is never launched.
+# This fixture only tests discovery and validation; it is never launched.
 [IO.File]::WriteAllText((Join-Path $source 'Dominion.xpack'), 'fixture, not game content')
 $escaped = $library.Replace('\', '\\')
 [IO.File]::WriteAllText((Join-Path $steamRoot 'steamapps\libraryfolders.vdf'), '"libraryfolders" { "0" { "path" "' + $escaped + '" } }', $script:Utf8)
@@ -73,20 +73,15 @@ $state = Join-Path $scratch 'state'
 New-Item -ItemType Directory -Path $state | Out-Null
 Assert-True ((Resolve-ModInstallation $state $source) -eq $source) 'Expliziter Pfad nicht akzeptiert.'
 Assert-True ((Resolve-ModInstallation $state) -eq $source) 'Gespeicherter Pfad nicht wiederverwendet.'
-$copy = Prepare-ModWorkingCopy $source (Join-Path $state '3315')
-Assert-True ((Get-FileHash -LiteralPath $copy).Hash -eq $script:SupportedExeHash) 'Kopie inkorrekt.'
-$copyTime = (Get-Item -LiteralPath $copy).LastWriteTimeUtc
-$null = Prepare-ModWorkingCopy $source (Join-Path $state '3315')
-Assert-True ((Get-Item -LiteralPath $copy).LastWriteTimeUtc -eq $copyTime) 'Vorhandene Kopie neu geschrieben.'
 [IO.File]::WriteAllText((Join-Path $source 'build_number.txt'), '9999')
 Assert-Throws { Assert-SupportedGame $source } 'Falscher Spielbuild wurde akzeptiert.'
 [IO.File]::WriteAllText((Join-Path $source 'build_number.txt'), '3315')
 [IO.File]::WriteAllText((Join-Path $source 'Dominion.exe'), 'bad exe')
 Assert-Throws { Assert-SupportedGame $source } 'Falscher EXE-Hash wurde akzeptiert.'
 Copy-Item -LiteralPath (Join-Path $SourceGameDirectory 'Dominion.exe') -Destination (Join-Path $source 'Dominion.exe') -Force
-$missing = Join-Path (Split-Path $copy) 'Dominion.xpack'
-Move-Item -LiteralPath $missing -Destination "$missing.moved"
-Assert-Throws { Prepare-ModWorkingCopy $source (Join-Path $state '3315') } 'Unvollstaendige Kopie wurde akzeptiert.'
+$starterText = [IO.File]::ReadAllText((Join-Path $PackageDirectory 'Start-Mod.ps1'))
+Assert-True ($starterText.Contains('--installed --apply')) 'Release startet nicht im Installationsmodus.'
+Assert-True ($starterText -notmatch 'Prepare-ModWorkingCopy|Start-TestProfile|Copy-Item') 'Release kopiert das Spiel oder wechselt das Profil.'
 
 # Session lock behavior is independent of the foreground desktop.
 $lockPath = Join-Path $scratch 'session.lock'
@@ -101,5 +96,5 @@ New-Item -ItemType Directory -Path $broken | Out-Null
 Assert-Throws { Assert-ModPackage $broken } 'Fehlendes Manifest wurde akzeptiert.'
 Copy-Item -LiteralPath (Join-Path $PackageDirectory 'package.json') -Destination $broken
 Assert-Throws { Assert-ModPackage $broken } 'Fehlende Binaerdateien wurden akzeptiert.'
-Write-Host 'PASS: Paket, Sicherungen, Pfade, Steam-Erkennung, Kopie, Fehlerfaelle und Sitzungssperre.'
+Write-Host 'PASS: Paket, Sicherungen, Pfade, Steam-Erkennung, Installationsmodus, Fehlerfaelle und Sitzungssperre.'
 Write-Host "Isolierte Testdaten: $scratch"

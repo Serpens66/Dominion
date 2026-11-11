@@ -6,7 +6,7 @@ Erste herunterladbare Windows-Version des Dominion Kingdom Effects Patch für **
 - Kartenauswahl nach Erweiterungen mit Kartenvorschau und gemeinsamer Auswahl mehrerer Zielstapel.
 - Korrekturen für die Kombination, Wiederholung und Speicherung von Effekten in Lokal spielen und Weitergeben, bis zur nativen Grenze von 32 Einträgen.
 - Erweiterte Online-Bannlisten über das vorhandene Spielmenü; private Partien mit größeren Listen wurden beobachtet.
-- Doppelklick-Starter mit fertigen Dateien, Steam-Pfaderkennung, getrennter Spielkopie und normalem Spielprofil. Höchstens drei Profilsicherungen.
+- Doppelklick-Starter mit fertigen Dateien, Steam-Pfaderkennung und direktem Start der Steam-Installation mit dem normalen Spielprofil. Keine Spielkopie, kein Testprofil. Höchstens drei Profilsicherungen.
 
 **Bekannte Grenzen:** Ungetestete und teilweise geprüfte Effekte sind entsprechend markiert und auswählbar. Bekannte Startabbrüche bleiben abgesichert. Kampagneneffekte funktionieren nicht in privaten Online-Partien. Der native Bann-Hilfetext nennt weiterhin fünf Einträge; Matchmaking und die volle Kapazität von 700 Banns sind ungeprüft. Vereinzelt fehlt eine Kartenillustration. Die sichtbare Prüfung bei 125 % und 150 % Windows-Skalierung steht noch aus.
 

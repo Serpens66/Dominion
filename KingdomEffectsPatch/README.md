@@ -7,7 +7,7 @@ Vorabversion für die Windows-Steam-Version von Dominion, **Spielbuild 3315** (S
 1. Das Release-ZIP vollständig in einen eigenen Ordner entpacken.
 2. **Dominion-mit-Mod-starten.cmd** doppelklicken. Dominion muss vorher geschlossen sein.
 3. Der Starter findet Dominion in den Steam-Bibliotheken. Falls nötig, den Spielordner eingeben. Eine spätere Änderung ist über `Dominion-mit-Mod-starten.cmd -GameDirectory "D:\SteamLibrary\steamapps\common\Dominion"` möglich.
-4. Beim ersten Start wird eine getrennte Spielkopie erstellt. Das kann dauern und benötigt zusätzlichen Speicherplatz. Weitere Starts verwenden dieselbe Kopie; es findet kein Build statt. Python und Visual Studio werden nicht benötigt.
+4. Der Starter startet Dominion direkt aus deiner Steam-Installation und aktiviert den Patch nur im Arbeitsspeicher. Es werden keine Spielkopie und kein Testprofil angelegt. Python und Visual Studio werden nicht benötigt.
 5. Auf **Bereit** warten. In **Lokal spielen** oder **Weitergeben** die Königreich-Auswahl öffnen und **F8** drücken.
 
 Steam und Internet können eingeschaltet bleiben. Kampagneneffekte werden in privaten Online-Partien nicht übernommen. Die erweiterten Online-Banns verwenden dagegen die normale Sammlung und Bannliste des Spiels.
@@ -30,7 +30,7 @@ Vor jedem Spielstart sichert der Starter ein verändertes `profiles.xml` unter `
 
 Zum Wiederherstellen Dominion und den Starter schließen, das aktuelle `%APPDATA%\TempleGates\Dominion\profiles.xml` separat aufbewahren und die gewünschte Sicherung als `profiles.xml` dorthin kopieren. Eine Sicherung erfasst den Profilstand vor einem Mod-Start, nicht jeden Spielzug.
 
-Die Einstellungen und Spielkopie liegen unter `%LOCALAPPDATA%\DominionKingdomEffectsPatch`. Bei einer unterbrochenen ersten Kopie den dort genannten `game.preparing`-Ordner umbenennen und erneut starten. Bei einer unvollständigen vorhandenen Kopie entsprechend den `3315\game`-Ordner umbenennen. Der Starter löscht solche Ordner nicht automatisch.
+Die Einstellungen und Profilsicherungen liegen unter `%LOCALAPPDATA%\DominionKingdomEffectsPatch`. Die Dateien der Steam-Installation werden nicht verändert; nach einem normalen Start über Steam ist der Patch nicht aktiv.
 
 ## Grenzen und Entfernen
 

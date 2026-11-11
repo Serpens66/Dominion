@@ -1010,7 +1010,7 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
                     rollback_ok = change_site(base, previous, false) && rollback_ok;
                 }
                 // Do not resume game threads with a partially installed patch.
-                // Termination is restricted to this verified working-copy process.
+                // Termination is restricted to this verified Dominion process.
                 if (!rollback_ok) {
                     TerminateProcess(GetCurrentProcess(), ERROR_PROCESS_ABORTED);
                     __fastfail(FAST_FAIL_FATAL_APP_EXIT); // Fallback if process termination failed.

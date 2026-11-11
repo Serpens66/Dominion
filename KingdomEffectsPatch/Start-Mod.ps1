@@ -23,21 +23,20 @@ function Invoke-ModRelease {
         }
         if ($CheckOnly) { Write-Host "Paket und Spielbuild geprueft: $source"; return }
         Write-Host 'Dominion Kingdom Effects Patch v0.1.0 | Spielbuild 3315'
-        Write-Host 'Spielkopie pruefen / beim ersten Start erstellen ...'
-        $game = Prepare-ModWorkingCopy $source (Join-Path $state '3315')
+        $game = Join-Path $source 'Dominion.exe'
         Assert-ModGameClosed
         $backup = Join-Path $state 'profile-backups'
         Backup-ModProfile (Join-Path $profileParent 'Dominion\profiles.xml') $backup
         Write-Host "Normales Spielprofil. Bis zu drei Sicherungen unter: $backup"
         $process = Start-Process -FilePath $game -WorkingDirectory (Split-Path $game) -WindowStyle Normal -PassThru
         try {
-            & (Join-Path $PSScriptRoot 'bin\attach.exe') --local --apply $process.Id $game (Join-Path $source 'Dominion.exe')
+            & (Join-Path $PSScriptRoot 'bin\attach.exe') --installed --apply $process.Id $game $game
             if ($LASTEXITCODE -ne 0) { throw 'Der Patch wurde nicht erfolgreich aktiviert. Bitte Dominion schliessen und den Starter erneut oeffnen.' }
             Write-Host 'Bereit. In Lokal spielen oder Weitergeben die Koenigreich-Auswahl oeffnen und F8 druecken.'
             Write-Host 'Erweiterte Online-Banns stehen in der normalen Sammlung zur Verfuegung.'
             $process.WaitForExit()
         } finally {
-            # Keep the session lock while the working copy is running, including on attach failure.
+            # Keep the session lock while Dominion is running, including on attach failure.
             if (!$process.HasExited) { Write-Host 'Bitte Dominion schliessen. Der Starter wartet auf das Spielende.'; $process.WaitForExit() }
         }
     } finally { if ($lock) { $lock.Dispose() } }
