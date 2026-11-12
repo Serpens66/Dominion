@@ -12,7 +12,7 @@ Unter **Erweiterungen und Editionen** garantiert **Immer** mindestens einen Stap
 
 Mit **Zusatzkarten bei Eigenschaften berücksichtigen** zählen feste Kartenreihen und bekannte Zusatzstapel bei den Eigenschaftsquoten mit. Zufällige Aufbaukarten wie beim Weg der Maus bleiben ausgenommen. **Verbunden mit** in der Kartenvorschau zeigt die zugehörigen Karten.
 
-**Bannliste kopieren** gibt die ausgeschlossenen Karten als Einträge für `profiles.xml` aus, im Kartenpool und unter dem Kingdom-Code. Ergänze sie im aktiven Profil in `localBans` für KI/Weitergeben oder in `bans` für Online/Privates Spiel. Dominion vorher schließen, die Datei sichern und vorhandene Zahlen nicht doppelt einfügen.
+**Bannliste kopieren** gibt die ausgeschlossenen Karten als Einträge für `profiles.xml` aus, in Abschnitt 2 unter dem Kingdom-Code. Ergänze sie im aktiven Profil in `localBans` für KI/Weitergeben oder in `bans` für Online/Privates Spiel. Dominion vorher schließen, die Datei sichern und vorhandene Zahlen nicht doppelt einfügen.
 
 ## Web-Namenslisten umwandeln
 

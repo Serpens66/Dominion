@@ -263,7 +263,7 @@ Das aktive Profil enthält zwei getrennte Listen. `bans` liegt in der nativen Pr
 
 ### Bannlisten-Einträge aus dem Generator
 
-Der Generator exportiert alle ausdrücklich ausgeschlossenen Hauptstapel und Landschaften, einschließlich gespeicherter Ausschlüsse aus derzeit deaktivierten Erweiterungen. Suche, Erweiterungsquoten und Zusatzkarten-Modus verändern diese Liste nicht. Kartenpool und Abschnitt 2 verwenden dieselbe Ausgabe; eine Ziehung ist dafür nicht erforderlich.
+Der Generator exportiert alle ausdrücklich ausgeschlossenen Hauptstapel und Landschaften, einschließlich gespeicherter Ausschlüsse aus derzeit deaktivierten Erweiterungen. Suche, Erweiterungsquoten und Zusatzkarten-Modus verändern diese Liste nicht. Die Ausgabe steht in Abschnitt 2 unter dem Kingdom-Code; eine Ziehung ist dafür nicht erforderlich.
 
 **XML-Struktur, lokal beobachtet an L02.** Die beiden äußeren Felder unterscheiden sich, die Einträge darin heißen jeweils `bans`. Anonymisiertes Strukturbeispiel:
 
