@@ -2,6 +2,10 @@
 
 Dieses Projekt untersucht und erweitert die Steam-Version von **Dominion von Temple Gates Games**. Einstieg für neue Chats ist [Documentation/README.md](Documentation/README.md). Für den regelbasierten Kingdom-Generator zuerst [SetGenerator/README.md](SetGenerator/README.md) und den [Speicherbefund](Documentation/Kingdom_Sets.md) lesen.
 
+## Unteragenten
+
+Für Chats in diesem Projekt ist der Einsatz von Unteragenten ausdrücklich erlaubt. Unteragenten sollen eigenständig eingesetzt werden, wenn dies nach Einschätzung des ausführenden Agenten für die Aufgabe sinnvoll ist; eine zusätzliche Rückfrage ist dafür nicht erforderlich.
+
 ## Pfade und Version
 
 | Zweck | Pfad |
