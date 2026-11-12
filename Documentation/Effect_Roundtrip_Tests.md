@@ -10,6 +10,8 @@ Ein echter lokaler Spielaufbau enthält in dieser Reihenfolge Müllhaufen, Vom T
 
 **Ergänzung vom 12. November:** Der Verlust ist inzwischen im zusätzlichen `setupData`-Startpfad reproduziert und gezielt korrigiert. Siehe [Startpfad, Erweiterungsfilter und Vergleichstests](Effect_Startup_Tests.md). Die folgende Tabelle belegt weiterhin die Parser-Rundreise; die tatsächliche Spielwirkung bleibt getrennt zu bewerten.
 
+**Aktualisierung des Spielwirkungsstands vom 12. November:** Die Produktionsprüfung des korrigierten Schuldenstempel-Textpfads bestätigt mit Triumph bei 0/1/2/3 Kopien 5/3/1/0 Schuldenkosten. Zwei Startsteine sind zulässig; auf demselben Projekt benötigen sie eine passende `start_allow_second_cube`-Freigabe. Ein dritter Stein bleibt wegen eines tatsächlichen nativen Abbruchs gesperrt. Die ursprünglichen Parserziele und deren Prüfergebnis werden dadurch nicht geändert. [Native Korrekturen und Produktionsmessungen](Native_Effect_Fixes.md)
+
 ## Ergebnisse je Effekt
 
 Die beiden Prüfspalten stehen jeweils für Einzelbefehl **und** Dreierfolge. Der Spielwirkungsstand stammt getrennt aus der Anleitung; Mehrfachwirkung bleibt gesondert dokumentiert.
@@ -61,7 +63,7 @@ Die beiden Prüfspalten stehen jeweils für Einzelbefehl **und** Dreierfolge. De
 | `stamp_reactionified` | `(village)` | Bestanden | Bestanden | Zusatztyp bestätigt | Gleicher Zusatztyp |
 | `stamp_shadowified` | `(village)` | Bestanden | Bestanden | Zusatztyp bestätigt | Gleicher Zusatztyp |
 | `stamp_cost_2_less` | `(travelling_fair)` | Bestanden | Bestanden | Ja | Bis 3× |
-| `stamp_cost_2D_less` | `(travelling_fair)` | Bestanden | Bestanden | Startabbruch mit Triumph | Startabbruch mit Triumph |
+| `stamp_cost_2D_less` | `(travelling_fair)` | Bestanden | Bestanden | Ja (Triumph, korrigierter Patch) | Bis 3× (Triumph; Kostenminimum 0) |
 | `stamp_cost_zero` | `(travelling_fair)` | Bestanden | Bestanden | Ja | Gleiche Wirkung |
 | `stamp_bonus_money` | `(travelling_fair)` | Bestanden | Bestanden | Ja | Bis 3× |
 | `stamp_also_silver` | `(travelling_fair)` | Bestanden | Bestanden | Ja | Gleiche Wirkung |
@@ -104,7 +106,7 @@ Die beiden Prüfspalten stehen jeweils für Einzelbefehl **und** Dreierfolge. De
 | `start_trash_curses` | `ohne Ziel` | Bestanden | Bestanden | Ja | Bis 3× |
 | `start_trash_pile` | `(village)` | Bestanden | Bestanden | Ja | Bis 3× |
 | `start_triple_pile` | `(village)` | Bestanden | Bestanden | Ja | Bis 3× |
-| `start_with_cube` | `(pageant)` | Bestanden | Bestanden | Ja | Spielstart bricht bei 2× und 3× ab |
+| `start_with_cube` | `(pageant)` | Bestanden | Bestanden | Ja | Bis 2× insgesamt; gleiches Projekt nur mit passender Freigabe |
 
 ## Reproduktion
 

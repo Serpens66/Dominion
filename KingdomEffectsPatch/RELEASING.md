@@ -69,3 +69,11 @@ Vor Paketbau `test_release_catalog.py` ausführen. Die ID-Mengen beider Anleitun
 ## Native Leer-Prüfung
 
 `clear_kingdom_test.exe <Testkopie> <roundtrip_probe.dll>` prüft Vanilla, normale Nutzung, Online-Diagnose und Messmodus mit temporären Einzelspieler-/Weitergeben-Profilen auf einem unsichtbaren Desktop. Es sendet keine Netzwerknachrichten. Der Bericht `clear-kingdom.tsv` liegt neben der Test-DLL; je Lauf entstehen 27 Fälle, über beide Profile und vier Varianten insgesamt 216. Der Test startet zusätzliche Prozesse zur Kontrolle der gespeicherten privaten Konfiguration. [Befund und Aussagegrenzen](../Documentation/Private_Game_Clear.md)
+
+`clear_kingdom_test.exe <Testkopie> <roundtrip_probe.dll> --editor` prüft zusätzlich 468 direkte Aufrufe des produktiven F8-Übernahmepfads in beiden Profilarten, normalen/Diagnose-Patchmodi und drei Konfigurationen. 32/33 Effekte, Wiederholungen, Reihenfolge, Taifun, Entfernen, unveränderte Entwürfe, ungültige Befehle/Ziele und bekannte Startsperren werden abgedeckt. Der Bericht `editor-apply.tsv` bleibt aus dem Release ausgeschlossen. Sechs Neustarts kontrollieren gespeicherte Karten, Effekte und Privatstatus.
+
+## Gezielt korrigierte native Effekte und Bannhilfe
+
+`native_effect_regression_test.exe <Testkopie> <roundtrip_probe.dll> --production` installiert den vollständigen normalen Patch und prüft neun gültige Engine-Fälle: Triumph ohne sowie mit 1/2/3 Schuldenstempeln, Festzug ohne Freigabe mit 0/1 und mit passender Freigabe mit 0/1/2 Startsteinen. Die nativen deutschen/englischen Anzeigenamen werden abgefragt; bei Schuldenstempeln wird außerdem die tatsächlich durchlaufene Textkorrektur gezählt. `--exploratory` ist ein ausdrücklicher Entwicklermodus für ungefilterte Referenzfälle einschließlich möglicher nativer Abbrüche und gehört nicht zur Release-Abnahme.
+
+`clear_kingdom_test.exe <Testkopie> <roundtrip_probe.dll> --ban-hints` kontrolliert native Texte, Referenzverwaltung, Metadaten, Sprachwechsel und wiederholte Anwendung. Zusätzlich muss der normale Produktionslauf `native ban help: status=0 updated=4` protokollieren. [Befunde und RVAs](../Documentation/Native_Effect_Fixes.md)

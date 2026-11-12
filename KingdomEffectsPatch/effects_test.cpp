@@ -121,12 +121,27 @@ void known_crashes() {
     assert(check("-x stamp_cost_2D_less(triumph)") == Error::debt_stamp);
     assert(check("-x stamp_cost_2d_less(triumph)") == Error::debt_stamp);
     assert(validate_text("-x stamp_cost_2D_less(triumph)", 4095) == Error::none);
+    assert(check("-x start_with_cube(pageant),start_with_cube(pageant),start_allow_second_cube(pageant)")==Error::none);
+    assert(check("-x start_allow_second_cube(pageant),start_with_cube(pageant),start_with_cube(pageant)")==Error::none);
+    assert(check("-x start_with_cube(pageant),start_with_cube(pageant),start_allow_second_cube(road_network)")==Error::repeated_project_cube);
+    assert(check("-x start_with_cube(pageant),start_with_cube(road_network),start_with_cube(cathedral)")==Error::project_cube_capacity);
+    assert(check("-x start_with_cube")==Error::malformed);
+    assert(check("-x start_allow_second_cube()")==Error::malformed);
+    debt_stamp_supported=true;
+    assert(check("-x stamp_cost_2D_less()")==Error::malformed);
+    assert(check("-x stamp_cost_2D_less(triumph)")==Error::none);
+    debt_stamp_supported=false;
     Effects effects{};
     effects[0] = {project_cube, 0xE20, 0xFFFFFFFFu, 0, 0};
     effects[1] = {project_cube, 0xE21, 0xFFFFFFFFu, 0, 0};
     assert(known_failure(effects) == Error::none);
     effects[1][1] = effects[0][1];
     assert(known_failure(effects) == Error::repeated_project_cube);
+    effects[2]={second_project_cube,0xE20,0xFFFFFFFFu,0,0};
+    assert(known_failure(effects)==Error::none);
+    effects[3]={project_cube,0xE21,0xFFFFFFFFu,0,0};
+    assert(known_failure(effects)==Error::project_cube_capacity);
+    effects[2]={};effects[3]={};
     effects[0][0] = debt_stamp;
     assert(known_failure(effects) == Error::debt_stamp);
 }

@@ -115,7 +115,7 @@ Eine **Nicht-Vorrats-Kopie** ist ein zusätzliches Exemplar der Karte, das du vo
 | Zusatztyp Reaktion | `stamp_reactionified(Karten-ID)` | Die Karte wird zusätzlich zur Reaktion. Du darfst sie spielen, wenn du sie außerhalb der Aufräumphase nimmst, entsorgst oder ablegst. *Einmal – Zusatztyp bestätigt · Mehrfach – Gleicher Zusatztyp* | Beim Nehmen, Entsorgen oder Ablegen der gewählten Karte außerhalb der Aufräumphase. | Keine Vorgabe | Basisspiel ausreichend |
 | Zusatztyp Schatten | `stamp_shadowified(Karten-ID)` | Die Karte wird zusätzlich zur Schattenkarte. Du kannst sie aus deinem Nachziehstapel spielen, als wäre sie in deiner Hand. Wenn sie eingemischt wird, kommt sie unter den Nachziehstapel. *Einmal – Zusatztyp bestätigt · Mehrfach – Gleicher Zusatztyp* | Beim Einmischen und beim Ausspielen der gewählten Karte aus dem Nachziehstapel. | Rising Sun | Basisspiel ausreichend |
 | −2 Kosten | `stamp_cost_2_less(Ereignis-ID)` | Das Ereignis kostet ![2 Geld](Spielzeichen/geld-2.png) weniger. *Einmal – Ja · Mehrfach – Bis 3×* | Bei der Kostenermittlung des gewählten Ereignisses. | Keine Vorgabe | Benötigt: ein Ereignis |
-| −2 Schuldenkosten | `stamp_cost_2D_less(Ereignis-ID)` | Das Ereignis kostet 2 Schulden weniger. *Einmal – Startabbruch mit Triumph · Mehrfach – Startabbruch mit Triumph* | Bei der Kostenermittlung des gewählten Ereignisses. In Build 3315 wegen Startabbrüchen gesperrt. | Keine Vorgabe | Benötigt: ein Ereignis mit Schuldenkosten |
+| −2 Schuldenkosten | `stamp_cost_2D_less(Ereignis-ID)` | Das Ereignis kostet 2 Schulden weniger, mindestens 0. *Einmal – Ja (Triumph, korrigierter Patch) · Mehrfach – Bis 3× (Triumph; Kostenminimum 0)* | Bei der Kostenermittlung des gewählten Ereignisses. | Keine Vorgabe | Benötigt: ein Ereignis mit Schuldenkosten |
 | Kostenlos | `stamp_cost_zero(Ereignis-ID)` | Das Ereignis kostet ![0 Geld](Spielzeichen/geld-0.png). *Einmal – Ja · Mehrfach – Gleiche Wirkung* | Bei der Kostenermittlung des gewählten Ereignisses. | Keine Vorgabe | Benötigt: ein Ereignis |
 | Extrageld | `stamp_bonus_money(Ereignis-ID)` | Wenn du das Ereignis kaufst, +![1 Geld](Spielzeichen/geld-1.png). *Einmal – Ja · Mehrfach – Bis 3×* | Beim Kaufen des gewählten Ereignisses. | Keine Vorgabe | Benötigt: ein Ereignis |
 | Silber Dazu | `stamp_also_silver(Ereignis-ID)` | Wenn du das Ereignis kaufst, nimm ein Silber. *Einmal – Ja · Mehrfach – Gleiche Wirkung* | Beim Kaufen des gewählten Ereignisses. | Keine Vorgabe | Benötigt: ein Ereignis |
@@ -141,7 +141,7 @@ Eine **Nicht-Vorrats-Kopie** ist ein zusätzliches Exemplar der Karte, das du vo
 | Taler | `start_5_coffers` | Jeder Spieler startet mit 5 Talern. *Einmal – Ja · Mehrfach – Bis 3×* | Einmal beim Spielaufbau. | Die Gilden oder Renaissance | Basisspiel ausreichend |
 | Zusätzliche Startkarte | `start_add_card(Karten-ID)` | Jeder Spieler startet mit einer Kopie dieser Karte zusätzlich im Startdeck. *Einmal – Ja · Mehrfach – Bis 3×* | Beim Spielaufbau, gewählte Karte ins Startdeck aller Spieler. | Keine Vorgabe | Basisspiel ausreichend |
 | Eine Startkarte von jedem Stapel | `start_add_each_pile` | Jeder Spieler startet mit einer Kopie von jedem Königreichkarten-Stapel zusätzlich im Startdeck. *Einmal – Ja · Mehrfach – Bis 3×* | Beim Spielaufbau, aus jedem Königreichstapel ins Startdeck aller Spieler. | Keine Vorgabe | Basisspiel ausreichend |
-| Zweiter Stein gefällig? | `start_allow_second_cube(Projekt-ID)` | Erlaubt einen zweiten Projektstein auf dem gewählten Projekt und verdoppelt damit dessen Effekt. *Einmal – Offen · Mehrfach – Offen* | Regel für das gewählte Projekt während der Partie. Kombination mit Startsteinen offen. | Renaissance | Benötigt: ein Projekt (Renaissance) |
+| Zweiter Stein gefällig? | `start_allow_second_cube(Projekt-ID)` | Erlaubt einen zweiten Projektstein auf dem gewählten Projekt und verdoppelt damit dessen Effekt. Fügt selbst keinen Startstein hinzu. *Einmal – Teilprüfung: zweiter Startstein auf Festzug bestätigt · Mehrfach – Offen* | Regel für das gewählte Projekt während der Partie. Für zwei gleiche Startsteine die Freigabe mit derselben Projekt-ID angeben; insgesamt höchstens 2 Startsteine. | Renaissance | Benötigt: ein Projekt (Renaissance) |
 | Kosten der Flüche | `start_curse_cost_3` | Flüche kosten ![3 Geld](Spielzeichen/geld-3.png). *Einmal – Ja · Mehrfach – Bis 3×* | Dauerhaft bei der Kostenermittlung von Flüchen. | Keine Vorgabe | Basisspiel ausreichend |
 | Doppeltes Startdeck | `start_double_deck` | Jeder Spieler startet mit doppelt so vielen Exemplaren jeder Karte seines Startdecks. *Einmal – Ja · Mehrfach – Bis 3×* | Einmal beim Spielaufbau. | Keine Vorgabe | Basisspiel ausreichend |
 | Doppeltes Erbstück | `start_double_heirloom(Karten-ID)` | Zwei Exemplare des Erbstücks ersetzen bei jedem Spieler zwei Startkupfer. Gib die zugehörige Königreichkarte an, etwa `start_double_heirloom(secret_cave)` für Geheime Höhle. *Einmal – Ja · Mehrfach – Bis 3×* | Beim Spielaufbau. Die zum Erbstück gehörende Königreichkarte wählen. | Nocturne | Benötigt: eine Königreichkarte mit Erbstück (Nocturne) |
@@ -163,7 +163,7 @@ Eine **Nicht-Vorrats-Kopie** ist ein zusätzliches Exemplar der Karte, das du vo
 | Flüche im Müll | `start_trash_curses` | Erzeugt beim Aufbau 10 Flüche direkt im Müll. *Einmal – Ja · Mehrfach – Bis 3×* | Einmal beim Spielaufbau. | Keine Vorgabe | Basisspiel ausreichend |
 | Stapel im Müll | `start_trash_pile(Karten-ID)` | Erzeugt beim Aufbau einen Stapel der gewählten Karte direkt im Müll. *Einmal – Ja · Mehrfach – Bis 3×* | Beim Spielaufbau. Gewählte Karte direkt im Müll erzeugen. | Keine Vorgabe | Basisspiel ausreichend |
 | Dreifacher Vorratsstapel | `start_triple_pile(Stapel-ID)` | Verdreifacht den Inhalt des gewählten Vorratsstapels. *Einmal – Ja · Mehrfach – Bis 3×* | Beim Spielaufbau am gewählten Vorratsstapel. | Keine Vorgabe | Basisspiel ausreichend |
-| Projektstein | `start_with_cube(Projekt-ID)` | Jeder Spieler startet mit einem Projektstein auf dem gewählten Projekt. Die Kampagne nutzt etwa `start_with_cube(pageant)` für Festzug. *Einmal – Ja · Mehrfach – Spielstart bricht bei 2× und 3× ab* | Beim Spielaufbau am gewählten Projekt. Höchstens ein Startstein pro Projekt im Editor. | Renaissance | Benötigt: ein Projekt (Renaissance) |
+| Projektstein | `start_with_cube(Projekt-ID)` | Jeder Spieler startet mit einem Projektstein auf dem gewählten Projekt. Die Kampagne nutzt etwa `start_with_cube(pageant)` für Festzug. *Einmal – Ja · Mehrfach – Bis 2× insgesamt; gleiches Projekt nur mit passender Freigabe* | Beim Spielaufbau am gewählten Projekt. Insgesamt höchstens 2 Startsteine; zwei auf demselben Projekt benötigen `start_allow_second_cube` mit derselben Projekt-ID. | Renaissance | Benötigt: ein Projekt (Renaissance) |
 
 
 #### Weitere Varianten aus der Kampagnenerzeugung
@@ -213,7 +213,7 @@ Hover über den Text eines Erweiterungsnamens zeigt dessen Symbol und Originalbe
 
 ### Online-Banns über die Kartengalerie
 
-Mit aktivem Patch kannst du in der normalen Kartengalerie mehr als fünf Online-Banns pro Kategorie setzen. Öffne eine Karte mit Rechtsklick und verwende **Verbieten → Online**. Das gilt auch für private Online-Partien. Die gemeinsame native Liste fasst höchstens 700 Einträge. Die Zähler zeigen die aktuelle Anzahl. Der ursprüngliche Hilfetext nennt weiterhin fünf Banns.
+Mit aktivem Patch kannst du in der normalen Kartengalerie mehr als fünf Online-Banns pro Kategorie setzen. Öffne eine Karte mit Rechtsklick und verwende **Verbieten → Online**. Das gilt auch für private Online-Partien. Die gemeinsame native Liste fasst höchstens 700 Einträge. Die Zähler zeigen die aktuelle Anzahl. Der Patch korrigiert auch die deutschen und englischen Online-Bann-Hilfetexte; sie nennen nun die gemeinsame Kapazität von 700 Karten und Querkarten.
 
 Der Nutzer bestätigte drei private Basisspiel-Partien mit einer manuell erweiterten Liste und ausschließlich den zehn freigegebenen Karten. Weitere Online-Modi und die volle Kapazität sind noch offen. Der Release-Starter verwendet das normale Profil; der bisherige Diagnose-Starter verwendet ein eigenes Testprofil. [Testablauf und Befunde](../KingdomEffectsPatch/TEST.md#erweiterte-online-bannliste)
 
@@ -325,7 +325,7 @@ A **non-Supply copy** is an extra copy of the card that you gain from outside th
 | Reactionified | `stamp_reactionified(card-ID)` | This card is also a Reaction. You may play it when you gain, trash, or discard it outside of Clean-up. *Once – Added type verified · Repeated – Same added type* | When gaining, trashing or discarding the chosen card outside Clean-up. | None specified | Base game sufficient |
 | Shadowified | `stamp_shadowified(card-ID)` | This card is also a Shadow. You can play it from your deck as if it were in your hand. When you shuffle it, put it on the bottom of your deck. *Once – Added type verified · Repeated – Same added type* | When shuffling in the chosen card and when playing it from your deck. | Rising Sun | Base game sufficient |
 | -2 Cost | `stamp_cost_2_less(event-ID)` | The Event costs ![2 coins](Spielzeichen/geld-2.png) less. *Once – Yes · Repeated – Up to 3×* | When determining the chosen Event's cost. | None specified | Requires: an Event |
-| -2 Debt Cost | `stamp_cost_2D_less(event-ID)` | The Event costs 2 less Debt. *Once – Start fails with Triumph · Repeated – Start fails with Triumph* | When determining the chosen Event's cost. Blocked in build 3315 due to setup crashes. | None specified | Requires: an Event with Debt cost |
+| -2 Debt Cost | `stamp_cost_2D_less(event-ID)` | The Event costs 2 less Debt, to a minimum of 0. *Once – Yes (Triumph, corrected patch) · Repeated – Up to 3× (Triumph; minimum cost 0)* | When determining the chosen Event's cost. | None specified | Requires: an Event with Debt cost |
 | Free | `stamp_cost_zero(event-ID)` | The Event costs ![0 coins](Spielzeichen/geld-0.png). *Once – Yes · Repeated – Same result* | When determining the chosen Event's cost. | None specified | Requires: an Event |
 | Bonus Money | `stamp_bonus_money(event-ID)` | When you buy this Event, +![1 coin](Spielzeichen/geld-1.png). *Once – Yes · Repeated – Up to 3×* | When buying the chosen Event. | None specified | Requires: an Event |
 | Also Silver | `stamp_also_silver(event-ID)` | When you buy this Event, gain a Silver. *Once – Yes · Repeated – Same result* | When buying the chosen Event. | None specified | Requires: an Event |
@@ -351,7 +351,7 @@ A **non-Supply copy** is an extra copy of the card that you gain from outside th
 | Coffers | `start_5_coffers` | Each player starts with 5 Coffers. *Once – Yes · Repeated – Up to 3×* | Once during setup. | Guilds or Renaissance | Base game sufficient |
 | Extra starting card | `start_add_card(card-ID)` | Each player starts with an extra copy of this card in their starting deck. *Once – Yes · Repeated – Up to 3×* | At setup, chosen card into every player's starting deck. | None specified | Base game sufficient |
 | One starting card from each pile | `start_add_each_pile` | Each player starts with an extra copy of a card from each Kingdom pile in their starting deck. *Once – Yes · Repeated – Up to 3×* | At setup, from every Kingdom pile into every player's starting deck. | None specified | Base game sufficient |
-| Second Cube | `start_allow_second_cube(project-ID)` | Allows a second cube on the chosen Project, doubling its effect. *Once – Untested · Repeated – Untested* | Rule for the chosen Project during play. Combination with starting cubes remains unverified. | Renaissance | Requires: a Project (Renaissance) |
+| Second Cube | `start_allow_second_cube(project-ID)` | Allows a second cube on the chosen Project, doubling its effect. It does not add a starting cube itself. *Once – Partial: second starting cube on Pageant verified · Repeated – Untested* | Rule for the chosen Project during play. Two starting cubes on the same Project require this permission with the matching Project ID; at most 2 starting cubes in total. | Renaissance | Requires: a Project (Renaissance) |
 | Cost of Curses | `start_curse_cost_3` | Curses cost ![3 coins](Spielzeichen/geld-3.png). *Once – Yes · Repeated – Up to 3×* | Whenever Curse costs are determined. | None specified | Base game sufficient |
 | Double starting deck | `start_double_deck` | Each player starts with twice as many copies of every card in their starting deck. *Once – Yes · Repeated – Up to 3×* | Once during setup. | None specified | Base game sufficient |
 | Double Heirloom | `start_double_heirloom(card-ID)` | Two copies of the Heirloom replace two starting Coppers per player. Use the associated Kingdom card ID, as in `start_double_heirloom(secret_cave)` for Secret Cave. *Once – Yes · Repeated – Up to 3×* | At setup. Choose the Kingdom card associated with the Heirloom. | Nocturne | Requires: a Kingdom card with an Heirloom (Nocturne) |
@@ -373,7 +373,7 @@ A **non-Supply copy** is an extra copy of the card that you gain from outside th
 | Curses in the trash | `start_trash_curses` | Creates 10 Curses directly in the trash at setup. *Once – Yes · Repeated – Up to 3×* | Once during setup. | None specified | Base game sufficient |
 | Pile in the trash | `start_trash_pile(card-ID)` | Creates a pile of the chosen card directly in the trash at setup. *Once – Yes · Repeated – Up to 3×* | At setup. Create the chosen card directly in the trash. | None specified | Base game sufficient |
 | Triple Supply pile | `start_triple_pile(pile-ID)` | Triples the number of cards in the chosen Supply pile. *Once – Yes · Repeated – Up to 3×* | At setup, on the chosen Supply pile. | None specified | Base game sufficient |
-| Project cube | `start_with_cube(project-ID)` | Each player starts with a cube on the chosen Project. One campaign example is `start_with_cube(pageant)` for Pageant. *Once – Yes · Repeated – Game start fails at 2× and 3×* | At setup, on the chosen Project. At most one starting cube per Project in the editor. | Renaissance | Requires: a Project (Renaissance) |
+| Project cube | `start_with_cube(project-ID)` | Each player starts with a cube on the chosen Project. One campaign example is `start_with_cube(pageant)` for Pageant. *Once – Yes · Repeated – Up to 2× in total; same Project requires matching permission* | At setup, on the chosen Project. At most 2 starting cubes in total; two on the same Project require `start_allow_second_cube` with the matching Project ID. | Renaissance | Requires: a Project (Renaissance) |
 
 
 #### Other campaign generation variants
@@ -402,3 +402,31 @@ For **Typhoon**, select a card by clicking or keyboard, then choose **Add pile**
 Hover the text of an expansion name, or select it with the keyboard, to see its symbol and original description. **Show rules** opens scrollable original rules from the SetGenerator catalog. Groups start collapsed; hover never expands them. Ordinary multiple selection uses light, clearly visible checkboxes.
 
 Choose **Language: Deutsch / English** in the F8 footer to switch immediately while retaining your draft, targets, sequence, selection and filters. Both German and English names remain searchable. Card faces, rules, status and error messages use the selected language. The separate preference `%LOCALAPPDATA%\DominionKingdomEffectsPatch\editor.ini` persists even when cancelling the effect draft; the game language and profile stay unchanged. Card previews are cached by ID and language within the shared 96 MiB memory budget.
+
+### Weitere korrigierte Fehler: F8, Bannhilfe und Startsteine
+
+Auch beim Übernehmen geänderter F8-Effekte bleibt der private Spielmodus erhalten. 468 direkte native Übernahmefälle und sechs Neustartprüfungen decken lokale, öffentliche und private Konfigurationen ab. Ungültige Entwürfe verändern den bisherigen Zustand nicht und zeigen eine konkrete Meldung.
+
+Der zuvor gesperrte Befehl `stamp_cost_2D_less` ist mit korrigiertem Text-Lookup wieder nutzbar. Seine ID bleibt unverändert. Mit Triumph wurden bei 0/1/2/3 Kopien tatsächlich **5/3/1/0 Schuldenkosten** gemessen. Die frühere Kleinschreibungsvariante ist kein gleichwertiger Ersatz für die originale ID.
+
+**Projektsteine:** Höchstens zwei `start_with_cube`-Einträge sind insgesamt möglich. Sollen beide dasselbe Projekt belegen, wird `start_allow_second_cube` mit derselben Projekt-ID benötigt. Die Reihenfolge dieser Freigabe in der Effektliste ist unerheblich. Ohne passende Freigabe bleibt die doppelte Belegung gesperrt; ein dritter Startstein bleibt ebenfalls gesperrt. Für zwei Steine auf Festzug:
+
+```text
+-x start_allow_second_cube(pageant), start_with_cube(pageant), start_with_cube(pageant)
+```
+
+Diese Kombination wurde mit der tatsächlich installierten Produktions-Patchversion im lokalen Spiel bestätigt. Die Markerprüfung ist kein vollständiger Wirkungstest sämtlicher Projekte. Die deutschen und englischen nativen Bann-Hilfetexte nennen nun die gemeinsame eigene Online-Liste mit bis zu 700 Karten und Querkarten; die Spracheinstellung und das Profil werden dabei nicht geändert. [Technische Befunde und Prüfgrenzen](Native_Effect_Fixes.md)
+
+### Further fixes: F8, ban help and starting cubes
+
+Applying changed F8 effects now preserves private-game status. 468 direct native apply cases and six restart checks cover local, public and private configurations. Invalid drafts retain the previous state and show a specific error.
+
+The previously blocked `stamp_cost_2D_less` command is usable with the corrected caption lookup. Its original ID is unchanged. With Triumph, 0/1/2/3 copies were measured to produce **5/3/1/0 Debt cost**. The older lowercase spelling is not an equivalent replacement for the original ID.
+
+**Project cubes:** At most two `start_with_cube` entries are allowed in total. Two on the same Project require `start_allow_second_cube` with the matching Project ID; its position in the effect list does not matter. Without matching permission, duplicate placement remains blocked, and a third starting cube remains blocked. For two cubes on Pageant:
+
+```text
+-x start_allow_second_cube(pageant), start_with_cube(pageant), start_with_cube(pageant)
+```
+
+This combination was verified in a local game with the installed production patch. Verifying the markers does not confirm every Project's full gameplay effect. The native German and English online-ban help now describes your shared online list of up to 700 cards and landscapes without changing the game language or profile. [Technical evidence and limits](Native_Effect_Fixes.md)

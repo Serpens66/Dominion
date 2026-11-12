@@ -1,4 +1,5 @@
 // Developer-only DLL, loaded in an isolated game process by roundtrip_test.
+#define KINGDOM_EFFECT_TEXT_TEST
 #include "patch.cpp"
 #include "card_picker.hpp"
 #include <fstream>
@@ -32,6 +33,8 @@ const char* target(TargetKind kind, bool second=false) {
 }
 
 #include "clear_probe.hpp"
+#include "editor_apply_probe.hpp"
+#include "translation_probe.hpp"
 
 DWORD run_roundtrip(void* argument) {
     const auto base=reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
@@ -45,6 +48,22 @@ DWORD run_roundtrip(void* argument) {
     if(phase==11) return install_patch(reinterpret_cast<void*>(3));
     if(phase==14) return install_patch(reinterpret_cast<void*>(4));
     if(phase==15) return install_patch(reinterpret_cast<void*>(1));
+    if(phase==30) return run_translation_probe();
+    if(phase==31) return run_ban_hint_checks();
+    if(phase==33) {
+        const auto calls=kingdom::effect_text_fix::debt_caption_calls;
+        const auto* en=kingdom::effect_text_fix::debt_caption_for_test(1);
+        const auto* de=kingdom::effect_text_fix::debt_caption_for_test(2);
+        if(!en || !de || std::strcmp(en,"-2 Debt Cost") || std::strcmp(de,"-2 Schuldenkosten"))return 0xFFFFFFFFu;
+        return calls;
+    }
+    if(phase==32) {
+        kingdom::effect_text_fix::initialize(base);
+        const Site caption{0x19B3D2,"\xE8\x59\x13\x0F\x00",5,kingdom::effect_text_fix::hook_address()};
+        if(std::memcmp(reinterpret_cast<void*>(base+caption.rva),caption.original,caption.length)!=0)return 601;
+        return change_site(reinterpret_cast<std::byte*>(base),caption,true)?0:602;
+    }
+    if(phase>=20) return run_editor_apply_checks(phase);
     if(phase>=10) return run_clear_checks(phase);
     if (phase==1) return install_patch(reinterpret_cast<void*>(2));
     if (phase==3) {

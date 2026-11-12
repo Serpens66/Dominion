@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -26,18 +27,22 @@ static_assert(effects_offset + sizeof(Effects) == setup_size);
 using Setup = std::array<std::byte, setup_size>;
 
 enum class Error {
-    none, capacity, shared_target, malformed, repeated_section, input_length, repeated_project_cube, debt_stamp
+    none, capacity, shared_target, malformed, repeated_section, input_length, repeated_project_cube, debt_stamp, project_cube_capacity
 };
 
 constexpr std::uint32_t double_pile = 0xDB8;
 constexpr std::uint32_t triple_pile = 0xDBA;
 constexpr std::uint32_t project_cube = 0x14B5;
+constexpr std::uint32_t second_project_cube = 0x14B6;
 constexpr std::uint32_t debt_stamp = 0x1423;
+inline std::atomic<bool> debt_stamp_supported{false};
 
 inline const wchar_t* known_failure_message(Error error) {
     switch (error) {
         case Error::repeated_project_cube:
-            return L"Projektstein darf f\u00fcr dasselbe Projekt nur einmal vorkommen. Entferne die Wiederholung.";
+            return L"Zwei Start-Projektsteine auf demselben Projekt benötigen auch „Zweiten Projektstein erlauben“ für dieses Projekt.";
+        case Error::project_cube_capacity:
+            return L"Beim Spielaufbau sind insgesamt höchstens zwei Start-Projektsteine möglich.";
         case Error::debt_stamp:
             return L"Der Stempel \u201e\u22122 Schuldenkosten\u201c kann in diesem Build den Spielstart abbrechen. Entferne ihn aus dem Set.";
         default:
@@ -58,10 +63,13 @@ inline std::size_t count(const Effects& list) {
 inline Error known_failure(const Effects& list) {
     const auto end = list.begin() + count(list);
     for (auto it = list.begin(); it != end; ++it) {
-        if ((*it)[0] == debt_stamp) return Error::debt_stamp;
+        if ((*it)[0] == debt_stamp && !debt_stamp_supported.load(std::memory_order_relaxed)) return Error::debt_stamp;
+        if ((*it)[0] == project_cube && std::count_if(list.begin(),end,[](const Effect& e){return e[0]==project_cube;})>2)
+            return Error::project_cube_capacity;
         if ((*it)[0] == project_cube && std::any_of(list.begin(), it, [&](const Effect& previous) {
             return previous[0] == project_cube && previous[1] == (*it)[1];
-        })) return Error::repeated_project_cube;
+        }) && !std::any_of(list.begin(),end,[&](const Effect& e){return e[0]==second_project_cube && e[1]==(*it)[1];}))
+            return Error::repeated_project_cube;
     }
     return Error::none;
 }
@@ -177,7 +185,9 @@ inline Error validate_text(std::string_view text, std::size_t maximum_length, bo
     unsigned depth = 0;
     unsigned entries = 0;
     std::array<std::string_view, maximum_effects> projects{};
+    std::array<std::string_view, maximum_effects> second_cubes{};
     std::size_t project_count = 0;
+    std::size_t second_count = 0;
     std::size_t start = 0;
     const auto finish_entry = [&](std::size_t end) {
         const auto entry = trimmed(text.substr(start, end - start));
@@ -187,13 +197,13 @@ inline Error validate_text(std::string_view text, std::size_t maximum_length, bo
         const auto name = trimmed(entry.substr(0, opening));
         if (name.empty() || (opening != entry.npos && entry.back() != ')')) return Error::malformed;
         if (guard_known_failures) {
-            if (name == "stamp_cost_2D_less" || name == "stamp_cost_2d_less") return Error::debt_stamp;
+            if ((name == "stamp_cost_2D_less" || name == "stamp_cost_2d_less") && !debt_stamp_supported.load(std::memory_order_relaxed)) return Error::debt_stamp;
             if (name == "start_with_cube" && opening != entry.npos) {
                 const auto target = trimmed(entry.substr(opening + 1, entry.size() - opening - 2));
-                const auto previous = projects.begin() + project_count;
-                if (std::find(projects.begin(), previous, target) != previous) return Error::repeated_project_cube;
                 projects[project_count++] = target;
             }
+            if(name=="start_allow_second_cube" && opening!=entry.npos)
+                second_cubes[second_count++]=trimmed(entry.substr(opening+1,entry.size()-opening-2));
         }
         if (name == "twist_room_for_more") {
             if (seen_room) return Error::shared_target;
@@ -206,7 +216,8 @@ inline Error validate_text(std::string_view text, std::size_t maximum_length, bo
         const bool needs_target = name == "start_double_pile" || name == "start_triple_pile" ||
                                   name == "start_replace_copper" || name == "start_make_split_pile" ||
                                   name == "start_shuffle_pile" || name == "twist_room_for_more" ||
-                                  name == "twist_typhoon";
+                                  name == "twist_typhoon" || name == "start_with_cube" ||
+                                  name == "start_allow_second_cube" || name == "stamp_cost_2D_less";
         if (needs_target && (opening == entry.npos ||
                             trimmed(entry.substr(opening + 1, entry.size() - opening - 2)).empty())) {
             return Error::malformed;
@@ -246,7 +257,15 @@ inline Error validate_text(std::string_view text, std::size_t maximum_length, bo
                 break;
         }
     }
-    return in_extras ? finish_entry(text.size()) : Error::none;
+    const auto error=in_extras ? finish_entry(text.size()) : Error::none;
+    if(error!=Error::none)return error;
+    if(guard_known_failures) {
+        if(project_count>2)return Error::project_cube_capacity;
+        if(project_count==2 && projects[0]==projects[1] &&
+           std::find(second_cubes.begin(),second_cubes.begin()+second_count,projects[0])==second_cubes.begin()+second_count)
+            return Error::repeated_project_cube;
+    }
+    return Error::none;
 }
 
 }

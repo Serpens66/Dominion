@@ -6,6 +6,8 @@
 #include "effects.hpp"
 #include "effect_editor.hpp"
 #include "ui_language.hpp"
+#include "effect_text_fix.hpp"
+#include "ban_hint_fix.hpp"
 
 #include <cstdio>
 #include <vector>
@@ -93,7 +95,8 @@ void log(const char* event, const kingdom::Effects* list = nullptr) {
 
 void reject(kingdom::Error error) {
     if (const auto* known = kingdom::known_failure_message(error)) {
-        log(error == kingdom::Error::repeated_project_cube ? "rejected repeated project cube" : "rejected debt stamp");
+        log(error==kingdom::Error::project_cube_capacity?"rejected project cube capacity":
+            error==kingdom::Error::repeated_project_cube?"rejected repeated project cube":"rejected debt stamp");
         MessageBoxW(GetActiveWindow(), kingdom::ui::tr(known), L"Dominion Kingdom Effects Patch", MB_OK | MB_ICONWARNING);
         return;
     }
@@ -464,6 +467,74 @@ bool validate_native_import(const char* text) {
     return false;
 }
 
+// Shared production apply path, also exercised directly by the isolated native tests.
+bool apply_editor_effects(kingdom::Setup* current,std::byte* config,
+                         const kingdom::EffectCommands& effects,const kingdom::EffectCommands& edited,
+                         std::wstring& apply_error) {
+    const DWORD version=*reinterpret_cast<const DWORD*>(config+0x28);
+    apply_error.clear();
+    if (edited == effects) return true;
+    std::size_t mismatch=0;
+    const auto fail=[&](const wchar_t* stage) {
+        if(edited.empty()) { apply_error=std::wstring(kingdom::ui::tr(L"Leere Effektliste: "))+stage+kingdom::ui::tr(L". Die bisherige Auswahl bleibt erhalten."); return false; }
+        const auto& command=edited[(std::min)(mismatch,edited.size()-1)];
+        apply_error=std::wstring(kingdom::ui::tr(L"Effekt "))+std::to_wstring(mismatch+1)+L" ("+
+            std::wstring(command.begin(),command.end())+L"): "+stage+kingdom::ui::tr(L". Die bisherige Auswahl bleibt erhalten.");
+        log_commands("editor rejected",{command}); return false;
+    };
+    const auto commands = kingdom::effect_command_text(edited);
+    log_commands("editor requested",edited);
+    const auto validation=kingdom::validate_text(commands,4095,true);
+    if(validation!=kingdom::Error::none) {
+        if(const auto* known=kingdom::known_failure_message(validation)) apply_error=kingdom::ui::tr(known);
+        else apply_error=kingdom::ui::tr(L"Diese Effektliste kann das Spiel nicht übernehmen.");
+        return false;
+    }
+    using Parse = void (__fastcall*)(const char*, kingdom::Setup*);
+    const auto parse = reinterpret_cast<Parse>(native_parser);
+    kingdom::Setup parsed{};
+    parse(commands.c_str(), &parsed);
+    const auto parsed_list=kingdom::read_effects(parsed.data());
+    log("editor parsed",&parsed_list);
+    if (!parsed_effects_match(parsed, edited,&mismatch)) return fail(kingdom::ui::tr(L"beim Einlesen nicht vollständig übernommen"));
+
+    auto next = *current;
+    kingdom::replace_effects(next, parsed);
+    const NativeSetupText output(next, version);
+    kingdom::EffectCommands serialized;
+    if (!kingdom::read_effect_commands(output.view(), serialized) ||
+        !kingdom::same_effect_commands(serialized, edited)) {
+        mismatch=0;
+        while(mismatch<(std::min)(serialized.size(),edited.size()) && kingdom::same_effect_commands({serialized[mismatch]},{edited[mismatch]})) ++mismatch;
+        log_commands("editor serialized mismatch",serialized); return fail(kingdom::ui::tr(L"bei der Ausgabe verändert"));
+    }
+    log_commands("editor serialized",serialized);
+    // Resolve an independent custom configuration before touching the real one.
+    // All strings are borrowed read-only; this path never selects a preset.
+    std::array<std::byte,0x38> candidate{};
+    std::memcpy(candidate.data(),config,candidate.size());
+    *reinterpret_cast<DWORD*>(candidate.data()+0x0C)=0;
+    *reinterpret_cast<const char**>(candidate.data()+0x30)=output.view().data();
+    const auto resolved=resolve_config(candidate.data());
+    const auto resolved_list=kingdom::read_effects(resolved.data()); log("editor resolved",&resolved_list);
+    if (!parsed_effects_match(resolved,edited,&mismatch)) return fail(kingdom::ui::tr(L"beim erneuten Laden verändert"));
+    // Detach the edited draft from the selected preset as the native
+    // custom setup path does. The user can then save it as a set.
+    output.write_to(config + 0x30);
+    *reinterpret_cast<DWORD*>(config + 0x0C) = 0;
+    *reinterpret_cast<DWORD*>(config + 0x10) = 0;
+    // Preserve private/public status, just as Clear Kingdom now does.
+    *reinterpret_cast<DWORD*>(config + 0x18) &= ~0x10u;
+    *current = next;
+    using SaveProfiles = void (__fastcall*)(void*);
+    auto* settings = *reinterpret_cast<void* const*>(image_base + 0x8C8DC8);
+    reinterpret_cast<SaveProfiles>(native_save_profiles)(settings);
+    const auto list = kingdom::read_effects(next.data());
+    log("effect editor applied", &list);
+    log_config_snapshot("editor committed configuration",config);
+    return true;
+}
+
 void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
     static bool held = false;
     const bool pressed = (GetAsyncKeyState(VK_F8) & 0x8000) != 0;
@@ -502,61 +573,7 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
         bool automatic = automatic_enabled;
         std::wstring apply_error;
         const auto apply = [&](const kingdom::EffectCommands& edited) {
-            apply_error.clear();
-            if (edited == effects) return true;
-            std::size_t mismatch=0;
-            const auto fail=[&](const wchar_t* stage) {
-                if(edited.empty()) { apply_error=std::wstring(kingdom::ui::tr(L"Leere Effektliste: "))+stage+kingdom::ui::tr(L". Die bisherige Auswahl bleibt erhalten."); return false; }
-                const auto& command=edited[(std::min)(mismatch,edited.size()-1)];
-                apply_error=std::wstring(kingdom::ui::tr(L"Effekt "))+std::to_wstring(mismatch+1)+L" ("+
-                    std::wstring(command.begin(),command.end())+L"): "+stage+kingdom::ui::tr(L". Die bisherige Auswahl bleibt erhalten.");
-                log_commands("editor rejected",{command}); return false;
-            };
-            const auto commands = kingdom::effect_command_text(edited);
-            log_commands("editor requested",edited);
-            if (kingdom::validate_text(commands, 4095, true) != kingdom::Error::none) return false;
-            using Parse = void (__fastcall*)(const char*, kingdom::Setup*);
-            const auto parse = reinterpret_cast<Parse>(native_parser);
-            kingdom::Setup parsed{};
-            parse(commands.c_str(), &parsed);
-            const auto parsed_list=kingdom::read_effects(parsed.data());
-            log("editor parsed",&parsed_list);
-            if (!parsed_effects_match(parsed, edited,&mismatch)) return fail(kingdom::ui::tr(L"beim Einlesen nicht vollständig übernommen"));
-
-            auto next = *current;
-            kingdom::replace_effects(next, parsed);
-            const NativeSetupText output(next, version);
-            kingdom::EffectCommands serialized;
-            if (!kingdom::read_effect_commands(output.view(), serialized) ||
-                !kingdom::same_effect_commands(serialized, edited)) {
-                mismatch=0;
-                while(mismatch<(std::min)(serialized.size(),edited.size()) && kingdom::same_effect_commands({serialized[mismatch]},{edited[mismatch]})) ++mismatch;
-                log_commands("editor serialized mismatch",serialized); return fail(kingdom::ui::tr(L"bei der Ausgabe verändert"));
-            }
-            log_commands("editor serialized",serialized);
-            // Resolve an independent custom configuration before touching the real one.
-            // All strings are borrowed read-only; this path never selects a preset.
-            std::array<std::byte,0x38> candidate{};
-            std::memcpy(candidate.data(),config,candidate.size());
-            *reinterpret_cast<DWORD*>(candidate.data()+0x0C)=0;
-            *reinterpret_cast<const char**>(candidate.data()+0x30)=output.view().data();
-            const auto resolved=resolve_config(candidate.data());
-            const auto resolved_list=kingdom::read_effects(resolved.data()); log("editor resolved",&resolved_list);
-            if (!parsed_effects_match(resolved,edited,&mismatch)) return fail(kingdom::ui::tr(L"beim erneuten Laden verändert"));
-            // Detach the edited draft from the selected preset as the native
-            // custom setup path does. The user can then save it as a set.
-            output.write_to(config + 0x30);
-            *reinterpret_cast<DWORD*>(config + 0x0C) = 0;
-            *reinterpret_cast<DWORD*>(config + 0x10) = 0;
-            *reinterpret_cast<DWORD*>(config + 0x18) &= ~0x30u;
-            *current = next;
-            using SaveProfiles = void (__fastcall*)(void*);
-            auto* settings = *reinterpret_cast<void* const*>(image_base + 0x8C8DC8);
-            reinterpret_cast<SaveProfiles>(native_save_profiles)(settings);
-            const auto list = kingdom::read_effects(next.data());
-            log("effect editor applied", &list);
-            log_config_snapshot("editor committed configuration",config);
-            return true;
+            return apply_editor_effects(current,config,effects,edited,apply_error);
         };
         log(context == kingdom::EditorContext::online ? "effect editor opened: online" : "effect editor opened: local");
         log_commands("editor opened",effects);
@@ -1018,6 +1035,9 @@ constexpr unsigned local_modes = (1u << 2) | (1u << 3);
 constexpr unsigned online_mode = 1u << 4;
 
 const Site sites[] = {
+    // This caption caller used the command ID as an invalid mixed-case translation key.
+    {0x19B3D2, "\xE8\x59\x13\x0F\x00",5,kingdom::effect_text_fix::hook_address(),false,local_modes|online_mode},
+    {0x19B68C, "\xE8\x9F\x10\x0F\x00",5,kingdom::effect_text_fix::hook_address(),false,local_modes|online_mode},
     // Clear Kingdom must retain private-game status. Bit 0x10 keeps its native reset.
     {0x1F70B5, "\x83\x66\x18\xCF", 4, nullptr, false, local_modes | online_mode,
                "\x83\x66\x18\xEF"},
@@ -1133,6 +1153,29 @@ private:
     std::vector<Thread> threads_;
 };
 
+constexpr UINT_PTR ban_hint_timer=0x4B455042;
+unsigned ban_hint_attempts=0;
+void CALLBACK refresh_native_ban_hints(HWND owner,UINT,UINT_PTR timer,DWORD) {
+    KillTimer(owner,timer);
+    const auto result=kingdom::native_ui::apply_ban_hints(owner,reinterpret_cast<std::uintptr_t>(image_base));
+    if(result.status==kingdom::native_ui::BanHintStatus::unavailable && ++ban_hint_attempts<40) {
+        SetTimer(owner,ban_hint_timer,50,refresh_native_ban_hints);return;
+    }
+    char message[100];std::snprintf(message,sizeof message,"native ban help: status=%u updated=%u",
+        static_cast<unsigned>(result.status),result.changed);log(message);
+}
+BOOL CALLBACK find_native_owner(HWND window,LPARAM value) {
+    DWORD pid=0;GetWindowThreadProcessId(window,&pid);
+    if(pid==GetCurrentProcessId() && !GetWindow(window,GW_OWNER)) {
+        *reinterpret_cast<HWND*>(value)=window;return FALSE;
+    }
+    return TRUE;
+}
+void schedule_native_ban_hints() {
+    HWND owner=nullptr;EnumWindows(find_native_owner,reinterpret_cast<LPARAM>(&owner));
+    if(!owner || !SetTimer(owner,ban_hint_timer,50,refresh_native_ban_hints))log("native ban help: scheduling failed");
+}
+
 }
 
 extern "C" DWORD WINAPI install_patch(void* argument) {
@@ -1165,6 +1208,7 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
         return 5;
     }
     const auto image = reinterpret_cast<std::uintptr_t>(base);
+    kingdom::effect_text_fix::initialize(image);
     image_base = base;
     native_parser = image + 0x0DDBB0;
     native_local_normalize = image + 0x0DBEF0;
@@ -1228,6 +1272,8 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
         }
     }
     if (install_error) return install_error;
+    if(!measure_only) kingdom::debt_stamp_supported.store(true,std::memory_order_release);
+    if(!measure_only) schedule_native_ban_hints();
     log(mode == 4 ? "build 3315: patch active, online diagnostics"
                   : mode == 3 ? "build 3315: patch active, automatic local doubling"
                   : measure_only ? "build 3315: measure mode" : "build 3315: patch active");

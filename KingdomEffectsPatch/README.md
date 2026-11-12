@@ -45,7 +45,7 @@ Unter `%LOCALAPPDATA%\DominionKingdomEffectsPatch` liegt `letzter-start.log` mit
 ## Grenzen und Entfernen
 
 - Die Effektwirkung wird in **Lokal spielen** und **Weitergeben** geprüft; nicht alle Effekte und Kombinationen sind abschließend getestet. Der Online-Editor bereitet die Auswahl vor, die Wirkung hängt vom Server ab.
-- Online-Banns können über das vorhandene Spielmenü über fünf Einträge hinaus bearbeitet werden. Die native gemeinsame Kapazität beträgt 700 Einträge. Größere Listen wurden in privaten Partien geprüft; Matchmaking und die volle Kapazität sind offen. Der ursprüngliche Hilfetext nennt weiterhin fünf Banns.
+- Online-Banns können über das vorhandene Spielmenü über fünf Einträge hinaus bearbeitet werden. Die native gemeinsame Kapazität beträgt 700 Einträge. Größere Listen wurden in privaten Partien geprüft; Matchmaking und die volle Kapazität sind offen. Die deutschen und englischen Online-Bann-Hilfetexte nennen nun die gemeinsame Kapazität von 700 Karten und Querkarten.
 - Bei einem Fehler der Patch-Initialisierung das Spiel schließen und den Starter erneut öffnen. Nicht mit einem fehlgeschlagenen Patch weiterspielen.
 - Nach einem Dominion-Update kann der Patch bis zu einer angepassten Version nicht mehr starten.
 
@@ -85,4 +85,8 @@ Unten in F8 schaltet **Sprache: Deutsch / English** das gesamte Menü um, einsch
 
 ## „Leer“ in der Königreich-Auswahl
 
-Der Patch korrigiert den nativen Fehler, durch den **Leer** ein privates Spiel in ein öffentliches Online-Spiel umwandeln konnte. Die Privat-Kennzeichnung bleibt im gemeinsamen Löschpfad erhalten. Karten, Querkarten, Effekte und zugehörige Auswahlvorgaben werden weiterhin wie im Original geleert; ein geladenes Set wird gelöst, aber nicht aus den gespeicherten Sets gelöscht. Der normale Profil-/Speicherablauf bleibt erhalten. Die sichtbare Abnahme des Einladens nach **Leer** steht noch aus.
+Der Patch korrigiert den nativen Fehler, durch den **Leer** ein privates Spiel in ein öffentliches Online-Spiel umwandeln konnte. Die Privat-Kennzeichnung bleibt sowohl im gemeinsamen Löschpfad als auch beim Übernehmen geänderter F8-Effekte erhalten. Karten, Querkarten, Effekte und zugehörige Auswahlvorgaben werden weiterhin wie im Original geleert; ein geladenes Set wird gelöst, aber nicht aus den gespeicherten Sets gelöscht. Der normale Profil-/Speicherablauf bleibt erhalten. Die sichtbare Abnahme des Einladens nach **Leer** steht noch aus.
+
+Der tatsächliche F8-Speicherpfad wurde zusätzlich mit 468 nativen Fällen einschließlich ungültiger Entwürfe und Neustarts geprüft. Validierungsfehler zeigen eine konkrete Meldung und lassen den bisherigen Zustand vollständig erhalten. Die sichtbare Abnahme erfolgt über **Privates Spiel → F8 ändern → Fertig → Leer → Einladen**.
+
+Der Schuldenkosten-Stempel ist nach Korrektur seiner nativen Beschriftung nutzbar; mit Triumph ergeben 0/1/2/3 Kopien 5/3/1/0 Schuldenkosten. Höchstens zwei Start-Projektsteine sind insgesamt zulässig; zwei auf demselben Projekt benötigen eine passende Freigabe für den zweiten Stein. Drei Startsteine bleiben wegen eines nachgewiesenen nativen Abbruchs gesperrt. Die native Online-Bannhilfe ist in Deutsch und Englisch korrigiert. Der bei vielen Effekten überlaufende Kampagnenhinweis wird noch untersucht; er lässt sich schließen oder über **Nicht wieder anzeigen** ausblenden. [Vollständiger Befundstatus](https://github.com/Serpens66/Dominion/blob/main/Documentation/Known_Issues.md)

@@ -41,6 +41,14 @@ Die vorhandenen 356 Parser-/Speicherprüfungen, zwölf lokalen Spielstartfälle 
 
 Die sichtbare Abnahme von Überschrift und Einladen bleibt beim Nutzer: **Privates Spiel → Königreich → Leer**. Die automatisierte Netzwerkprüfung bestätigt die Client-Konfiguration, keinen echten Server-/Einladungsablauf.
 
-## Getrennter weiterer Befund
+## F8-Übernahme ebenfalls korrigiert
 
-Der vorhandene F8-Übernahmepfad in `patch.cpp` enthält ebenfalls eine Rücksetzung mit `~0x30u`. Dieser Pfad gehört nicht zur hier freigegebenen Änderung an **Leer** und bleibt unverändert. Eine mögliche entsprechende Modusänderung beim tatsächlichen Übernehmen eines F8-Entwurfs ist damit nicht durch diesen Fix behoben und benötigt eine eigene Abnahme.
+Nach zusätzlicher Nutzerfreigabe wurde auch die Rücksetzung im F8-Speicherpfad von `~0x30u` auf `~0x10u` geändert. Der produktive Übernahmepfad ist in `apply_editor_effects` zusammengefasst, damit die nativen Tests exakt denselben Code ausführen wie die F8-Bestätigung. Es gibt dafür keine neue native Patchstelle. Karten, Reihenfolge, Ziele, Spielerplätze, Zeitsteuerung und andere Konfigurationen bleiben erhalten; nur die gewählten Effekte und die notwendige Set-Verknüpfung werden bearbeitet.
+
+Die Validierung gibt bei einer Ablehnung jetzt den konkreten bekannten Startschutz beziehungsweise eine lesbare Fehlermeldung zurück, bevor echte Konfigurationsdaten geändert werden. Unbekannte IDs oder Ziele, stille Parserkürzungen, 33 Effekte und die bekannten problematischen Startkombinationen erhalten weder einen teilweisen Commit noch eine Erfolgsmeldung.
+
+`clear_kingdom_test.exe <Testkopie> <roundtrip_probe.dll> --editor` prüft 468 echte F8-Übernahmefälle: zwei Profilarten, Patchmodi 2/3/4, drei Konfigurationskontexte, eigenes Königreich/geladenes Set und je 13 Schritte. Geprüft werden unveränderte Übernahme, Dorf/Markt gemeinsam, Reihenfolge und bewusste Wiederholung, Taifun-Ziele, sämtliche Effekte entfernen, 32/33 Einträge, ungültige IDs/Ziele und abgesicherte Startabbrüche. In sechs zusätzlichen frischen Prozessen werden Privat-Kennzeichnung, Karten und Effekte nach Neustart geprüft. Der Lauf besteht mit **468/468 Fällen**. Der echte Netzwerk-Konfigurationsbauer wird ohne Versand kontrolliert.
+
+Bei geladenen Sets kann der native Auflöser bereits vor dem Öffnen von F8 sein Bit `0x10` zurücksetzen. Die Tests vergleichen daher den tatsächlich geöffneten Zustand unmittelbar vor der Übernahme. Die Privat-Kennzeichnung `0x20` muss bereits bei dieser Auflösung erhalten bleiben und bleibt vom F8-Fix ebenfalls unberührt.
+
+Die sichtbare Abnahme lautet jetzt: **Privates Spiel → F8 → Effekte ändern → Fertig → Leer → Einladen**. Private Online-Effektwirkung wird dadurch weiterhin nicht serverseitig ergänzt. Weitere bekannte Einschränkungen werden getrennt in [Bekannte Probleme](Known_Issues.md) geführt.

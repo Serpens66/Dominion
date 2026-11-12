@@ -50,7 +50,7 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `stamp_bonus_money(Ereignis)` | Beim Kauf erhält der Spieler eine Münze. | Ja | Bis 3× |
 | `stamp_chameleonize(Karte)` | Tauscht die auf der Karte gewährten Münz- und Kartenziehboni gegeneinander. | Offen | Offen |
 | `stamp_cost_2_less(Ereignis)` | Senkt die Münzkosten um zwei. | Ja | Bis 3× |
-| `stamp_cost_2D_less(Ereignis)` | Senkt die Schuldenkosten um zwei. | Startabbruch mit Triumph | Startabbruch mit Triumph |
+| `stamp_cost_2D_less(Ereignis)` | Senkt die Schuldenkosten um zwei, mindestens 0. | Ja (Triumph, korrigierter Patch) | Bis 3× (Triumph; Kostenminimum 0) |
 | `stamp_cost_zero(Ereignis)` | Setzt die Ereigniskosten auf null. | Ja | Gleiche Wirkung |
 | `stamp_discounted(Karte)` | Senkt die Münzkosten um eins. | Ja | Bis 3× |
 | `stamp_double_vp(Landmarke)` | Verdoppelt die von der Landmarke vergebenen Siegpunkte. | Offen | Offen |
@@ -138,7 +138,7 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `start_trash_curses` | Legt beim Aufbau Flüche in den Müll. | Ja | Bis 3× |
 | `start_trash_pile(Karte)` | Legt beim Aufbau einen Stapel der gewählten Karte in den Müll. | Ja | Bis 3× |
 | `start_triple_pile(Stapel)` | Verdreifacht den gewählten Vorratsstapel. | Ja | Bis 3× |
-| `start_with_cube(Projekt)` | Jeder Spieler startet mit einem Marker auf dem gewählten Projekt. | Ja | Spielstart bricht bei 2× und 3× ab |
+| `start_with_cube(Projekt)` | Jeder Spieler startet mit einem Marker auf dem gewählten Projekt. | Ja | Bis 2× insgesamt; gleiches Projekt nur mit passender Freigabe |
 
 Die Community-Liste nennt außerdem `stamp_allow_second_cube`, `stamp_free`, `start_native_village_mat` und `start_multitrait`. Im Namensregister von Build 3315 stehen für die ersten drei Wirkungen `start_allow_second_cube`, `stamp_cost_zero` und `start_native_village`. Für Multitrait gibt es Hinweise auf `landmod_trait*`-Einträge. Eine passende Importform ist offen. [Community-Liste](https://www.reddit.com/r/dominion/comments/1pnmsph/custom_campaign_features_in_your_kingdoms_tgg/)
 
@@ -237,7 +237,7 @@ Die F8-Effekttabelle berechnet alle Zeilenhöhen vor der Anzeige und verwendet e
 
 ### Native Effektmessung ohne Fensterfokus
 
-**Im Spiel gemessen am 10. November 2026, Build 3315, Steam-Build 17683350.** Die geprüfte Arbeitskopie lässt sich mit einem temporären Profil auf einem separaten Windows-Desktop starten. Der Runner legt die lokale Partie über Dominions Startlogik an und misst den ersten Zug aus dem nativen Spielzustand. In lokalen Vergleichspartien mit zwei menschlichen Spielerplätzen wurden 55 Effekte bestätigt. Bei sechs weiteren Effekten sind Teilwirkungen gemessen. Bei den mehrfachen Projektsteinen und der Schuldenreduktion mit Triumph wurde ein Startabbruch beobachtet. Automatische Ereigniskäufe machen auch einige Kauf- und Erhaltensregeln im ersten Zug messbar. Die Tabellen geben den Stand für einfache und mehrfache Wirkung an. [Testergebnisse und Aufruf](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
+**Im Spiel gemessen am 10. November 2026, Build 3315, Steam-Build 17683350.** Die geprüfte Arbeitskopie lässt sich mit einem temporären Profil auf einem separaten Windows-Desktop starten. Der Runner legt die lokale Partie über Dominions Startlogik an und misst den ersten Zug aus dem nativen Spielzustand. In lokalen Vergleichspartien mit zwei menschlichen Spielerplätzen wurden 55 Effekte bestätigt. Bei sechs weiteren Effekten sind Teilwirkungen gemessen. Bei den mehrfachen Projektsteinen und der Schuldenreduktion mit Triumph wurde damals ein Startabbruch beobachtet. **Aktualisierung vom 12. November:** Der Schuldenstempel ist nach Korrektur seines Beschriftungspfads nutzbar (Triumph: 5/3/1/0 Schulden bei 0/1/2/3 Kopien). Zwei Startsteine sind insgesamt zulässig; auf demselben Projekt nur mit passender Freigabe. Drei bleiben wegen eines echten nativen Abbruchs gesperrt. [Aktuelle Produktionsmessungen](Native_Effect_Fixes.md) Automatische Ereigniskäufe machen auch einige Kauf- und Erhaltensregeln im ersten Zug messbar. Die Tabellen geben den Stand für einfache und mehrfache Wirkung an. [Testergebnisse und Aufruf](../KingdomEffectsPatch/TEST.md#automatisierte-lokale-effektprüfung-im-hintergrund)
 
 ## Bannlisten für lokale und private Online-Partien
 
@@ -294,7 +294,7 @@ Der Patch verwendet die vorhandenen Schaltflächen **Verbieten**, **KI / Weiterg
 | `0x208EA3` | `0x2082A3` | `6A 05 6A 05` | `6A 00 6A 00`, eigene Online-Schaltfläche. |
 | `0x465480` | `0x463C80` | `28 25 64 2F 25 64 29 00` | `28 25 64 29 00 00 00 00`, Zählerformat `(%d)`. Die einzige gefundene Referenz ist `0x2075DD`. |
 
-Die vier direkten Aufrufer der nativen Listenbearbeitung `0x208220` wurden abgeglichen. Zwei verwenden die lokalen Grenzargumente 0, zwei die hier ersetzten Online-Grenzargumente 5. `CountBanTypes` bleibt für die getrennten Zähler erhalten. Installation und Rücknahme der drei Byteänderungen verwenden dieselbe Originalbyte-Prüfung, Threadpause und Rücknahme bei Installationsfehlern wie die übrigen Eingriffe. Der ursprüngliche Galerie-Hilfetext nennt weiterhin fünf Online-Banns.
+Die vier direkten Aufrufer der nativen Listenbearbeitung `0x208220` wurden abgeglichen. Zwei verwenden die lokalen Grenzargumente 0, zwei die hier ersetzten Online-Grenzargumente 5. `CountBanTypes` bleibt für die getrennten Zähler erhalten. Installation und Rücknahme der drei Byteänderungen verwenden dieselbe Originalbyte-Prüfung, Threadpause und Rücknahme bei Installationsfehlern wie die übrigen Eingriffe. Die spätere Korrektur aktualisiert beide Online-Bann-Hilfetexte in Deutsch und Englisch auf die gemeinsame Kapazität von 700 Karten und Querkarten. [Native Textkorrekturen](Native_Effect_Fixes.md)
 
 **Automatisiert im nativen Client geprüft.** In einer unsichtbaren Arbeitskopie mit temporärem Offline-Profil akzeptierte die originale Listenbearbeitung mit den gepatchten Grenzargumenten zwölf Karten und sechs Querkarten. Entfernen, erneutes Hinzufügen und Laden aller 18 Einträge nach Prozessneustart funktionierten in beiden geprüften Patchmodi. Der Messmodus behielt seine Fünfergrenze. Die Testaufrufe liefen auf dem Fensterthread und ließen die Netzwerksynchronisierung aus. [Prüfablauf und Grenzen](../KingdomEffectsPatch/TEST.md#erweiterte-online-bannliste)
 

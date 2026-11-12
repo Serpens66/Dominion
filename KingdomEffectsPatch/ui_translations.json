@@ -123,5 +123,7 @@
   "Verwende einen -x-Abschnitt mit kommagetrennten Effekten.": "Use one -x section with comma-separated effects.",
   "Der Kingdom-Text ist zu lang für diesen Import.": "The Kingdom text is too long for this import.",
   "Die zehn Stapel und die vorhandenen Regeln passen nicht in die 32 Effektplätze. Die Partie verwendet die bisherigen Regeln.": "The ten piles and existing rules exceed the 32 effect slots. The game will use the previous rules.",
-  "Die zehn Hauptstapel konnten nicht eindeutig bestimmt werden. Die Partie verwendet die bisherigen Regeln.": "The ten main piles could not be identified unambiguously. The game will use the previous rules."
+  "Die zehn Hauptstapel konnten nicht eindeutig bestimmt werden. Die Partie verwendet die bisherigen Regeln.": "The ten main piles could not be identified unambiguously. The game will use the previous rules.",
+  "Zwei Start-Projektsteine auf demselben Projekt benötigen auch „Zweiten Projektstein erlauben“ für dieses Projekt.": "Two starting cubes on the same Project also require “Allow second project cube” for that Project.",
+  "Beim Spielaufbau sind insgesamt höchstens zwei Start-Projektsteine möglich.": "At most two starting project cubes in total are supported during setup."
 }

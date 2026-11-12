@@ -771,17 +771,19 @@
       "kind": "mechanic",
       "de": "Benötigt: ein Ereignis mit Schuldenkosten",
       "en": "Requires: an Event with Debt cost",
-      "detail_de": "Bekannter Startabbruch bleibt unabhängig von dieser Voraussetzung gesperrt.",
-      "detail_en": "The known setup failure remains blocked independently of this requirement.",
+      "detail_de": "Benötigt ein Ereignis mit Schuldenkosten. Der Patch korrigiert ausschließlich die Textauflösung der originalen Effekt-ID. Triumph wurde mit 0/1/2/3 Kopien und 5/3/1/0 Schuldenkosten in der installierten Produktionsversion bestätigt; Kosten fallen nicht unter 0.",
+      "detail_en": "Requires an Event with Debt cost. The patch corrects only the caption lookup for the original effect ID. Triumph was verified in the installed production version with 0/1/2/3 copies and 5/3/1/0 Debt cost; costs do not fall below 0.",
       "evidence": [
         "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
-        "Documentation/Effect_Roundtrip_Tests.md"
+        "Documentation/Effect_Roundtrip_Tests.md",
+        "Documentation/Native_Effect_Fixes.md"
       ],
       "evidence_detail": {
         "method": "documented native effect text and target contract; functional verification is recorded separately",
         "rule_de": "Das Ereignis kostet 2 Schulden weniger.",
         "rule_en": "The Event costs 2 less Debt.",
-        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion",
+        "additional_test": "Installed production patch mode 2, local game, build 3315; native-effect-rechecks.tsv. See Native_Effect_Fixes.md for exact measured cases and limits."
       }
     },
     "stamp_cost_zero": {
@@ -1128,17 +1130,19 @@
       "kind": "mechanic",
       "de": "Benötigt: ein Projekt (Renaissance)",
       "en": "Requires: a Project (Renaissance)",
-      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
-      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "detail_de": "Das passende Projekt muss verfügbar sein. Erlaubt einen zweiten Stein auf genau diesem Projekt, fügt aber selbst keinen Startstein hinzu. Zwei gleiche start_with_cube-Ziele benötigen diese Freigabe mit derselben Projekt-ID; über die gesamte Effektliste bleiben höchstens 2 Startsteine möglich. Zwei Startsteine auf Festzug sind mit dieser Freigabe im Produktions-Patch bestätigt. Andere Projektwirkungen und Mehrfachfreigaben bleiben getrennt zu prüfen.",
+      "detail_en": "The matching Project must be available. Allows a second cube on that Project, but adds no starting cube itself. Two equal start_with_cube targets need this permission with the same Project ID; the complete effect list still allows at most 2 starting cubes. Two starting cubes on Pageant were verified with this permission in the production patch. Other Project effects and repeated permissions remain separate tests.",
       "evidence": [
         "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
-        "Documentation/Effect_Roundtrip_Tests.md"
+        "Documentation/Effect_Roundtrip_Tests.md",
+        "Documentation/Native_Effect_Fixes.md"
       ],
       "evidence_detail": {
         "method": "documented native effect text and target contract; functional verification is recorded separately",
         "rule_de": "Erlaubt einen zweiten Projektstein auf dem gewählten Projekt und verdoppelt damit dessen Effekt.",
         "rule_en": "Allows a second cube on the chosen Project, doubling its effect.",
-        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion",
+        "additional_test": "Installed production patch mode 2, local game, build 3315; native-effect-rechecks.tsv. See Native_Effect_Fixes.md for exact measured cases and limits."
       }
     },
     "start_curse_cost_3": {
@@ -1502,17 +1506,19 @@
       "kind": "mechanic",
       "de": "Benötigt: ein Projekt (Renaissance)",
       "en": "Requires: a Project (Renaissance)",
-      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
-      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "detail_de": "Das passende Projekt muss verfügbar sein. Jeder Eintrag legt einen Startstein je Spieler auf das Ziel. Höchstens 2 Startsteine sind insgesamt erlaubt. Für zwei auf demselben Projekt muss start_allow_second_cube mit derselben Projekt-ID vorhanden sein; die Reihenfolge ist egal. Ein dritter Startstein wird wegen eines nachgewiesenen nativen Startabbruchs abgefangen.",
+      "detail_en": "The matching Project must be available. Each entry puts one starting cube per player on the target. At most 2 starting cubes are allowed in total. Two on the same Project require start_allow_second_cube with the same Project ID, in any order. A third starting cube is rejected because of a verified native setup failure.",
       "evidence": [
         "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
-        "Documentation/Effect_Roundtrip_Tests.md"
+        "Documentation/Effect_Roundtrip_Tests.md",
+        "Documentation/Native_Effect_Fixes.md"
       ],
       "evidence_detail": {
         "method": "documented native effect text and target contract; functional verification is recorded separately",
         "rule_de": "Jeder Spieler startet mit einem Projektstein auf dem gewählten Projekt. Die Kampagne nutzt etwa start_with_cube(pageant) für Festzug.",
         "rule_en": "Each player starts with a cube on the chosen Project. One campaign example is start_with_cube(pageant) for Pageant.",
-        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion",
+        "additional_test": "Installed production patch mode 2, local game, build 3315; native-effect-rechecks.tsv. See Native_Effect_Fixes.md for exact measured cases and limits."
       }
     }
   },

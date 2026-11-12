@@ -4,19 +4,8 @@
 #undef wmain
 #include <sstream>
 
-DWORD clear_request(const Child& child,const fs::path& dll,DWORD request) {
-    const auto local=LoadLibraryExW(dll.c_str(),nullptr,DONT_RESOLVE_DLL_REFERENCES);
-    require(local!=nullptr,"Cannot inspect probe DLL.");
-    const auto proc=GetProcAddress(local,"RoundtripProbe");require(proc!=nullptr,"Missing probe export.");
-    std::array<DWORD,512> args{};
-    args[0]=reinterpret_cast<DWORD>(GetProcAddress(GetModuleHandleW(L"kernel32.dll"),"LoadLibraryW"));
-    args[1]=reinterpret_cast<DWORD>(proc)-reinterpret_cast<DWORD>(local);FreeLibrary(local);args[2]=request;
-    require((dll.native().size()+1)*2<sizeof(args)-12,"Probe path too long.");
-    std::memcpy(args.data()+3,dll.c_str(),(dll.native().size()+1)*2);
-    constexpr std::array<BYTE,23> code{0x53,0x8B,0x5C,0x24,0x08,0x8D,0x4B,0x0C,0x51,0xFF,0x13,
-        0x03,0x43,0x04,0xFF,0x73,0x08,0xFF,0xD0,0x5B,0xC2,0x04,0};
-    return child.query(code,args,30000);
-}
+#include "probe_request.hpp"
+
 std::vector<std::string> clear_outputs(const fs::path& path) {
     std::ifstream file(path);require(bool(file),"Missing Clear report.");
     std::vector<std::string> rows;std::string line;std::getline(file,line);
@@ -28,7 +17,10 @@ std::vector<std::string> clear_outputs(const fs::path& path) {
 }
 int wmain(int argc,wchar_t** argv) {
     try {
-        require(argc==3,"Usage: clear_kingdom_test <separate Dominion.exe> <roundtrip_probe.dll>");
+        require(argc==3 || (argc==4 && (std::wstring_view(argv[3])==L"--editor" || std::wstring_view(argv[3])==L"--translations" || std::wstring_view(argv[3])==L"--ban-hints")),"Usage: clear_kingdom_test <separate Dominion.exe> <roundtrip_probe.dll> [--editor]");
+        const bool editor=argc==4 && std::wstring_view(argv[3])==L"--editor";
+        const bool hints=argc==4 && std::wstring_view(argv[3])==L"--ban-hints";
+        const bool translations=argc==4 && (std::wstring_view(argv[3])==L"--translations" || hints);
         const auto exe=fs::canonical(argv[1]),dll=fs::canonical(argv[2]);
         Handle working(CreateFileW(exe.c_str(),GENERIC_READ,FILE_SHARE_READ,nullptr,OPEN_EXISTING,0,nullptr));
         Handle original(CreateFileW(L"E:\\ProgrammeE\\Steam\\steamapps\\common\\Dominion\\Dominion.exe",FILE_READ_ATTRIBUTES,
@@ -37,10 +29,11 @@ int wmain(int argc,wchar_t** argv) {
         verify_executable(working.value);
         auto name=L"DominionClear_"+std::to_wstring(GetCurrentProcessId());HiddenDesktop desktop(name);
         const auto root=fs::temp_directory_path()/name;require(fs::create_directory(root),"Scratch exists.");
-        const auto report=dll.parent_path()/L"clear-kingdom.tsv";
+        const auto report=dll.parent_path()/(editor?L"editor-apply.tsv":L"clear-kingdom.tsv");
         for(int hotseat=0;hotseat<2;++hotseat) {
             std::vector<std::string> reference;
-            for(int mode:{0,3,4,1}) {
+            const std::vector<int> modes=translations?std::vector<int>{0}:editor?std::vector<int>{2,3,4}:std::vector<int>{0,3,4,1};
+            for(int mode:modes) {
                 const auto folder=root/(std::to_wstring(hotseat)+L"-"+std::to_wstring(mode));require(fs::create_directory(folder),"Scratch exists.");
                 const Probe fixture{"twist_big_ideas",0,{5,6}};write_profile(folder,fixture,1);
                 const auto profile=folder/L"profiles.xml";
@@ -56,22 +49,29 @@ int wmain(int argc,wchar_t** argv) {
                 {
                     Child child(exe,name);const auto base=child.image_base();redirect_save_folder(child,base,folder);child.resume();
                     const auto client=wait_for_client(child,base,folder);
-                    if(mode) require(clear_request(child,dll,mode==3?11:mode==4?14:15)==0,"Patch installation failed.");
+                    if(mode) require(clear_request(child,dll,mode==2?1:mode==3?11:mode==4?14:15)==0,"Patch installation failed.");
                     start_local_game(child,base,client,folder);
-                    const auto result=clear_request(child,dll,(mode==3 || mode==4)?12:10);
-                    std::printf("%s mode=%d clear_result=%lu\n",hotseat?"Weitergeben":"Singleplayer",mode,result);std::fflush(stdout);
+                    const auto result=clear_request(child,dll,translations?(hints?31:30):editor?20:(mode==3 || mode==4)?12:10);
+                    std::printf("%s mode=%d %s_result=%lu\n",hotseat?"Weitergeben":"Singleplayer",mode,editor?"editor":"clear",result);std::fflush(stdout);
                     require(result==0,"Native Clear checks failed.");
-                    auto rows=clear_outputs(report);
-                    if(!mode)reference=rows;else require(rows==reference,"Patch changed cleared kingdom content.");
-                    fs::copy_file(report,folder/L"clear-kingdom.tsv");
+                    if(translations){std::puts("Translation probe completed.");return 0;}
+                    if(editor){
+                        std::ifstream file(report);require(bool(file),"Missing editor report.");std::string line;std::getline(file,line);unsigned count=0;
+                        while(std::getline(file,line)){require(line.find("\tPASS\t")!=line.npos,"Editor apply case failed.");++count;}
+                        require(count==78,"Incomplete editor report.");
+                    }else{
+                        auto rows=clear_outputs(report);
+                        if(!mode)reference=rows;else require(rows==reference,"Patch changed cleared kingdom content.");
+                    }
+                    fs::copy_file(report,folder/report.filename());
                 }
-                if(mode==3 || mode==4) {
+                if(mode==2 || mode==3 || mode==4) {
                     Child reopened(exe,name);const auto base=reopened.image_base();redirect_save_folder(reopened,base,folder);reopened.resume();
                     const auto client=wait_for_client(reopened,base,folder);start_local_game(reopened,base,client,folder);
-                    require(clear_request(reopened,dll,13)==0,"Private status or cleared selection did not survive restart.");
+                    require(clear_request(reopened,dll,editor?21:13)==0,"Private status or cleared selection did not survive restart.");
                 }
             }
         }
-        std::wprintf(L"PASS: 216 native Clear comparisons, identical kingdom output, private persistence; scratch: %ls\n",root.c_str());return 0;
+        std::wprintf(editor?L"PASS: 468 native F8 apply checks and private persistence; scratch: %ls\n":L"PASS: 216 native Clear comparisons, identical kingdom output, private persistence; scratch: %ls\n",root.c_str());return 0;
     }catch(const std::exception& error){std::fprintf(stderr,"%s\n",error.what());return 1;}
 }
