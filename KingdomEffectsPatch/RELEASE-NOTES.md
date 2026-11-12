@@ -2,6 +2,7 @@
 
 Erste herunterladbare Windows-Version des Dominion Kingdom Effects Patch für **Spielbuild 3315 / Steam-Build 17683350**.
 
+- „Leer“ erhält den privaten Spielmodus; der übrige native Lösch- und Speicherablauf bleibt bestehen.
 - F8-Editor mit 89 Kampagneneffekten, Wirkung, Auslösezeitpunkt, interner ID und dokumentiertem Prüfstand.
 - Vollständige Umschaltung Deutsch/English mit separat gespeicherter Sprachwahl; Kartenbilder und Erweiterungsregeln wechseln mit.
 - Tatsächliche Mechanik- und Zielvoraussetzungen getrennt von nativen Erweiterungsfiltern und Funktionsprüfungen.

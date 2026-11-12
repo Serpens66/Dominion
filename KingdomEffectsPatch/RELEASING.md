@@ -65,3 +65,7 @@ Der Runner verweigert die Original-EXE als Testkopie und prüft deren Build-3315
 Vor Paketbau `test_release_catalog.py` ausführen. Die ID-Mengen beider Anleitungsfassungen, `Effect_Requirements.json` und der nativen Erweiterungsmetadaten müssen alle 89 Effekte enthalten. Die sechs Anleitungs-Spalten werden ebenfalls geprüft.
 
 `editor_release_test.exe` läuft auf einem unsichtbaren Desktop, mit separater Test-INI statt Nutzerpräferenzen. Der Lauf deckt bleibende Textzellen, Umbrüche, Deutsch/English, Taifun-Kapazität und die gemeinsame Sortiersteuerung ab. `resources_test.exe` baut 773 Vorschauen in beiden Sprachen auf und prüft den gemeinsamen Cache sowie die Sprachzuordnung asynchroner Ergebnisse. Die Berichte und Screenshots in `out/staging` sind nicht Bestandteil des Pakets. [Aktueller Prüfstand](../Documentation/F8_Editor_Usability.md)
+
+## Native Leer-Prüfung
+
+`clear_kingdom_test.exe <Testkopie> <roundtrip_probe.dll>` prüft Vanilla, normale Nutzung, Online-Diagnose und Messmodus mit temporären Einzelspieler-/Weitergeben-Profilen auf einem unsichtbaren Desktop. Es sendet keine Netzwerknachrichten. Der Bericht `clear-kingdom.tsv` liegt neben der Test-DLL; je Lauf entstehen 27 Fälle, über beide Profile und vier Varianten insgesamt 216. Der Test startet zusätzliche Prozesse zur Kontrolle der gespeicherten privaten Konfiguration. [Befund und Aussagegrenzen](../Documentation/Private_Game_Clear.md)

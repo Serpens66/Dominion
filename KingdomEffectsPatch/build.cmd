@@ -34,6 +34,7 @@ cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0editor_rel
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT /LD "%~dp0roundtrip_probe.cpp" "%~dp0effect_editor.cpp" "%~dp0card_picker.cpp" "%~dp0dialog_skin.cpp" "%~dp0game_resources.cpp" effect_editor.res /link /OUT:roundtrip_probe.dll user32.lib gdi32.lib comctl32.lib gdiplus.lib || goto fail
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0roundtrip_test.cpp" /link /OUT:roundtrip_test.exe bcrypt.lib user32.lib || goto fail
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0startup_effect_test.cpp" /link /OUT:startup_effect_test.exe bcrypt.lib user32.lib || goto fail
+cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0clear_kingdom_test.cpp" /link /OUT:clear_kingdom_test.exe bcrypt.lib user32.lib || goto fail
 goto done
 :background
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0background_effect_test.cpp" /link /OUT:background_effect_test.exe bcrypt.lib user32.lib || goto fail

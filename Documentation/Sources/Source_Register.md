@@ -127,3 +127,9 @@ Nur der lokale Aufruf `0x0B1E6B` aktiviert den Kontext des neuen Hooks bei `0x0D
 Die 89 Erweiterungsbezüge wurden auf dem initialisierten Spielthread ausgelesen und mit der nativen Gruppentabelle bei RVA `0x380878` abgeglichen. 45 Definitionen besitzen solche Metadaten. Innerhalb einer Anforderungsgruppe gelten Alternativen. Der Befund belegt einen nativen Filter, keine zwingende Voraussetzung jeder einzelnen Spielwirkung. Daten und Testergebnisse: [Effect_Startup_Tests.md](../Effect_Startup_Tests.md).
 
 Der Test für natives Schließen/Neustarten verwendet ausschließlich im isolierten Spiel Dispatcher-Aktion 9, die `0x0B1F60` und anschließend `0x0B1E20` aufruft. Der Produktionspatch fügt dafür keine Hookstelle hinzu.
+
+### „Leer“ und private Online-Konfiguration aus L01
+
+**12. November 2026, Build 3315 / Steam 17683350, Hash wie L01; statisch und isoliert dynamisch geprüft.** Der `btn_clear`-Zweig ruft `0x1F7090` bei `0x1FF7CF` auf. Die Instruktion `83 66 18 CF` bei `0x1F70B5` löscht Konfigurationsbits `0x10/0x20`. `0x22B7BB` prüft den privaten Kontext; `0x22B842` setzt daraufhin `0x20`. Dieses Bit wird unter anderem bei `0x200039` und `0x1FFB08` ausgewertet. Der native Netzwerk-Konfigurationsbauer `0x0B3B80` übernimmt es unverändert. Die weitere Löschung erfolgt über `0x0E42D0`, die Ausgabe und Profilspeicherung über `0x0E4CB0`.
+
+Der Patch ersetzt ausschließlich das Maskenbyte `CF` durch `EF`. 216 native Vergleichsfälle mit temporären Einzelspieler-/Weitergeben-Profilen und unsichtbarem Desktop bestätigen unveränderte Auswahllöschung und erhaltene private Kennzeichnung. Neustart und Netzwerk-Konfiguration wurden ohne Versand geprüft. Die sichtbare Überschrift und der echte Einladungsablauf bleiben Nutzerabnahme. [Vollständiger Befund und getrennter F8-Hinweis](../Private_Game_Clear.md)

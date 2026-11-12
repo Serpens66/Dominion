@@ -1018,6 +1018,9 @@ constexpr unsigned local_modes = (1u << 2) | (1u << 3);
 constexpr unsigned online_mode = 1u << 4;
 
 const Site sites[] = {
+    // Clear Kingdom must retain private-game status. Bit 0x10 keeps its native reset.
+    {0x1F70B5, "\x83\x66\x18\xCF", 4, nullptr, false, local_modes | online_mode,
+               "\x83\x66\x18\xEF"},
     {0x0B1E6B,"\xE8\x80\xA0\x02\x00",5,local_normalize_hook,false,local_modes},
     {0x0DC2CD,"\x8B\x8D\x58\xE6\xFF\xFF\x8B\x09",8,effect_requirements_hook,true,local_modes},
     {0x1F6F17, "\xE8\x94\x6C\xEE\xFF", 5, search_parser_hook},

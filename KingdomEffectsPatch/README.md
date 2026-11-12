@@ -82,3 +82,7 @@ Helle Checkboxen kennzeichnen die gewöhnliche Mehrfachauswahl. Tabellenzellen b
 Unten in F8 schaltet **Sprache: Deutsch / English** das gesamte Menü um, einschließlich Effekttexten, Teststand, Voraussetzungen, Kartenbildern, Erweiterungsregeln und Fehlermeldungen. Entwurf, Ziele, Reihenfolge, Auswahl und Filter bleiben erhalten. Deutsche und englische Namen bleiben unabhängig von der Anzeigesprache suchbar. Die Wahl wird separat in `%LOCALAPPDATA%\DominionKingdomEffectsPatch\editor.ini` gespeichert, auch nach **Abbrechen**. Die Spielsprache und dein Profil werden nicht verändert. Kartenbilder werden nach ID und Sprache innerhalb des gemeinsamen 96-MiB-Limits zwischengespeichert.
 
 **Rotationskoller** braucht passende rotierbare Stapel aus **Verbündete**: Die oberste Gruppe gleicher Karten wird gemeinsam unter den Stapel gelegt. `A A B B C C` wird zu `B B C C A A`. Ein gewöhnlicher Dorf-Stapel verändert sich sichtbar nicht.
+
+## „Leer“ in der Königreich-Auswahl
+
+Der Patch korrigiert den nativen Fehler, durch den **Leer** ein privates Spiel in ein öffentliches Online-Spiel umwandeln konnte. Die Privat-Kennzeichnung bleibt im gemeinsamen Löschpfad erhalten. Karten, Querkarten, Effekte und zugehörige Auswahlvorgaben werden weiterhin wie im Original geleert; ein geladenes Set wird gelöst, aber nicht aus den gespeicherten Sets gelöscht. Der normale Profil-/Speicherablauf bleibt erhalten. Die sichtbare Abnahme des Einladens nach **Leer** steht noch aus.

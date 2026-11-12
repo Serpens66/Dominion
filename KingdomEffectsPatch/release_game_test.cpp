@@ -121,6 +121,10 @@ int wmain(int argc, wchar_t** argv) {
         unsigned char limit = 0xFF;
         require(ReadProcessMemory(process.value, reinterpret_cast<void*>(base + 0x208EA4), &limit, 1, &amount) &&
                 amount == 1 && limit == 0, "Online ban patch is not installed.");
+        constexpr std::array<unsigned char,4> expected_clear{0x83,0x66,0x18,0xEF};
+        std::array<unsigned char,4> installed_clear{};
+        require(ReadProcessMemory(process.value,reinterpret_cast<void*>(base+0x1F70B5),installed_clear.data(),installed_clear.size(),&amount) &&
+                amount==installed_clear.size() && installed_clear==expected_clear,"Clear Kingdom private-mode fix missing.");
         std::wprintf(L"Scratch: %ls\n", scratch.c_str());
         constexpr std::array<unsigned char,5> original_editor{0xE8,0x96,0x4A,0xEE,0xFF};
         std::array<unsigned char,5> editor{};

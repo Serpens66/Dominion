@@ -31,6 +31,8 @@ const char* target(TargetKind kind, bool second=false) {
 }
 }
 
+#include "clear_probe.hpp"
+
 DWORD run_roundtrip(void* argument) {
     const auto base=reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
     native_parser=base+0xDDBB0; native_setup_serializer=base+0xE0FF0;
@@ -40,6 +42,10 @@ DWORD run_roundtrip(void* argument) {
         reinterpret_cast<LPCWSTR>(&run_roundtrip),&self);
     wchar_t path[32768]{}; GetModuleFileNameW(self,path,32768);
     const auto phase=reinterpret_cast<std::uintptr_t>(argument);
+    if(phase==11) return install_patch(reinterpret_cast<void*>(3));
+    if(phase==14) return install_patch(reinterpret_cast<void*>(4));
+    if(phase==15) return install_patch(reinterpret_cast<void*>(1));
+    if(phase>=10) return run_clear_checks(phase);
     if (phase==1) return install_patch(reinterpret_cast<void*>(2));
     if (phase==3) {
         const auto* profile=active_profile(); if(!profile) return 205;
@@ -139,7 +145,8 @@ BOOL CALLBACK find_window(HWND window,LPARAM parameter) {
 }
 }
 extern "C" DWORD WINAPI roundtrip_probe(void* argument) {
-    if (reinterpret_cast<std::uintptr_t>(argument)==1) return run_roundtrip(argument);
+    const auto request=reinterpret_cast<std::uintptr_t>(argument);
+    if (request==1 || request==11 || request==14 || request==15) return run_roundtrip(argument);
     HWND window=nullptr; EnumWindows(find_window,reinterpret_cast<LPARAM>(&window));
     if(!window) return 201;
     completed=CreateEventW(nullptr,TRUE,FALSE,nullptr); if(!completed) return 202;

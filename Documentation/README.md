@@ -16,6 +16,7 @@ Ziel ist die Steam-Version von Dominion von Temple Gates Games. Die erste Unters
 | Kingdom-Syntax, Kampagneneffekte und Modding-Befunde nachschlagen | [Technische Referenz](Modding_Overview.md#kingdom-text-und-kampagneneffekte) |
 | Native Mod für doppelte Königreichstapel untersuchen | [Aufbau, lokale Abgrenzung und Offline-Testplan](Doppelte_Koenigreichstapel_Mod.md) |
 | Verlust beim lokalen Start und Erweiterungsbezug prüfen | [Korrigierter Startpfad und Erweiterungsfilter](Effect_Startup_Tests.md) |
+| Privates Spiel bleibt nach „Leer“ privat | [Löschpfad, Fix und Vergleichstests](Private_Game_Clear.md) |
 | F8-Bedienung, Sprache und tatsächliche Effektvoraussetzungen | [Editoraufbau und Prüfstand](F8_Editor_Usability.md) |
 | Effektübernahme und Speicherung getrennt von Spielwirkung prüfen | [Isolierter Rundreise-Test aller 89 Effekte](Effect_Roundtrip_Tests.md) |
 | Kampagneneffekte mit Freunden spielen | [Befund für Privates Spiel und offener Test mit Weitergeben](Modding_Overview.md#kampagneneffekte-im-privaten-online-spiel) |
