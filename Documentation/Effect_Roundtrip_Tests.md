@@ -20,7 +20,7 @@ Die beiden Prüfspalten stehen jeweils für Einzelbefehl **und** Dreierfolge. De
 | `twist_busy_busy` | `ohne Ziel` | Bestanden | Bestanden | Ja | Bis 3× |
 | `twist_extra_oomph` | `ohne Ziel` | Bestanden | Bestanden | Ja | Bis 3× |
 | `twist_forever_favored` | `ohne Ziel` | Bestanden | Bestanden | Ja | Bis 3× |
-| `twist_garbage_heap` | `ohne Ziel` | Bestanden | Bestanden | Teilprüfung: laut Nutzertest nicht übernommen; Ursache offen | Offen |
+| `twist_garbage_heap` | `ohne Ziel` | Bestanden | Bestanden | Ja (Nutzertest, 1×) | Offen |
 | `twist_penny_party` | `ohne Ziel` | Bestanden | Bestanden | Ja | Bis 3× |
 | `twist_shoppers` | `ohne Ziel` | Bestanden | Bestanden | Ja | Bis 3× |
 | `twist_cramped` | `ohne Ziel` | Bestanden | Bestanden | Ja | Bis 3× |
@@ -34,11 +34,11 @@ Die beiden Prüfspalten stehen jeweils für Einzelbefehl **und** Dreierfolge. De
 | `twist_incoming` | `ohne Ziel` | Bestanden | Bestanden | Ja | Gleiche Wirkung |
 | `twist_rebates` | `ohne Ziel` | Bestanden | Bestanden | Ja | Bis 3× |
 | `twist_beakers` | `ohne Ziel` | Bestanden | Bestanden | Teilprüfung: laut Nutzertest nicht übernommen; Ursache offen | Offen |
-| `twist_delayed_joy` | `ohne Ziel` | Bestanden | Bestanden | Offen | Offen |
-| `twist_pennies_saved` | `ohne Ziel` | Bestanden | Bestanden | Offen | Offen |
-| `twist_real_estate_barons` | `ohne Ziel` | Bestanden | Bestanden | Offen | Offen |
+| `twist_delayed_joy` | `ohne Ziel` | Bestanden | Bestanden | Ja (Nutzertest, 1×) | Offen |
+| `twist_pennies_saved` | `ohne Ziel` | Bestanden | Bestanden | Ja (Nutzertest, 1×) | Offen |
+| `twist_real_estate_barons` | `ohne Ziel` | Bestanden | Bestanden | Ja (Nutzertest, 1×) | Offen |
 | `twist_sale` | `ohne Ziel` | Bestanden | Bestanden | Ja | Bis 3× |
-| `twist_head_start` | `ohne Ziel` | Bestanden | Bestanden | Offen | Offen |
+| `twist_head_start` | `ohne Ziel` | Bestanden | Bestanden | Ja (Nutzertest, 1×) | Offen |
 | `twist_mirror_loot` | `ohne Ziel` | Bestanden | Bestanden | Ja | Gleiche Wirkung |
 | `twist_room_for_more` | `(village)` | Bestanden | Bestanden | Ja | Einmal im F8-Editor |
 | `twist_turn_turn_turn` | `ohne Ziel` | Bestanden | Bestanden | Offen | Offen |
@@ -109,3 +109,7 @@ Die beiden Prüfspalten stehen jeweils für Einzelbefehl **und** Dreierfolge. De
 ## Reproduktion
 
 Die Entwicklungswerkzeuge `roundtrip_test.exe` und `roundtrip_probe.dll` entstehen mit `KingdomEffectsPatch/build.cmd staging`. Aufruf siehe `KingdomEffectsPatch/RELEASING.md`. Der Rohbericht `effect-roundtrip.tsv` bleibt unter `out/staging`; der Download enthält keine Testprogramme, Profile oder Rohprotokolle. Die Release-Nutzung startet weiterhin die Originalinstallation mit dem normalen Profil.
+
+## Nutzerbestätigung vom 12. November 2026
+
+Der Nutzer bestätigt die einfache Spielwirkung der im jüngsten Log enthaltenen Effekte: `twist_garbage_heap`, `twist_from_the_throne`, `twist_landfill`, `twist_so_much_stuff`, `twist_delayed_joy`, `twist_pennies_saved`, `twist_real_estate_barons` und `twist_head_start`. Diese Bestätigung stammt vom Nutzer; das Log allein belegt nur ihre Übernahme. Mehrfachwirkung bleibt offen. `twist_beakers` und `twist_turn_turn_turn` sind in diesem Log nicht enthalten und erhalten durch diese Rückmeldung keinen neuen Wirkungsnachweis.

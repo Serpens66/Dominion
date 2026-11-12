@@ -79,11 +79,11 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 
 | Registrierte Schreibweise | Ziel und Wirkung | Einmal | Mehrfach |
 | --- | --- | --- | --- |
-| `twist_beakers` | Nicht ausgegebene Tränke bleiben für spätere Züge erhalten. | Laut Nutzertest nicht übernommen; Ursache offen | Offen |
+| `twist_beakers` | Nicht ausgegebene Tränke bleiben für spätere Züge erhalten. | Lokale Übernahme korrigiert; Spielwirkung offen | Offen |
 | `twist_big_ideas` | Zu Zugbeginn eine Karte mehr ziehen. | Ja | Bis 3× |
 | `twist_busy_busy` | Zu Zugbeginn eine zusätzliche Aktion. | Ja | Bis 3× |
 | `twist_cramped` | Die reguläre Handgröße beträgt vier Karten. | Ja | Bis 3× |
-| `twist_delayed_joy` | Gaben können bis zum nächsten Zug aufbewahrt werden. | Offen | Offen |
+| `twist_delayed_joy` | Gaben können bis zum nächsten Zug aufbewahrt werden. | Ja (Nutzertest, 1×) | Offen |
 | `twist_double_up` | Die erste erhaltene Aktions- oder Geldkarte des Zuges gibt eine zusätzliche Kopie von außerhalb des Vorrats. | Ja | Bis 3× |
 | `twist_extra_oomph` | Zu Zugbeginn eine zusätzliche Münze. | Ja | Bis 3× |
 | `twist_fast_track` | Erhaltene Dauer- oder Reservekarten werden beiseitegelegt und zu Beginn des nächsten Aufräumens ausgespielt. | Beiseitelegen bestätigt | Bei 2× und 3× auf der Ablage |
@@ -91,14 +91,14 @@ Die Spalten **Einmal** und **Mehrfach** beziehen sich auf gemessene lokale Parti
 | `twist_favored_wealthy` | Beim Erhalten einer Geldkarte gibt es einen Gefallen. | Ja | Bis 3× |
 | `twist_forever_favored` | Zu Zugbeginn einen Gefallen erhalten. | Ja | Bis 3× |
 | `twist_from_the_throne` | Die erste Aktion des Zuges wird zweimal ausgespielt. | Ja (Nutzertest, 1×) | Offen |
-| `twist_garbage_heap` | Zu Zugbeginn darf eine Handkarte entsorgt werden. | Laut Nutzertest nicht übernommen; Ursache offen | Offen |
-| `twist_head_start` | In der Kampagne erhält der Mensch zwei frühe Extrazüge und die KI zehn Siegpunktmarker. | Offen | Offen |
+| `twist_garbage_heap` | Zu Zugbeginn darf eine Handkarte entsorgt werden. | Ja (Nutzertest, 1×) | Offen |
+| `twist_head_start` | In der Kampagne erhält der Mensch zwei frühe Extrazüge und die KI zehn Siegpunktmarker. | Ja (Nutzertest, 1×) | Offen |
 | `twist_incoming` | Erhaltene Aktions- und Geldkarten kommen auf den Nachziehstapel. | Ja | Gleiche Wirkung |
 | `twist_landfill` | Beim Entsorgen einer eigenen Karte wird eine Karte gezogen. | Ja (Nutzertest, 1×) | Offen |
 | `twist_mirror_loot` | Alle Karten des Loot-Stapels sind gleich. | Ja | Gleiche Wirkung |
-| `twist_pennies_saved` | Übrige Münzen werden am Ende der Kaufphase in Taler umgewandelt. | Offen | Offen |
+| `twist_pennies_saved` | Übrige Münzen werden am Ende der Kaufphase in Taler umgewandelt. | Ja (Nutzertest, 1×) | Offen |
 | `twist_penny_party` | Zu Zugbeginn ein Kupfer erhalten. | Ja | Bis 3× |
-| `twist_real_estate_barons` | Siegpunktmarker können wie Taler ausgegeben werden. | Offen | Offen |
+| `twist_real_estate_barons` | Siegpunktmarker können wie Taler ausgegeben werden. | Ja (Nutzertest, 1×) | Offen |
 | `twist_rebates` | Beim Erhalten einer Karte gibt es eine Münze. | Ja | Bis 3× |
 | `twist_room_for_more(Königreichstapel)` | Fügt dem Vorrat einen weiteren Königreichstapel hinzu. | Ja | Einmal im F8-Editor |
 | `twist_sale` | Karten kosten eine Münze weniger. | Ja | Bis 3× |

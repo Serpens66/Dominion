@@ -37,7 +37,7 @@ Alle Tests laufen in getrennten Spielprozessen mit temporären Profilen auf eine
 
 Die native Dispatcher-Aktion 9 schließt die lokale Partie (`0x0B1F60`) und startet erneut (`0x0B1E20`). Nach diesem Übergang enthält die Achterfolge weiterhin alle acht IDs in richtiger Reihenfolge; der von F8 verwendete Konfigurationsauflöser liest acht Einträge. Die sichtbare Navigation über das Spielmenü bleibt Teil der Nutzerabnahme.
 
-Die bisherigen 356 Parser-/Ausgabe-/Konfigurationsprüfungen bleiben zusätzlich bestehen. **Übernahme ist kein vollständiger Spielwirkungstest.** Das tatsächliche Ausgeben von Siegpunktmarkern für Großeigentümer, die zusätzlichen Züge von Vorsprung sowie Rotationskoller mit rotierbaren Stapeln und die Mehrfachwirkung bleiben offen. Bei Rotationskoller benötigt der gezielte Wirkungstest tatsächlich einen passenden rotierbaren Stapel, unabhängig davon, dass der Effekt nun erhalten bleibt.
+Die bisherigen 356 Parser-/Ausgabe-/Konfigurationsprüfungen bleiben zusätzlich bestehen. **Übernahme ist kein vollständiger Spielwirkungstest.** Zum damaligen automatisierten Prüfstand blieben das tatsächliche Ausgeben von Siegpunktmarkern, zusätzliche Züge und Rotation offen. Die spätere Nutzerbestätigung unten ergänzt die einfache Wirkung von Großeigentümer und Vorsprung. Rotationskoller und die Mehrfachwirkung bleiben offen. Bei Rotationskoller benötigt der gezielte Wirkungstest tatsächlich einen passenden rotierbaren Stapel, unabhängig davon, dass der Effekt nun erhalten bleibt.
 
 ## Erweiterungsangaben
 
@@ -65,3 +65,7 @@ $env:SteamGameId = '1131620'
 ```
 
 `kingdomData` prüft den bisherigen Weg; `0` statt `1` startet die Vergleichsmessung ohne Patch. Ein optionaler letzter Parameter wählt Fall 0 bis 11. Die Testdateien, Profile und Rohprotokolle sind nicht im Release enthalten.
+
+## Nutzerbestätigung vom 12. November 2026
+
+Der Nutzer bestätigt die einfache Spielwirkung der im jüngsten Log enthaltenen Effekte: `twist_garbage_heap`, `twist_from_the_throne`, `twist_landfill`, `twist_so_much_stuff`, `twist_delayed_joy`, `twist_pennies_saved`, `twist_real_estate_barons` und `twist_head_start`. Diese Bestätigung stammt vom Nutzer; das Log allein belegt nur ihre Übernahme. Mehrfachwirkung bleibt offen. `twist_beakers` und `twist_turn_turn_turn` sind in diesem Log nicht enthalten und erhalten durch diese Rückmeldung keinen neuen Wirkungsnachweis.
