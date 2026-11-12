@@ -1,30 +1,35 @@
-# v0.1.0 – Vorabversion
+# v0.1.0
 
-Erste herunterladbare Windows-Version des Dominion Kingdom Effects Patch für **Spielbuild 3315 / Steam-Build 17683350**.
+## English
 
-- Auch die F8-Übernahme erhält den privaten Spielmodus; ungültige Entwürfe melden konkrete Fehler und bleiben ohne Teilübernahme.
-- „Leer“ erhält den privaten Spielmodus; der übrige native Lösch- und Speicherablauf bleibt bestehen. Privates Spiel → Leer wurde am 13. November vom Nutzer bestätigt; die kombinierte F8-/Einladungsabnahme bleibt offen.
-- F8-Suche mit wiederverwendeten Textfeldern, vorbereiteten Suchtexten und zwischengespeicherten Zeilenhöhen; keine verzögerte Eingabe und kein nachträglich wachsender Scrollbereich.
-- F8-Editor mit 89 Kampagneneffekten, Wirkung, Auslösezeitpunkt, interner ID und dokumentiertem Prüfstand.
-- Vollständige Umschaltung Deutsch/English mit separat gespeicherter Sprachwahl; Kartenbilder und Erweiterungsregeln wechseln mit.
-- Tatsächliche Mechanik- und Zielvoraussetzungen getrennt von nativen Erweiterungsfiltern und Funktionsprüfungen.
-- Taifun mit „Stapel hinzufügen“, Doppelklick/Leertaste und nummerierten Zielen. Taifun und aktive Effekte per Drag-and-drop oder Alt+Pfeiltasten sortierbar, Entf zum Entfernen.
-- Helle Checkboxen, Erweiterungsvorschau mit Originalbeschreibung und Regeln direkt im gemeinsamen scrollbaren Textbereich sowie von Anfang an markierbare Tabellenzellen ohne Formatwechsel beim Anklicken.
-- Taifun bei einfacher Aktivierung im Nutzertest bestätigt; Mehrfachwirkung bleibt offen.
-- Effektliste mit von Anfang an vollständigem pixelbasiertem Scrollbereich; zusätzlich 13 Kategorien nach „Wann/wie“, kombinierbar mit der Suche. Mehrere Auslöser pro Effekt bleiben berücksichtigt.
-- Markierbarer, kopierbarer Tabellentext sowie Rechtsklick-Aktionen für eine Effektzeile oder alle gefilterten Effekte. Kopierte Namen und IDs enthalten keine unsichtbaren Layoutzeichen.
-- F8 auch bei der Königreich-Auswahl für Online-Spiele und Privates Spiel. Getrennte Konfigurationen, sichtbarer Hinweis auf die Serverabhängigkeit und deaktivierte lokale Zufallsstapel-Automatik im Online-Editor. Die tatsächliche Online-Wirkung ist weiterhin nicht nachgewiesen.
-- Stabile Kartenvorschau mit dauerhaft sichtbarem Text über dem Bild, gepufferter Bildausgabe und zusammengefassten identischen Ladeanfragen.
-- Strengere Effektprüfung vor Übernahme und erweiterte Diagnose vom F8-Entwurf bis zum lokalen Spielaufbau; Bericht für alle 89 Effekte. Der im lokalen setupData-Startpfad nachgewiesene Effektverlust durch den nativen Erweiterungsfilter ist korrigiert.
-- Höhere Kartenauswahl mit großer Vorschau, anfangs geschlossenen Erweiterungen und Hover ausschließlich über Kartennamen.
-- Erweiterungsbezug aus dem Spielcode für alle 89 Effekte, sichtbar und suchbar in F8; 45 Effekte besitzen eine native Vorgabe. Diese ist vom Nachweis einer tatsächlichen Spielvoraussetzung getrennt.
-- Karten- und Menügrafiken direkt aus der vorhandenen Dominion.xpack; keine mitgelieferten Spielbilder, keine vorherige Extraktion und kein Grafik-Cache auf der Festplatte. Asynchrone Vorschau mit gemeinsamem 96-MiB-Speicher-Cache.
-- Korrekturen für die Kombination, Wiederholung und Speicherung von Effekten in Lokal spielen und Weitergeben, bis zur nativen Grenze von 32 Einträgen.
-- Erweiterte Online-Bannlisten über das vorhandene Spielmenü; private Partien mit größeren Listen wurden beobachtet. Die deutsche und englische native Hilfe nennt nun die gemeinsame Grenze von 700 Karten und Querkarten.
-- Schuldenkosten-Stempel mit korrigierter nativer Beschriftung; Triumph mit 0/1/2/3 Kopien und 5/3/1/0 Schuldenkosten im Produktions-Patch geprüft.
-- Gültige doppelte Start-Projektsteine freigegeben: höchstens zwei insgesamt, bei gleichem Projekt nur mit passender Freigabe für den zweiten Stein. Dritter Startstein bleibt abgesichert.
-- Doppelklick-Starter mit fertigen Dateien, Steam-Pfaderkennung und direktem Start der Steam-Installation mit dem normalen Spielprofil. Keine Spielkopie, kein Testprofil. Höchstens drei Profilsicherungen.
+First public release for **Dominion on Windows/Steam, game build 3315**.
 
-**Bekannte Grenzen:** Ungetestete und teilweise geprüfte Effekte sind entsprechend markiert und auswählbar. Bekannte Startabbrüche bleiben abgesichert. Kampagneneffekte funktionieren nicht in privaten Online-Partien. Der native Kampagnenhinweis kann bei vielen Effekten überlaufen und lässt sich ausblenden. Matchmaking und die volle Kapazität von 700 Banns sind ungeprüft. Vereinzelt fehlt eine Kartenillustration. Die sichtbare Prüfung bei 125 % und 150 % Windows-Skalierung steht noch aus.
+- Customize local and pass-and-play Kingdoms with **89 selectable campaign effects**, combining up to **32 entries**.
+- Use **F8** to search and filter effects, read their prerequisites and test status, choose multiple card targets, and add intentional repeats. For example, double Village and Market together to start with 20 cards in each pile.
+- Switch the editor between **Deutsch / English** using **Language:**. Browse card previews and scrollable expansion rules.
+- Set more than five online bans using the game's existing collection, up to **700 cards and landscapes combined** in your online list.
+- Keep private games private when choosing **Clear**.
+- Double-click launcher, normal Steam installation and profile, automatic rotation of three profile backups. No Python, Visual Studio, separate game copy or test profile required.
 
-Installation und Bedienung stehen in der beiliegenden README.md. Das ZIP enthält keine Spielgrafiken, keine Dominion-EXE, kein Xpack und keine Profildaten. Dominion muss separat über Steam installiert sein.
+**Install:** Extract the entire ZIP, close Dominion and double-click **Dominion-mit-Mod-starten.cmd**. Wait for **Bereit**, then press **F8** in Kingdom selection. See README.md for a step-by-step example.
+
+**Limits:** Campaign effects currently work in local play and pass-and-play; the online editor cannot add server support. Automatic doubling of random piles is local-only. Some effects and repeat combinations remain untested. Larger ban lists have been tested in private games, but matchmaking and the full capacity remain open. The campaign-features popup can overflow; close it or hide it with **Don't show again**. DLC ownership is unchanged.
+
+To play without the mod, restart Dominion normally through Steam.
+
+## Deutsch
+
+Erstes öffentliches Release für **Dominion unter Windows/Steam, Spielbuild 3315**.
+
+- Königreiche in **Lokal spielen und Weitergeben** mit **89 auswählbaren Kampagneneffekten** gestalten; bis zu **32 Einträge** kombinieren.
+- In **F8** Effekte suchen und filtern, Voraussetzungen und Teststand lesen, mehrere Zielkarten wählen und Effekte bewusst wiederholen. Beispielsweise Dorf und Markt gemeinsam auf jeweils 20 Karten verdoppeln.
+- Mit **Language:** zwischen **Deutsch / English** umschalten. Kartenvorschauen und scrollbare Erweiterungsregeln direkt ansehen.
+- Mehr als fünf Online-Banns über die vorhandene Sammlung setzen: bis zu **700 Karten und Querkarten zusammen** in der eigenen Online-Liste.
+- **Privates Spiel** bleibt beim Anklicken von **Leer** privat.
+- Doppelklick-Starter mit normaler Steam-Installation und normalem Profil sowie bis zu drei automatischen Profilsicherungen. Kein Python, Visual Studio, keine Spielkopie und kein Testprofil erforderlich.
+
+**Installation:** ZIP vollständig entpacken, Dominion schließen und **Dominion-mit-Mod-starten.cmd** doppelklicken. Auf **Bereit** warten und in der Königreich-Auswahl **F8** drücken. Ein konkretes Beispiel steht in README.md.
+
+**Grenzen:** Kampagneneffekte funktionieren aktuell lokal und in Weitergeben; der Online-Editor ergänzt keine Serverunterstützung. Das automatische Verdoppeln zufälliger Stapel bleibt lokal. Einige Effekte und Wiederholungen sind noch ungetestet. Größere Bannlisten wurden privat geprüft, Matchmaking und volle Kapazität sind offen. Der Hinweis **Kampagnen-Features** kann überlaufen; schließen oder **Nicht wieder anzeigen** wählen. DLC-Besitz bleibt unverändert.
+
+Für eine Partie ohne Mod Dominion normal über Steam neu starten.

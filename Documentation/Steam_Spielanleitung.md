@@ -209,7 +209,7 @@ Für **Taifun** eine Karte anklicken oder per Tastatur wählen und **Stapel hinz
 
 Hover über den Text eines Erweiterungsnamens zeigt dessen Symbol sowie Originalbeschreibung und Regeln aus demselben lokalen Katalog wie beim SetGenerator. Beschreibung und Regeln stehen mit einer Leerzeile getrennt direkt im scrollbaren Textbereich; ein zusätzlicher Button ist nicht erforderlich. Die Erweiterung lässt sich auch per Tastatur ansteuern. Alle Gruppen sind anfangs geschlossen; Hover öffnet sie nicht. Bei gewöhnlicher Mehrfachauswahl kennzeichnen helle Checkboxen die gewählten Karten.
 
-**Sprache: Deutsch / English** in der Fußzeile schaltet sofort um. Entwurf, Ziele, Reihenfolge, Auswahl und Filter bleiben erhalten; deutsche und englische Namen bleiben unabhängig von der Sprache suchbar. Kartenbilder und Erweiterungsregeln wechseln ebenfalls. Die Sprache wird getrennt unter `%LOCALAPPDATA%\DominionKingdomEffectsPatch\editor.ini` gespeichert und bleibt auch nach **Abbrechen** erhalten. Spielsprache und Profil bleiben unverändert.
+**Language: Deutsch / English** in der Fußzeile schaltet sofort um. Entwurf, Ziele, Reihenfolge, Auswahl und Filter bleiben erhalten; deutsche und englische Namen bleiben unabhängig von der Sprache suchbar. Kartenbilder und Erweiterungsregeln wechseln ebenfalls. Die Sprache wird getrennt unter `%LOCALAPPDATA%\DominionKingdomEffectsPatch\editor.ini` gespeichert und bleibt auch nach **Abbrechen** erhalten. Spielsprache und Profil bleiben unverändert.
 
 ### Online-Banns über die Kartengalerie
 
