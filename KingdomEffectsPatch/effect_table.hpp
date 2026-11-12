@@ -1,3 +1,4 @@
+#include "ui_language.hpp"
 #pragma once
 #include <windows.h>
 #include <windowsx.h>
@@ -18,6 +19,7 @@ constexpr UINT effect_table_layout = WM_APP + 83;
 constexpr UINT effect_table_cells = WM_APP + 84;
 constexpr UINT effect_table_padding = WM_APP + 85;
 constexpr UINT effect_table_close_text = WM_APP + 86;
+constexpr UINT effect_table_select_cell = WM_APP + 87;
 namespace effect_table_detail {
 inline std::wstring plain_copy(std::wstring text) {
     text.erase(std::remove(text.begin(),text.end(),L'\u200B'),text.end()); return text;
@@ -47,6 +49,7 @@ inline std::wstring selected_text(HWND editor) {
 }
 inline LRESULT CALLBACK text_proc(HWND editor,UINT message,WPARAM wparam,LPARAM lparam,UINT_PTR id,DWORD_PTR data) {
     const auto table=reinterpret_cast<HWND>(data);
+    if(message==WM_GETDLGCODE && wparam==VK_ESCAPE) return DefSubclassProc(editor,message,wparam,lparam)|DLGC_WANTMESSAGE;
     // The key handler already copies sanitized text; do not let EDIT repeat
     // Ctrl+A/C through WM_CHAR using its unsanitized default clipboard path.
     if (message==WM_CHAR && (wparam==1 || wparam==3)) return 0;
@@ -56,7 +59,7 @@ inline LRESULT CALLBACK text_proc(HWND editor,UINT message,WPARAM wparam,LPARAM 
     if (message==WM_KEYDOWN && wparam=='A' && (GetKeyState(VK_CONTROL)&0x8000)) { SendMessageW(editor,EM_SETSEL,0,-1); return 0; }
     if (message==WM_KEYDOWN && wparam==VK_ESCAPE) { SendMessageW(table,effect_table_close_text,reinterpret_cast<WPARAM>(editor),0); return 0; }
     if (message==WM_MOUSEWHEEL || message==WM_CONTEXTMENU) return SendMessageW(table,message,message==WM_CONTEXTMENU?reinterpret_cast<WPARAM>(editor):wparam,lparam);
-    if (message==WM_KILLFOCUS) PostMessageW(table,effect_table_close_text,reinterpret_cast<WPARAM>(editor),0);
+    if(message==WM_LBUTTONDOWN || message==WM_RBUTTONDOWN || message==WM_SETFOCUS) SendMessageW(table,effect_table_select_cell,reinterpret_cast<WPARAM>(editor),0);
     if (message==WM_NCDESTROY) RemoveWindowSubclass(editor,text_proc,id);
     return DefSubclassProc(editor,message,wparam,lparam);
 }
@@ -69,45 +72,51 @@ struct Model {
     bool redraw=true;
     bool all_marked=false;
     HWND editor=nullptr;
+    std::vector<std::array<HWND,3>> controls;
     int padding_x=7,padding_y=5;
     std::wstring search;
     ULONGLONG typed_at=0;
-    ~Model() { close_editor(); }
-    void close_editor() {
-        const auto old=editor; editor=nullptr;
-        if (old && IsWindow(old)) { if (GetFocus()==old) SetFocus(GetParent(old)); DestroyWindow(old); }
+    ~Model() { destroy_cells(); }
+    void close_editor() { if(editor && IsWindow(editor))SendMessageW(editor,EM_SETSEL,WPARAM(-1),0);editor=nullptr; }
+    void destroy_cells(){editor=nullptr;for(const auto& row:controls)for(auto cell:row)if(IsWindow(cell))DestroyWindow(cell);controls.clear();}
+    bool owns(HWND cell) const {for(const auto& row:controls)for(auto value:row)if(value==cell)return true;return false;}
+    void layout_cells(HWND table){
+        if(!redraw)return;
+        if(controls.size()!=rows.size()){destroy_cells();controls.resize(rows.size());}
+        RECT client{};GetClientRect(table,&client);const int boundaries[]{0,client.right*30/100,client.right*73/100,client.right};
+        for(std::size_t row=0;row<rows.size();++row)for(int column=0;column<3;++column){
+            auto& cell=controls[row][column];
+            if(!cell){cell=CreateWindowExW(0,L"EDIT",rows[row].cells[column].c_str(),WS_CHILD|ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL,
+                0,0,1,1,table,nullptr,reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(table,GWLP_HINSTANCE)),nullptr);
+                SetWindowSubclass(cell,text_proc,1,reinterpret_cast<DWORD_PTR>(table));SendMessageW(cell,WM_SETFONT,reinterpret_cast<WPARAM>(font),FALSE);
+                SendMessageW(cell,EM_SETMARGINS,EC_LEFTMARGIN|EC_RIGHTMARGIN,0);}
+            const bool visible=offsets[row]<position+client.bottom && offsets[row+1]>position;
+            if(!visible){if(GetWindowLongPtrW(cell,GWL_STYLE)&WS_VISIBLE)ShowWindow(cell,SW_HIDE);continue;}
+            SendMessageW(cell,WM_SETFONT,reinterpret_cast<WPARAM>(font),FALSE);
+            const int width=boundaries[column+1]-boundaries[column]-1,height=rows[row].height-1;
+            SetWindowPos(cell,nullptr,boundaries[column],offsets[row]-position,width,height,SWP_NOZORDER|SWP_NOACTIVATE);
+            RECT area{padding_x,padding_y,width-padding_x,height-padding_y};SendMessageW(cell,EM_SETRECTNP,0,reinterpret_cast<LPARAM>(&area));
+            if(!(GetWindowLongPtrW(cell,GWL_STYLE)&WS_VISIBLE))ShowWindow(cell,SW_SHOWNA);
+            InvalidateRect(cell,nullptr,FALSE);
+        }
     }
     std::wstring exported(bool all) const {
-        std::wstring text=all?L"Effekt\tWirkung\tWann/wie\r\n":L"";
+        std::wstring text=all?kingdom::ui::tr(L"Effekt\tWirkung\tWann/wie\r\n"):L"";
         for (int row=0;row<int(rows.size());++row) {
             if (!all && row!=selected) continue;
             if (!text.empty() && text.back()!=L'\n') text+=L"\r\n";
             for (std::size_t column=0;column<3;++column) {
                 if (column) text+=L'\t';
                 auto value=rows[row].cells[column];
-                value.erase(std::remove(value.begin(),value.end(),L'\r'),value.end());
-                std::replace(value.begin(),value.end(),L'\n',L' ');
                 text+=value;
             }
         }
         return plain_copy(std::move(text));
     }
     HWND open_cell(HWND table,int row,int column) {
-        close_editor();
-        if (row<0 || row>=int(rows.size()) || column<0 || column>=3) return nullptr;
-        RECT client{}; GetClientRect(table,&client);
-        const int boundaries[]{0,client.right*30/100,client.right*73/100,client.right};
-        const auto& text=rows[row].cells[column];
-        editor=CreateWindowExW(0,L"EDIT",text.c_str(),WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL,
-            boundaries[column],offsets[row]-position,boundaries[column+1]-boundaries[column],rows[row].height,table,nullptr,
-            reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(table,GWLP_HINSTANCE)),nullptr);
-        if (!editor) return nullptr;
-        SetWindowSubclass(editor,text_proc,1,reinterpret_cast<DWORD_PTR>(table));
-        SendMessageW(editor,WM_SETFONT,reinterpret_cast<WPARAM>(font),FALSE);
-        SendMessageW(editor,EM_SETMARGINS,EC_LEFTMARGIN|EC_RIGHTMARGIN,0);
-        RECT text_area{padding_x,padding_y,boundaries[column+1]-boundaries[column]-padding_x,rows[row].height-padding_y};
-        SendMessageW(editor,EM_SETRECTNP,0,reinterpret_cast<LPARAM>(&text_area));
-        SetFocus(editor); return editor;
+        if(row<0 || row>=int(rows.size()) || column<0 || column>=3)return nullptr;
+        if(controls.size()!=rows.size())layout_cells(table);
+        editor=controls[row][column];SetFocus(editor);return editor;
     }
     int page(HWND window) const { RECT r{}; GetClientRect(window,&r); return (std::max)(1,int(r.bottom)); }
     int limit(HWND window) const { return (std::max)(0,offsets.back()-page(window)); }
@@ -115,7 +124,7 @@ struct Model {
         close_editor();
         position=std::clamp(value,0,limit(window));
         SCROLLINFO info{sizeof info,SIF_POS}; info.nPos=position;
-        SetScrollInfo(window,SB_VERT,&info,TRUE); if (redraw) InvalidateRect(window,nullptr,FALSE);
+        SetScrollInfo(window,SB_VERT,&info,TRUE);layout_cells(window); if (redraw) InvalidateRect(window,nullptr,FALSE);
     }
     void rebuild(HWND window) {
         close_editor();
@@ -124,7 +133,7 @@ struct Model {
         position=std::clamp(position,0,limit(window));
         SCROLLINFO info{sizeof info,SIF_RANGE|SIF_PAGE|SIF_POS|SIF_DISABLENOSCROLL};
         info.nMin=0; info.nMax=(std::max)(0,offsets.back()-1); info.nPage=UINT(page(window)); info.nPos=position;
-        SetScrollInfo(window,SB_VERT,&info,TRUE);
+        SetScrollInfo(window,SB_VERT,&info,TRUE);layout_cells(window);
         if (redraw) InvalidateRect(window,nullptr,FALSE);
     }
     int at(int pixel) const {
@@ -139,7 +148,7 @@ struct Model {
             else if (offsets[row+1]>position+page(window))
                 scroll(window,rows[row].height>page(window)?offsets[row]:offsets[row+1]-page(window));
         }
-        if (redraw) InvalidateRect(window,nullptr,FALSE);
+        if(redraw){InvalidateRect(window,nullptr,FALSE);for(const auto& cells:controls)for(auto cell:cells)InvalidateRect(cell,nullptr,FALSE);}
         if (notify && changed) {
             SendMessageW(GetParent(window),WM_COMMAND,MAKEWPARAM(GetDlgCtrlID(window),LBN_SELCHANGE),reinterpret_cast<LPARAM>(window));
             NotifyWinEvent(EVENT_OBJECT_SELECTION,window,OBJID_CLIENT,row+1);
@@ -161,11 +170,17 @@ inline LRESULT CALLBACK procedure(HWND window,UINT message,WPARAM wparam,LPARAM 
             if (!valid() || !lparam) return LB_ERR;
             state.rows[wparam].cells=*reinterpret_cast<const std::array<std::wstring,3>*>(lparam); return 0;
         case effect_table_padding: state.padding_x=int(wparam); state.padding_y=int(lparam); return 0;
+        case effect_table_select_cell:
+            state.editor=reinterpret_cast<HWND>(wparam);
+            for(int row=0;row<int(state.controls.size());++row)for(auto cell:state.controls[row])if(cell==state.editor){state.select(window,row,true,false);return 0;}
+            return 0;
         case effect_table_close_text:
-            if (state.editor==reinterpret_cast<HWND>(wparam)) state.close_editor(); return 0;
+            if (state.editor==reinterpret_cast<HWND>(wparam)){state.close_editor();SetFocus(window);} return 0;
         case WM_CTLCOLOREDIT: case WM_CTLCOLORSTATIC:
-            if (reinterpret_cast<HWND>(lparam)==state.editor) {
-                const auto dc=reinterpret_cast<HDC>(wparam); const auto color=RGB(231,205,148);
+            if (state.owns(reinterpret_cast<HWND>(lparam))) {
+                bool selected=state.all_marked;
+                if(state.selected>=0 && state.selected<int(state.controls.size()))for(auto cell:state.controls[state.selected])selected|=cell==reinterpret_cast<HWND>(lparam);
+                const auto dc=reinterpret_cast<HDC>(wparam); const auto color=selected?RGB(231,205,148):RGB(248,238,212);
                 SetTextColor(dc,RGB(56,35,20)); SetBkColor(dc,color); SetDCBrushColor(dc,color);
                 return reinterpret_cast<LRESULT>(GetStockObject(DC_BRUSH));
             }
@@ -184,9 +199,9 @@ inline LRESULT CALLBACK procedure(HWND window,UINT message,WPARAM wparam,LPARAM 
             }
             const auto menu=CreatePopupMenu(); if (!menu) return 0;
             const bool has_text=text_source && !selected_text(state.editor).empty();
-            AppendMenuW(menu,MF_STRING|(has_text?0:MF_GRAYED),1,L"Markierten Text kopieren\tStrg+C");
-            AppendMenuW(menu,MF_STRING|(state.selected>=0?0:MF_GRAYED),2,L"Effektzeile kopieren");
-            AppendMenuW(menu,MF_STRING|(!state.rows.empty()?0:MF_GRAYED),3,L"Alle angezeigten Effekte kopieren");
+            AppendMenuW(menu,MF_STRING|(has_text?0:MF_GRAYED),1,kingdom::ui::tr(L"Markierten Text kopieren\tStrg+C"));
+            AppendMenuW(menu,MF_STRING|(state.selected>=0?0:MF_GRAYED),2,kingdom::ui::tr(L"Effektzeile kopieren"));
+            AppendMenuW(menu,MF_STRING|(!state.rows.empty()?0:MF_GRAYED),3,kingdom::ui::tr(L"Alle angezeigten Effekte kopieren"));
             const auto command=TrackPopupMenu(menu,TPM_RETURNCMD|TPM_RIGHTBUTTON,point.x,point.y,0,window,nullptr);
             DestroyMenu(menu);
             if (command==1 && state.editor) SendMessageW(state.editor,WM_COPY,0,0);
@@ -213,7 +228,7 @@ inline LRESULT CALLBACK procedure(HWND window,UINT message,WPARAM wparam,LPARAM 
             if (!state.rows.empty()) SendMessageW(GetParent(window),effect_table_layout,0,0);
             else state.rebuild(window);
             return 0;
-        case LB_RESETCONTENT: state.close_editor(); state.all_marked=false; state.rows.clear(); state.offsets.assign(1,0); state.position=0; state.selected=-1;
+        case LB_RESETCONTENT: state.destroy_cells(); state.all_marked=false; state.rows.clear(); state.offsets.assign(1,0); state.position=0; state.selected=-1;
             if (state.redraw) state.rebuild(window); return 0;
         case LB_ADDSTRING: {
             Row row; row.label=reinterpret_cast<const wchar_t*>(lparam); row.cells[0]=row.label; state.rows.push_back(std::move(row));
@@ -346,6 +361,16 @@ inline LRESULT CALLBACK procedure(HWND window,UINT message,WPARAM wparam,LPARAM 
     }
     return DefWindowProcW(window,message,wparam,lparam);
 }
+}
+inline int measure_effect_cell(HWND parent,HFONT font,const std::wstring& text,int width,int padding_x,int padding_y) {
+    const auto edit=CreateWindowExW(0,L"EDIT",text.c_str(),WS_CHILD|ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL,0,0,width,10000,parent,nullptr,
+        reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(parent,GWLP_HINSTANCE)),nullptr);
+    if(!edit)return 0;
+    SendMessageW(edit,WM_SETFONT,reinterpret_cast<WPARAM>(font),FALSE);SendMessageW(edit,EM_SETMARGINS,EC_LEFTMARGIN|EC_RIGHTMARGIN,0);
+    RECT area{padding_x,padding_y,width-padding_x,9999-padding_y};SendMessageW(edit,EM_SETRECTNP,0,reinterpret_cast<LPARAM>(&area));
+    const auto dc=GetDC(edit);const auto previous=SelectObject(dc,font);TEXTMETRICW metrics{};GetTextMetricsW(dc,&metrics);
+    const int height=int(SendMessageW(edit,EM_GETLINECOUNT,0,0))*metrics.tmHeight+2*padding_y+2;
+    SelectObject(dc,previous);ReleaseDC(edit,dc);DestroyWindow(edit);return height;
 }
 inline bool register_effect_table(HINSTANCE module) {
     WNDCLASSW existing{};

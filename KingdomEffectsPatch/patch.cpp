@@ -5,6 +5,7 @@
 
 #include "effects.hpp"
 #include "effect_editor.hpp"
+#include "ui_language.hpp"
 
 #include <cstdio>
 #include <vector>
@@ -93,7 +94,7 @@ void log(const char* event, const kingdom::Effects* list = nullptr) {
 void reject(kingdom::Error error) {
     if (const auto* known = kingdom::known_failure_message(error)) {
         log(error == kingdom::Error::repeated_project_cube ? "rejected repeated project cube" : "rejected debt stamp");
-        MessageBoxW(GetActiveWindow(), known, L"Dominion Kingdom Effects Patch", MB_OK | MB_ICONWARNING);
+        MessageBoxW(GetActiveWindow(), kingdom::ui::tr(known), L"Dominion Kingdom Effects Patch", MB_OK | MB_ICONWARNING);
         return;
     }
     const wchar_t* message = L"Der Effektabschnitt konnte nicht gelesen werden.";
@@ -115,7 +116,7 @@ void reject(kingdom::Error error) {
             break;
     }
     log("import rejected");
-    MessageBoxW(GetActiveWindow(), message, L"Dominion Kingdom Effects Patch", MB_OK | MB_ICONWARNING);
+    MessageBoxW(GetActiveWindow(), kingdom::ui::tr(message), L"Dominion Kingdom Effects Patch", MB_OK | MB_ICONWARNING);
 }
 
 bool validate(const char* text) {
@@ -321,7 +322,7 @@ void __cdecl end_automatic() {
     automatic_failure = nullptr;
     if (failure) {
         log("automatic doubling skipped");
-        MessageBoxW(GetActiveWindow(), failure, L"Dominion Kingdom Effects Patch", MB_OK | MB_ICONWARNING);
+        MessageBoxW(GetActiveWindow(), kingdom::ui::tr(failure), L"Dominion Kingdom Effects Patch", MB_OK | MB_ICONWARNING);
     }
 }
 
@@ -456,10 +457,10 @@ bool validate_native_import(const char* text) {
     std::size_t mismatch=0;
     if(parsed_effects_match(parsed,commands,&mismatch)) return true;
     const auto& command=commands[(std::min)(mismatch,commands.size()-1)];
-    const std::wstring message=L"Der Import wurde bei Effekt "+std::to_wstring(mismatch+1)+L" ("+
-        std::wstring(command.begin(),command.end())+L") nicht vollständig eingelesen. Die bisherige Auswahl bleibt erhalten.";
+    const std::wstring message=kingdom::ui::tr(L"Der Import wurde bei Effekt ")+std::to_wstring(mismatch+1)+L" ("+
+        std::wstring(command.begin(),command.end())+kingdom::ui::tr(L") nicht vollständig eingelesen. Die bisherige Auswahl bleibt erhalten.");
     log_commands("import rejected mismatch",{command});
-    MessageBoxW(GetActiveWindow(),message.c_str(),L"Dominion – Königreich-Effekte",MB_OK|MB_ICONWARNING);
+    MessageBoxW(GetActiveWindow(),message.c_str(),kingdom::ui::tr(L"Dominion – Königreich-Effekte"),MB_OK|MB_ICONWARNING);
     return false;
 }
 
@@ -505,10 +506,10 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
             if (edited == effects) return true;
             std::size_t mismatch=0;
             const auto fail=[&](const wchar_t* stage) {
-                if(edited.empty()) { apply_error=std::wstring(L"Leere Effektliste: ")+stage+L". Die bisherige Auswahl bleibt erhalten."; return false; }
+                if(edited.empty()) { apply_error=std::wstring(kingdom::ui::tr(L"Leere Effektliste: "))+stage+kingdom::ui::tr(L". Die bisherige Auswahl bleibt erhalten."); return false; }
                 const auto& command=edited[(std::min)(mismatch,edited.size()-1)];
-                apply_error=std::wstring(L"Effekt ")+std::to_wstring(mismatch+1)+L" ("+
-                    std::wstring(command.begin(),command.end())+L"): "+stage+L". Die bisherige Auswahl bleibt erhalten.";
+                apply_error=std::wstring(kingdom::ui::tr(L"Effekt "))+std::to_wstring(mismatch+1)+L" ("+
+                    std::wstring(command.begin(),command.end())+L"): "+stage+kingdom::ui::tr(L". Die bisherige Auswahl bleibt erhalten.");
                 log_commands("editor rejected",{command}); return false;
             };
             const auto commands = kingdom::effect_command_text(edited);
@@ -520,7 +521,7 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
             parse(commands.c_str(), &parsed);
             const auto parsed_list=kingdom::read_effects(parsed.data());
             log("editor parsed",&parsed_list);
-            if (!parsed_effects_match(parsed, edited,&mismatch)) return fail(L"beim Einlesen nicht vollständig übernommen");
+            if (!parsed_effects_match(parsed, edited,&mismatch)) return fail(kingdom::ui::tr(L"beim Einlesen nicht vollständig übernommen"));
 
             auto next = *current;
             kingdom::replace_effects(next, parsed);
@@ -530,7 +531,7 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
                 !kingdom::same_effect_commands(serialized, edited)) {
                 mismatch=0;
                 while(mismatch<(std::min)(serialized.size(),edited.size()) && kingdom::same_effect_commands({serialized[mismatch]},{edited[mismatch]})) ++mismatch;
-                log_commands("editor serialized mismatch",serialized); return fail(L"bei der Ausgabe verändert");
+                log_commands("editor serialized mismatch",serialized); return fail(kingdom::ui::tr(L"bei der Ausgabe verändert"));
             }
             log_commands("editor serialized",serialized);
             // Resolve an independent custom configuration before touching the real one.
@@ -541,7 +542,7 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
             *reinterpret_cast<const char**>(candidate.data()+0x30)=output.view().data();
             const auto resolved=resolve_config(candidate.data());
             const auto resolved_list=kingdom::read_effects(resolved.data()); log("editor resolved",&resolved_list);
-            if (!parsed_effects_match(resolved,edited,&mismatch)) return fail(L"beim erneuten Laden verändert");
+            if (!parsed_effects_match(resolved,edited,&mismatch)) return fail(kingdom::ui::tr(L"beim erneuten Laden verändert"));
             // Detach the edited draft from the selected preset as the native
             // custom setup path does. The user can then save it as a set.
             output.write_to(config + 0x30);
@@ -564,8 +565,8 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
             automatic_enabled = automatic;
         }
     } catch (...) {
-        MessageBoxW(owner, L"Dominion konnte diese Effektliste nicht übernehmen. Die bisherige Auswahl bleibt erhalten.",
-                    L"Dominion – Königreich-Effekte", MB_OK | MB_ICONWARNING);
+        MessageBoxW(owner, kingdom::ui::tr(L"Dominion konnte diese Effektliste nicht übernehmen. Die bisherige Auswahl bleibt erhalten."),
+                    kingdom::ui::tr(L"Dominion – Königreich-Effekte"), MB_OK | MB_ICONWARNING);
     }
 }
 
@@ -1153,6 +1154,7 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
         std::memcmp(base + 0x1FF7D4, "\x32\xC0\x8B\x4D\xF4", 5) != 0 ||
         std::memcmp(base + 0x1F6CD3, "\x8B\x7D\xE4\x8D\x4D\xD0", 6) != 0) return 4;
 
+    kingdom::ui::load_language();
     wchar_t temp[MAX_PATH];
     const DWORD size = GetTempPathW(MAX_PATH, temp);
     if (!size || size >= MAX_PATH ||

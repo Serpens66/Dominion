@@ -6,7 +6,32 @@ def main():
     import json
     from pathlib import Path
     refs=json.loads((Path(__file__).resolve().parents[1]/'Documentation'/'Effect_Expansion_References.json').read_text(encoding='utf-8'))
+    from generate_effect_catalog import read_english_effects
     effects = read_effects()
+    english=read_english_effects()
+    req=json.loads((Path(__file__).resolve().parents[1]/'Documentation'/'Effect_Requirements.json').read_text(encoding='utf-8'))['effects']
+    guide=(Path(__file__).resolve().parents[1]/'Documentation'/'Steam_Spielanleitung.md').read_text(encoding='utf-8')
+    import re
+    de=guide.split('### Katalog der Kampagneneffekte',1)[1].split('#### Weitere Varianten aus der Kampagnenerzeugung',1)[0]
+    en=guide.split('### Campaign effect catalog',1)[1].split('#### Other campaign generation variants',1)[0]
+    for text,language in [(de,'de'),(en,'en')]:
+        for line in text.splitlines():
+            if line.startswith('|'):assert line.count('|')==7,line
+        rows=[line for line in text.splitlines() if line.startswith('|') and re.search(r'`(?:twist|stamp|start)_',line)]
+        assert len(rows)==89
+        for line in rows:
+            id=re.search(r'`((?:twist|stamp|start)_\w+)',line)[1]
+            assert line.count('|')==7 and line.split('|')[-2].strip()==req[id][language],id
+    assert set(req)==set(english)=={row[0] for row in effects}
+    for id,entry in req.items():
+        assert entry['kind'] in ('base','mechanic','unclear')
+        assert all(entry[k] for k in ('de','en','detail_de','detail_en','evidence','evidence_detail'))
+        assert all(english[id])
+    assert req['twist_garbage_heap']['kind']=='base'
+    assert req['twist_beakers']['kind']=='mechanic' and 'Trank' in req['twist_beakers']['de']
+    assert req['twist_turn_turn_turn']['kind']=='mechanic'
+    assert req['start_5_coffers']['kind']=='base'
+
     assert set(refs['effects'])=={row[0] for row in effects}
     assert refs['effects']['twist_beakers']==[['alchemy']]
     assert refs['effects']['twist_pennies_saved']==[['guilds']]

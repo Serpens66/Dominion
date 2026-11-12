@@ -65,8 +65,20 @@ Zur Untersuchung eines Verlusts nach einer Partie: Effekte in F8 festlegen, mit 
 
 ## Erweiterungsbezug und korrigierter lokaler Start
 
-F8 nennt bei jedem Effekt den **Erweiterungsbezug** aus dem Spielcode; auch Erweiterungsnamen sind suchbar. Das ist eine native Filtervorgabe, keine bestätigte zwingende Voraussetzung der Wirkung. **Keine native Vorgabe** bedeutet lediglich, dass die Effektdefinition keine solche Bedingung enthält. Verfügbare Zielkarten und besondere Spielsituationen gelten zusätzlich.
+F8 zeigt in der Wirkungsspalte **Basisspiel ausreichend**, **Benötigt: …** oder bei unklarer Beweislage **Voraussetzung ungeklärt**. Der Detailtext erklärt Mechaniken und Selbstbereitstellung, etwa von Talern. Voraussetzungen ersetzen nicht den separat ausgewiesenen Funktionsnachweis. Der **Erweiterungsbezug im Spielcode** bleibt getrennt im Detailtext und ist weiterhin suchbar; er ist eine native Filtervorgabe, keine zwingende Erweiterungspflicht. Die Voraussetzungen sperren keine Effekte und fügen keine Karten hinzu.
 
-Der Patch verhindert beim lokalen Start, dass dieser Erweiterungsfilter einen Effekt und alle nachfolgenden Einträge entfernt. Er schaltet keine Erweiterungskarten frei und verändert den Online-Startpfad nicht. Die größere Kartenauswahl zeigt beim Öffnen alle Erweiterungen geschlossen. Erst Hover über einen Kartennamen, Anklicken oder Tastaturauswahl lädt eine Vorschau; Leerflächen ändern sie nicht. Die Karte nutzt bei ausreichender Bildschirmhöhe die rechte Spaltenbreite, der Text bleibt darüber stehen.
+Der Patch verhindert beim lokalen Start, dass dieser Erweiterungsfilter einen Effekt und alle nachfolgenden Einträge entfernt. Er schaltet keine Erweiterungskarten frei und verändert den Online-Startpfad nicht. Die größere Kartenauswahl zeigt beim Öffnen alle Erweiterungen geschlossen. Hover über einen Kartennamen, Anklicken oder Tastaturauswahl lädt eine Kartenvorschau. Über Erweiterungsnamen erscheinen stattdessen deren Symbol, Originalbeschreibung und scrollbare Regeln; Leerflächen ändern die Vorschau nicht. Die Karte nutzt bei ausreichender Bildschirmhöhe die rechte Spaltenbreite, der Text bleibt darüber stehen.
 
 Nach einem erfolgreichen Start wurden auch natives Schließen/Neustarten und erneutes Auflösen der F8-Konfiguration geprüft. Die abschließende sichtbare Kontrolle erfolgt mit deinem normalen Starter: Achterfolge setzen, starten, zurück ins Königreich-Menü und F8 erneut öffnen. Für die drei bislang übersprungenen Effekte sind Ankunft und Spielwirkung getrennte Befunde.
+
+## Neue Auswahlbedienung und Sprache
+
+Für **Taifun** die gewünschte Karte anklicken oder mit den Pfeiltasten wählen und **Stapel hinzufügen** drücken; Doppelklick und Leertaste funktionieren ebenfalls. Hover allein wählt kein Ziel. Die nummerierte Liste enthält höchstens 20 verschiedene Stapel. **Entfernen** oder **Entf** bei Fokus in dieser Liste entfernt den markierten Stapel.
+
+Taifun-Stapel und aktive Effekte per Drag-and-drop sortieren. Die Einfügemarkierung zeigt die neue Position; am Rand scrollt die Liste. **Alt+Pfeil hoch/runter** ist die Tastaturalternative. **Esc** oder Ablegen außerhalb bricht ab. Gleichnamige aktive Effekte bleiben getrennte Einträge. Die Taifun-Zielfolge bleibt erhalten; ihre spätere tatsächliche Verwendung durch das Spiel ist noch nicht vollständig geprüft.
+
+Helle Checkboxen kennzeichnen die gewöhnliche Mehrfachauswahl. Tabellenzellen bleiben von der ersten Anzeige an markierbar, ohne beim Anklicken Schrift oder Umbrüche zu ändern. Kopierte Texte behalten vorhandene Zeilenumbrüche; nur unsichtbare Hilfszeichen in IDs werden entfernt.
+
+Unten in F8 schaltet **Sprache: Deutsch / English** das gesamte Menü um, einschließlich Effekttexten, Teststand, Voraussetzungen, Kartenbildern, Erweiterungsregeln und Fehlermeldungen. Entwurf, Ziele, Reihenfolge, Auswahl und Filter bleiben erhalten. Deutsche und englische Namen bleiben unabhängig von der Anzeigesprache suchbar. Die Wahl wird separat in `%LOCALAPPDATA%\DominionKingdomEffectsPatch\editor.ini` gespeichert, auch nach **Abbrechen**. Die Spielsprache und dein Profil werden nicht verändert. Kartenbilder werden nach ID und Sprache innerhalb des gemeinsamen 96-MiB-Limits zwischengespeichert.
+
+**Rotationskoller** braucht passende rotierbare Stapel aus **Verbündete**: Die oberste Gruppe gleicher Karten wird gemeinsam unter den Stapel gelegt. `A A B B C C` wird zu `B B C C A A`. Ein gewöhnlicher Dorf-Stapel verändert sich sichtbar nicht.

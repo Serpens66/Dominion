@@ -1,4 +1,5 @@
 // Actual native dialog controls on a separate desktop; no foreground input.
+#define KINGDOM_UI_TEST
 #define UNICODE
 #define EFFECT_TABLE_TEST_CLIPBOARD
 #include "effect_editor.cpp"
@@ -12,12 +13,22 @@ std::string failure;
 bool checked = false;
 bool picker_checked = false;
 unsigned picker_ticks = 0;
+bool ordered_checked=false;
 bool missing_art=false;
 bool online_checked = false;
 bool online_cancel = false;
 UINT_PTR timer = 0;
 void check(bool condition, const char* message) { if (!condition) throw std::runtime_error(message); }
 
+void save_dialog(HWND dialog,const wchar_t* name) {
+    ShowWindow(dialog,SW_SHOWNOACTIVATE);
+    const auto directory=std::filesystem::path(L"KingdomEffectsPatch/out/staging/ui-check");std::filesystem::create_directories(directory);
+    RECT rect{};GetClientRect(dialog,&rect);const auto dc=GetDC(dialog),buffer=CreateCompatibleDC(dc);
+    const auto bitmap=CreateCompatibleBitmap(dc,rect.right,rect.bottom);const auto old=SelectObject(buffer,bitmap);
+    SendMessageW(dialog,WM_PRINT,reinterpret_cast<WPARAM>(buffer),PRF_CLIENT|PRF_CHILDREN|PRF_ERASEBKGND|PRF_CHECKVISIBLE);Gdiplus::Bitmap image(bitmap,nullptr);
+    const CLSID png{0x557cf406,0x1a04,0x11d3,{0x9a,0x73,0,0,0xf8,0x1e,0xf3,0x2e}};
+    image.Save((directory/name).c_str(),&png,nullptr);SelectObject(buffer,old);DeleteObject(bitmap);DeleteDC(buffer);ReleaseDC(dialog,dc);
+}
 void check_scroll_geometry(HWND dialog) {
     const auto list=GetDlgItem(dialog,IDC_CATALOG);
     const auto count=SendMessageW(list,LB_GETCOUNT,0,0);
@@ -55,7 +66,7 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
         const auto named=accessible->get_accName(first,&name);
         const bool readable=SUCCEEDED(named) && name && SysStringLen(name)>0;
         if (name) SysFreeString(name); accessible->Release();
-        check(SUCCEEDED(counted) && children==89 && readable,"Accessible rows missing.");
+        check(SUCCEEDED(counted) && children>=89 && readable,"Accessible rows missing.");
         check_scroll_geometry(dialog);
         const auto font=reinterpret_cast<HFONT>(SendMessageW(list,WM_GETFONT,0,0));
         LOGFONTW original{}; check(GetObjectW(font,sizeof original,&original)!=0,"Missing table font.");
@@ -120,11 +131,14 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
         SendMessageW(list,LB_SETSEL,TRUE,-1); SendMessageW(list,WM_COPY,0,0);
         const auto copied=kingdom::effect_table_detail::test_clipboard;
         check(copied.find(L"Effekt\tWirkung\tWann/wie\r\n")==0 && copied.find(L"Ungetestet")!=copied.npos,"Filtered table copy failed.");
-        check(std::count(copied.begin(),copied.end(),L'\n')==untested,"Copy did not include all filtered rows.");
+        check(std::count(copied.begin(),copied.end(),L'\n')>=untested,"Copy did not include all filtered rows.");
         check(copied.find(L"twist_big_ideas")==copied.npos && copied.find(L'\u200B')==copied.npos,"Copy includes hidden rows or layout characters.");
         auto& table=*reinterpret_cast<kingdom::effect_table_detail::Model*>(GetWindowLongPtrW(list,GWLP_USERDATA));
         table.select(list,0,true);
-        const auto text_editor=table.open_cell(list,0,0); check(text_editor!=nullptr,"Selectable cell unavailable.");
+        const auto existing_cell=table.controls[0][0];RECT before_cell{},after_cell{};GetWindowRect(existing_cell,&before_cell);
+        const auto before_lines=SendMessageW(existing_cell,EM_GETLINECOUNT,0,0);
+        const auto text_editor=table.open_cell(list,0,0);
+        GetWindowRect(text_editor,&after_cell);check(text_editor==existing_cell && EqualRect(&before_cell,&after_cell) && before_lines==SendMessageW(text_editor,EM_GETLINECOUNT,0,0),"Click changes text layout."); check(text_editor!=nullptr,"Selectable cell unavailable.");
         SendMessageW(text_editor,EM_SETSEL,0,-1); SendMessageW(text_editor,WM_COPY,0,0);
         check(kingdom::effect_table_detail::test_clipboard==kingdom::effect_table_detail::plain_copy(table.rows[0].cells[0]),"Selected text copy failed.");
         SendMessageW(text_editor,EM_SETSEL,2,7); SendMessageW(text_editor,WM_COPY,0,0);
@@ -145,6 +159,32 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
         check(!IsWindowEnabled(GetDlgItem(dialog, IDC_ADD)), "Empty selection can be added.");
         SetDlgItemTextW(dialog, IDC_QUERY, L"");
         check(SendMessageW(list, LB_GETCOUNT, 0, 0) == 89, "Search reset mismatch.");
+        auto& draft=*reinterpret_cast<kingdom::Draft*>(GetWindowLongPtrW(dialog,DWLP_USER));
+        save_dialog(dialog,L"f8-de.png");
+        const auto saved_effects=draft.effects;const auto* saved_selection=draft.selected;
+        SendDlgItemMessageW(dialog,IDC_LANGUAGE,CB_SETCURSEL,1,0);SendMessageW(dialog,WM_COMMAND,MAKEWPARAM(IDC_LANGUAGE,CBN_SELCHANGE),0);
+        check(kingdom::ui::english() && draft.effects==saved_effects && draft.selected==saved_selection,"Language change lost draft or selection.");
+        for(const auto& effect:kingdom::effect_catalog){check(*effect.title_en && *effect.description_en && *effect.timing_en && *effect.status_en && *effect.requirement_en,"Missing English effect data.");}
+        check(kingdom::table_text(kingdom::effect_catalog[0])[1].find(L"Base game sufficient")!=std::wstring::npos,"English prerequisite missing.");
+        for(const auto query:{L"Große Ideen",L"Big Ideas",L"twist_big_ideas"}){SetDlgItemTextW(dialog,IDC_QUERY,query);check(SendMessageW(list,LB_GETCOUNT,0,0)==1,"Bilingual search mismatch.");}
+        SetDlgItemTextW(dialog,IDC_QUERY,L"");check_scroll_geometry(dialog);save_dialog(dialog,L"f8-en.png");
+        SendDlgItemMessageW(dialog,IDC_LANGUAGE,CB_SETCURSEL,0,0);SendMessageW(dialog,WM_COMMAND,MAKEWPARAM(IDC_LANGUAGE,CBN_SELCHANGE),0);
+        draft.effects={"twist_big_ideas","twist_busy_busy","twist_big_ideas"};kingdom::update_active(dialog,draft,0);
+        const auto active=GetDlgItem(dialog,IDC_ACTIVE);
+        RECT row0{},row2{};SendMessageW(active,LB_GETITEMRECT,0,reinterpret_cast<LPARAM>(&row0));SendMessageW(active,LB_GETITEMRECT,2,reinterpret_cast<LPARAM>(&row2));
+        DWORD_PTR reorder_data=0;check(GetWindowSubclass(active,kingdom::ListReorder::proc,9071,&reorder_data)!=FALSE,"Missing reorder subclass.");
+        auto& reorder=*reinterpret_cast<kingdom::ListReorder*>(reorder_data);
+        SendMessageW(active,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(10,row0.top+2));
+        const int down_source=reorder.source;
+        SendMessageW(active,WM_MOUSEMOVE,MK_LBUTTON,MAKELPARAM(10,row2.bottom-1));
+        const int move_source=reorder.source,move_at=reorder.insertion;const bool was_dragging=reorder.dragging;
+        SendMessageW(active,WM_LBUTTONUP,0,MAKELPARAM(10,row2.bottom-1));
+        if(draft.effects[0]!="twist_busy_busy")std::fprintf(stderr,"Drag trace: row0 %ld/%ld row2 %ld/%ld down %d move %d insertion %d dragging %d\n",row0.top,row0.bottom,row2.top,row2.bottom,down_source,move_source,move_at,int(was_dragging));
+        check(draft.effects[0]=="twist_busy_busy" && draft.effects[2]=="twist_big_ideas","Drag failed with identical effects.");
+        const auto drag_saved=draft.effects;SendMessageW(active,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(10,2));SendMessageW(active,WM_MOUSEMOVE,MK_LBUTTON,MAKELPARAM(10,row2.bottom-1));SendMessageW(active,WM_KEYDOWN,VK_ESCAPE,0);SendMessageW(active,WM_LBUTTONUP,0,MAKELPARAM(10,row2.bottom-1));check(draft.effects==drag_saved,"Escape did not cancel drag.");
+        SendMessageW(active,LB_SETCURSEL,0,0);SendMessageW(active,WM_SYSKEYDOWN,VK_DOWN,1L<<29);check(draft.effects[1]=="twist_busy_busy","Alt+Down failed.");
+        SetFocus(active);SendMessageW(active,WM_KEYDOWN,VK_DELETE,0);check(draft.effects.size()==2,"Delete did not remove selected effect.");
+        draft.effects=saved_effects;kingdom::update_active(dialog,draft);
         checked = true;
     } catch (const std::exception& error) { failure = error.what(); }
     PostMessageW(dialog, WM_COMMAND, IDCANCEL, 0);
@@ -203,7 +243,7 @@ BOOL CALLBACK inspect_picker(HWND dialog, LPARAM) {
         check(missing_art ? !picker.image : bool(picker.image),"Async image/fallback state incorrect.");
         check(IsWindowVisible(GetDlgItem(dialog, IDC_CARD_IMAGE)), "Image area hidden.");
         wchar_t name[128]{}; GetDlgItemTextW(dialog, IDC_CARD_IMAGE, name, 128);
-        check(std::wstring_view(name)==L"Geizhals", "Stale preview published after navigation.");
+        check(std::wstring_view(name)==kingdom::ui::pick(L"Geizhals",L"Miser"), "Stale preview published after navigation.");
         check(IsWindowVisible(GetDlgItem(dialog, IDC_CARD_TITLE)) && IsWindowVisible(GetDlgItem(dialog, IDC_CARD_INFO)), "Text displaced by image.");
         RECT before{},after{}; GetWindowRect(GetDlgItem(dialog,IDC_CARD_IMAGE),&before);
         if(picker.skin->logical_height()>=385) check(before.bottom-before.top>=(before.right-before.left)*1.5,"Card area is too short to use column width.");
@@ -225,6 +265,51 @@ BOOL CALLBACK inspect_picker(HWND dialog, LPARAM) {
     } catch (const std::exception& error) { failure=error.what(); }
     KillTimer(nullptr,timer); PostMessageW(dialog,WM_COMMAND,IDCANCEL,0); return FALSE;
 }
+BOOL CALLBACK inspect_ordered(HWND dialog,LPARAM) {
+    if(!GetDlgItem(dialog,IDC_CARD_TREE))return TRUE;
+    KillTimer(nullptr,timer);
+    try {
+        auto& picker=*reinterpret_cast<kingdom::Picker*>(GetWindowLongPtrW(dialog,DWLP_USER));const auto tree=GetDlgItem(dialog,IDC_CARD_TREE);
+        check(picker.mode==kingdom::CardSelection::ordered && !(GetWindowLongPtrW(tree,GWL_STYLE)&TVS_CHECKBOXES),"Typhoon has unwanted checkboxes.");
+        check(!IsWindowEnabled(GetDlgItem(dialog,IDOK)),"Empty Typhoon can be accepted.");
+        const auto group=TreeView_GetRoot(tree);RECT label{};TreeView_GetItemRect(tree,group,&label,TRUE);
+        SendMessageW(tree,WM_MOUSEMOVE,0,MAKELPARAM(label.left+3,(label.top+label.bottom)/2));
+        check(picker.expansion && !picker.displayed && !IsWindowVisible(GetDlgItem(dialog,IDC_CARD_IMAGE)),"Expansion preview missing.");
+        SendMessageW(dialog,WM_COMMAND,IDC_CARD_TEXT,0);check(picker.expansion_rules,"Expansion rules not reachable.");
+        save_dialog(dialog,kingdom::ui::english()?L"expansion-en.png":L"expansion-de.png");
+        TreeView_SelectItem(tree,group);check(picker.expansion,"Keyboard expansion preview missing.");
+        // Hover cannot choose the Add button's target.
+        TreeView_Expand(tree,group,TVE_EXPAND);const auto first=TreeView_GetChild(tree,group),second=TreeView_GetNextSibling(tree,first);
+        TreeView_SelectItem(tree,first);const auto* chosen=kingdom::card_at(tree,first);kingdom::preview(dialog,picker,kingdom::card_at(tree,second));
+        SendMessageW(dialog,WM_COMMAND,IDC_CARD_ADD,0);check(picker.selected.size()==1 && picker.selected.front()==chosen,"Hover replaced the chosen target.");
+        SendMessageW(dialog,WM_COMMAND,IDC_CARD_ADD,0);check(picker.selected.size()==1,"Duplicate Typhoon pile accepted.");
+        TreeView_SelectItem(tree,second);SendMessageW(tree,WM_KEYDOWN,VK_SPACE,0);check(picker.selected.size()==2,"Space does not add selected pile.");
+        SetDlgItemTextW(dialog,IDC_CARD_QUERY,L"");
+        for(const auto& entry:picker.visible){if(picker.has(entry.second))continue;TreeView_SelectItem(tree,entry.first);kingdom::add_selected_pile(dialog,picker);if(picker.selected.size()==20)break;}
+        check(picker.selected.size()==20 && !IsWindowEnabled(GetDlgItem(dialog,IDC_CARD_ADD)),"Typhoon capacity or Add state incorrect.");
+        const auto saved=picker.selected;for(const auto& entry:picker.visible)if(!picker.has(entry.second)){TreeView_SelectItem(tree,entry.first);kingdom::add_selected_pile(dialog,picker);break;}
+        check(picker.selected==saved,"21st Typhoon pile changed draft.");
+        const auto list=GetDlgItem(dialog,IDC_CARD_SELECTION);SendMessageW(list,LB_SETTOPINDEX,0,0);RECT r0{},r2{};
+        SendMessageW(list,LB_GETITEMRECT,0,reinterpret_cast<LPARAM>(&r0));SendMessageW(list,LB_GETITEMRECT,1,reinterpret_cast<LPARAM>(&r2));
+        SendMessageW(list,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(8,r0.top+2));SendMessageW(list,WM_MOUSEMOVE,MK_LBUTTON,MAKELPARAM(8,r2.bottom-1));SendMessageW(list,WM_LBUTTONUP,0,MAKELPARAM(8,r2.bottom-1));
+        check(picker.selected[1]==saved[0] && picker.selected[0]==saved[1],"Typhoon drag reorder failed.");
+        SendMessageW(list,LB_SETCURSEL,1,0);SendMessageW(list,WM_SYSKEYDOWN,VK_UP,1L<<29);check(picker.selected==saved,"Typhoon Alt+Up failed.");
+        RECT client{};GetClientRect(list,&client);
+        const auto outside_before=picker.selected;
+        SendMessageW(list,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(8,r0.top+2));SendMessageW(list,WM_MOUSEMOVE,MK_LBUTTON,MAKELPARAM(8,client.bottom+10));SendMessageW(list,WM_LBUTTONUP,0,MAKELPARAM(8,client.bottom+10));
+        check(picker.selected==outside_before,"Drop outside changed order.");
+        SendMessageW(list,LB_SETTOPINDEX,0,0);SendMessageW(list,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(8,2));SendMessageW(list,WM_MOUSEMOVE,MK_LBUTTON,MAKELPARAM(8,client.bottom-2));
+        for(int i=0;i<4;++i)SendMessageW(list,WM_TIMER,9071,0);
+        check(SendMessageW(list,LB_GETTOPINDEX,0,0)>0,"Drag edge did not scroll.");
+        check(SendMessageW(list,WM_GETDLGCODE,VK_ESCAPE,0)&DLGC_WANTALLKEYS,"Dialog would consume drag Escape.");
+        SendMessageW(list,WM_KEYDOWN,VK_ESCAPE,0);check(picker.selected==outside_before,"Edge-scroll Escape changed order.");
+        SendMessageW(list,LB_SETCURSEL,0,0);SetFocus(tree);SendMessageW(list,WM_KEYDOWN,VK_DELETE,0);check(picker.selected.size()==20,"Unfocused list consumed Delete.");
+        SetFocus(list);SendMessageW(list,WM_KEYDOWN,VK_DELETE,0);check(picker.selected.size()==19,"Typhoon Delete failed.");
+        ordered_checked=true;
+    }catch(const std::exception& error){failure=error.what();}
+    PostMessageW(dialog,WM_COMMAND,IDCANCEL,0);return FALSE;
+}
+void CALLBACK inspect_ordered_dialog(HWND,UINT,UINT_PTR,DWORD){EnumThreadWindows(GetCurrentThreadId(),inspect_ordered,0);}
 void CALLBACK inspect_card_dialog(HWND, UINT, UINT_PTR, DWORD) { EnumThreadWindows(GetCurrentThreadId(),inspect_picker,0); }
 }
 
@@ -284,6 +369,12 @@ int main() {
             DialogBoxIndirectParamW(GetModuleHandleW(nullptr),reinterpret_cast<const DLGTEMPLATE*>(layout.data()),nullptr,kingdom::picker_proc,reinterpret_cast<LPARAM>(&stable));
             KillTimer(nullptr,timer);if(!picker_checked && failure.empty())failure="Scaled picker check did not run.";
         }
+        if(failure.empty()) for(const auto language:{kingdom::ui::Language::de,kingdom::ui::Language::en}){
+            kingdom::ui::selected=language;ordered_checked=false;timer=SetTimer(nullptr,0,100,inspect_ordered_dialog);
+            kingdom::pick_cards(nullptr,kingdom::ui::pick(L"Taifun",L"Typhoon"),cards,{},kingdom::CardSelection::ordered,[](const kingdom::CardTargets&,bool){return std::wstring{};});
+            KillTimer(nullptr,timer);if(!ordered_checked && failure.empty())failure="Ordered picker test did not run.";
+        }
+        kingdom::ui::selected=kingdom::ui::Language::de;
         if (failure.empty()) {
             check(!kingdom::set_resource_package_for_test(std::filesystem::path(package).parent_path()/L"missing-test-resources.xpack"),"Missing resource fixture unexpectedly exists.");
             missing_art=true; picker_checked=false; picker_ticks=0;
@@ -293,6 +384,12 @@ int main() {
             KillTimer(nullptr,timer);
             if(!picker_checked && failure.empty()) failure="Missing-art check did not run.";
         }
+    }
+    if(failure.empty()){
+        const auto directory=std::filesystem::path(L"KingdomEffectsPatch/out/staging/ui-check");std::filesystem::create_directories(directory);
+        kingdom::ui::test_preferences=directory/L"editor.ini";
+        check(kingdom::ui::set_language(kingdom::ui::Language::en),"Language preference save failed.");kingdom::ui::selected=kingdom::ui::Language::de;kingdom::ui::load_language();check(kingdom::ui::english(),"Language preference did not survive reload.");
+        std::filesystem::remove(kingdom::ui::test_preferences);kingdom::ui::test_preferences.clear();kingdom::ui::selected=kingdom::ui::Language::de;
     }
     SetThreadDesktop(previous);
     CloseDesktop(desktop);

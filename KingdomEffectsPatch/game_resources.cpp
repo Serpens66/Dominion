@@ -22,6 +22,7 @@ struct ResourceCard {
     bool landscape, dark;
     const char* value_symbol;
     const wchar_t* value;
+    const wchar_t *title_en,*rules_en,*types_en;
 };
 struct ResourceAlias { const char *name, *path; };
 #include "resource_catalog.generated.hpp"
@@ -253,8 +254,10 @@ struct Painter {
         return rows;
     }
 };
-ResourceImage render(Resources& store,const ResourceCard& card) {
-    const std::string cache_key=std::string("card:")+card.id; if (auto cached=store.hit(cache_key)) return cached;
+ResourceImage render(Resources& store,const ResourceCard& source,ui::Language language) {
+    auto card=source;
+    if(language==ui::Language::en) {card.title=card.title_en;card.rules=card.rules_en;card.types=card.types_en;}
+    const std::string cache_key=std::string(language==ui::Language::en?"card:en:":"card:de:")+card.id; if (auto cached=store.hit(cache_key)) return cached;
     require(bool(safe_load(store,"res/card_gen/shared/txt_back")) &&
             bool(safe_load(store,card.top)) && bool(safe_load(store,card.bottom)));
     const int width=card.landscape?524:344,height=card.landscape?344:524;
@@ -339,10 +342,10 @@ ResourceImage game_art(std::string_view name) {
     for (const auto& alias:resource_aliases) if (name==alias.name) { path=alias.path; break; }
     return safe_load(store,path);
 }
-ResourceImage game_card(std::string_view id) {
+ResourceImage game_card(std::string_view id,ui::Language language) {
     auto& store=resources(); std::lock_guard<std::recursive_mutex> guard(store.mutex);
     for (const auto& card:resource_cards) if (id==card.id) {
-        try { store.initialize(); return render(store,card); } catch (...) { return {}; }
+        try { store.initialize(); return render(store,card,language); } catch (...) { return {}; }
     }
     return {};
 }
@@ -352,27 +355,29 @@ bool set_resource_package_for_test(const std::filesystem::path& path) { auto& st
 struct CardPreviewLoader::State {
     std::mutex mutex; std::condition_variable ready; bool stop=false, pending=false, complete=false;
     std::uint64_t generation=0, loads=0; std::string requested,result_id; ResourceImage result; std::thread worker;
+    ui::Language requested_language=ui::Language::de,result_language=ui::Language::de;
     State():worker([this] {
         for (;;) {
             std::unique_lock<std::mutex> lock(mutex); ready.wait(lock,[this]{return stop||pending;}); if (stop) return;
-            const auto id=requested; const auto serial=generation; pending=false; lock.unlock();
-            auto image=game_card(id); lock.lock();
+            const auto id=requested; const auto serial=generation;const auto language=requested_language; pending=false; lock.unlock();
+            auto image=game_card(id,language); lock.lock();
             ++loads;
-            if (!stop && serial==generation) { result_id=id; result=std::move(image); complete=true; }
+            if (!stop && serial==generation) { result_id=id;result_language=language; result=std::move(image); complete=true; }
         }
     }) {}
     ~State() { { std::lock_guard<std::mutex> lock(mutex); stop=true; } ready.notify_one(); worker.join(); }
 };
 CardPreviewLoader::CardPreviewLoader():state_(std::make_unique<State>()) {}
 CardPreviewLoader::~CardPreviewLoader()=default;
-void CardPreviewLoader::request(std::string id) {
-    { std::lock_guard<std::mutex> lock(state_->mutex); if (state_->generation && id==state_->requested) return;
+void CardPreviewLoader::request(std::string id,ui::Language language) {
+    { std::lock_guard<std::mutex> lock(state_->mutex); if (state_->generation && id==state_->requested && language==state_->requested_language) return;
+      state_->requested_language=language;
       ++state_->generation; state_->requested=std::move(id); state_->pending=!state_->requested.empty(); state_->complete=false; state_->result.reset(); }
     state_->ready.notify_one();
 }
-bool CardPreviewLoader::take(std::string& id,ResourceImage& image) {
+bool CardPreviewLoader::take(std::string& id,ResourceImage& image,ui::Language* language) {
     std::lock_guard<std::mutex> lock(state_->mutex); if (!state_->complete) return false;
-    id=state_->result_id; image=std::move(state_->result); state_->complete=false; return true;
+    id=state_->result_id; image=std::move(state_->result);if(language)*language=state_->result_language; state_->complete=false; return true;
 }
 std::pair<std::uint64_t,std::uint64_t> CardPreviewLoader::counts() const {
     std::lock_guard<std::mutex> lock(state_->mutex); return {state_->generation,state_->loads};

@@ -52,7 +52,7 @@ Die bisherigen 356 Parser-/Ausgabe-/Konfigurationsprüfungen bleiben zusätzlich
 | Vorsprung | Seaside |
 | Rotationskoller | Verbündete |
 
-Diese Angaben sind **keine bewiesenen zwingenden Voraussetzungen der Spielwirkung**. Einige Mechaniken lassen sich unabhängig von den Karten der zugehörigen Erweiterung verwenden. Zielkarten und besondere Auslösesituationen bleiben zusätzliche Voraussetzungen. F8 zeigt den Erweiterungsbezug in der Wirkungsspalte und im Detailtext und berücksichtigt ihn in der Suche; die deutsche und englische Anleitung besitzen eine eigene Spalte.
+Diese Angaben sind **keine bewiesenen zwingenden Voraussetzungen der Spielwirkung**. Einige Mechaniken lassen sich unabhängig von den Karten der zugehörigen Erweiterung verwenden. Zielkarten und besondere Auslösesituationen bleiben zusätzliche Voraussetzungen. F8 zeigt die separat redaktionell erfasste Mechanik-/Zielvoraussetzung in der Wirkungsspalte. Die native Filtervorgabe bleibt im Detailtext und in der Suche erhalten. Beide Anleitungsfassungen besitzen getrennte Spalten. [Daten und Beleggrenzen](F8_Editor_Usability.md)
 
 ## Reproduktion
 

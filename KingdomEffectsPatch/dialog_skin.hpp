@@ -29,6 +29,7 @@ public:
     bool draw_icon(HDC dc, std::string_view name, RECT bounds) const;
     int add_icon(HIMAGELIST images, std::string_view name) const;
     HIMAGELIST checks() const;
+    void language_changed() const;
     static constexpr COLORREF paper = RGB(248, 238, 212);
     static constexpr COLORREF panel = RGB(229, 209, 165);
     static constexpr COLORREF ink = RGB(56, 35, 20);
@@ -49,6 +50,7 @@ private:
     HFONT heading_ = nullptr;
     ULONG_PTR graphics_ = 0;
     mutable std::map<std::string, ResourceImage, std::less<>> art_;
+    std::map<HWND,std::wstring> captions_;
 };
 
 }

@@ -105,6 +105,8 @@ DialogSkin::DialogSkin(HWND dialog, bool fit_height) : dialog_(dialog) {
     }
 
     for (auto child = GetWindow(dialog, GW_CHILD); child; child = GetWindow(child, GW_HWNDNEXT)) {
+        const auto text=caption(child);
+        if(*text.data()) captions_.emplace(child,text.data());
         wchar_t name[24]{};
         GetClassNameW(child, name, static_cast<int>(std::size(name)));
         if (scale_ < 1) {
@@ -136,6 +138,12 @@ DialogSkin::DialogSkin(HWND dialog, bool fit_height) : dialog_(dialog) {
         }
     }
     SendMessageW(dialog, DM_SETDEFID, IDOK, 0);
+    language_changed();
+}
+
+void DialogSkin::language_changed() const {
+    for(const auto& entry:captions_) if(IsWindow(entry.first)) SetWindowTextW(entry.first,ui::tr(entry.second.c_str()));
+    InvalidateRect(dialog_,nullptr,FALSE);
 }
 
 DialogSkin::~DialogSkin() {
@@ -212,15 +220,15 @@ int DialogSkin::add_icon(HIMAGELIST images, std::string_view name) const {
 }
 
 HIMAGELIST DialogSkin::checks() const {
-    if (!art("checkbox") || !art("check")) return nullptr;
     const auto size = units({0, 0, 10, 9}).right;
-    const auto images = ImageList_Create(size, size, ILC_COLOR32, 3, 0);
+    const auto images = ImageList_Create(size, size, ILC_COLOR24|ILC_MASK, 3, 0);
     if (!images) return nullptr;
-    // The tree draws no image for state 0 and uses image indices 1 and 2 for checkboxes.
-    if (add_icon(images, "checkbox") == 0 && add_icon(images, "checkbox") == 1 &&
-        add_icon(images, "check") == 2) return images;
-    ImageList_Destroy(images);
-    return nullptr;
+    const auto dc=GetDC(dialog_),buffer=CreateCompatibleDC(dc);
+    const auto bitmap=CreateCompatibleBitmap(dc,size,size);const auto old=SelectObject(buffer,bitmap);
+    for(int state=0;state<3;++state){RECT rect{0,0,size,size};SetDCBrushColor(buffer,paper);FillRect(buffer,&rect,static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+        InflateRect(&rect,-1,-1);DrawFrameControl(buffer,&rect,DFC_BUTTON,DFCS_BUTTONCHECK|(state==2?DFCS_CHECKED:0)|DFCS_FLAT);
+        if(ImageList_AddMasked(images,bitmap,RGB(255,0,255))<0){SelectObject(buffer,old);DeleteObject(bitmap);DeleteDC(buffer);ReleaseDC(dialog_,dc);ImageList_Destroy(images);return nullptr;}}
+    SelectObject(buffer,old);DeleteObject(bitmap);DeleteDC(buffer);ReleaseDC(dialog_,dc);return images;
 }
 
 void DialogSkin::paint_background(HDC dc) const {
@@ -310,8 +318,8 @@ void DialogSkin::paint_checkbox(HWND button, HDC dc) const {
     const auto size = (std::min)(rect.bottom, units({0, 0, 10, 0}).right);
     RECT box{0, (rect.bottom - size) / 2, size, (rect.bottom + size) / 2};
     const bool checked = SendMessageW(button, BM_GETCHECK, 0, 0) == BST_CHECKED;
-    if (!draw_icon(dc, checked ? "check" : "checkbox", box))
-        DrawFrameControl(dc, &box, DFC_BUTTON, DFCS_BUTTONCHECK | (checked ? DFCS_CHECKED : 0));
+    DrawFrameControl(dc, &box, DFC_BUTTON, DFCS_BUTTONCHECK | DFCS_FLAT | (checked ? DFCS_CHECKED : 0) |
+                     (IsWindowEnabled(button)?0:DFCS_INACTIVE));
     rect.left = box.right + 4;
     const auto label = caption(button);
     const auto font = reinterpret_cast<HFONT>(SendMessageW(button, WM_GETFONT, 0, 0));

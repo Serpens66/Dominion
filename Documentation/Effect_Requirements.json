@@ -1,0 +1,1521 @@
+{
+  "gameBuild": 3315,
+  "effects": {
+    "twist_big_ideas": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Zu Beginn deines Zuges +1 Karte.",
+        "rule_en": "At the start of your turn, +1 Card.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_busy_busy": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Zu Beginn deines Zuges +1 Aktion.",
+        "rule_en": "At the start of your turn, +1 Action.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_extra_oomph": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Zu Beginn deines Zuges +1 Geld.",
+        "rule_en": "At the start of your turn, +1 coin.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_forever_favored": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Erzeugt Gefallen selbst. Zum Ausgeben wird ein passender Verbündeter oder ein anderer Verbraucher benötigt.",
+      "detail_en": "Provides Favors itself. Spending them requires an appropriate Ally or another consumer.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Zu Beginn deines Zuges +1 Gefallen.",
+        "rule_en": "At the start of your turn, +1 Favor.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_garbage_heap": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Zu Beginn deines Zuges darfst du eine Handkarte entsorgen.",
+        "rule_en": "At the start of your turn, you may trash a card from your hand.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_penny_party": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Nimm zu Beginn deines Zuges ein Kupfer.",
+        "rule_en": "Gain a Copper at the start of your turn.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_shoppers": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Zu Beginn deines Zuges +1 Kauf.",
+        "rule_en": "At the start of your turn, +1 Buy.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_cramped": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Du ziehst deine normale Hand mit 4 statt 5 Karten.",
+        "rule_en": "Your regular hand draw is 4 cards instead of 5.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_from_the_throne": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Die erste Aktionskarte, die du pro Zug spielst, wird automatisch zweimal gespielt.",
+        "rule_en": "The first Action card you play each turn is automatically played twice.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_landfill": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine deiner Karten entsorgst, +1 Karte. Das gilt auch für Karten, die du von einem anderen Ort als deiner Hand entsorgst.",
+        "rule_en": "When you trash one of your cards, +1 Card. This also applies when you trash the card from somewhere other than your hand.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_so_much_stuff": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du deine erste Karte in einem Zug spielst, nimm eine Nicht-Vorrats-Kopie dieser Karte.",
+        "rule_en": "When you play your first card in a turn, gain a non-Supply copy of it.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_double_up": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du in einem Zug zum ersten Mal eine Aktions- oder Geldkarte nimmst, nimm zusätzlich eine Nicht-Vorrats-Kopie dieser Karte.",
+        "rule_en": "The first time you gain an Action or Treasure card in a turn, also gain a non-Supply copy of it.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_fast_track": {
+      "kind": "mechanic",
+      "de": "Benötigt: Dauer- oder Reservekarten",
+      "en": "Requires: Duration or Reserve cards",
+      "detail_de": "Die Spielwirkung setzt diese Mechanik voraus; die native Erweiterungsangabe allein reicht als Nachweis nicht aus.",
+      "detail_en": "Gameplay requires this mechanic; native expansion metadata alone is not proof of a mandatory expansion.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine Dauer- oder Reservekarte nimmst, lege sie zur Seite und spiele sie zu Beginn der kommenden Aufräumphase.",
+        "rule_en": "When you gain a Duration or Reserve card, set it aside and play it at the start of the upcoming Clean-up.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_favored_landlords": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Erzeugt Gefallen selbst. Zum Ausgeben wird ein passender Verbündeter oder ein anderer Verbraucher benötigt.",
+      "detail_en": "Provides Favors itself. Spending them requires an appropriate Ally or another consumer.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine Punktekarte nimmst, +1 Gefallen.",
+        "rule_en": "When you gain a Victory card, +1 Favor.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_favored_wealthy": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Erzeugt Gefallen selbst. Zum Ausgeben wird ein passender Verbündeter oder ein anderer Verbraucher benötigt.",
+      "detail_en": "Provides Favors itself. Spending them requires an appropriate Ally or another consumer.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine Geldkarte nimmst, +1 Gefallen.",
+        "rule_en": "When you gain a Treasure card, +1 Favor.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_incoming": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine Aktions- oder Geldkarte nimmst, kommt sie sofort oben auf deinen Nachziehstapel statt auf den Ablagestapel.",
+        "rule_en": "When you gain an Action or Treasure card, put it straight onto your deck instead of your discard pile.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_rebates": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine Karte nimmst, +1 Geld.",
+        "rule_en": "When you gain a card, +1 coin.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_beakers": {
+      "kind": "mechanic",
+      "de": "Benötigt: Trank-Guthaben (Alchemisten)",
+      "en": "Requires: Potion credit (Alchemy)",
+      "detail_de": "Die Spielwirkung setzt diese Mechanik voraus; die native Erweiterungsangabe allein reicht als Nachweis nicht aus.",
+      "detail_en": "Gameplay requires this mechanic; native expansion metadata alone is not proof of a mandatory expansion.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Ungenutztes Trank-Guthaben bleibt erhalten, bis du es ausgibst. Du kannst es wie Taler in späteren Zügen zum Bezahlen verwenden.",
+        "rule_en": "Unspent Potion resources carry over until you spend them. You can use them to pay on later turns, like Coffers.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_delayed_joy": {
+      "kind": "mechanic",
+      "de": "Benötigt: Gaben (Nocturne)",
+      "en": "Requires: Boons (Nocturne)",
+      "detail_de": "Die Spielwirkung setzt diese Mechanik voraus; die native Erweiterungsangabe allein reicht als Nachweis nicht aus.",
+      "detail_en": "Gameplay requires this mechanic; native expansion metadata alone is not proof of a mandatory expansion.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Du darfst jede Gabe aufbewahren und erst im nächsten Zug ausführen.",
+        "rule_en": "You may save any Boon and resolve it on your next turn.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_pennies_saved": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Erzeugt Taler selbst; benötigt keine Gilden- oder Renaissance-Karte im Königreich.",
+      "detail_en": "Provides Coffers itself; no Guilds or Renaissance Kingdom card is required.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Am Ende deiner Kaufphase wird übriges Geld zu Talern.",
+        "rule_en": "At the end of your Buy phase, convert unspent coins to Coffers.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_real_estate_barons": {
+      "kind": "mechanic",
+      "de": "Benötigt: Siegpunktmarker",
+      "en": "Requires: VP tokens",
+      "detail_de": "Marker können aus unterschiedlichen Karten oder Effekten stammen; Empires ist keine ausschließliche Pflicht.",
+      "detail_en": "Tokens can come from different cards or effects; Empires is not an exclusive requirement.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Du kannst Siegpunktmarker als Taler ausgeben.",
+        "rule_en": "You can spend VP tokens as Coffers.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_sale": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Karten kosten 1 Geld weniger.",
+        "rule_en": "Cards cost 1 coin less.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_head_start": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Lokale Einzelwirkung vom Nutzer bestätigt. Die beschriebenen Vorteile für Mensch und KI hängen von der Spielerbesetzung ab.",
+      "detail_en": "Single local application confirmed by the user. The stated human and AI benefits depend on player setup.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "In der Kampagne erhältst du zu Beginn 2 Extrazüge. Die KI erhält 10 Siegpunktmarker.",
+        "rule_en": "In the campaign, you get 2 extra turns at the start. The AI gets 10 VP tokens.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_mirror_loot": {
+      "kind": "mechanic",
+      "de": "Benötigt: Kostbarkeiten-Stapel (Plünderer)",
+      "en": "Requires: Loot pile (Plunder)",
+      "detail_de": "Die Spielwirkung setzt diese Mechanik voraus; die native Erweiterungsangabe allein reicht als Nachweis nicht aus.",
+      "detail_en": "Gameplay requires this mechanic; native expansion metadata alone is not proof of a mandatory expansion.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Der Kostbarkeiten-Stapel besteht aus Exemplaren derselben Kostbarkeit.",
+        "rule_en": "The Loot pile consists of copies of the same Loot card.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_room_for_more": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Legt beim Spielaufbau den gewählten Königreichkarten-Stapel in den Vorrat. Die Übernahme aus einem eigenen Set ist offen.",
+        "rule_en": "Adds the chosen Kingdom pile to the Supply at setup. Loading it from a custom set remains unverified.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_turn_turn_turn": {
+      "kind": "mechanic",
+      "de": "Benötigt: rotierbare Stapel (Verbündete)",
+      "en": "Requires: rotating piles (Allies)",
+      "detail_de": "Die oberste zusammenhängende Gruppe gleichnamiger Karten wandert unter den Stapel. A A B B C C wird zu B B C C A A. Bei gewöhnlichen einheitlichen Stapeln entsteht keine sichtbare Änderung.",
+      "detail_en": "Move the top consecutive group of identically named cards to the bottom. A A B B C C becomes B B C C A A. Ordinary uniform piles show no visible change.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md",
+        "https://www.riograndegames.com/wp-content/uploads/2021/09/Dominion-Allies-Rules.pdf"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Zu Beginn jedes menschlichen Zuges nach dem ersten wandert bei jedem rotierbaren Vorratsstapel die oberste Gruppe gleicher Karten unter den Stapel.",
+        "rule_en": "At the start of each human turn after the first, move the top group of matching cards to the bottom of each Supply pile that can rotate.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "twist_typhoon": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Zu Beginn der menschlichen Züge wird ein Königreichkarten-Stapel im Vorrat durch einen anderen ersetzt. Die Liste in Klammern legt die möglichen Ersatzstapel fest und fasst bis zu 20 Stapel-IDs.",
+        "rule_en": "At the start of human turns, the game replaces a Kingdom pile in the Supply. The list in parentheses specifies up to 20 possible replacement pile IDs.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_plus_action": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine Karte von diesem Stapel spielst, +1 Aktion.",
+        "rule_en": "When you play a card from this pile, +1 Action.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_plus_card": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine Karte von diesem Stapel spielst, +1 Karte.",
+        "rule_en": "When you play a card from this pile, +1 Card.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_plus_buy": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine Karte von diesem Stapel spielst, +1 Kauf.",
+        "rule_en": "When you play a card from this pile, +1 Buy.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_plus_coin": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine Karte von diesem Stapel spielst, +1 Geld.",
+        "rule_en": "When you play a card from this pile, +1 coin.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_chameleonize": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Beim Ausspielen werden +Karten und Geldboni in gleicher Höhe getauscht. Aus +2 Karten wird zum Beispiel +2 Geld und umgekehrt.",
+        "rule_en": "When you play the card, swap +Cards and coin bonuses in equal amounts. +2 Cards becomes +2 coins, and vice versa.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_discounted": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Die Karte kostet 1 Geld weniger.",
+        "rule_en": "The card costs 1 coin less.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_pay_later": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Der Geldpreis der Karte wird in gleich viele Schulden umgewandelt.",
+        "rule_en": "Convert the card's coin cost to an equal amount of Debt.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_two_for_one": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Die Karte kostet 1 Geld mehr. Wenn du sie nimmst, nimm zusätzlich eine Nicht-Vorrats-Kopie.",
+        "rule_en": "The card costs 1 coin more. When you gain it, also gain a non-Supply copy.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_offers_insight": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du diese Karte nimmst, +1 Karte am Ende des Zuges.",
+        "rule_en": "When you gain this card, +1 Card at the end of the turn.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_with_horse": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen. Der Effekt liefert die genannte Sonderkarte beziehungsweise den Zusatztyp selbst; der Erweiterungsname ist allein keine Kartenpflicht.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation. The effect supplies the special card or added type itself; the expansion name alone does not require cards from that set.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du diese Karte nimmst, nimm ein Pferd.",
+        "rule_en": "When you gain this card, gain a Horse.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_with_spoils": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen. Der Effekt liefert die genannte Sonderkarte beziehungsweise den Zusatztyp selbst; der Erweiterungsname ist allein keine Kartenpflicht.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation. The effect supplies the special card or added type itself; the expansion name alone does not require cards from that set.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du diese Karte nimmst, nimm eine Beute (spoils).",
+        "rule_en": "When you gain this card, gain a Spoils (spoils).",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_with_villager": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Erzeugt Dorfbewohner selbst; keine zusätzliche Renaissance-Karte erforderlich.",
+      "detail_en": "Provides Villagers itself; no additional Renaissance card is required.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du diese Karte nimmst, +1 Dorfbewohner.",
+        "rule_en": "When you gain this card, +1 Villager.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_durationified": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen. Der Effekt liefert die genannte Sonderkarte beziehungsweise den Zusatztyp selbst; der Erweiterungsname ist allein keine Kartenpflicht.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation. The effect supplies the special card or added type itself; the expansion name alone does not require cards from that set.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Die Karte wird zusätzlich zur Dauerkarte. Wenn du sie spielst, gibt sie dir zu Beginn deines nächsten Zuges +1 Karte und +1 Aktion.",
+        "rule_en": "This card is also a Duration. When you play it, it gives you +1 Card and +1 Action at the start of your next turn.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_treasurified": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Die Karte hat zusätzlich den Typ Geld. Du kannst sie dadurch auch als Geldkarte in der Kaufphase spielen.",
+        "rule_en": "This card is also a Treasure, so you can play it as a Treasure in your Buy phase.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_victorified": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Die Karte wird zusätzlich zur Punktekarte und ist 1 Siegpunkt wert.",
+        "rule_en": "This card is also a Victory card and is worth 1 victory point.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_reactionified": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Die Karte wird zusätzlich zur Reaktion. Du darfst sie spielen, wenn du sie außerhalb der Aufräumphase nimmst, entsorgst oder ablegst.",
+        "rule_en": "This card is also a Reaction. You may play it when you gain, trash, or discard it outside of Clean-up.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_shadowified": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen. Der Effekt liefert die genannte Sonderkarte beziehungsweise den Zusatztyp selbst; der Erweiterungsname ist allein keine Kartenpflicht.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation. The effect supplies the special card or added type itself; the expansion name alone does not require cards from that set.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Die Karte wird zusätzlich zur Schattenkarte. Du kannst sie aus deinem Nachziehstapel spielen, als wäre sie in deiner Hand. Wenn sie eingemischt wird, kommt sie unter den Nachziehstapel.",
+        "rule_en": "This card is also a Shadow. You can play it from your deck as if it were in your hand. When you shuffle it, put it on the bottom of your deck.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_cost_2_less": {
+      "kind": "mechanic",
+      "de": "Benötigt: ein Ereignis",
+      "en": "Requires: an Event",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Das Ereignis kostet 2 Geld weniger.",
+        "rule_en": "The Event costs 2 coins less.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_cost_2D_less": {
+      "kind": "mechanic",
+      "de": "Benötigt: ein Ereignis mit Schuldenkosten",
+      "en": "Requires: an Event with Debt cost",
+      "detail_de": "Bekannter Startabbruch bleibt unabhängig von dieser Voraussetzung gesperrt.",
+      "detail_en": "The known setup failure remains blocked independently of this requirement.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Das Ereignis kostet 2 Schulden weniger.",
+        "rule_en": "The Event costs 2 less Debt.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_cost_zero": {
+      "kind": "mechanic",
+      "de": "Benötigt: ein Ereignis",
+      "en": "Requires: an Event",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Das Ereignis kostet 0 Geld.",
+        "rule_en": "The Event costs 0 coins.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_bonus_money": {
+      "kind": "mechanic",
+      "de": "Benötigt: ein Ereignis",
+      "en": "Requires: an Event",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du das Ereignis kaufst, +1 Geld.",
+        "rule_en": "When you buy this Event, +1 coin.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_also_silver": {
+      "kind": "mechanic",
+      "de": "Benötigt: ein Ereignis",
+      "en": "Requires: an Event",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du das Ereignis kaufst, nimm ein Silber.",
+        "rule_en": "When you buy this Event, gain a Silver.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_motivational": {
+      "kind": "mechanic",
+      "de": "Benötigt: ein Ereignis",
+      "en": "Requires: an Event",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du das Ereignis kaufst, +2 Karten am Ende des Zuges.",
+        "rule_en": "When you buy this Event, +2 Cards at the end of the turn.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_got_it_already": {
+      "kind": "mechanic",
+      "de": "Benötigt: ein Ereignis",
+      "en": "Requires: an Event",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Das Ereignis wird in deinem ersten Zug automatisch und kostenlos gekauft.",
+        "rule_en": "You automatically buy this Event for free on your first turn.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_one_track_mind": {
+      "kind": "mechanic",
+      "de": "Benötigt: ein Ereignis",
+      "en": "Requires: an Event",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Das Ereignis wird zu Beginn jeder Kaufphase automatisch und kostenlos gekauft.",
+        "rule_en": "You automatically buy this Event for free at the start of each Buy phase.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_fawning_service": {
+      "kind": "mechanic",
+      "de": "Benötigt: ein Ereignis",
+      "en": "Requires: an Event",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine Provinz nimmst, wird das Ereignis automatisch und kostenlos gekauft.",
+        "rule_en": "When you gain a Province, you automatically buy this Event for free.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_perks_of_wealth": {
+      "kind": "mechanic",
+      "de": "Benötigt: ein Ereignis",
+      "en": "Requires: an Event",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du ein Gold nimmst, führe das Ereignis aus.",
+        "rule_en": "When you gain a Gold, resolve this Event.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_double_vp": {
+      "kind": "mechanic",
+      "de": "Benötigt: eine Landmarke (Empires)",
+      "en": "Requires: a Landmark (Empires)",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Die Landmarke vergibt doppelt so viele Siegpunkte.",
+        "rule_en": "The Landmark awards twice as many victory points.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_action_way": {
+      "kind": "mechanic",
+      "de": "Benötigt: einen Weg (Menagerie)",
+      "en": "Requires: a Way (Menagerie)",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine Karte nach den Anweisungen dieses Wegs spielst, +1 Aktion.",
+        "rule_en": "When you play a card using this Way, +1 Action.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_coin_way": {
+      "kind": "mechanic",
+      "de": "Benötigt: einen Weg (Menagerie)",
+      "en": "Requires: a Way (Menagerie)",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn du eine Karte nach den Anweisungen dieses Wegs spielst, +1 Geld.",
+        "rule_en": "When you play a card using this Way, +1 coin.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_also_debt": {
+      "kind": "mechanic",
+      "de": "Benötigt: eine Prophezeiung und ihren Auslöser (Rising Sun)",
+      "en": "Requires: a Prophecy and its trigger (Rising Sun)",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn die Prophezeiung eintritt, erhält jeder Spieler 5 Schulden.",
+        "rule_en": "When the Prophecy comes true, each player gets 5 Debt.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_also_gold": {
+      "kind": "mechanic",
+      "de": "Benötigt: eine Prophezeiung und ihren Auslöser (Rising Sun)",
+      "en": "Requires: a Prophecy and its trigger (Rising Sun)",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn die Prophezeiung eintritt, nimmt jeder Spieler 3 Gold außerhalb des Vorrats.",
+        "rule_en": "When the Prophecy comes true, each player gains 3 Gold from outside the Supply.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_also_plague": {
+      "kind": "mechanic",
+      "de": "Benötigt: eine Prophezeiung und ihren Auslöser (Rising Sun)",
+      "en": "Requires: a Prophecy and its trigger (Rising Sun)",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn die Prophezeiung eintritt, nimmt jeder Spieler 3 Flüche außerhalb des Vorrats.",
+        "rule_en": "When the Prophecy comes true, each player gains 3 Curses from outside the Supply.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "stamp_also_respect": {
+      "kind": "mechanic",
+      "de": "Benötigt: eine Prophezeiung und ihren Auslöser (Rising Sun)",
+      "en": "Requires: a Prophecy and its trigger (Rising Sun)",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Wenn die Prophezeiung eintritt, erhält jeder Spieler mit positivem Punktestand so viele Siegpunktmarker, wie er zu diesem Zeitpunkt Siegpunkte hat.",
+        "rule_en": "When the Prophecy comes true, each player with a positive score gets as many VP tokens as they currently have victory points.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_10_favor": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Erzeugt Gefallen selbst. Zum Ausgeben wird ein passender Verbündeter oder ein anderer Verbraucher benötigt.",
+      "detail_en": "Provides Favors itself. Spending them requires an appropriate Ally or another consumer.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Jeder Spieler startet mit 10 Gefallen.",
+        "rule_en": "Each player starts with 10 Favors.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_10_villagers": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Erzeugt Dorfbewohner selbst; keine zusätzliche Renaissance-Karte erforderlich.",
+      "detail_en": "Provides Villagers itself; no additional Renaissance card is required.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Jeder Spieler startet mit 10 Dorfbewohnern.",
+        "rule_en": "Each player starts with 10 Villagers.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_5_coffers": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Erzeugt Taler selbst; benötigt keine Gilden- oder Renaissance-Karte im Königreich.",
+      "detail_en": "Provides Coffers itself; no Guilds or Renaissance Kingdom card is required.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Jeder Spieler startet mit 5 Talern.",
+        "rule_en": "Each player starts with 5 Coffers.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_add_card": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Jeder Spieler startet mit einer Kopie dieser Karte zusätzlich im Startdeck.",
+        "rule_en": "Each player starts with an extra copy of this card in their starting deck.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_add_each_pile": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Jeder Spieler startet mit einer Kopie von jedem Königreichkarten-Stapel zusätzlich im Startdeck.",
+        "rule_en": "Each player starts with an extra copy of a card from each Kingdom pile in their starting deck.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_allow_second_cube": {
+      "kind": "mechanic",
+      "de": "Benötigt: ein Projekt (Renaissance)",
+      "en": "Requires: a Project (Renaissance)",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Erlaubt einen zweiten Projektstein auf dem gewählten Projekt und verdoppelt damit dessen Effekt.",
+        "rule_en": "Allows a second cube on the chosen Project, doubling its effect.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_curse_cost_3": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Flüche kosten 3 Geld.",
+        "rule_en": "Curses cost 3 coins.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_double_deck": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Jeder Spieler startet mit doppelt so vielen Exemplaren jeder Karte seines Startdecks.",
+        "rule_en": "Each player starts with twice as many copies of every card in their starting deck.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_double_heirloom": {
+      "kind": "mechanic",
+      "de": "Benötigt: eine Königreichkarte mit Erbstück (Nocturne)",
+      "en": "Requires: a Kingdom card with an Heirloom (Nocturne)",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Zwei Exemplare des Erbstücks ersetzen bei jedem Spieler zwei Startkupfer. Gib die zugehörige Königreichkarte an, etwa start_double_heirloom(secret_cave) für Geheime Höhle.",
+        "rule_en": "Two copies of the Heirloom replace two starting Coppers per player. Use the associated Kingdom card ID, as in start_double_heirloom(secret_cave) for Secret Cave.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_double_pile": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Verdoppelt den Inhalt des Vorratsstapels. start_double_pile(village) wurde mit Dorf im Spiel bestätigt.",
+        "rule_en": "Doubles the number of cards in the Supply pile. start_double_pile(village) was verified with Village in a game test.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_double_vp_tokens": {
+      "kind": "mechanic",
+      "de": "Benötigt: passende Landmarke mit Siegpunktmarkern (Empires)",
+      "en": "Requires: appropriate Landmark using VP tokens (Empires)",
+      "detail_de": "Die Landmarke muss Siegpunktmarker als Vorrat verwenden und vergeben können. Andere Landmarken profitieren nicht allein von zusätzlichen Markern.",
+      "detail_en": "The Landmark must use and award a pool of VP tokens. Other Landmarks do not benefit merely from extra tokens.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Legt pro Spieler 6 zusätzliche Siegpunktmarker auf die gewählte Landmarke. Bei Landmarken mit regulär 6 Markern pro Spieler verdoppelt sich dadurch die Startmenge.",
+        "rule_en": "Adds 6 VP tokens per player to the chosen Landmark. This doubles the starting amount for Landmarks that normally have 6 tokens per player.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_in_play": {
+      "kind": "mechanic",
+      "de": "Benötigt: eine Dauerkarte",
+      "en": "Requires: a Duration card",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Jeder Spieler startet mit der gewählten Dauerkarte bereits im Spiel. Die Plünderer-Kampagne nutzt start_in_play(search) für Suche.",
+        "rule_en": "Each player starts with the chosen Duration card already in play. The Plunder campaign uses start_in_play(search) for Search.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_journey_facedown": {
+      "kind": "mechanic",
+      "de": "Benötigt: Reisemarker und einen passenden Auslöser (Abenteuer)",
+      "en": "Requires: Journey token and an appropriate trigger (Adventures)",
+      "detail_de": "Ändert den Startzustand des Reisemarkers. Für einen spielerischen Unterschied wird zusätzlich eine Karte oder ein Ereignis benötigt, das den Reisemarker verwendet (Abenteuer).",
+      "detail_en": "Changes the initial Journey token state. A meaningful gameplay difference additionally requires a card or Event using that token (Adventures).",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Jeder Spieler beginnt mit verdecktem Reisemarker.",
+        "rule_en": "Each player starts with their Journey token face down.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_make_split_pile": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Ersetzt die untere Hälfte eines vorhandenen Stapels mit mindestens 10 Karten durch die zweite Karte. Bei einem Zehnerstapel ersetzt start_make_split_pile(vassal,groundskeeper) die unteren 5 Vasallen durch Gärtnerinnen.",
+        "rule_en": "Replaces the bottom half of an existing pile of at least 10 cards with the second card. In a ten-card pile, start_make_split_pile(vassal,groundskeeper) replaces the bottom 5 Vassals with Groundskeepers.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_native_village": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Erzeugt die Ablage selbst. Zum späteren Zurückholen wird Eingeborenendorf benötigt.",
+      "detail_en": "Provides the mat itself. Retrieving the cards later requires Native Village.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Jeder Spieler startet mit der gewählten Karte auf seinem Eingeborenendorf-Tableau. start_native_village(silver) legt dort ein Silber ab.",
+        "rule_en": "Each player starts with the chosen card on their Native Village mat. start_native_village(silver) puts a Silver there.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_plus_2_vp_tokens": {
+      "kind": "mechanic",
+      "de": "Benötigt: passende Landmarke mit Siegpunktmarkern (Empires)",
+      "en": "Requires: appropriate Landmark using VP tokens (Empires)",
+      "detail_de": "Die Marker auf Aktionsstapeln benötigen eine passende Wertung, insbesondere Entweihter Schrein. Ein beliebiges Landmarken-Ziel macht diese Marker nicht automatisch nutzbar.",
+      "detail_en": "Tokens on Action piles need an appropriate scoring rule, notably Defiled Shrine. An arbitrary Landmark target does not automatically make them useful.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Legt beim Aufbau je 2 zusätzliche Siegpunktmarker auf die Aktionsstapel im Vorrat, ausgenommen Stapel vom Typ Sammlung. Die passende Ziel-ID für Entweihter Schrein ist defiled_shrine.",
+        "rule_en": "At setup, adds 2 VP tokens to each Action pile in the Supply, excluding Gathering piles. The target ID for Defiled Shrine is defiled_shrine.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_plus_8_vp_tokens": {
+      "kind": "mechanic",
+      "de": "Benötigt: passende Landmarke mit Siegpunktmarkern (Empires)",
+      "en": "Requires: appropriate Landmark using VP tokens (Empires)",
+      "detail_de": "Die Marker auf Geldstapeln benötigen eine passende Wertung, insbesondere Aquädukt. Ein beliebiges Landmarken-Ziel macht diese Marker nicht automatisch nutzbar.",
+      "detail_en": "Tokens on Treasure piles need an appropriate scoring rule, notably Aqueduct. An arbitrary Landmark target does not automatically make them useful.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Legt beim Aufbau je 8 zusätzliche Siegpunktmarker auf die Geldstapel im Vorrat. Die passende Ziel-ID für Aquädukt ist aqueduct.",
+        "rule_en": "At setup, adds 8 VP tokens to each Treasure pile in the Supply. The target ID for Aqueduct is aqueduct.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_replace_copper": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Ersetzt pro Spieler ein Startkupfer durch eine neu erzeugte Kopie der gewählten Karte.",
+        "rule_en": "Replaces one starting Copper per player with a newly created copy of the chosen card.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_replace_copper_from_pile": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Nimmt pro Spieler eine Karte vom gewählten Stapel und legt sie anstelle eines Kupfers ins Startdeck.",
+        "rule_en": "Takes one card per player from the chosen pile and puts it in their starting deck in place of a Copper.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_replace_estate": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Ersetzt pro Spieler ein Startanwesen durch eine neu erzeugte Kopie der gewählten Karte, etwa mit start_replace_estate(silver).",
+        "rule_en": "Replaces one starting Estate per player with a newly created copy of the chosen card, as in start_replace_estate(silver).",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_replace_estate_from_pile": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Nimmt pro Spieler eine Karte vom gewählten Stapel und legt sie anstelle eines Anwesens ins Startdeck. Die Menagerie-Kampagne nutzt start_replace_estate_from_pile(horse) dreimal, damit jeder Spieler mit 3 Pferden startet.",
+        "rule_en": "Takes one card per player from the chosen pile and puts it in their starting deck in place of an Estate. The Menagerie campaign uses start_replace_estate_from_pile(horse) three times so each player starts with 3 Horses.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_same_reward": {
+      "kind": "mechanic",
+      "de": "Benötigt: Belohnungen, z. B. durch Ritterkampf",
+      "en": "Requires: Rewards, e.g. from Joust",
+      "detail_de": "Die Spielwirkung setzt diese Mechanik voraus; die native Erweiterungsangabe allein reicht als Nachweis nicht aus.",
+      "detail_en": "Gameplay requires this mechanic; native expansion metadata alone is not proof of a mandatory expansion.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Das Spiel wählt eine Belohnung zufällig aus und macht alle anderen Belohnungen zu Kopien davon. Die Vorlage mit Ritterkampf (joust) verwendet den Befehl ohne Klammern.",
+        "rule_en": "The game picks a Reward at random and makes all the other Rewards copies of it. The Joust (joust) template uses the command without parentheses.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_shuffle_pile": {
+      "kind": "mechanic",
+      "de": "Benötigt: einen gemischten Stapel",
+      "en": "Requires: a mixed pile",
+      "detail_de": "Bei einem Stapel aus nur einer Kartensorte ist das Mischen nicht sichtbar.",
+      "detail_en": "Shuffling a pile containing only one card type has no visible effect.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Mischt den gewählten gemischten Vorratsstapel beim Aufbau, etwa start_shuffle_pile(patrician) für den Stapel mit Patrizier und Handelsplatz.",
+        "rule_en": "Shuffles the chosen split Supply pile at setup. For example, start_shuffle_pile(patrician) shuffles the Patrician and Emporium pile.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_tavern": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Erzeugt die Ablage selbst. Zum Aufrufen einer Karte braucht es eine passende Reservekarte und ihren Auslöser.",
+      "detail_en": "Provides the mat itself. Calling a card requires an appropriate Reserve card and its trigger.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Jeder Spieler startet mit der gewählten Karte auf seinem Wirtshaus-Tableau. Eine Kampagnenvorlage nutzt zweimal start_tavern(copper).",
+        "rule_en": "Each player starts with the chosen card on their Tavern mat. One campaign template uses start_tavern(copper) twice.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_trash_curses": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Erzeugt beim Aufbau 10 Flüche direkt im Müll.",
+        "rule_en": "Creates 10 Curses directly in the trash at setup.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_trash_pile": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Erzeugt beim Aufbau einen Stapel der gewählten Karte direkt im Müll.",
+        "rule_en": "Creates a pile of the chosen card directly in the trash at setup.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_triple_pile": {
+      "kind": "base",
+      "de": "Basisspiel ausreichend",
+      "en": "Base game sufficient",
+      "detail_de": "Keine besondere Erweiterungsmechanik erforderlich. Ein gewähltes Ziel muss verfügbar sein und zur Situation passen.",
+      "detail_en": "No special expansion mechanic required. A chosen target must be available and fit the situation.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Verdreifacht den Inhalt des gewählten Vorratsstapels.",
+        "rule_en": "Triples the number of cards in the chosen Supply pile.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    },
+    "start_with_cube": {
+      "kind": "mechanic",
+      "de": "Benötigt: ein Projekt (Renaissance)",
+      "en": "Requires: a Project (Renaissance)",
+      "detail_de": "Das passende Ziel muss verfügbar sein. Der Effekt erzeugt dieses Ziel nicht automatisch.",
+      "detail_en": "The appropriate target must be available. The effect does not automatically add that target.",
+      "evidence": [
+        "Documentation/Steam_Spielanleitung.md#katalog-der-kampagneneffekte",
+        "Documentation/Effect_Roundtrip_Tests.md"
+      ],
+      "evidence_detail": {
+        "method": "documented native effect text and target contract; functional verification is recorded separately",
+        "rule_de": "Jeder Spieler startet mit einem Projektstein auf dem gewählten Projekt. Die Kampagne nutzt etwa start_with_cube(pageant) für Festzug.",
+        "rule_en": "Each player starts with a cube on the chosen Project. One campaign example is start_with_cube(pageant) for Pageant.",
+        "native_metadata": "Effect_Expansion_References.json is a generator filter, not a proof of a required expansion"
+      }
+    }
+  },
+  "classificationNote": "Prerequisites are derived from documented rules and target contracts, not native expansion filter tags. They do not certify untested in-game behavior or ownership bypasses.",
+  "exeSha256": "56e8d563320b7d6c0cf68ae11cdf2c0aa971dbff44bb296651b630815c548877"
+}

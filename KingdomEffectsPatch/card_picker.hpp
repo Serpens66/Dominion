@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include "ui_language.hpp"
 
 namespace kingdom {
 
@@ -23,7 +24,13 @@ struct CardTarget {
     int potions;
     int debt;
     unsigned kinds;
+    const wchar_t *title_en=L"", *expansion_en=L"", *types_en=L"", *cost_en=L"", *rules_en=L"";
 };
+inline const wchar_t* card_title(const CardTarget& card) {return ui::english() && *card.title_en?card.title_en:card.title;}
+inline const wchar_t* card_expansion(const CardTarget& card) {return ui::english() && *card.expansion_en?card.expansion_en:card.expansion;}
+inline const wchar_t* card_types(const CardTarget& card) {return ui::english() && *card.types_en?card.types_en:card.types;}
+inline const wchar_t* card_cost(const CardTarget& card) {return ui::english() && *card.cost_en?card.cost_en:card.cost;}
+inline const wchar_t* card_rules(const CardTarget& card) {return ui::english() && *card.rules_en?card.rules_en:card.rules;}
 
 using CardTargets = std::vector<const CardTarget*>;
 enum class CardSelection { single, multiple, ordered };

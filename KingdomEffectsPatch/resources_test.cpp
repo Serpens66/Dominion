@@ -33,17 +33,26 @@ int wmain(int argc,wchar_t** argv) {
         }
         if (argc==6) { require(!game_card("market")); return 0; }
         unsigned missing=0;
-        for (const auto& card:resource_cards) {
-            auto image=game_card(card.id);
+        for(const auto language:{ui::Language::de,ui::Language::en}) for (const auto& card:resource_cards) {
+            auto image=game_card(card.id,language);
             report<<"card:"<<card.id<<'\t'<<(image?"ok":"missing")<<'\n';
             if (!image) { ++missing; continue; }
             require(resource_cache_bytes()<=budget);
             if (std::string_view(card.id)=="market" || std::string_view(card.id)=="miser" ||
                 std::string_view(card.id)=="village" || std::string_view(card.id)=="city_quarter" ||
                 std::string_view(card.id)=="capitalism" || std::string_view(card.id)=="harem") {
-                const auto output=std::filesystem::path(argv[4])/(std::string(card.id)+".png");
+                const auto output=std::filesystem::path(argv[4])/(std::string(card.id)+(language==ui::Language::en?"-en.png":"-de.png"));
                 require(image->Save(output.c_str(),&png,nullptr)==Gdiplus::Ok);
             }
+        }
+        {
+            const auto de=game_card("village",ui::Language::de),en=game_card("village",ui::Language::en);
+            require(de && en && de!=en && digest(*de)!=digest(*en));
+            require(game_card("village",ui::Language::de)==de && game_card("village",ui::Language::en)==en);
+            CardPreviewLoader loader;loader.request("village",ui::Language::de);loader.request("village",ui::Language::en);
+            std::string id;ResourceImage image;ui::Language language=ui::Language::de;bool done=false;
+            for(int i=0;i<300;++i){if(loader.take(id,image,&language)){done=true;break;}Sleep(10);}
+            require(done && image==en && language==ui::Language::en && id=="village");
         }
         // A superseded request cannot become the currently published result.
         {

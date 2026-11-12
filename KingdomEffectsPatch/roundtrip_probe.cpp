@@ -11,6 +11,8 @@ using kingdom::CardTarget;
 struct EffectDefinition {
     const char* id; const wchar_t *title,*description,*timing,*status,*verification,*expansion_reference;
     unsigned timing_mask; TargetKind first,second;
+    const wchar_t *title_en,*description_en,*timing_en,*status_en,*expansion_reference_en;
+    const wchar_t *requirement_de,*requirement_en,*requirement_detail_de,*requirement_detail_en;
 };
 #include "effect_catalog.generated.hpp"
 const char* target(TargetKind kind, bool second=false) {

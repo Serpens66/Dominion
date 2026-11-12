@@ -59,3 +59,9 @@ Der Runner verweigert die Original-EXE als Testkopie und prüft deren Build-3315
 ## Zusätzlicher Startpfad-Test
 
 `startup_effect_test.exe <Testkopie> <roundtrip_probe.dll> setupData 1` prüft die zwölf dokumentierten Startfälle einschließlich Achterfolge und nativem Schließen/Neustarten. `kingdomData` vergleicht den bisherigen Weg; `0` statt `1` protokolliert den ungepatchten Referenzlauf. Der Runner bleibt aus dem Release ausgeschlossen. Erweiterungsdaten stammen aus `Documentation/Effect_Expansion_References.json`; deren IDs und EXE-Hash werden beim Katalogbau geprüft.
+
+## Bilinguale Oberfläche und Voraussetzungen
+
+Vor Paketbau `test_release_catalog.py` ausführen. Die ID-Mengen beider Anleitungsfassungen, `Effect_Requirements.json` und der nativen Erweiterungsmetadaten müssen alle 89 Effekte enthalten. Die sechs Anleitungs-Spalten werden ebenfalls geprüft.
+
+`editor_release_test.exe` läuft auf einem unsichtbaren Desktop, mit separater Test-INI statt Nutzerpräferenzen. Der Lauf deckt bleibende Textzellen, Umbrüche, Deutsch/English, Taifun-Kapazität und die gemeinsame Sortiersteuerung ab. `resources_test.exe` baut 773 Vorschauen in beiden Sprachen auf und prüft den gemeinsamen Cache sowie die Sprachzuordnung asynchroner Ergebnisse. Die Berichte und Screenshots in `out/staging` sind nicht Bestandteil des Pakets. [Aktueller Prüfstand](../Documentation/F8_Editor_Usability.md)

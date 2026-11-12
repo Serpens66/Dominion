@@ -52,7 +52,7 @@ def read_effects():
     catalog = catalog.split("#### Weitere Varianten aus der Kampagnenerzeugung", 1)[0]
     pattern = (
         r"^\| ([^|]+) \| `((?:twist|stamp|start)_[a-z0-9_]+)(?:\(([^)]+)\))?`"
-        r" \| ([^|\n]*?) \*Einmal – ([^|\n]*?) · Mehrfach – ([^|\n]*?)\* \| ([^|\n]+) \|(?: [^|\n]+ \|)?$"
+        r" \| ([^|\n]*?) \*Einmal – ([^|\n]*?) · Mehrfach – ([^|\n]*?)\* \| ([^|\n]+) \|(?: [^|\n]+ \|)*$"
     )
     effects = []
     for name, command, args, description, once, repeated, timing in re.findall(pattern, catalog, re.MULTILINE | re.IGNORECASE):
@@ -72,6 +72,15 @@ def read_effects():
         effects.append((command, plain_text(name), plain_text(description), plain_text(timing), status, first, second))
     assert len(effects) == len({row[0] for row in effects}) == 89, "Expected 89 documented effects"
     return effects
+
+
+def read_english_effects():
+    text=(DOCS/'Steam_Spielanleitung.md').read_text(encoding='utf-8')
+    text=text.split('### Campaign effect catalog',1)[1].split('#### Other campaign generation variants',1)[0]
+    pattern=r"^\| ([^|]+) \| `((?:twist|stamp|start)_[a-z0-9_]+)(?:\(([^)]+)\))?` \| ([^|\n]*?) \*Once – ([^|\n]*?) · Repeated – ([^|\n]*?)\* \| ([^|\n]+) \|(?: [^|\n]+ \|)*$"
+    rows={id:(plain_text(name),plain_text(description),plain_text(timing),f"Once – {once}\r\nRepeated – {repeated}") for name,id,args,description,once,repeated,timing in re.findall(pattern,text,re.M|re.I)}
+    assert len(rows)==89, 'Expected 89 English effects'
+    return rows
 
 
 def search_key(text):
@@ -119,7 +128,7 @@ def timing_mask(timing):
     return mask
 
 
-def rule_text(text):
+def rule_text(text, english=False):
     text = re.sub(r"-//(?=[a-zäöüß])", "", text)
     text = text.replace("//", "\n").replace("{br}", "\n").replace("{coin_2}", "[2]")
     text = re.sub(r"([\[{])!", r"\1", text)
@@ -131,7 +140,10 @@ def rule_text(text):
         text = text.replace("{" + marker + "}", label)
     text = text.replace("|", "").replace("`", "")
     text = re.sub(r"%([^%]+)%", r"\1", text)
-    return "\r\n".join("".join(ch for ch in line if ch >= " " or ch == "\t") for line in text.splitlines())
+    result="\r\n".join("".join(ch for ch in line if ch >= " " or ch == "\t") for line in text.splitlines())
+    if english:
+        for de,en in [('Münzen','Coins'),('Schulden','Debt'),('Trank','Potion'),('Sonnenmarker','Sun tokens'),('Siegpunkte','VP'),('Embargomarker','Embargo tokens'),('Geldmarker','Coin tokens'),('Gefallen-Marker','Favor tokens')]: result=result.replace(de,en)
+    return result
 
 
 def read_targets(catalog, aliases):
@@ -183,13 +195,15 @@ def prepare_resources(output, xpack, cards, load_types):
         entries = read_index(package)
         strings = read_strings(read_resource(package, entries, "res/translation/de"))
     labels = ["#pragma once", "namespace kingdom::menu_text {"]
-    labels.extend(f"inline constexpr wchar_t {name}[] = {literal(strings[key], True)};" for name, key in MENU_LABELS.items())
+    with xpack.open('rb') as package: english_strings=read_strings(read_resource(package,entries,'res/translation/en-us'))
+    labels.extend(f"inline const wchar_t* {name}() {{ return ui::pick({literal(strings[key],True)},{literal(english_strings["dom_msg_cancel"] if name=="cancel" else english_strings[key],True)}); }}" for name,key in MENU_LABELS.items())
     (output.parent / "menu_labels.generated.hpp").write_text("\n".join(labels + ["}"]), encoding="utf-8")
     def sprite(name):
         path = "res/card_gen/shared/" + name
         return path if path in entries else ""
     def first(*names):
         return next((sprite(n) for n in names if sprite(n)), "")
+    english_types=load_catalog(xpack)["types"]["en"]
     resources = {}
     for key in entries:
         parts = key.split("/")
@@ -233,6 +247,9 @@ def prepare_resources(output, xpack, cards, load_types):
         fields += [literal(v,True) for v in (title,rules,types)]
         fields += [str(cost[k]) for k in ("coins","potions","debt")]
         fields += [str(bool(landscape)).lower(), str("night" in kinds and not landscape).lower(),literal(value[0]),literal(value[1],True)]
+        en_title,en_rules=card['text']['en']
+        en_rules=re.sub(r'%([^%]+)%',r'\1',en_rules).replace('{br}','//').replace('{coin_2}','[2]')
+        fields += [literal(v,True) for v in (en_title,en_rules,' – '.join(english_types.get(k,k) for k in kinds))]
         rows.append("    {" + ", ".join(fields) + "},")
     rows += ["};", "constexpr ResourceAlias resource_aliases[] = {"]
     aliases={name:"res/ui_art/"+key for name,key in MENU_ASSETS.items()}
@@ -261,12 +278,28 @@ def main(output, xpack):
     properties = json.loads((DOCS / "Card_Properties.json").read_text(encoding="utf-8"))
     aliases = {key: data["aliasFor"] for key, data in properties["cards"].items() if data and "aliasFor" in data}
     targets = read_targets(catalog, aliases)
+    english_effects=read_english_effects()
+    requirement_data=json.loads((DOCS/'Effect_Requirements.json').read_text(encoding='utf-8'))
+    assert requirement_data['exeSha256']==catalog['nativeIds']['exeSha256']
+    requirements=requirement_data['effects']
+    assert all(all(row) for row in english_effects.values()), 'Missing English effect text'
+    for effect_id,req in requirements.items():
+        assert req['kind'] in ('base','mechanic','unclear'), effect_id
+        assert all(req[key] for key in ('de','en','detail_de','detail_en','evidence','evidence_detail')), effect_id
+    assert set(requirements)==set(english_effects)=={row[0] for row in read_effects()}
+    by_id={card['id']:card for card in catalog['cards']}
+    ui_pairs=json.loads((Path(__file__).parent/'ui_translations.json').read_text(encoding='utf-8'))
+    (output.parent/'ui_translations.generated.hpp').write_text('static constexpr Pair pairs[]{\n'+''.join('{'+literal(de,True)+','+literal(en,True)+'},\n' for de,en in ui_pairs.items())+'};\n',encoding='utf-8')
     rows = ["// Generated from Documentation by generate_effect_catalog.py.",
             "constexpr EffectDefinition effect_catalog[] = {"]
     for command, name, description, timing, status, first, second in read_effects():
         expansion=' oder '.join(catalog['expansions'].get(key,key) for group in references['effects'][command] for key in group)
+        en_name,en_description,en_timing,en_status=english_effects[command]
+        en_ref=' or '.join(catalog['expansionsEn'].get(key,key) for group in references['effects'][command] for key in group)
+        req=requirements[command]
+        extra=', '.join(literal(v,True) for v in (en_name,en_description,en_timing,en_status,en_ref,req['de'],req['en'],req['detail_de'],req['detail_en']))
         rows.append(f"    {{{literal(command)}, {literal(name, True)}, {literal(description, True)}, {literal(timing, True)}, {literal(status, True)}, {literal(verification_label(status), True)}, {literal(expansion,True)}, {timing_mask(timing)}, "
-                    f"TargetKind::{first}, TargetKind::{second}}},")
+                    f"TargetKind::{first}, TargetKind::{second}, {extra}}},")
     rows.extend(("};", "", "constexpr const wchar_t* timing_filters[] = {"))
     rows.extend(f"    {literal(label, True)}," for label in TIMING_FILTERS)
     rows.extend(("};", "", "constexpr CardTarget target_catalog[] = {"))
@@ -274,12 +307,27 @@ def main(output, xpack):
         mask = " | ".join(f"kind_mask(TargetKind::{kind})" for kind in kinds)
         fields = ", ".join(literal(value, True) for value in metadata)
         price = ", ".join(map(str, costs))
-        rows.append(f"    {{{literal(card_id)}, {fields}, {literal(expansion_id)}, {literal(icons)}, {price}, {mask}}},")
+        props=by_id[card_id]; en_title,en_rules=props['text']['en']; cost=props.get('cost')
+        en_cost=[]
+        if cost:
+            if cost['coins'] or not(cost['potions'] or cost['debt']): en_cost.append(f"{cost['coins']} Coins")
+            if cost['potions']: en_cost.append(f"{cost['potions']} Potion")
+            if cost['debt']: en_cost.append(f"{cost['debt']} Debt")
+        en_extra=', '.join(literal(v,True) for v in (en_title, 'Basic Cards' if expansion_id=='basic' else catalog['expansionsEn'][expansion_id], ' · '.join(catalog['types']['en'].get(k,k) for k in props['types']), ' + '.join(en_cost),rule_text(en_rules,True)))
+        rows.append(f"    {{{literal(card_id)}, {fields}, {literal(expansion_id)}, {literal(icons)}, {price}, {mask}, {en_extra}}},")
     rows.extend(("};", "", "constexpr std::pair<std::string_view, std::string_view> target_aliases[] = {"))
     for alias, canonical in aliases.items():
         rows.append(f"    {{{literal(alias)}, {literal(canonical)}}},")
     rows.append("};")
     output.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    expansion_rows=['constexpr ExpansionInfo expansion_catalog[]{']
+    for exp in catalog['expansions']:
+        info=catalog['expansionInfo'].get(exp,{})
+        de=info.get('de',{}); en=info.get('en',{})
+        values=(exp,'Grundkarten' if exp=='basic' else catalog['expansions'][exp], 'Basic Cards' if exp=='basic' else catalog['expansionsEn'].get(exp,exp),rule_text(de.get('description','')),rule_text(en.get('description',''),True),rule_text('\n\n'.join(de.get('rules',[]))),rule_text('\n\n'.join(en.get('rules',[])),True))
+        expansion_rows.append('    {'+literal(values[0])+', '+', '.join(literal(v,True) for v in values[1:])+'},')
+    expansion_rows.append('};')
+    (output.parent/'expansion_catalog.generated.hpp').write_text('\n'.join(expansion_rows)+'\n',encoding='utf-8')
     target_ids = {entry[0] for entry in targets}
     prepare_resources(output, xpack, [card for card in catalog["cards"] if card["id"] in target_ids], catalog["types"]["de"])
 
