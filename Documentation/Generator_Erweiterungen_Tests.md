@@ -114,3 +114,24 @@ Stand 13. November 2026. Eine Vorprüfung verwendet dieselben Filterprädikate w
 | Offen | Firefox/Edge: konkreten Hinweis durch Festhalten und Loslassen auslösen, längere Namenslisten umbrechen lassen und die letzte Ziehung samt Export während des Konflikts sichtbar halten. |
 
 Die allgemeine Unlösbarkeitsmeldung bleibt für gemeinsam unvereinbare Regeln erhalten, wenn keine einzelne Ursache nachgewiesen wurde. Ein einzelner verworfener Suchzweig wird nicht als globaler Konflikt ausgegeben. Die Prüfungen liefen mit `node SetGenerator/test_generator_solver.js`; die Einstellungsdatei des Nutzers und die Spieldateien wurden nicht verändert.
+
+## Vorrang-Modus und sichtbare Kartenansichten
+
+Stand 13. November 2026. Der optionale Modus „Festgehaltene Karten haben Vorrang“ startet aus. Version-1/2-Einstellungen ohne `pinnedPriority` und ein Gesamtreset verwenden ebenfalls aus. Die Checkbox wird mit den bestehenden Einstellungen gespeichert. Im Vorrang-Modus ist die effektive Obergrenze einer Quote das Maximum aus ihrem eingegebenen Bis-Wert und der Zahl passender fester Quellen. Mindestquoten bleiben bestehen und werden bereits durch feste Treffer erfüllt. Eingabewerte werden nicht überschrieben.
+
+Feste Hauptstapel und Landschaften bleiben auch bei gesperrter Herkunft oder Edition zulässig, ohne weitere Karten daraus freizugeben. Festhalten erzwingt keinen Lostopfplatz. Zufallssets bleiben normale Kandidaten: Erst bei Auslosung gelten ihre Mindestquoten und werden ihre übrigen Karten freigegeben. Nicht ausgeloste Sets können nur über explizite feste Karten vertreten sein. Für Landschaften mit Auto gilt dasselbe. Die eingestellte Hauptstapelzahl, höchstens vier unterstützte Landschaften und zulässige Sonderaufbauten bleiben verbindlich.
+
+| Status | Fall und Ergebnis |
+| --- | --- |
+| Technisch geprüft | Forscherin trotz Entsorgen 0–0 festgehalten: sie bleibt enthalten, aber die übrigen Hauptstapel enthalten keinen weiteren Entsorger. Der eingegebene Bis-Wert bleibt 0. |
+| Technisch geprüft | Sechs feste und vier ergänzte Karten ergeben zehn Hauptstapel. Nicht mehr erfüllbare Mindestquoten für die freien Plätze werden mit verbleibender Trefferzahl und Kapazität erklärt. |
+| Technisch geprüft | Gesperrte Renaissance lässt Forscherin zu, aber keine anderen Renaissance-Kandidaten. Ein fester Abenteurer bleibt bei nicht freigegebener erster Edition enthalten; Kanzler wird nicht zusätzlich freigegeben. |
+| Technisch geprüft | Festhalten erzwingt keinen zusätzlichen Zufallsset-Platz. Zwei zusätzliche Sets werden weiterhin ausgelost. Die Mindestquote eines nicht ausgelosten Zufallssets bleibt inaktiv, während sein expliziter fester Stapel enthalten bleibt. |
+| Technisch geprüft | Eine feste Brandschatzung bleibt trotz Landschaftsgesamtzahl 0–0, Ereignisquote 0–0 und gesperrtem Plünderer enthalten. Die Regeln werden nur für feste Quellen erweitert. Zu viele feste Hauptstapel und mehr als vier feste Landschaften werden weiterhin abgelehnt. Auch 11–13 Hauptstapel liefern die gewählte Anzahl. Die Hinweise „fest · noch“ und ihre Ausblendung bei ausgeschaltetem Modus sind im DOM-Modell geprüft. |
+| Technisch geprüft | Boolescher Einstellungswert, Ablehnung ungültiger Typen, Import ohne Wert, Import mit Vorrang und Rückkehr zum ausgeschalteten Zustand beim Gesamtreset. Bestehende strenge Konfliktprüfungen und Solver-Suite laufen weiter. |
+| Technisch geprüft | Gemeinsame Kartenansicht `updateCardVisual` wird von Titel-Tooltip und direkter Ergebnisansicht verwendet. Inline-Ansichten erhalten keine eigene Registrierung im Tooltip-Zustand. Bildpfade, vollständige Basiskarten und Regeltexte bleiben gemeinsam gepflegt. |
+| Offen | Firefox/Edge: Hinweise „fest · noch“, Überschreitungen, bedingte Angriffsquoten, Änderung der Erweiterungsquoten und Zähler mit aktivem Vorrang-Modus prüfen. Letzte Ziehung und Export müssen bis zur nächsten erfolgreichen Ziehung erhalten bleiben. |
+| Offen | Firefox/Edge bei 390 und 1440 Pixeln: vollständige Karten in Abschnitt 2 und Planungsstapel 11–13, vollständige Basiskarten und zusammengesetzte Erweiterungskarten, fehlende Bilder, beide Sprachen/Designs und erneute Ziehung prüfen. |
+| Offen | Erweiterungssymbole vor den Gruppenüberschriften für Hauptstapel und Landschaften nach Suche, Quoteneingabe, Reset und Sprachwechsel prüfen. |
+
+Die Karten werden erst für tatsächlich angezeigte Ergebnisse oder geöffnete Vorschauen aufgebaut. Für die 26 Basiskarten werden vorhandene vollständige Vorderseiten genutzt; andere Karten verwenden Illustration, Rahmen und Spieltext. Das Ergebnisraster hat höchstens vier Spalten mit ungefähr 10–18 rem breiten Karten. Beim Ersetzen einer Ziehung werden auch festgehaltene Regelverweise der direkten Kartenansichten freigegeben. Eine visuelle Browser-Abnahme dieser Änderungen wurde in diesem Durchlauf nicht durchgeführt.

@@ -10,6 +10,8 @@
 
 Unter **Erweiterungen und Editionen** garantiert **Immer** mindestens einen Stapel aus dem Set. **Zufall** nimmt das Set in den Lostopf auf. Mit **Von** und **Bis** bestimmst du die Stapelzahl pro Set. Bei Zufall gelten diese Quoten, sobald das Set ausgelost wurde. Festgehaltene Karten machen ihre Herkunft erforderlich und belegen bei Zufallssets einen Lostopfplatz. Über **Einstellungen sichern oder laden** kannst du deine Auswahl in einen anderen Browser übertragen.
 
+Mit **Festgehaltene Karten haben Vorrang** dürfen feste Karten Quoten überschreiten und aus gesperrten Erweiterungen oder Editionen stammen. Sie erfüllen weiterhin Mindestquoten; die übrigen Plätze bleiben an die Regeln gebunden. Festhalten allein belegt dann keinen Zufallsset-Platz. Unter den Filtern steht, was noch ergänzt werden darf.
+
 Mit **Zusatzkarten bei Eigenschaften berücksichtigen** zählen feste Kartenreihen und bekannte Zusatzstapel bei den Eigenschaftsquoten mit. Zufällige Aufbaukarten wie beim Weg der Maus bleiben ausgenommen. **Verbunden mit** in der Kartenvorschau zeigt die zugehörigen Karten.
 
 **Bannliste kopieren** gibt die ausgeschlossenen Karten als Einträge für `profiles.xml` aus, in Abschnitt 2 unter dem Kingdom-Code. Ergänze sie im aktiven Profil in `localBans` für KI/Weitergeben oder in `bans` für Online/Privates Spiel. Dominion vorher schließen, die Datei sichern und vorhandene Zahlen nicht doppelt einfügen.

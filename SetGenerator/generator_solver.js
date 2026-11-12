@@ -399,12 +399,19 @@ function analyzeExpansionLottery(request, onFound, deadline = Date.now() + 4800)
     const randomExpansions = [...required, ...picked];
     const selected = new Set([...always, ...randomExpansions]);
     const inPool = card => selected.has(card.expansion);
+    const fixedIds = new Set(request.fixed.map(card => card.id));
+    const pinned = card => request.pinnedPriority && (card.choice === "pinned" || fixedIds.has(card.id));
     const trial = {
       ...request,
-      rules: request.rules.filter(rule => !rule.conditionalExpansion || selected.has(rule.conditionalExpansion)),
+      rules: request.rules.flatMap(rule => {
+        if (!rule.conditionalExpansion || selected.has(rule.conditionalExpansion)) return [rule];
+        if (!request.pinnedPriority) return [];
+        const ids = new Set(rule.ids);
+        return [{ ...rule, min: 0, max: request.fixed.filter(card => ids.has(card.id)).length }];
+      }),
       candidates: request.candidates.filter(inPool),
-      extras: request.extras.filter(inPool),
-      landscapePool: request.landscapePool.filter(card => !inherited.has(card.expansion) || inPool(card)),
+      extras: request.extras.filter(card => inPool(card) || pinned(card)),
+      landscapePool: request.landscapePool.filter(card => pinned(card) || !inherited.has(card.expansion) || inPool(card)),
     };
     const addExpansions = result => ({ ...result, randomExpansions });
     const outcome = analyzeKingdom(trial, result => onFound(addExpansions(result)), deadline, true);

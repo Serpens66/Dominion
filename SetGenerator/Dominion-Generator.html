@@ -283,6 +283,9 @@
   }
   .inherited-stepper button:hover { background: var(--soft-hover); }
   .range-rule-name { display: flex; align-items: center; gap: .4rem; min-height: 2rem; }
+  .range-rule-name:has(> .pinned-quota-note:not([hidden])) { flex-wrap: wrap; }
+  .pinned-quota-note { flex-basis: 100%; grid-column: 1 / -1; font-size: .76rem; color: var(--muted); font-weight: 400; }
+  .pinned-quota-note[data-exceeded] { color: var(--accent-text); }
   input[type=checkbox] { accent-color: var(--green); }
   :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
   #status, #copy-status { margin-top: .8rem; }
@@ -575,8 +578,10 @@
   }
   :is(#cards, #planning-cards) {
     display: grid;
-    /* Keep at most four columns inside the preview area. */
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, max(13rem, calc((100% - 1.65rem) / 4))), 1fr));
+    /* Up to four complete card faces, approximately 10–18rem each. */
+    max-inline-size: 73.65rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, max(10rem, calc((100% - 1.65rem) / 4))), 1fr));
+    align-items: start;
     gap: .55rem;
     padding: 0;
     margin: .85rem 0 0;
@@ -675,7 +680,10 @@
     box-shadow: 0 .35rem 1rem var(--shadow);
     font-size: .9rem;
   }
-  .card-preview .card-art { width: 100%; height: auto; border-radius: .25rem; }
+  :is(.card-preview, .result-card-visual) .card-art { width: 100%; height: auto; border-radius: .25rem; }
+  .result-card-visual { min-width: 0; margin-block: .4rem; }
+  .result-card-visual .preview-edition { font-size: .8rem; color: var(--muted); margin: 0 0 .25rem; }
+  .result-card-visual details { font-size: .85rem; }
   .related-mode { display: inline-flex; align-items: baseline; gap: .45rem; }
   #related-mode-help { font-size: .85rem; margin-top: .3rem; }
   .related-cards { margin-top: .5rem; padding-top: .5rem; border-top: 1px solid var(--line); }
@@ -706,7 +714,7 @@
     font-family: Georgia, serif;
     isolation: isolate;
   }
-  .card-preview > [hidden], .preview-face .preview-face-art[hidden] { display: none; }
+  :is(.card-preview, .result-card-visual) > [hidden], .preview-face .preview-face-art[hidden] { display: none; }
   .preview-face-title, .preview-face-footer {
     z-index: 1;
     position: relative;
@@ -941,6 +949,8 @@
         <summary class="section-summary" data-en="Pin or exclude cards">Karten festhalten oder ausschließen</summary>
         <div class="section-body">
           <p class="muted" data-en="Search for a card name or property in German or English. All selected properties must match. Pinned piles count towards the quotas. Excluded piles stay out of the draw.">Suche nach Kartennamen oder Eigenschaften auf Deutsch oder Englisch. Alle ausgewählten Eigenschaften müssen passen. Festgehaltene Stapel zählen zu den Quoten. Ausgeschlossene Karten bleiben aus der Ziehung.</p>
+          <label><input type="checkbox" id="pinned-priority" aria-describedby="pinned-priority-help"> <span data-en="Pinned cards take priority">Festgehaltene Karten haben Vorrang</span></label>
+          <p class="muted" id="pinned-priority-help" data-en="Pins count towards minimums and may exceed maximums. Their expansion or edition need not be enabled. Remaining slots still follow the rules. Pinning alone uses no additional expansion slot.">Feste Karten erfüllen Mindestquoten und dürfen Obergrenzen überschreiten. Ihre Erweiterung oder Edition muss nicht freigegeben sein. Die übrigen Plätze folgen weiterhin den Regeln. Festhalten allein verbraucht keinen zusätzlichen Erweiterungsplatz.</p>
           <div class="row pool-search-controls">
             <label for="pool-search" data-en="Search cards">Kartensuche</label>
             <span class="pool-search-input">
@@ -1584,12 +1594,19 @@ function analyzeExpansionLottery(request, onFound, deadline = Date.now() + 4800)
     const randomExpansions = [...required, ...picked];
     const selected = new Set([...always, ...randomExpansions]);
     const inPool = card => selected.has(card.expansion);
+    const fixedIds = new Set(request.fixed.map(card => card.id));
+    const pinned = card => request.pinnedPriority && (card.choice === "pinned" || fixedIds.has(card.id));
     const trial = {
       ...request,
-      rules: request.rules.filter(rule => !rule.conditionalExpansion || selected.has(rule.conditionalExpansion)),
+      rules: request.rules.flatMap(rule => {
+        if (!rule.conditionalExpansion || selected.has(rule.conditionalExpansion)) return [rule];
+        if (!request.pinnedPriority) return [];
+        const ids = new Set(rule.ids);
+        return [{ ...rule, min: 0, max: request.fixed.filter(card => ids.has(card.id)).length }];
+      }),
       candidates: request.candidates.filter(inPool),
-      extras: request.extras.filter(inPool),
-      landscapePool: request.landscapePool.filter(card => !inherited.has(card.expansion) || inPool(card)),
+      extras: request.extras.filter(card => inPool(card) || pinned(card)),
+      landscapePool: request.landscapePool.filter(card => pinned(card) || !inherited.has(card.expansion) || inPool(card)),
     };
     const addExpansions = result => ({ ...result, randomExpansions });
     const outcome = analyzeKingdom(trial, result => onFound(addExpansions(result)), deadline, true);
@@ -1998,6 +2015,8 @@ const resultPins = new Map();
 const editionInputs = new Map();
 const requireLoot = document.getElementById("require-loot");
 const includeRelated = document.getElementById("include-related");
+const pinnedPriority = document.getElementById("pinned-priority");
+const pinnedQuotaNotes = new Map();
 const coloniesMode = document.getElementById("colonies");
 const sheltersMode = document.getElementById("shelters");
 const setupResult = document.getElementById("setup-result");
@@ -2399,6 +2418,11 @@ function renderRelatedSection(state, card) {
 }
 
 function updatePreview(preview) {
+  updateCardVisual(preview);
+  preview.button.setAttribute("aria-describedby", preview.content.rules.id);
+}
+
+function updateCardVisual(preview) {
   const { card, button, panel } = preview;
   const language = uiLanguage;
   const pack = imageData;
@@ -2406,12 +2430,15 @@ function updatePreview(preview) {
   const render = { language, pack };
   preview.rendered = render;
   const { face, heading, cost, typeLine, image, fullImage, rules, ruleBody, transcript, summary, editionNote } =
-    preview.content ??= buildPreviewContent(panel, card);
-  button.setAttribute("aria-describedby", rules.id);
+    preview.content ??= buildPreviewContent(panel, card, Boolean(button));
   const english = language === "en";
   const [title, gameRules] = card.text[language];
-  button.textContent = heading.textContent = title;
-  button.lang = panel.lang = language;
+  heading.textContent = title;
+  panel.lang = language;
+  if (button) {
+    button.textContent = title;
+    button.lang = language;
+  }
   renderCardCost(cost, card, language);
   typeLine.textContent = card.types.map(type => catalog.types[language][type] ?? type).join(" · ");
   const text = formatGameRules(gameRules);
@@ -2456,7 +2483,7 @@ async function showPreviewImages(preview, render, complete, illustration) {
       face.hidden = true;
       fullImage.hidden = transcript.hidden = false;
       transcript.append(rules);
-      positionRelatedPreview(preview);
+      if (preview.button) positionRelatedPreview(preview);
       return;
     }
     fullImage.removeAttribute("src");
@@ -2467,11 +2494,11 @@ async function showPreviewImages(preview, render, complete, illustration) {
     if (preview.rendered !== render) return;
     image.hidden = !decoded;
     if (!decoded) image.removeAttribute("src");
-    positionRelatedPreview(preview);
+    if (preview.button) positionRelatedPreview(preview);
   }
 }
 
-function buildPreviewContent(panel, card) {
+function buildPreviewContent(panel, card, withRelated = true) {
   const face = document.createElement("div");
   const faceBody = document.createElement("div");
   const heading = document.createElement("strong");
@@ -2514,7 +2541,7 @@ function buildPreviewContent(panel, card) {
     panel.append(editionNote);
   }
   panel.append(face, fullImage, transcript);
-  const relatedSection = addRelatedSection(panel, card);
+  const relatedSection = withRelated ? addRelatedSection(panel, card) : null;
   return { face, heading, cost, typeLine, image, fullImage, rules, ruleBody, transcript, summary, editionNote, relatedSection };
 }
 
@@ -2576,6 +2603,11 @@ function showCards(result, list = cardsList) {
   for (const card of result) {
     const item = document.createElement("li");
     addCardPreview(item, card, "result");
+    const visual = document.createElement("div");
+    visual.id = "result-face-" + list.id + "-" + card.id;
+    visual.className = "result-card-visual";
+    item.append(visual);
+    updateCardVisual({ card, panel: visual });
     const pin = document.createElement("input");
     const label = document.createElement("label");
     const choice = poolChoices.get(card.id);
@@ -2604,6 +2636,7 @@ function clearOutputs() {
   status.className = "";
   copyStatus.textContent = "";
   setPreview(null);
+  for (const container of [cardsList, planningCards, setupResult]) releaseTooltipPins(container);
   for (const preview of previews) {
     if (cardsList.contains(preview.button) || planningCards.contains(preview.button) || setupResult.contains(preview.button)) previews.delete(preview);
   }
@@ -2809,7 +2842,23 @@ function expansionInPossiblePool(id) {
   return mode === "always" || (mode === "random" && Number(randomExpansionCount.value) > 0);
 }
 
+function pinnedSourcesForRule(rule, fixed, fixedLandscapes) {
+  if (rule.id.startsWith("land-")) return fixedLandscapes.filter(rule.matches ?? (() => true));
+  return [...fixed.filter(rule.matches), ...(includeRelated.checked && rule.property ? fixedLandscapes.filter(rule.matches) : [])];
+}
+
+function pinnedCountForRule(rule, fixed, fixedLandscapes) {
+  const sources = pinnedSourcesForRule(rule, fixed, fixedLandscapes);
+  return rule.distinct ? new Set(sources.map(card => card.expansion)).size : sources.length;
+}
+
+function effectivePinnedRange(rule, range, fixed, fixedLandscapes) {
+  if (!pinnedPriority.checked || !range) return range;
+  return { ...range, max: Math.max(range.max, pinnedCountForRule(rule, fixed, fixedLandscapes)) };
+}
+
 function validatePinnedQuotas(fixed, fixedLandscapes, quotas) {
+  if (pinnedPriority.checked) return;
   const attackRule = countRules.find(rule => rule.id === "attack");
   const attacked = fixed.some(attackRule.matches) ||
     (includeRelated.checked && fixedLandscapes.some(attackRule.matches));
@@ -2834,6 +2883,50 @@ function validatePinnedQuotas(fixed, fixedLandscapes, quotas) {
   }
 }
 
+function updatePinnedQuotaNotes() {
+  const fixed = cards.filter(card => poolChoices.get(card.id)?.value === "pinned");
+  const landPinned = landscapes.filter(card => poolChoices.get(card.id)?.value === "pinned");
+  for (const rule of [...countRules, ...landRules]) {
+    const note = pinnedQuotaNotes.get(rule.id);
+    if (!note) continue;
+    const count = pinnedCountForRule(rule, fixed, landPinned);
+    note.hidden = !pinnedPriority.checked || !count;
+    if (note.hidden) continue;
+    try {
+      let range = readRange(rule, rule.inherited);
+      if (rule.group === "exp" && expansionModes.get(rule.id.slice(4)).value === "off") range = {min: 0, max: 0};
+      if (!range) range = {min: 0, max: expansionInPossiblePool(rule.expansion) ? landscapeLimit : 0};
+      const random = rule.group === "exp" && expansionModes.get(rule.id.slice(4)).value === "random";
+      const prefix = rule.whenAttacked ? tr("Bei Angriffen: ", "With Attacks: ") : "";
+      note.textContent = prefix + count + tr(" fest · noch ", " pinned · remaining ") +
+        Math.max(0, range.min - count) + "–" + Math.max(0, range.max - count) +
+        (count > range.max ? tr(" · feste Karten überschreiten Bis", " · pins exceed To") : "") +
+        (random ? tr(" bei Auslosung", " if drawn") : "");
+      note.toggleAttribute("data-exceeded", count > range.max);
+    } catch { note.hidden = true; }
+  }
+}
+
+function validateRemainingQuotas(fixed, landPinned, pool, landPool, quotas, landscapeCount) {
+  if (!pinnedPriority.checked) return;
+  const free = kingdomSize - fixed.length;
+  const fixedAttack = fixed.some(countRules.find(rule => rule.id === "attack").matches) ||
+    (includeRelated.checked && landPinned.some(countRules.find(rule => rule.id === "attack").matches));
+  for (const rule of countRules) {
+    if (rule.whenAttacked && !fixedAttack) continue;
+    if (rule.group === "exp" && expansionModes.get(rule.id.slice(4)).value === "random") continue;
+    const count = pinnedCountForRule(rule, fixed, landPinned);
+    const extra = Math.min(free, pool.filter(card => !fixed.includes(card) && rule.matches(card)).length) +
+      (includeRelated.checked && rule.property ? Math.min(landscapeCount.max - landPinned.length,
+        landPool.filter(card => !landPinned.includes(card) && rule.matches(card)).length) : 0);
+    const needed = Math.max(0, quotas.get(rule.id).min - count);
+    if (needed > extra) throw new Error(tr(
+      `Für „${ruleLabel(rule)}“ fehlen noch ${needed} Treffer. Mit ${free} freien Hauptstapelplätzen und den möglichen Landschaftszusätzen sind höchstens ${extra} weitere Treffer möglich.`,
+      `“${ruleLabel(rule)}” still needs ${needed} matches. With ${free} free Kingdom slots and the possible Landscape extras, at most ${extra} more matches are possible.`
+    ));
+  }
+}
+
 function readDrawRequest() {
   const count = Number(randomExpansionCount.value);
   const always = expansions.filter(id => expansionModes.get(id).value === "always");
@@ -2850,7 +2943,7 @@ function readDrawRequest() {
     ...fixed.map(card => card.expansion),
     ...landPinned.filter(card => autoLandscapes.includes(card.expansion)).map(card => card.expansion),
   ]);
-  const required = random.filter(id => pinnedSources.has(id));
+  const required = pinnedPriority.checked ? [] : random.filter(id => pinnedSources.has(id));
   if (required.length > count) {
     const names = required.map(expansionName).join(", ");
     throw new Error(tr(
@@ -2868,15 +2961,17 @@ function readDrawRequest() {
   const minTotal = [...always, ...required].reduce((sum, id) => sum + ranges.get(id).min, 0);
   if (minTotal > kingdomSize) throw new Error(tr(`Die Mindestzahlen der Erweiterungen brauchen mehr als ${kingdomSize} Königreichstapel.`, `The expansion minimums require more than ${kingdomSize} Kingdom piles.`));
   const allowed = card => expansionQuotas.get(card.expansion).max > 0 && allowsEdition(card);
-  const disabled = fixed.find(card => !allowed(card));
+  const disabled = pinnedPriority.checked ? null : fixed.find(card => !allowed(card));
   if (disabled) throw new Error(tr("„" + cardTitle(disabled) + "“ ist festgehalten. Gib die Erweiterung oder Edition frei.",
     "“" + cardTitle(disabled, "en") + "” is pinned. Enable its expansion or edition."));
   if (fixed.length > kingdomSize) throw new Error(tr(`Halte höchstens ${kingdomSize} Königreichstapel fest.`, `Pin no more than ${kingdomSize} Kingdom piles.`));
-  const pool = cards.filter(card => allowed(card) && poolChoices.get(card.id).value !== "excluded");
+  const pool = cards.filter(card => (allowed(card) || (pinnedPriority.checked && fixed.includes(card))) && poolChoices.get(card.id).value !== "excluded");
   const capacity = [...expansionQuotas].reduce((sum, [id, range]) =>
-    sum + Math.min(range.max, pool.filter(card => card.expansion === id).length), 0);
-  const landscapeCount = readRange(landRules[0]);
+    sum + Math.min(Math.max(range.max, pinnedPriority.checked ? fixed.filter(card => card.expansion === id).length : 0), pool.filter(card => card.expansion === id).length), 0);
+  if (landPinned.length > landscapeLimit) throw new Error(tr(`Halte höchstens ${landscapeLimit} Landschaften fest.`, `Pin no more than ${landscapeLimit} Landscapes.`));
+  const landscapeCount = effectivePinnedRange(landRules[0], readRange(landRules[0]), fixed, landPinned);
   const landPool = landscapes.filter(card => {
+    if (pinnedPriority.checked && landPinned.includes(card)) return true;
     const explicit = landQuotas.get("land-exp-" + card.expansion);
     return (explicit?.max ?? expansionQuotas.get(card.expansion).max) > 0 &&
       allowsEdition(card) && poolChoices.get(card.id).value !== "excluded";
@@ -2887,9 +2982,10 @@ function readDrawRequest() {
   if (landPinned.length > landscapeCount.max || landPool.length < landscapeCount.min) {
     throw new Error(tr("Die Gesamtzahl der Landschaften passt nicht zum verfügbaren Pool oder zu den festgehaltenen Landschaften.", "The total Landscape quota conflicts with the available pool or pinned Landscapes."));
   }
-  const quotas = new Map(countRules.map(rule => [rule.id, rule.group === "exp"
-    ? expansionQuotas.get(rule.id.slice(4)) : readRange(rule)]));
+  const quotas = new Map(countRules.map(rule => [rule.id, effectivePinnedRange(rule, rule.group === "exp"
+    ? expansionQuotas.get(rule.id.slice(4)) : readRange(rule), fixed, landPinned)]));
   validatePinnedQuotas(fixed, landPinned, quotas);
+  validateRemainingQuotas(fixed, landPinned, pool, landPool, quotas, landscapeCount);
   if (capacity < kingdomSize) throw new Error(tr(`Erweiterungsquoten und Kartenauswahl lassen weniger als ${kingdomSize} Königreichstapel zu.`, `The expansion quotas and card choices allow fewer than ${kingdomSize} Kingdom piles.`));
   const rules = countRules.map(rule => {
     const expansion = rule.group === "exp" ? rule.id.slice(4) : undefined;
@@ -2898,7 +2994,7 @@ function readDrawRequest() {
     return serializeRule(rule, range, pool, kingdomSize, conditionalExpansion, landPool, landscapeCount.max);
   }).filter(Boolean);
   const landRulesActive = landRules.slice(1).map(rule => {
-    const quota = landQuotas.get(rule.id);
+    const quota = effectivePinnedRange(rule, landQuotas.get(rule.id), fixed, landPinned);
     return quota && serializeRule(rule, quota, landPool, landscapeCount.max);
   }).filter(Boolean);
   for (const dimension of ["land-type-", "land-exp-"]) {
@@ -2910,7 +3006,7 @@ function readDrawRequest() {
     count, always, required, optional: random.filter(id => !required.includes(id)), autoLandscapes,
   } : undefined;
   return {
-    kingdomSize, expansionLottery, includeRelated: includeRelated.checked, fixed: fixed.map(solverCard),
+    kingdomSize, expansionLottery, pinnedPriority: pinnedPriority.checked, includeRelated: includeRelated.checked, fixed: fixed.map(solverCard),
     candidates: pool.filter(card => !fixed.includes(card)).map(solverCard),
     extras: pool.map(solverCard), components: allCards.filter(card => !card.kingdomPile).map(solverCard),
     rules, landscapeCount, landscapeRules: landRulesActive, landscapePool: landPool.map(solverCard),
@@ -2997,6 +3093,7 @@ function readSettings(source) {
   const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
   if ((settings.kingdomSize !== undefined && !allowedKingdomSizes.includes(settings.kingdomSize)) ||
       (settings.includeRelated !== undefined && typeof settings.includeRelated !== "boolean") ||
+      (settings.pinnedPriority !== undefined && typeof settings.pinnedPriority !== "boolean") ||
       !isRecord(settings.ranges) || !isRecord(settings.cardChoices) ||
       !Object.values(settings.cardChoices).every(choice => choice === "pinned" || choice === "excluded") ||
       typeof settings.setName !== "string" ||
@@ -3056,7 +3153,7 @@ function collectSettings() {
     .map(([id, field]) => [id, field.value]));
   const editions = Object.fromEntries([...editionInputs].map(([id, field]) => [id, field.checked]));
   const modes = Object.fromEntries([...expansionModes].map(([id, field]) => [id, field.value]));
-  return { version: 2, kingdomSize, includeRelated: includeRelated.checked, ranges, cardChoices, editions, expansionModes: modes,
+  return { version: 2, kingdomSize, pinnedPriority: pinnedPriority.checked, includeRelated: includeRelated.checked, ranges, cardChoices, editions, expansionModes: modes,
     randomExpansionCount: Number(randomExpansionCount.value), requireLoot: requireLoot.checked,
     colonies: coloniesMode.value, shelters: sheltersMode.value, interfaceLanguage: uiLanguage,
     setName: setName.value };
@@ -3097,6 +3194,7 @@ function applyExpansionModes(modes = {}, additional = 0) {
 }
 
 function applySettings(settings) {
+  pinnedPriority.checked = settings.pinnedPriority ?? false;
   includeRelated.checked = settings.includeRelated ?? false;
   setKingdomSize(settings.kingdomSize ?? standardKingdomSize);
   applyRangeSettings([...countRules, ...landRules], settings.ranges);
@@ -3343,6 +3441,9 @@ function makePoolGroup(expansion, entries, area) {
   details.className = "pool-details";
   const summary = document.createElement("summary");
   summary.className = "section-summary";
+  const summaryText = document.createElement("span");
+  if (gameIcons["exp-" + expansion]) summary.append(makeGameIcon("exp-" + expansion));
+  summary.append(summaryText);
   const list = document.createElement("ul");
   list.className = "card-pool-grid";
   const body = document.createElement("div");
@@ -3384,7 +3485,7 @@ function makePoolGroup(expansion, entries, area) {
     const searchNames = [card.id, cardTitle(card), cardTitle(card, "en"), ...(card.alternateTitles ?? [])].map(normalizePoolSearch);
     items.push({ card, item, choice, cost, searchNames });
   }
-  poolGroups.push({ expansion, details, summary, list, items, area });
+  poolGroups.push({ expansion, details, summary, summaryText, list, items, area });
 }
 
 function hidePoolItem(item, hidden) {
@@ -3428,6 +3529,7 @@ function updatePoolSearch() {
 
 function updatePoolGroups() {
   updateBanExports();
+  updatePinnedQuotaNotes();
   const active = [];
   for (const expansion of expansions) {
     const [from, to] = rangeInputs.get("exp-" + expansion);
@@ -3451,18 +3553,19 @@ function updatePoolGroups() {
     let available = 0, pinned = 0, excluded = 0;
     for (const { card, choice } of group.items) {
       if (choice.value === "excluded") excluded++;
-      else if (enabled && allowsEdition(card)) available++;
+      else if ((enabled && allowsEdition(card)) || (pinnedPriority.checked && choice.value === "pinned")) available++;
       if (choice.value === "pinned") pinned++;
     }
     const label = expansionName(group.expansion) + (group.area === "land-pool" ? " · " + tr("Landschaften", "Landscapes") : "");
     const text = label + " · " + available + tr(" verfügbar · ", " available · ") +
       pinned + tr(" fest · ", " pinned · ") + excluded + tr(" ausgeschlossen", " excluded");
-    if (group.summary.textContent !== text) group.summary.textContent = text;
+    if (group.summaryText.textContent !== text) group.summaryText.textContent = text;
   }
   let visibleDefense = 0;
   for (const [card, item] of defenseItems) {
-    hidePoolItem(item, !expansionInPossiblePool(card.expansion) ||
-      !(rangeInputs.get("exp-" + card.expansion)[1].valueAsNumber > 0) || !allowsEdition(card) || poolChoices.get(card.id).value === "excluded");
+    const pinned = pinnedPriority.checked && poolChoices.get(card.id).value === "pinned";
+    hidePoolItem(item, !pinned && (!expansionInPossiblePool(card.expansion) ||
+      !(rangeInputs.get("exp-" + card.expansion)[1].valueAsNumber > 0) || !allowsEdition(card) || poolChoices.get(card.id).value === "excluded"));
     if (!item.hidden) visibleDefense++;
   }
   defenseEmpty.hidden = Boolean(visibleDefense);
@@ -3652,6 +3755,12 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     registerHint(label, tip, toggle);
   }
   group.append(name);
+  const pinnedNote = document.createElement("small");
+  pinnedNote.className = "pinned-quota-note";
+  pinnedNote.id = "pinned-note-" + rule.id;
+  pinnedNote.hidden = true;
+  name.append(pinnedNote);
+  pinnedQuotaNotes.set(rule.id, pinnedNote);
   const max = rangeLimit(rule);
   const [initialMin, initialMax] = defaultRanges[rule.id] ?? [0, rule.initialMax ?? defaultGroupMaxima[rule.group] ?? max];
   const fields = [];
@@ -3936,6 +4045,7 @@ enableRandomExpansions.addEventListener("click", () => {
 });
 document.getElementById("expansion-settings").addEventListener("input", scheduleRuleCheck);
 document.getElementById("draw-rules").addEventListener("input", scheduleRuleCheck);
+pinnedPriority.addEventListener("input", scheduleRuleCheck);
 includeRelated.addEventListener("input", () => {
   setKingdomSize(kingdomSize, true);
   refreshPoolSearch();

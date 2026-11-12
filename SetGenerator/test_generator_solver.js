@@ -243,6 +243,7 @@ assert.ok(out.result.main.every(id => byId.get(id).expansion === "base"));
 const propertyContext = {
   catalog, allCards: all, cards: allPiles, cardById: byId, standardKingdomSize: 10,
   landscapeLimit: 4, kingdomSize: 10, includeRelated: { checked: true }, poolChoices: new Map(),
+  pinnedPriority: {checked: false},
   expansions: Object.keys(catalog.expansions), cardTypeIcons: {}, resourceIcons: {},
 };
 const predicateSource = html.slice(html.indexOf("const landscapeTypes ="), html.indexOf("function makeGameIcon("));
@@ -358,6 +359,7 @@ assert.equal(propertyAPI.validRangePair(propertyRules.get("cost-2"), ["0", "14"]
 const sourceFunction = name => html.match(new RegExp("(?:async )?function " + name + "\\([\\s\\S]*?\\n\\}"))[0];
 // Pinned sources must explain proven upper-bound conflicts before a Worker starts.
 const pinnedContext = {
+  pinnedPriority: {checked: false},
   countRules: propertyAPI.countRules, includeRelated: propertyContext.includeRelated,
   uiLanguage: "de", cardTitle: (card, language) => card.text[language][0],
 };
@@ -402,11 +404,15 @@ const researchContext = {
   randomExpansionCount: {value: "2"}, coloniesMode: {value: "always"}, sheltersMode: {value: "rules"}, requireLoot: {checked: false},
   poolChoices: new Map(all.map(card => [card.id, {value: card.id === "research" ? "pinned" : "random"}])),
   rangeInputs: new Map(), expansionModes: new Map(), uiLanguage: "de",
+  pinnedQuotaNotes: new Map(),
   tr: de => de, ruleLabel: rule => rule.label, cardTitle: card => card.text.de[0], expansionName: id => catalog.expansions[id],
 };
 const fixtureCode = predicateSource + "\n" + ["isValidRangeBound", "rangeNumber", "readRange", "solverCard", "serializeRule",
-  "allowsEdition", "expansionInPossiblePool", "validatePinnedQuotas", "readDrawRequest"].map(sourceFunction).join("\n");
-const fixtureAPI = vm.runInNewContext(fixtureCode + "\n({readDrawRequest,countRules,landRules})", researchContext);
+  "allowsEdition", "expansionInPossiblePool", "pinnedSourcesForRule", "pinnedCountForRule", "effectivePinnedRange",
+  "validatePinnedQuotas", "validateRemainingQuotas", "updatePinnedQuotaNotes", "readDrawRequest"].map(sourceFunction).join("\n");
+const fixtureAPI = vm.runInNewContext(fixtureCode + "\n({readDrawRequest,countRules,landRules,updatePinnedQuotaNotes})", researchContext);
+for (const rule of [...fixtureAPI.countRules, ...fixtureAPI.landRules]) researchContext.pinnedQuotaNotes.set(rule.id,
+  {hidden: true, textContent: "", toggleAttribute(name, value) {this[name] = value;}});
 for (const rule of fixtureAPI.countRules) researchContext.rangeInputs.set(rule.id, fixtureFields([0, 10]));
 for (const id of ["actions", "cards", "buy"]) researchContext.rangeInputs.get(id)[0].value = "1";
 researchContext.rangeInputs.get("trash")[1].value = "0";
@@ -428,6 +434,80 @@ const researchResult = fixtureSolver(validResearchRequest, () => {});
 assert.ok(researchResult.result?.main.includes("research"));
 assert.ok(researchResult.result.randomExpansions.includes("renaissance"));
 
+// Priority keeps the original inputs while allowing pinned sources above To.
+researchContext.pinnedPriority.checked = true;
+researchContext.rangeInputs.get("trash")[1].value = "0";
+fixtureAPI.updatePinnedQuotaNotes();
+assert.match(researchContext.pinnedQuotaNotes.get("trash").textContent, /1 fest · noch 0–0.*überschreiten/);
+assert.equal(researchContext.pinnedQuotaNotes.get("trash")["data-exceeded"], true);
+let priorityRequest = fixtureAPI.readDrawRequest();
+assert.equal(researchContext.rangeInputs.get("trash")[1].value, "0");
+assert.equal(priorityRequest.expansionLottery.required.length, 0);
+let priorityResult = fixtureSolver(priorityRequest, () => {}).result;
+assert.ok(priorityResult?.main.includes("research"));
+assert.equal(priorityResult.main.filter(id => byId.get(id).nativeFilters.includes("Trashing")).length, 1);
+assert.equal(priorityResult.randomExpansions.length, 2);
+// A pinned card from an off set is the only admission from that set.
+researchContext.expansionModes.get("renaissance").value = "off";
+priorityRequest = fixtureAPI.readDrawRequest();
+assert.ok(priorityRequest.fixed.some(card => card.id === "research"));
+assert.ok(priorityRequest.candidates.every(card => card.expansion !== "renaissance"));
+priorityResult = fixtureSolver(priorityRequest, () => {}).result;
+assert.ok(priorityResult?.main.includes("research"));
+assert.equal(priorityResult.main.filter(id => byId.get(id).expansion === "renaissance").length, 1);
+// Old-edition pins do not enable the rest of the old edition.
+researchContext.poolChoices.get("adventurer").value = "pinned";
+priorityRequest = fixtureAPI.readDrawRequest();
+assert.ok(priorityRequest.fixed.some(card => card.id === "adventurer"));
+assert.ok(!priorityRequest.candidates.some(card => card.id === "chancellor"));
+researchContext.poolChoices.get("adventurer").value = "random";
+// Six fixed cards leave four slots, with Research as the only allowed trasher.
+for (const id of ["village", "smithy", "market", "cellar", "workshop"]) researchContext.poolChoices.get(id).value = "pinned";
+priorityResult = fixtureSolver(fixtureAPI.readDrawRequest(), () => {}).result;
+assert.equal(priorityResult.main.length, 10);
+for (const id of ["research", "village", "smithy", "market", "cellar", "workshop"]) assert.ok(priorityResult.main.includes(id));
+assert.equal(priorityResult.main.filter(id => byId.get(id).nativeFilters.includes("Trashing")).length, 1);
+// A lower bound that the four remaining slots cannot meet is explained.
+researchContext.rangeInputs.get("cards")[0].value = "6";
+assert.throws(() => fixtureAPI.readDrawRequest(), /freien Hauptstapelplätzen/);
+researchContext.rangeInputs.get("cards")[0].value = "1";
+// Pinned Landscapes are admitted despite zero total and source maxima.
+researchContext.poolChoices.get("foray").value = "pinned";
+researchContext.rangeInputs.set("land-total", fixtureFields([0, 0]));
+researchContext.rangeInputs.set("land-type-event", fixtureFields([0, 0]));
+priorityRequest = fixtureAPI.readDrawRequest();
+assert.equal(priorityRequest.landscapeCount.max, 1);
+assert.ok(priorityRequest.landscapePool.some(card => card.id === "foray"));
+priorityResult = fixtureSolver(priorityRequest, () => {}).result;
+assert.deepEqual(Array.from(priorityResult.landscapes), ["foray"]);
+researchContext.poolChoices.get("foray").value = "random";
+// Main pile count remains a hard limit.
+for (const card of base.slice(0, 12)) researchContext.poolChoices.get(card.id).value = "pinned";
+assert.throws(() => fixtureAPI.readDrawRequest(), /höchstens 10/);
+for (const choice of researchContext.poolChoices.values()) choice.value = "random";
+researchContext.poolChoices.get("research").value = "pinned";
+for (const size of [11, 12, 13]) {
+  researchContext.kingdomSize = size;
+  assert.equal(fixtureSolver(fixtureAPI.readDrawRequest(), () => {}).result.main.length, size);
+}
+researchContext.kingdomSize = 10;
+for (const id of ["foray", "advance", "obelisk", "way_of_the_mouse", "cursed"]) researchContext.poolChoices.get(id).value = "pinned";
+assert.throws(() => fixtureAPI.readDrawRequest(), /höchstens 4 Landschaften/);
+researchContext.pinnedPriority.checked = false;
+fixtureAPI.updatePinnedQuotaNotes();
+assert.ok([...researchContext.pinnedQuotaNotes.values()].every(note => note.hidden));
+
+// A random set that is not drawn contributes only its explicit pins. Its
+// original minimum is inactive, and its other cards remain out of the pool.
+const unselectedPinnedSet = request(get("research"), base.slice(0, 10), {
+  pinnedPriority: true,
+  expansionLottery: {always: ["base"], required: [], optional: ["renaissance"], count: 0, autoLandscapes: []},
+  rules: [rule(get("research"), 3, 4, {conditionalExpansion: "renaissance"})],
+});
+const noRandomSet = fixtureSolver(unselectedPinnedSet, () => {}).result;
+assert.ok(noRandomSet?.main.includes("research"));
+assert.equal(noRandomSet.main.filter(id => byId.get(id).expansion === "renaissance").length, 1);
+
 const validationContext = {
   ...propertyContext, allowedKingdomSizes: [10, 11, 12, 13],
   countRules: propertyAPI.countRules, landRules: [], expansionModes: new Map(),
@@ -439,11 +519,14 @@ const validationContext = {
 const parseSettings = vm.runInNewContext(sourceFunction("readSettings") + "\nreadSettings", validationContext);
 const legacySettings = {version: 1, ranges: {}, cardChoices: {}, setName: "Test"};
 assert.equal(parseSettings(JSON.stringify(legacySettings)).includeRelated, undefined);
+assert.equal(parseSettings(JSON.stringify({...legacySettings, pinnedPriority: true})).pinnedPriority, true);
+assert.throws(() => parseSettings(JSON.stringify({...legacySettings, pinnedPriority: "true"})), /ungültige/);
 assert.equal(parseSettings(JSON.stringify({...legacySettings, includeRelated: true, ranges: {attack: ["0", "14"]}})).includeRelated, true);
 assert.throws(() => parseSettings(JSON.stringify({...legacySettings, includeRelated: "true"})), /ungültige/);
 assert.throws(() => parseSettings(JSON.stringify({...legacySettings, ranges: {attack: ["0", "14"]}})), /Angriff/);
 const settingsToggle = {checked: true};
 const applyContext = {
+  pinnedPriority: {checked: false},
   includeRelated: settingsToggle, standardKingdomSize: 10, countRules: [], landRules: [],
   poolChoices: new Map(), editionInputs: new Map(), requireLoot: {}, coloniesMode: {}, sheltersMode: {},
   uiLanguage: "de", setName: {},
@@ -455,8 +538,11 @@ applyStoredSettings(legacySettings);
 assert.equal(settingsToggle.checked, false, "old settings default the new mode to off");
 applyStoredSettings({...legacySettings, includeRelated: true});
 assert.equal(settingsToggle.checked, true);
+applyStoredSettings({...legacySettings, pinnedPriority: true});
+assert.equal(applyContext.pinnedPriority.checked, true);
 applyStoredSettings({ranges: {}, cardChoices: {}, setName: "Reset"});
 assert.equal(settingsToggle.checked, false, "a reset returns the new mode to off");
+assert.equal(applyContext.pinnedPriority.checked, false);
 
 // Exercise the real nested-preview state logic without a browser/renderer.
 class TooltipNode {
