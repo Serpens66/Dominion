@@ -2809,6 +2809,31 @@ function expansionInPossiblePool(id) {
   return mode === "always" || (mode === "random" && Number(randomExpansionCount.value) > 0);
 }
 
+function validatePinnedQuotas(fixed, fixedLandscapes, quotas) {
+  const attackRule = countRules.find(rule => rule.id === "attack");
+  const attacked = fixed.some(attackRule.matches) ||
+    (includeRelated.checked && fixedLandscapes.some(attackRule.matches));
+  for (const rule of countRules) {
+    if (rule.whenAttacked && !attacked) continue;
+    const matches = fixed.filter(rule.matches);
+    const landscapeMatches = includeRelated.checked && rule.property
+      ? fixedLandscapes.filter(rule.matches) : [];
+    const sources = [...matches, ...landscapeMatches];
+    const maximum = quotas.get(rule.id).max;
+    if (sources.length <= maximum) continue;
+    const names = sources.map(card => cardTitle(card, uiLanguage)).join(", ");
+    const label = ruleLabel(rule);
+    throw new Error(tr(
+      names + (sources.length === 1 ? " ist festgehalten und zählt zu „" : " sind festgehalten und zählen zu „") +
+        label + "“. Dieser Filter erlaubt höchstens " + maximum + ", benötigt werden bereits " + sources.length +
+        ". Erhöhe Bis auf mindestens " + sources.length + " oder löse das Festhalten.",
+      names + (sources.length === 1 ? " is pinned and counts towards “" : " are pinned and count towards “") +
+        label + "”. This filter allows at most " + maximum + ", but the pinned sources already require " + sources.length +
+        ". Increase To to at least " + sources.length + " or unpin the matching cards."
+    ));
+  }
+}
+
 function readDrawRequest() {
   const count = Number(randomExpansionCount.value);
   const always = expansions.filter(id => expansionModes.get(id).value === "always");
@@ -2847,16 +2872,9 @@ function readDrawRequest() {
   if (disabled) throw new Error(tr("„" + cardTitle(disabled) + "“ ist festgehalten. Gib die Erweiterung oder Edition frei.",
     "“" + cardTitle(disabled, "en") + "” is pinned. Enable its expansion or edition."));
   if (fixed.length > kingdomSize) throw new Error(tr(`Halte höchstens ${kingdomSize} Königreichstapel fest.`, `Pin no more than ${kingdomSize} Kingdom piles.`));
-  for (const [id, range] of expansionQuotas) {
-    if (fixed.filter(card => card.expansion === id).length > range.max) {
-      throw new Error(tr("Zu viele Stapel aus „" + expansionName(id) + "“ sind festgehalten.",
-        "Too many piles from “" + expansionName(id) + "” are pinned."));
-    }
-  }
   const pool = cards.filter(card => allowed(card) && poolChoices.get(card.id).value !== "excluded");
   const capacity = [...expansionQuotas].reduce((sum, [id, range]) =>
     sum + Math.min(range.max, pool.filter(card => card.expansion === id).length), 0);
-  if (capacity < kingdomSize) throw new Error(tr(`Erweiterungsquoten und Kartenauswahl lassen weniger als ${kingdomSize} Königreichstapel zu.`, `The expansion quotas and card choices allow fewer than ${kingdomSize} Kingdom piles.`));
   const landscapeCount = readRange(landRules[0]);
   const landPool = landscapes.filter(card => {
     const explicit = landQuotas.get("land-exp-" + card.expansion);
@@ -2869,9 +2887,13 @@ function readDrawRequest() {
   if (landPinned.length > landscapeCount.max || landPool.length < landscapeCount.min) {
     throw new Error(tr("Die Gesamtzahl der Landschaften passt nicht zum verfügbaren Pool oder zu den festgehaltenen Landschaften.", "The total Landscape quota conflicts with the available pool or pinned Landscapes."));
   }
+  const quotas = new Map(countRules.map(rule => [rule.id, rule.group === "exp"
+    ? expansionQuotas.get(rule.id.slice(4)) : readRange(rule)]));
+  validatePinnedQuotas(fixed, landPinned, quotas);
+  if (capacity < kingdomSize) throw new Error(tr(`Erweiterungsquoten und Kartenauswahl lassen weniger als ${kingdomSize} Königreichstapel zu.`, `The expansion quotas and card choices allow fewer than ${kingdomSize} Kingdom piles.`));
   const rules = countRules.map(rule => {
     const expansion = rule.group === "exp" ? rule.id.slice(4) : undefined;
-    const range = expansion ? expansionQuotas.get(expansion) : readRange(rule);
+    const range = quotas.get(rule.id);
     const conditionalExpansion = random.includes(expansion) && !required.includes(expansion) ? expansion : undefined;
     return serializeRule(rule, range, pool, kingdomSize, conditionalExpansion, landPool, landscapeCount.max);
   }).filter(Boolean);
@@ -2925,7 +2947,7 @@ function checkRules(drawWhenReady = false) {
           if (!reusable) checkRules();
         }
       } else if (total === "0") {
-        reportRules("error", tr("Mit diesen Quoten, Ausschlüssen und Setup-Regeln ist kein Königreich möglich.", "No Kingdom satisfies these quotas, exclusions, and setup rules."));
+        reportRules("error", tr("Diese Quoten, Ausschlüsse und Setup-Regeln sind gemeinsam nicht erfüllbar. Ein einzelner Konflikt konnte nicht ermittelt werden.", "These quotas, exclusions, and setup rules cannot be satisfied together. No individual conflict could be identified."));
       } else {
         reportRules("error", tr("Zeitlimit erreicht. Für diese Regeln wurde noch keine gültige Ziehung gefunden.", "Time limit reached. No valid draw was found within the limit."));
       }

@@ -356,6 +356,78 @@ assert.equal(propertyAPI.validRangePair(propertyRules.get("attack"), ["0", "14"]
 assert.equal(propertyAPI.validRangePair(propertyRules.get("cost-2"), ["0", "14"], 10, true), false);
 
 const sourceFunction = name => html.match(new RegExp("(?:async )?function " + name + "\\([\\s\\S]*?\\n\\}"))[0];
+// Pinned sources must explain proven upper-bound conflicts before a Worker starts.
+const pinnedContext = {
+  countRules: propertyAPI.countRules, includeRelated: propertyContext.includeRelated,
+  uiLanguage: "de", cardTitle: (card, language) => card.text[language][0],
+};
+pinnedContext.tr = (de, en) => pinnedContext.uiLanguage === "en" ? en : de;
+pinnedContext.ruleLabel = rule => pinnedContext.uiLanguage === "en" && rule.id === "trash" ? "Trash cards" : rule.label;
+const validatePinned = vm.runInNewContext(sourceFunction("validatePinnedQuotas") + "\nvalidatePinnedQuotas", pinnedContext);
+const pinnedQuotas = (id, max) => new Map(propertyAPI.countRules.map(rule => [rule.id, {min: 0, max: rule.id === id ? max : 14}]));
+assert.throws(() => validatePinned(get("research"), [], pinnedQuotas("trash", 0)), /Forscherin.*Karten entsorgen.*höchstens 0.*bereits 1.*mindestens 1/);
+assert.doesNotThrow(() => validatePinned(get("research"), [], pinnedQuotas("trash", 1)));
+assert.throws(() => validatePinned(get("research", "chapel"), [], pinnedQuotas("trash", 1)), /Forscherin, Kapelle.*bereits 2/);
+assert.throws(() => validatePinned(get("research"), [], pinnedQuotas("cost-4", 0)), /Forscherin.*4 Münzen/);
+assert.throws(() => validatePinned(get("research"), [], pinnedQuotas("exp-renaissance", 0)), /Forscherin.*Renaissance/);
+assert.doesNotThrow(() => validatePinned(get("moat"), [], pinnedQuotas("defense", 0)));
+assert.throws(() => validatePinned(get("moat", "witch"), [], pinnedQuotas("defense", 0)), /Burggraben.*Abwehrkarten/);
+assert.doesNotThrow(() => validatePinned(get("beggar"), [], pinnedQuotas("attack-reaction", 0)));
+assert.throws(() => validatePinned(get("beggar", "witch"), [], pinnedQuotas("attack-reaction", 0)), /Bettler.*Angriffsreaktionen/);
+assert.doesNotThrow(() => validatePinned(get("peasant"), [], pinnedQuotas("attack", 0)));
+propertyContext.includeRelated.checked = true;
+assert.throws(() => validatePinned(get("peasant"), [], pinnedQuotas("attack", 0)), /Kleinbauer.*Angriff/);
+assert.throws(() => validatePinned([], get("foray"), pinnedQuotas("attack", 0)), /Brandschatzung.*Angriff/);
+assert.throws(() => validatePinned(get("peasant", "moat"), [], pinnedQuotas("defense", 0)), /Burggraben.*Abwehrkarten/);
+assert.throws(() => validatePinned([], get("foray"), pinnedQuotas("defense", 0)), /Brandschatzung.*Abwehrkarten/);
+assert.doesNotThrow(() => validatePinned([], get("foray"), pinnedQuotas("cost-3", 0)));
+assert.doesNotThrow(() => validatePinned([], get("foray"), pinnedQuotas("exp-plunder", 0)));
+assert.doesNotThrow(() => validatePinned(get("moat"), get("way_of_the_mouse"), pinnedQuotas("defense", 0)));
+propertyContext.includeRelated.checked = false;
+pinnedContext.uiLanguage = "en";
+assert.throws(() => validatePinned(get("research"), [], pinnedQuotas("trash", 0)), /Research is pinned.*Trash cards.*at most 0.*at least 1/);
+
+// Reduced, anonymous reproduction of the supplied setup: three fixed sets,
+// two random sets, Research pinned, trashing forbidden, and 2–4 Landscapes.
+const researchFixture = {
+  fixedSets: ["base", "intrigue", "prosperity"],
+  randomSets: ["adventures", "menagerie", "nocturne", "promos", "renaissance"],
+};
+const fixtureFields = values => values.map(value => ({
+  value: String(value), min: "0", get valueAsNumber() { return Number(this.value); },
+}));
+const researchContext = {
+  ...propertyContext, includeRelated: {checked: false},
+  editionInputs: new Map(), isFirstEdition: card => card.edition === "first",
+  randomExpansionCount: {value: "2"}, coloniesMode: {value: "always"}, sheltersMode: {value: "rules"}, requireLoot: {checked: false},
+  poolChoices: new Map(all.map(card => [card.id, {value: card.id === "research" ? "pinned" : "random"}])),
+  rangeInputs: new Map(), expansionModes: new Map(), uiLanguage: "de",
+  tr: de => de, ruleLabel: rule => rule.label, cardTitle: card => card.text.de[0], expansionName: id => catalog.expansions[id],
+};
+const fixtureCode = predicateSource + "\n" + ["isValidRangeBound", "rangeNumber", "readRange", "solverCard", "serializeRule",
+  "allowsEdition", "expansionInPossiblePool", "validatePinnedQuotas", "readDrawRequest"].map(sourceFunction).join("\n");
+const fixtureAPI = vm.runInNewContext(fixtureCode + "\n({readDrawRequest,countRules,landRules})", researchContext);
+for (const rule of fixtureAPI.countRules) researchContext.rangeInputs.set(rule.id, fixtureFields([0, 10]));
+for (const id of ["actions", "cards", "buy"]) researchContext.rangeInputs.get(id)[0].value = "1";
+researchContext.rangeInputs.get("trash")[1].value = "0";
+researchContext.rangeInputs.get("attack")[1].value = "0";
+for (const rule of fixtureAPI.landRules) researchContext.rangeInputs.set(rule.id,
+  fixtureFields(rule.inherited ? ["", ""] : rule.id === "land-total" ? [2, 4] : [0, 4]));
+for (const id of researchContext.expansions) {
+  const mode = researchFixture.fixedSets.includes(id) ? "always" : researchFixture.randomSets.includes(id) ? "random" : "off";
+  researchContext.expansionModes.set(id, {value: mode});
+  researchContext.rangeInputs.set("exp-" + id, fixtureFields(mode === "off" ? [0, 0] : mode === "always" ? [1, 10] : [0, 4]));
+}
+const beforeConflict = JSON.stringify([...researchContext.rangeInputs].map(([id, fields]) => [id, fields.map(field => field.value)]));
+assert.throws(() => fixtureAPI.readDrawRequest(), /Forscherin.*Karten entsorgen/);
+assert.equal(JSON.stringify([...researchContext.rangeInputs].map(([id, fields]) => [id, fields.map(field => field.value)])), beforeConflict);
+researchContext.rangeInputs.get("trash")[1].value = "1";
+const validResearchRequest = fixtureAPI.readDrawRequest();
+const fixtureSolver = vm.runInNewContext(worker + "\nanalyzeExpansionLottery");
+const researchResult = fixtureSolver(validResearchRequest, () => {});
+assert.ok(researchResult.result?.main.includes("research"));
+assert.ok(researchResult.result.randomExpansions.includes("renaissance"));
+
 const validationContext = {
   ...propertyContext, allowedKingdomSizes: [10, 11, 12, 13],
   countRules: propertyAPI.countRules, landRules: [], expansionModes: new Map(),

@@ -98,3 +98,19 @@ Stand 11. November 2026, native Zuordnung für Spielbuild 3315 / Steam-Build 176
 | Offen | Neue Generator-Ausgabe für Privates Spiel prüfen. Erweiterte Landschaftsbanns und Matchmaking bleiben getrennte offene Fälle. |
 
 Reproduzierbar mit `node SetGenerator/test_generator_solver.js` und `python SetGenerator/test_generator_catalog.py`. Der Python-Test nutzt für den XML-Test nur synthetische Daten; der zusätzliche native Abgleich wird auf Rechnern ohne lokale Build-3315-EXE übersprungen. Für die neue Ausgabe erfolgte in diesem Durchlauf keine visuelle Browser- oder Steam-Abnahme.
+
+## Konkrete Konflikte mit festgehaltenen Karten
+
+Stand 13. November 2026. Eine Vorprüfung verwendet dieselben Filterprädikate wie die Ziehung und prüft die festgehaltenen Hauptstapel sowie, im Zusatzkarten-Modus, feste Landschaftszusätze gegen die Obergrenzen. Sie nennt die passenden Karten, den Filter, die erlaubte Höchstzahl und den bereits erforderlichen Wert. Es werden keine Einstellungen geändert. Bedingte Schutz-/Angriffsreaktionsquoten werden erst bei einem Angriff aus den festgehaltenen Quellen geprüft.
+
+| Status | Fall und Ergebnis |
+| --- | --- |
+| Technisch geprüft | Nutzerfall: Forscherin ist festgehalten, Karten entsorgen steht auf 0–0. Die Meldung nennt Forscherin, Entsorgen, das Maximum 0 und den nötigen Bis-Wert 1. |
+| Technisch geprüft | Reduzierte anonyme Reproduktion mit drei Immer-Sets, zwei Zufallssets, Renaissance als erforderlichem Zufallsset und 2–4 Landschaften: 0–0 wird vor dem Worker mit Ursache abgelehnt, ausschließlich die Änderung auf 0–1 liefert eine Ziehung mit Forscherin. |
+| Technisch geprüft | Mehrere festgehaltene Entsorger werden mit Namen und gemeinsamer Anzahl genannt. Kosten- und Erweiterungsobergrenzen verwenden dieselbe Vorprüfung. |
+| Technisch geprüft | Zusatzkarten-Modus: Kleinbauer zählt über Soldat als Angriff. Feste Kostbarkeiten aus Brandschatzung zählen als Landschaftsquelle; Kosten und Herkunft der Landschaft erhöhen keine Hauptstapelquote. |
+| Technisch geprüft | Burggraben beziehungsweise Bettler allein lösen bei bedingtem Maximum 0 keinen Konflikt aus. Mit festgehaltener Hexe gilt die jeweilige Quote. Der Weg der Maus aktiviert durch sein zufälliges Ziel keine solche Vorprüfung. |
+| Technisch geprüft | Deutsche und englische Meldungen, unveränderte Eingabewerte nach Ablehnung, bestehende Solver-Suite und Gleichheit von eingebettetem Worker und Solver-Quelle. |
+| Offen | Firefox/Edge: konkreten Hinweis durch Festhalten und Loslassen auslösen, längere Namenslisten umbrechen lassen und die letzte Ziehung samt Export während des Konflikts sichtbar halten. |
+
+Die allgemeine Unlösbarkeitsmeldung bleibt für gemeinsam unvereinbare Regeln erhalten, wenn keine einzelne Ursache nachgewiesen wurde. Ein einzelner verworfener Suchzweig wird nicht als globaler Konflikt ausgegeben. Die Prüfungen liefen mit `node SetGenerator/test_generator_solver.js`; die Einstellungsdatei des Nutzers und die Spieldateien wurden nicht verändert.
