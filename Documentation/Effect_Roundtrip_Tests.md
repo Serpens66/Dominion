@@ -44,7 +44,7 @@ Die beiden Prüfspalten stehen jeweils für Einzelbefehl **und** Dreierfolge. De
 | `twist_mirror_loot` | `ohne Ziel` | Bestanden | Bestanden | Ja | Gleiche Wirkung |
 | `twist_room_for_more` | `(village)` | Bestanden | Bestanden | Ja | Einmal im F8-Editor |
 | `twist_turn_turn_turn` | `ohne Ziel` | Bestanden | Bestanden | Offen | Offen |
-| `twist_typhoon` | `(village,smithy)` | Bestanden | Bestanden | Offen | Offen |
+| `twist_typhoon` | `(village,smithy)` | Bestanden | Bestanden | Ja (Nutzertest, 1×, 13. November) | Offen |
 | `stamp_plus_action` | `(village)` | Bestanden | Bestanden | Offen | Offen |
 | `stamp_plus_card` | `(village)` | Bestanden | Bestanden | Offen | Offen |
 | `stamp_plus_buy` | `(village)` | Bestanden | Bestanden | Offen | Offen |

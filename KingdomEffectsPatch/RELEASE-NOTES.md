@@ -3,12 +3,14 @@
 Erste herunterladbare Windows-Version des Dominion Kingdom Effects Patch für **Spielbuild 3315 / Steam-Build 17683350**.
 
 - Auch die F8-Übernahme erhält den privaten Spielmodus; ungültige Entwürfe melden konkrete Fehler und bleiben ohne Teilübernahme.
-- „Leer“ erhält den privaten Spielmodus; der übrige native Lösch- und Speicherablauf bleibt bestehen.
+- „Leer“ erhält den privaten Spielmodus; der übrige native Lösch- und Speicherablauf bleibt bestehen. Privates Spiel → Leer wurde am 13. November vom Nutzer bestätigt; die kombinierte F8-/Einladungsabnahme bleibt offen.
+- F8-Suche mit wiederverwendeten Textfeldern, vorbereiteten Suchtexten und zwischengespeicherten Zeilenhöhen; keine verzögerte Eingabe und kein nachträglich wachsender Scrollbereich.
 - F8-Editor mit 89 Kampagneneffekten, Wirkung, Auslösezeitpunkt, interner ID und dokumentiertem Prüfstand.
 - Vollständige Umschaltung Deutsch/English mit separat gespeicherter Sprachwahl; Kartenbilder und Erweiterungsregeln wechseln mit.
 - Tatsächliche Mechanik- und Zielvoraussetzungen getrennt von nativen Erweiterungsfiltern und Funktionsprüfungen.
 - Taifun mit „Stapel hinzufügen“, Doppelklick/Leertaste und nummerierten Zielen. Taifun und aktive Effekte per Drag-and-drop oder Alt+Pfeiltasten sortierbar, Entf zum Entfernen.
-- Helle Checkboxen, Erweiterungsvorschau mit Originalregeln und von Anfang an markierbare Tabellenzellen ohne Formatwechsel beim Anklicken.
+- Helle Checkboxen, Erweiterungsvorschau mit Originalbeschreibung und Regeln direkt im gemeinsamen scrollbaren Textbereich sowie von Anfang an markierbare Tabellenzellen ohne Formatwechsel beim Anklicken.
+- Taifun bei einfacher Aktivierung im Nutzertest bestätigt; Mehrfachwirkung bleibt offen.
 - Effektliste mit von Anfang an vollständigem pixelbasiertem Scrollbereich; zusätzlich 13 Kategorien nach „Wann/wie“, kombinierbar mit der Suche. Mehrere Auslöser pro Effekt bleiben berücksichtigt.
 - Markierbarer, kopierbarer Tabellentext sowie Rechtsklick-Aktionen für eine Effektzeile oder alle gefilterten Effekte. Kopierte Namen und IDs enthalten keine unsichtbaren Layoutzeichen.
 - F8 auch bei der Königreich-Auswahl für Online-Spiele und Privates Spiel. Getrennte Konfigurationen, sichtbarer Hinweis auf die Serverabhängigkeit und deaktivierte lokale Zufallsstapel-Automatik im Online-Editor. Die tatsächliche Online-Wirkung ist weiterhin nicht nachgewiesen.

@@ -39,7 +39,7 @@ Der abschließende Lauf besteht mit **216/216 nativen Vergleichsfällen**, einsc
 
 Die vorhandenen 356 Parser-/Speicherprüfungen, zwölf lokalen Spielstartfälle sowie nativen F8-Dialogprüfungen bestehen ebenfalls. Der echte Release-Injector installiert die finale DLL im normalen Modus und im Online-Diagnosemodus; eine Prüfung des tatsächlich installierten Instruktionswerts bestätigt jeweils `83 66 18 EF`. Der normale Engine-Regressionslauf mit Große Ideen 3× erreicht weiterhin acht Handkarten im ersten Zug. Die UI-Dialogtests ersetzen keine echte private Online-Partie.
 
-Die sichtbare Abnahme von Überschrift und Einladen bleibt beim Nutzer: **Privates Spiel → Königreich → Leer**. Die automatisierte Netzwerkprüfung bestätigt die Client-Konfiguration, keinen echten Server-/Einladungsablauf.
+**Nutzertest vom 13. November 2026:** **Privates Spiel → Königreich → Leer** funktioniert; der Modus bleibt privat. Ein anschließender Einladungsablauf sowie die kombinierte Folge mit vorheriger F8-Übernahme sind damit nicht separat bestätigt. Die automatisierte Netzwerkprüfung bestätigt die Client-Konfiguration, keinen echten Server-/Einladungsablauf.
 
 ## F8-Übernahme ebenfalls korrigiert
 
@@ -51,4 +51,4 @@ Die Validierung gibt bei einer Ablehnung jetzt den konkreten bekannten Startschu
 
 Bei geladenen Sets kann der native Auflöser bereits vor dem Öffnen von F8 sein Bit `0x10` zurücksetzen. Die Tests vergleichen daher den tatsächlich geöffneten Zustand unmittelbar vor der Übernahme. Die Privat-Kennzeichnung `0x20` muss bereits bei dieser Auflösung erhalten bleiben und bleibt vom F8-Fix ebenfalls unberührt.
 
-Die sichtbare Abnahme lautet jetzt: **Privates Spiel → F8 → Effekte ändern → Fertig → Leer → Einladen**. Private Online-Effektwirkung wird dadurch weiterhin nicht serverseitig ergänzt. Weitere bekannte Einschränkungen werden getrennt in [Bekannte Probleme](Known_Issues.md) geführt.
+Als zusätzliche sichtbare Abnahme offen bleibt die kombinierte Folge: **Privates Spiel → F8 → Effekte ändern → Fertig → Leer → Einladen**. Der Nutzertest vom 13. November bestätigt bisher den eigenständigen Leer-Fix. Private Online-Effektwirkung wird dadurch weiterhin nicht serverseitig ergänzt. Weitere bekannte Einschränkungen werden getrennt in [Bekannte Probleme](Known_Issues.md) geführt.

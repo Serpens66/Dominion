@@ -56,7 +56,6 @@ struct Picker {
     std::set<std::wstring, std::less<>> expanded{};
     const CardTarget* displayed = nullptr;
     const ExpansionInfo* expansion=nullptr;
-    bool expansion_rules=false;
     std::map<HTREEITEM,const ExpansionInfo*> groups{};
     ULONG_PTR graphics = 0;
     ResourceImage image{};
@@ -93,7 +92,7 @@ std::string expansion_icon(const CardTarget& card) {
     return std::string("exp-") + (std::string_view(card.expansion_id) == "basic" ? "base" : card.expansion_id);
 }
 
-void layout_preview(HWND dialog, const Picker& picker) {
+void layout_preview(HWND, const Picker& picker) {
     // Geometry is fixed before the first request, independent of loading state.
     picker.skin->place(IDC_CARD_RULES, {217, 84, 378, 126});
     const auto extra=picker.skin->logical_height()-247;
@@ -101,7 +100,6 @@ void layout_preview(HWND dialog, const Picker& picker) {
     picker.skin->place(IDC_CARD_STATUS,{8,226+extra,264,243+extra});
     picker.skin->place(IDOK,{271,227+extra,323,243+extra});
     picker.skin->place(IDCANCEL,{326,227+extra,378,243+extra});
-    ShowWindow(GetDlgItem(dialog, IDC_CARD_TEXT), SW_HIDE);
 }
 
 void preview(HWND dialog, Picker& picker, const CardTarget* card) {
@@ -251,18 +249,22 @@ void render_cards(HWND dialog, Picker& picker) {
     selection_status(dialog, picker);
 }
 
-void preview_expansion(HWND dialog,Picker& picker,const ExpansionInfo* info,bool force=false) {
-    if(!info || (picker.expansion==info && !force))return;
+void preview_expansion(HWND dialog,Picker& picker,const ExpansionInfo* info) {
+    if(!info || picker.expansion==info)return;
     picker.expansion=info;picker.displayed=nullptr;picker.image.reset();picker.loader.request("");
     SetDlgItemTextW(dialog,IDC_CARD_TITLE,ui::pick(info->de,info->en));
     SetDlgItemTextW(dialog,IDC_CARD_INFO,L"");
-    const auto text=picker.expansion_rules?ui::pick(info->rules_de,info->rules_en):ui::pick(info->description_de,info->description_en);
-    SetDlgItemTextW(dialog,IDC_CARD_RULES,*text?text:ui::tr(L"Für diese Erweiterung sind keine zusätzlichen Regeln im Katalog enthalten."));
+    const auto* description=ui::pick(info->description_de,info->description_en);
+    const auto* rules=ui::pick(info->rules_de,info->rules_en);
+    std::wstring text=description?description:L"";
+    if(rules && *rules) {
+        if(!text.empty())text+=L"\r\n\r\n";
+        text+=rules;
+    }
+    SetDlgItemTextW(dialog,IDC_CARD_RULES,text.empty()?ui::tr(L"Für diese Erweiterung sind keine zusätzlichen Regeln im Katalog enthalten."):text.c_str());
     const auto extra=picker.skin->logical_height()-247;
-    picker.skin->place(IDC_CARD_RULES,{217,84,378,202+extra});
-    picker.skin->place(IDC_CARD_TEXT,{217,205+extra,378,222+extra});
-    SetDlgItemTextW(dialog,IDC_CARD_TEXT,ui::tr(picker.expansion_rules?L"Beschreibung anzeigen":L"Regeln anzeigen"));
-    ShowWindow(GetDlgItem(dialog,IDC_CARD_TEXT),SW_SHOW);ShowWindow(GetDlgItem(dialog,IDC_CARD_IMAGE),SW_HIDE);
+    picker.skin->place(IDC_CARD_RULES,{217,84,378,222+extra});
+    ShowWindow(GetDlgItem(dialog,IDC_CARD_IMAGE),SW_HIDE);
     InvalidateRect(GetDlgItem(dialog,IDC_CARD_INFO),nullptr,FALSE);
 }
 void add_selected_pile(HWND dialog,Picker& picker) {
@@ -527,8 +529,6 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             selection_status(dialog, picker);
         } else if(control==IDC_CARD_ADD && picker.mode==CardSelection::ordered) {
             add_selected_pile(dialog,picker);
-        } else if(control==IDC_CARD_TEXT && picker.expansion) {
-            picker.expansion_rules=!picker.expansion_rules;preview_expansion(dialog,picker,picker.expansion,true);
         } else if (control == IDC_CARD_UP || control == IDC_CARD_DOWN || control == IDC_CARD_REMOVE) {
             change_order(dialog, picker, control);
         } else if (control == IDOK) {

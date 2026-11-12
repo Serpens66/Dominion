@@ -9,6 +9,8 @@
 #include <array>
 #include <cstring>
 #include <new>
+#include <map>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -20,7 +22,12 @@ constexpr UINT effect_table_cells = WM_APP + 84;
 constexpr UINT effect_table_padding = WM_APP + 85;
 constexpr UINT effect_table_close_text = WM_APP + 86;
 constexpr UINT effect_table_select_cell = WM_APP + 87;
+constexpr UINT effect_table_replace_rows = WM_APP + 88;
 namespace effect_table_detail {
+#ifdef EFFECT_TABLE_PERF_COUNTERS
+struct PerformanceCounters { unsigned created=0,destroyed=0,measurements=0,measurement_windows=0; };
+inline PerformanceCounters performance;
+#endif
 inline std::wstring plain_copy(std::wstring text) {
     text.erase(std::remove(text.begin(),text.end(),L'\u200B'),text.end()); return text;
 }
@@ -73,31 +80,64 @@ struct Model {
     bool all_marked=false;
     HWND editor=nullptr;
     std::vector<std::array<HWND,3>> controls;
+    struct StoredCells { std::array<HWND,3> windows{}; std::array<std::wstring,3> text{}; };
+    std::map<LPARAM,StoredCells> retained;
     int padding_x=7,padding_y=5;
     std::wstring search;
     ULONGLONG typed_at=0;
     ~Model() { destroy_cells(); }
     void close_editor() { if(editor && IsWindow(editor))SendMessageW(editor,EM_SETSEL,WPARAM(-1),0);editor=nullptr; }
-    void destroy_cells(){editor=nullptr;for(const auto& row:controls)for(auto cell:row)if(IsWindow(cell))DestroyWindow(cell);controls.clear();}
-    bool owns(HWND cell) const {for(const auto& row:controls)for(auto value:row)if(value==cell)return true;return false;}
+    void destroy_cells(){
+        editor=nullptr;
+        for(const auto& entry:retained)for(auto cell:entry.second.windows)if(IsWindow(cell)){
+            DestroyWindow(cell);
+#ifdef EFFECT_TABLE_PERF_COUNTERS
+            ++performance.destroyed;
+#endif
+        }
+        retained.clear();controls.clear();
+    }
+    bool owns(HWND cell) const {for(const auto& row:controls)for(auto value:row)if(value && value==cell)return true;return false;}
+    void replace_rows(HWND table,const std::vector<Row>& next){
+        close_editor();
+        for(const auto& row:controls)for(auto cell:row)if(cell && (GetWindowLongPtrW(cell,GWL_STYLE)&WS_VISIBLE))ShowWindow(cell,SW_HIDE);
+        rows=next;controls.assign(rows.size(),{});offsets.assign(1,0);
+        position=0;selected=-1;all_marked=false;wheel=0;search.clear();
+        if(redraw)rebuild(table);
+    }
     void layout_cells(HWND table){
         if(!redraw)return;
-        if(controls.size()!=rows.size()){destroy_cells();controls.resize(rows.size());}
+        if(controls.size()!=rows.size())controls.resize(rows.size());
         RECT client{};GetClientRect(table,&client);const int boundaries[]{0,client.right*30/100,client.right*73/100,client.right};
-        for(std::size_t row=0;row<rows.size();++row)for(int column=0;column<3;++column){
-            auto& cell=controls[row][column];
-            if(!cell){cell=CreateWindowExW(0,L"EDIT",rows[row].cells[column].c_str(),WS_CHILD|ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL,
-                0,0,1,1,table,nullptr,reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(table,GWLP_HINSTANCE)),nullptr);
-                SetWindowSubclass(cell,text_proc,1,reinterpret_cast<DWORD_PTR>(table));SendMessageW(cell,WM_SETFONT,reinterpret_cast<WPARAM>(font),FALSE);
-                SendMessageW(cell,EM_SETMARGINS,EC_LEFTMARGIN|EC_RIGHTMARGIN,0);}
+        for(std::size_t row=0;row<rows.size();++row){
             const bool visible=offsets[row]<position+client.bottom && offsets[row+1]>position;
-            if(!visible){if(GetWindowLongPtrW(cell,GWL_STYLE)&WS_VISIBLE)ShowWindow(cell,SW_HIDE);continue;}
-            SendMessageW(cell,WM_SETFONT,reinterpret_cast<WPARAM>(font),FALSE);
-            const int width=boundaries[column+1]-boundaries[column]-1,height=rows[row].height-1;
-            SetWindowPos(cell,nullptr,boundaries[column],offsets[row]-position,width,height,SWP_NOZORDER|SWP_NOACTIVATE);
-            RECT area{padding_x,padding_y,width-padding_x,height-padding_y};SendMessageW(cell,EM_SETRECTNP,0,reinterpret_cast<LPARAM>(&area));
-            if(!(GetWindowLongPtrW(cell,GWL_STYLE)&WS_VISIBLE))ShowWindow(cell,SW_SHOWNA);
-            InvalidateRect(cell,nullptr,FALSE);
+            if(!visible){for(auto cell:controls[row])if(cell && (GetWindowLongPtrW(cell,GWL_STYLE)&WS_VISIBLE))ShowWindow(cell,SW_HIDE);continue;}
+            // Production rows carry their stable EffectDefinition pointer. The
+            // negative fallback keeps the legacy LB_* interface usable too.
+            auto& row_cells=retained[rows[row].data?rows[row].data:-LPARAM(row+1)];
+            for(int column=0;column<3;++column){
+                auto& cell=row_cells.windows[column];
+                if(!cell){
+                    cell=CreateWindowExW(0,L"EDIT",L"",WS_CHILD|ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL,
+                        0,0,1,1,table,nullptr,reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(table,GWLP_HINSTANCE)),nullptr);
+                    if(!cell)continue;
+#ifdef EFFECT_TABLE_PERF_COUNTERS
+                    ++performance.created;
+#endif
+                    SetWindowSubclass(cell,text_proc,1,reinterpret_cast<DWORD_PTR>(table));
+                    SendMessageW(cell,EM_SETMARGINS,EC_LEFTMARGIN|EC_RIGHTMARGIN,0);
+                }
+                controls[row][column]=cell;
+                if(row_cells.text[column]!=rows[row].cells[column]){
+                    row_cells.text[column]=rows[row].cells[column];SetWindowTextW(cell,row_cells.text[column].c_str());
+                }
+                if(reinterpret_cast<HFONT>(SendMessageW(cell,WM_GETFONT,0,0))!=font)SendMessageW(cell,WM_SETFONT,reinterpret_cast<WPARAM>(font),FALSE);
+                const int width=boundaries[column+1]-boundaries[column]-1,height=rows[row].height-1;
+                SetWindowPos(cell,nullptr,boundaries[column],offsets[row]-position,width,height,SWP_NOZORDER|SWP_NOACTIVATE);
+                RECT area{padding_x,padding_y,width-padding_x,height-padding_y};SendMessageW(cell,EM_SETRECTNP,0,reinterpret_cast<LPARAM>(&area));
+                if(!(GetWindowLongPtrW(cell,GWL_STYLE)&WS_VISIBLE))ShowWindow(cell,SW_SHOWNA);
+                InvalidateRect(cell,nullptr,FALSE);
+            }
         }
     }
     std::wstring exported(bool all) const {
@@ -115,8 +155,10 @@ struct Model {
     }
     HWND open_cell(HWND table,int row,int column) {
         if(row<0 || row>=int(rows.size()) || column<0 || column>=3)return nullptr;
-        if(controls.size()!=rows.size())layout_cells(table);
-        editor=controls[row][column];SetFocus(editor);return editor;
+        if(row+1>=int(offsets.size()))return nullptr;
+        if(offsets[row]<position || offsets[row]>=position+page(table))scroll(table,offsets[row]);
+        layout_cells(table);
+        editor=controls[row][column];if(editor)SetFocus(editor);return editor;
     }
     int page(HWND window) const { RECT r{}; GetClientRect(window,&r); return (std::max)(1,int(r.bottom)); }
     int limit(HWND window) const { return (std::max)(0,offsets.back()-page(window)); }
@@ -148,7 +190,7 @@ struct Model {
             else if (offsets[row+1]>position+page(window))
                 scroll(window,rows[row].height>page(window)?offsets[row]:offsets[row+1]-page(window));
         }
-        if(redraw){InvalidateRect(window,nullptr,FALSE);for(const auto& cells:controls)for(auto cell:cells)InvalidateRect(cell,nullptr,FALSE);}
+        if(redraw){InvalidateRect(window,nullptr,FALSE);for(const auto& cells:controls)for(auto cell:cells)if(cell)InvalidateRect(cell,nullptr,FALSE);}
         if (notify && changed) {
             SendMessageW(GetParent(window),WM_COMMAND,MAKEWPARAM(GetDlgCtrlID(window),LBN_SELCHANGE),reinterpret_cast<LPARAM>(window));
             NotifyWinEvent(EVENT_OBJECT_SELECTION,window,OBJID_CLIENT,row+1);
@@ -166,6 +208,8 @@ inline LRESULT CALLBACK procedure(HWND window,UINT message,WPARAM wparam,LPARAM 
     auto& state=*model;
     const auto valid=[&] { return wparam<state.rows.size(); };
     switch (message) {
+        case effect_table_replace_rows:
+            if(!lparam)return LB_ERR;state.replace_rows(window,*reinterpret_cast<const std::vector<Row>*>(lparam));return 0;
         case effect_table_cells:
             if (!valid() || !lparam) return LB_ERR;
             state.rows[wparam].cells=*reinterpret_cast<const std::array<std::wstring,3>*>(lparam); return 0;
@@ -221,8 +265,10 @@ inline LRESULT CALLBACK procedure(HWND window,UINT message,WPARAM wparam,LPARAM 
             return 0;
         case WM_GETFONT: return reinterpret_cast<LRESULT>(state.font);
         case WM_SETFONT:
+            if(state.font==reinterpret_cast<HFONT>(wparam))return 0;
             state.font=reinterpret_cast<HFONT>(wparam);
-            if (!state.rows.empty()) SendMessageW(GetParent(window),effect_table_layout,0,0);
+            for(const auto& entry:state.retained)for(auto cell:entry.second.windows)if(cell)SendMessageW(cell,WM_SETFONT,wparam,FALSE);
+            SendMessageW(GetParent(window),effect_table_layout,1,0);
             return 0;
         case WM_SIZE:
             if (!state.rows.empty()) SendMessageW(GetParent(window),effect_table_layout,0,0);
@@ -362,16 +408,40 @@ inline LRESULT CALLBACK procedure(HWND window,UINT message,WPARAM wparam,LPARAM 
     return DefWindowProcW(window,message,wparam,lparam);
 }
 }
-inline int measure_effect_cell(HWND parent,HFONT font,const std::wstring& text,int width,int padding_x,int padding_y) {
-    const auto edit=CreateWindowExW(0,L"EDIT",text.c_str(),WS_CHILD|ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL,0,0,width,10000,parent,nullptr,
-        reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(parent,GWLP_HINSTANCE)),nullptr);
-    if(!edit)return 0;
-    SendMessageW(edit,WM_SETFONT,reinterpret_cast<WPARAM>(font),FALSE);SendMessageW(edit,EM_SETMARGINS,EC_LEFTMARGIN|EC_RIGHTMARGIN,0);
-    RECT area{padding_x,padding_y,width-padding_x,9999-padding_y};SendMessageW(edit,EM_SETRECTNP,0,reinterpret_cast<LPARAM>(&area));
-    const auto dc=GetDC(edit);const auto previous=SelectObject(dc,font);TEXTMETRICW metrics{};GetTextMetricsW(dc,&metrics);
-    const int height=int(SendMessageW(edit,EM_GETLINECOUNT,0,0))*metrics.tmHeight+2*padding_y+2;
-    SelectObject(dc,previous);ReleaseDC(edit,dc);DestroyWindow(edit);return height;
-}
+// One hidden EDIT uses exactly the visible cells' text layout. Reuse it for
+// every uncached height instead of allocating a window for each measurement.
+class EffectCellMeasurer {
+    HWND edit_=nullptr;
+    HFONT font_=nullptr;
+    int line_height_=0;
+public:
+    explicit EffectCellMeasurer(HWND parent){
+        edit_=CreateWindowExW(0,L"EDIT",L"",WS_CHILD|ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL,0,0,1,10000,parent,nullptr,
+            reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(parent,GWLP_HINSTANCE)),nullptr);
+        if(!edit_)throw std::runtime_error("Cannot create effect measurement field.");
+        SendMessageW(edit_,EM_SETMARGINS,EC_LEFTMARGIN|EC_RIGHTMARGIN,0);
+#ifdef EFFECT_TABLE_PERF_COUNTERS
+        ++effect_table_detail::performance.measurement_windows;
+#endif
+    }
+    ~EffectCellMeasurer(){if(IsWindow(edit_))DestroyWindow(edit_);}
+    EffectCellMeasurer(const EffectCellMeasurer&)=delete;
+    EffectCellMeasurer& operator=(const EffectCellMeasurer&)=delete;
+    int measure(HFONT font,const std::wstring& text,int width,int padding_x,int padding_y){
+#ifdef EFFECT_TABLE_PERF_COUNTERS
+        ++effect_table_detail::performance.measurements;
+#endif
+        if(font_!=font || !line_height_){
+            font_=font;SendMessageW(edit_,WM_SETFONT,reinterpret_cast<WPARAM>(font),FALSE);
+            const auto dc=GetDC(edit_);const auto previous=SelectObject(dc,font);TEXTMETRICW metrics{};GetTextMetricsW(dc,&metrics);
+            line_height_=metrics.tmHeight;SelectObject(dc,previous);ReleaseDC(edit_,dc);
+        }
+        SetWindowPos(edit_,nullptr,0,0,width,10000,SWP_NOZORDER|SWP_NOACTIVATE);
+        RECT area{padding_x,padding_y,width-padding_x,9999-padding_y};SendMessageW(edit_,EM_SETRECTNP,0,reinterpret_cast<LPARAM>(&area));
+        SetWindowTextW(edit_,text.c_str());
+        return int(SendMessageW(edit_,EM_GETLINECOUNT,0,0))*line_height_+2*padding_y+2;
+    }
+};
 inline bool register_effect_table(HINSTANCE module) {
     WNDCLASSW existing{};
     if (GetClassInfoW(module,L"DominionEffectTable",&existing)) return true;

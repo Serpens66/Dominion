@@ -20,6 +20,8 @@ bool online_cancel = false;
 UINT_PTR timer = 0;
 void check(bool condition, const char* message) { if (!condition) throw std::runtime_error(message); }
 
+std::wstring control_text(HWND control){const int size=GetWindowTextLengthW(control);std::wstring text(size+1,L'\0');GetWindowTextW(control,text.data(),size+1);text.resize(size);return text;}
+
 void save_dialog(HWND dialog,const wchar_t* name) {
     ShowWindow(dialog,SW_SHOWNOACTIVATE);
     const auto directory=std::filesystem::path(L"KingdomEffectsPatch/out/staging/ui-check");std::filesystem::create_directories(directory);
@@ -156,7 +158,13 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
         }
         SetDlgItemTextW(dialog, IDC_QUERY, L"no-such-effect-123456");
         check(SendMessageW(list, LB_GETCOUNT, 0, 0) == 0, "Empty search mismatch.");
+        auto while_empty=original;while_empty.lfHeight=MulDiv(original.lfHeight,115,100);
+        const auto empty_font=CreateFontIndirectW(&while_empty);
+        SendMessageW(list,WM_SETFONT,reinterpret_cast<WPARAM>(empty_font),0);
         check(!IsWindowEnabled(GetDlgItem(dialog, IDC_ADD)), "Empty selection can be added.");
+        SetDlgItemTextW(dialog,IDC_QUERY,L"");check_scroll_geometry(dialog);
+        SendMessageW(list,WM_SETFONT,reinterpret_cast<WPARAM>(font),0);DeleteObject(empty_font);
+        check_scroll_geometry(dialog);
         SetDlgItemTextW(dialog, IDC_QUERY, L"");
         check(SendMessageW(list, LB_GETCOUNT, 0, 0) == 89, "Search reset mismatch.");
         auto& draft=*reinterpret_cast<kingdom::Draft*>(GetWindowLongPtrW(dialog,DWLP_USER));
@@ -275,7 +283,17 @@ BOOL CALLBACK inspect_ordered(HWND dialog,LPARAM) {
         const auto group=TreeView_GetRoot(tree);RECT label{};TreeView_GetItemRect(tree,group,&label,TRUE);
         SendMessageW(tree,WM_MOUSEMOVE,0,MAKELPARAM(label.left+3,(label.top+label.bottom)/2));
         check(picker.expansion && !picker.displayed && !IsWindowVisible(GetDlgItem(dialog,IDC_CARD_IMAGE)),"Expansion preview missing.");
-        SendMessageW(dialog,WM_COMMAND,IDC_CARD_TEXT,0);check(picker.expansion_rules,"Expansion rules not reachable.");
+        const auto* expansion=picker.expansion;
+        const auto combined=std::wstring(kingdom::ui::pick(expansion->description_de,expansion->description_en))+L"\r\n\r\n"+kingdom::ui::pick(expansion->rules_de,expansion->rules_en);
+        check(control_text(GetDlgItem(dialog,IDC_CARD_RULES))==combined,"Expansion description and rules are not combined.");
+        check((GetWindowLongPtrW(GetDlgItem(dialog,IDC_CARD_RULES),GWL_STYLE)&WS_VSCROLL)!=0,"Expansion rules cannot scroll.");
+        const kingdom::ExpansionInfo empty{"basic",L"Test",L"Test",L"",L"",L"",L""};
+        const kingdom::ExpansionInfo rules_only{"basic",L"Test",L"Test",L"",L"",L"Regeln",L"Rules"};
+        const kingdom::ExpansionInfo description_only{"basic",L"Test",L"Test",L"Beschreibung",L"Description",L"",L""};
+        kingdom::preview_expansion(dialog,picker,&empty);check(!control_text(GetDlgItem(dialog,IDC_CARD_RULES)).empty(),"Empty expansion fallback missing.");
+        kingdom::preview_expansion(dialog,picker,&rules_only);check(control_text(GetDlgItem(dialog,IDC_CARD_RULES))==kingdom::ui::pick(L"Regeln",L"Rules"),"Rules-only expansion malformed.");
+        kingdom::preview_expansion(dialog,picker,&description_only);check(control_text(GetDlgItem(dialog,IDC_CARD_RULES))==kingdom::ui::pick(L"Beschreibung",L"Description"),"Description-only expansion malformed.");
+        kingdom::preview_expansion(dialog,picker,expansion);
         save_dialog(dialog,kingdom::ui::english()?L"expansion-en.png":L"expansion-de.png");
         TreeView_SelectItem(tree,group);check(picker.expansion,"Keyboard expansion preview missing.");
         // Hover cannot choose the Add button's target.

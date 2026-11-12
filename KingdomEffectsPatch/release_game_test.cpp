@@ -1,6 +1,7 @@
 #define wmain attach_cli
 #include "attach.cpp"
 #undef wmain
+#include <fstream>
 
 int wmain(int argc, wchar_t** argv) {
     try {
@@ -96,13 +97,20 @@ int wmain(int argc, wchar_t** argv) {
         wait_for_menu(process.value, child.dwProcessId);
         require(std::filesystem::exists(scratch / L"log.txt"), "Game did not write its log to disposable folder.");
         std::puts("The actual Dominion engine reached its main menu without using the foreground desktop.");
+        unsigned launcher_index=0;
         const auto invoke_launcher = [&](const std::filesystem::path& source, bool installed = false, bool online = false) {
             const auto exe = package / L"attach.exe";
             std::wstring command = L"\"" + exe.wstring() + (online ? L"\" --online --apply " : installed ? L"\" --installed --apply " : L"\" --local --apply ") +
                 std::to_wstring(child.dwProcessId) + L" \"" + path.wstring() + L"\" \"" + source.wstring() + L"\"";
             STARTUPINFOW info{sizeof info};
+            SECURITY_ATTRIBUTES inherited{sizeof inherited,nullptr,TRUE};
+            const auto transcript=scratch/(L"injector-"+std::to_wstring(++launcher_index)+L".txt");
+            Handle output(CreateFileW(transcript.c_str(),GENERIC_WRITE,FILE_SHARE_READ,&inherited,CREATE_ALWAYS,0,nullptr));
+            Handle input(CreateFileW(L"NUL",GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,&inherited,OPEN_EXISTING,0,nullptr));
+            require(output.valid() && input.valid(),"Cannot prepare injector diagnostic handles.");
+            info.dwFlags=STARTF_USESTDHANDLES;info.hStdOutput=output.value;info.hStdError=output.value;info.hStdInput=input.value;
             PROCESS_INFORMATION attached{};
-            require(CreateProcessW(exe.c_str(), command.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW,
+            require(CreateProcessW(exe.c_str(), command.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW,
                         nullptr, package.c_str(), &info, &attached), "Cannot launch the packaged injector.");
             Handle launcher(attached.hProcess), launch_thread(attached.hThread);
             if (WaitForSingleObject(launcher.value, 75000) != WAIT_OBJECT_0) {
@@ -111,13 +119,17 @@ int wmain(int argc, wchar_t** argv) {
             }
             DWORD result = 0;
             require(GetExitCodeProcess(launcher.value, &result), "Cannot read injector result.");
+            if(result && launcher_index>=3){
+                std::ifstream diagnostic_file(transcript);std::string line;
+                while(std::getline(diagnostic_file,line))std::fprintf(stderr,"Injector: %s\n",line.c_str());
+            }
             return result;
         };
         require(invoke_launcher(path) != 0, "Injector did not reject original/copy identity collision.");
         require(invoke_launcher(std::filesystem::canonical(argv[3]), true) != 0,
                 "Installed mode did not reject a different executable identity.");
-        require(diagnostic ? invoke_launcher(std::filesystem::canonical(argv[3]),false,true) == 0 :
-                            invoke_launcher(path,true) == 0, "Packaged injector failed.");
+        const auto initialized=diagnostic?invoke_launcher(std::filesystem::canonical(argv[3]),false,true):invoke_launcher(path,true);
+        if(initialized)throw std::runtime_error("Packaged injector failed with exit code "+std::to_string(initialized)+".");
         unsigned char limit = 0xFF;
         require(ReadProcessMemory(process.value, reinterpret_cast<void*>(base + 0x208EA4), &limit, 1, &amount) &&
                 amount == 1 && limit == 0, "Online ban patch is not installed.");

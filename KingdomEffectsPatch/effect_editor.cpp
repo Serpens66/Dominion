@@ -45,6 +45,12 @@ const wchar_t* effect_requirement_detail(const EffectDefinition& effect) {return
 
 #include "effect_catalog.generated.hpp"
 
+struct EffectPresentation {
+    std::array<std::wstring,3> cells;
+    std::vector<std::wstring> search;
+    int height=0;
+};
+
 struct Draft {
     EffectCommands effects;
     bool automatic;
@@ -56,6 +62,12 @@ struct Draft {
     const CardTarget* first = nullptr;
     const CardTarget* second = nullptr;
     std::unique_ptr<DialogSkin> skin{};
+    std::vector<EffectPresentation> catalog;
+    bool catalog_english=false;
+    HFONT height_font=nullptr;
+    std::array<int,3> height_widths{};
+    POINT height_padding{};
+    std::unique_ptr<EffectCellMeasurer> measurer;
 };
 
 std::wstring widen(std::string_view value) {
@@ -183,36 +195,42 @@ std::array<std::wstring, 3> table_text(const EffectDefinition& effect) {
 
 constexpr UINT table_text_flags = DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL;
 
-void measure_rows(HWND dialog, const Draft& draft) {
-    const auto list = GetDlgItem(dialog, IDC_CATALOG);
-    const auto dc = GetDC(list);
-    if (!dc) return;
-    const auto font = reinterpret_cast<HFONT>(SendMessageW(list, WM_GETFONT, 0, 0));
-    const auto previous = SelectObject(dc, font);
-    const auto padding = draft.skin->units({0, 0, 4, 3});
-    SendMessageW(list,effect_table_padding,padding.right,padding.bottom);
-    // Updating row heights can make the vertical scrollbar appear.
-    LONG previous_width = -1;
-    for (int pass = 0; pass < 2; ++pass) {
-        RECT client{};
-        GetClientRect(list, &client);
-        if (client.right == previous_width) break;
-        previous_width = client.right;
-        const auto cells = table_cells(dialog, client);
-        const auto count = SendMessageW(list, LB_GETCOUNT, 0, 0);
-        for (LRESULT row = 0; row < count; ++row) {
-            const auto* effect = reinterpret_cast<const EffectDefinition*>(SendMessageW(list, LB_GETITEMDATA, row, 0));
-            const auto text = table_text(*effect);
-            LONG height = 0;
-            for (std::size_t column = 0; column < cells.size(); ++column) {
-                height=(std::max)(height,LONG(measure_effect_cell(list,font,text[column],cells[column].right-cells[column].left-1,padding.right,padding.bottom)));
-            }
-            SendMessageW(list, LB_SETITEMHEIGHT, row, height + 1);
-        }
+void prepare_catalog(Draft& draft) {
+    if(draft.catalog.size()==std::size(effect_catalog) && draft.catalog_english==ui::english())return;
+    draft.catalog.clear();draft.catalog.reserve(std::size(effect_catalog));draft.catalog_english=ui::english();
+    for(const auto& effect:effect_catalog){
+        EffectPresentation entry;entry.cells=table_text(effect);
+        for(const auto* text:{effect.title,effect.description,effect.timing,effect.expansion_reference,effect.verification,
+            effect.title_en,effect.description_en,effect.timing_en,effect.requirement_de,effect.requirement_en,
+            effect.requirement_detail_de,effect.requirement_detail_en,ui::tr(effect.verification)})entry.search.push_back(fold_card_search(text));
+        entry.search.push_back(fold_card_search(widen(effect.id)));
+        draft.catalog.push_back(std::move(entry));
     }
-    SelectObject(dc, previous);
-    ReleaseDC(list, dc);
-    InvalidateRect(GetDlgItem(dialog, IDC_CATALOG_HEADER), nullptr, TRUE);
+}
+
+void measure_rows(HWND dialog,Draft& draft) {
+    const auto list=GetDlgItem(dialog,IDC_CATALOG);
+    const auto font=reinterpret_cast<HFONT>(SendMessageW(list,WM_GETFONT,0,0));
+    const auto padding=draft.skin->units({0,0,4,3});
+    SendMessageW(list,effect_table_padding,padding.right,padding.bottom);
+    if(!draft.measurer)draft.measurer=std::make_unique<EffectCellMeasurer>(list);
+    RECT client{};GetClientRect(list,&client);const auto cells=table_cells(dialog,client);
+    const std::array<int,3> widths{cells[0].right-cells[0].left-1,cells[1].right-cells[1].left-1,cells[2].right-cells[2].left-1};
+    if(font!=draft.height_font || widths!=draft.height_widths || padding.right!=draft.height_padding.x || padding.bottom!=draft.height_padding.y){
+        for(auto& entry:draft.catalog)entry.height=0;
+        draft.height_font=font;draft.height_widths=widths;draft.height_padding={padding.right,padding.bottom};
+    }
+    const auto count=SendMessageW(list,LB_GETCOUNT,0,0);
+    for(LRESULT row=0;row<count;++row){
+        const auto* effect=reinterpret_cast<const EffectDefinition*>(SendMessageW(list,LB_GETITEMDATA,row,0));
+        auto& entry=draft.catalog.at(std::size_t(effect-std::begin(effect_catalog)));
+        if(!entry.height){
+            for(std::size_t column=0;column<3;++column)
+                entry.height=(std::max)(entry.height,draft.measurer->measure(font,entry.cells[column],widths[column],padding.right,padding.bottom)+1);
+        }
+        SendMessageW(list,LB_SETITEMHEIGHT,row,entry.height);
+    }
+    InvalidateRect(GetDlgItem(dialog,IDC_CATALOG_HEADER),nullptr,FALSE);
 }
 
 void paint_table(HWND dialog, const Draft& draft, const DRAWITEMSTRUCT& draw) {
@@ -314,37 +332,19 @@ void filter_catalog(HWND dialog, Draft& draft) {
     const std::array<std::string_view, 4> prefixes{"", "twist_", "stamp_", "start_"};
     const auto prefix = category >= 0 && category < 4 ? prefixes[category] : prefixes[0];
     const unsigned timing = category >= 4 && category < 4 + std::size(timing_filters) ? 1u << (category - 4) : 0;
-    SendDlgItemMessageW(dialog, IDC_CATALOG, WM_SETREDRAW, FALSE, 0);
-    SendDlgItemMessageW(dialog, IDC_CATALOG, LB_RESETCONTENT, 0, 0);
-    LRESULT selection = 0;
-    for (const auto& effect : effect_catalog) {
+    prepare_catalog(draft);
+    std::vector<effect_table_detail::Row> rows;rows.reserve(std::size(effect_catalog));
+    LRESULT selection=0;
+    for(const auto& effect:effect_catalog){
         const std::string_view id(effect.id);
-        if (id.substr(0, prefix.size()) != prefix || (timing && !(effect.timing_mask & timing))) continue;
-        if (fold_card_search(effect.title).find(filter) == filter.npos &&
-            fold_card_search(widen(id)).find(filter) == filter.npos &&
-            fold_card_search(effect.description).find(filter) == filter.npos &&
-            fold_card_search(effect.timing).find(filter) == filter.npos &&
-            fold_card_search(effect.expansion_reference).find(filter) == filter.npos &&
-            fold_card_search(effect.verification).find(filter) == filter.npos &&
-            fold_card_search(effect.title_en).find(filter) == filter.npos &&
-            fold_card_search(effect.description_en).find(filter) == filter.npos &&
-            fold_card_search(effect.timing_en).find(filter) == filter.npos &&
-            fold_card_search(effect.requirement_de).find(filter) == filter.npos &&
-            fold_card_search(effect.requirement_en).find(filter) == filter.npos &&
-            fold_card_search(effect.requirement_detail_de).find(filter) == filter.npos &&
-            fold_card_search(effect.requirement_detail_en).find(filter) == filter.npos &&
-            fold_card_search(ui::tr(effect.verification)).find(filter) == filter.npos) continue;
-        const auto name = table_name(effect);
-        const auto row = SendDlgItemMessageW(dialog, IDC_CATALOG, LB_ADDSTRING, 0,
-                                             reinterpret_cast<LPARAM>(name.c_str()));
-        if (row >= 0) SendDlgItemMessageW(dialog, IDC_CATALOG, LB_SETITEMDATA, row,
-                                          reinterpret_cast<LPARAM>(&effect));
-        if (row >= 0) {
-            const auto cells=table_text(effect);
-            SendDlgItemMessageW(dialog,IDC_CATALOG,effect_table_cells,row,reinterpret_cast<LPARAM>(&cells));
-        }
-        if (&effect == draft.selected && row >= 0) selection = row;
+        if(id.substr(0,prefix.size())!=prefix || (timing && !(effect.timing_mask&timing)))continue;
+        const auto& entry=draft.catalog[std::size_t(&effect-std::begin(effect_catalog))];
+        if(!std::any_of(entry.search.begin(),entry.search.end(),[&](const auto& text){return text.find(filter)!=text.npos;}))continue;
+        if(&effect==draft.selected)selection=LRESULT(rows.size());
+        rows.push_back({table_name(effect),reinterpret_cast<LPARAM>(&effect),entry.height?entry.height:24,entry.cells});
     }
+    SendDlgItemMessageW(dialog,IDC_CATALOG,WM_SETREDRAW,FALSE,0);
+    SendDlgItemMessageW(dialog,IDC_CATALOG,effect_table_replace_rows,0,reinterpret_cast<LPARAM>(&rows));
     measure_rows(dialog, draft);
     SendDlgItemMessageW(dialog, IDC_CATALOG, WM_SETREDRAW, TRUE, 0);
     SendDlgItemMessageW(dialog, IDC_CATALOG, LB_SETCURSEL, selection, 0);
@@ -475,14 +475,14 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             CheckDlgButton(dialog, IDC_AUTOMATIC, !online && draft.automatic ? BST_CHECKED : BST_UNCHECKED);
             EnableWindow(GetDlgItem(dialog, IDC_AUTOMATIC), !online);
             if (online) SetDlgItemTextW(dialog, IDC_AUTOMATIC, kingdom::ui::tr(L"Automatische Verdopplung nur lokal"));
-            filter_catalog(dialog, draft);
-            update_active(dialog, draft);
             return TRUE;
         }
         const auto state = GetWindowLongPtrW(dialog, DWLP_USER);
         if (!state) return FALSE;
         auto& draft = *reinterpret_cast<Draft*>(state);
         if (message == effect_table_layout && draft.skin) {
+            if(wparam){draft.height_font=nullptr;draft.measurer.reset();}
+            prepare_catalog(draft);
             SendDlgItemMessageW(dialog, IDC_CATALOG, WM_SETREDRAW, FALSE, 0);
             measure_rows(dialog, draft);
             SendDlgItemMessageW(dialog, IDC_CATALOG, WM_SETREDRAW, TRUE, 0);

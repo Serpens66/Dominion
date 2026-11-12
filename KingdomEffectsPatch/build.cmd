@@ -30,6 +30,7 @@ clipboard_test.exe || goto fail
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0resources_test.cpp" /link /OUT:resources_test.exe gdiplus.lib user32.lib gdi32.lib || goto fail
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0release_game_test.cpp" /link /OUT:release_game_test.exe bcrypt.lib user32.lib || goto fail
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0editor_release_test.cpp" "%~dp0dialog_skin.cpp" "%~dp0game_resources.cpp" effect_editor.res /link /OUT:editor_release_test.exe user32.lib gdi32.lib comctl32.lib gdiplus.lib || goto fail
+cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0editor_search_test.cpp" "%~dp0dialog_skin.cpp" "%~dp0game_resources.cpp" effect_editor.res /link /OUT:editor_search_test.exe user32.lib gdi32.lib comctl32.lib gdiplus.lib || goto fail
 :probes
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT /LD "%~dp0roundtrip_probe.cpp" "%~dp0effect_editor.cpp" "%~dp0card_picker.cpp" "%~dp0dialog_skin.cpp" "%~dp0game_resources.cpp" effect_editor.res /link /OUT:roundtrip_probe.dll user32.lib gdi32.lib comctl32.lib gdiplus.lib || goto fail
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0roundtrip_test.cpp" /link /OUT:roundtrip_test.exe bcrypt.lib user32.lib || goto fail
