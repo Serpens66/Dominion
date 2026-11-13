@@ -9,7 +9,7 @@
 
 ## Kingdom Effects Patch
 
-**[Patch herunterladen / Download](https://github.com/Serpens66/Dominion/releases)** · [Anleitung / English & Deutsch](KingdomEffectsPatch/README.md)
+**[Patch herunterladen / Download](https://github.com/Serpens66/Dominion/releases/tag/v0.1.1)** · [Anleitung / English & Deutsch](KingdomEffectsPatch/README.md)
 
 Passe deine Dominion-Partien im Spiel mit **F8** an: etwa Dorf und Markt gemeinsam verdoppeln oder zusätzliche Start- und Zugregeln kombinieren. Der Patch bietet deutsche und englische Menüs, größere Online-Bannlisten und behebt den Wechsel von „Privates Spiel“ zu öffentlich beim Leeren der Kartenauswahl. Kampagneneffekte wirken aktuell in **Lokal spielen und Weitergeben**, nicht in Online-Partien.
 

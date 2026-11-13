@@ -53,3 +53,7 @@ Bestandene Prüfungen auf unsichtbaren Desktops mit getrennten Profilen, ohne ph
 - Bestehende 356 Parserfälle, 216 Leer-Vergleiche, 468 F8-Speicherprüfungen samt Privatstatus sowie 18 gerenderte Checkboxfälle bestehen erneut. Die breit angelegten Speicherprüfungen verwenden ausdrücklich erlaubte Ziel-Fixtures; sie ersetzen nicht die oben getrennt geprüfte echte Kartenfreigabe.
 
 Die UI-Prüfung nutzt erlaubte/abgelehnte/unbekannte Testanbieter, um den Filter reproduzierbar zu prüfen. Die nativen Vergleiche verwenden die tatsächlichen Freigaben des isolierten Clients. Eine aktuell aktive kostenlose Rotation wurde nicht eigens durch einen Kauf oder eine Kontoveränderung hergestellt; deren Behandlung folgt dem nachgewiesenen nativen Cache-/Grant-Pfad. Rohberichte und temporäre Profile bleiben außerhalb des Releases. Sichtbare Nutzerabnahme des zusätzlichen Freigabefixes und Veröffentlichung von v0.1.1 bleiben offen.
+
+## Nutzerabnahme und Veröffentlichung
+
+Am 13. November 2026 bestätigt der Nutzer die Funktion der Zielkartenfreigabe und beauftragt die Veröffentlichung von v0.1.1. Die Checkboxdarstellung war bereits bestätigt. Die frühere Veröffentlichungssperre ist damit aufgehoben; das alte Patch-Release v0.1.0 und veraltete lokale Patch-Pakete werden auf ausdrücklichen Wunsch entfernt. Historische Messungen und Testgrenzen bleiben dokumentiert.
