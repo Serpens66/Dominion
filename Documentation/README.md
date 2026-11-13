@@ -58,6 +58,8 @@ Katalog und Zieh-Worker aus dem Projektordner aktualisieren und prüfen. Passe d
 ```powershell
 python .\SetGenerator\generator_catalog.py "E:\ProgrammeE\Steam\steamapps\common\Dominion\Dominion.xpack"
 node .\SetGenerator\test_generator_solver.js
+node .\SetGenerator\test_expansion_weights.js
+node .\SetGenerator\test_weighted_lottery.js
 node .\SetGenerator\test_kingdom_export.js
 python .\SetGenerator\test_generator_catalog.py
 ```

@@ -110,12 +110,242 @@ async function launch(name, url) {
   };
 }
 
+async function exercisePool(browser) {
+  const result = JSON.parse(await browser.evaluate(`(() => {
+    const failures = []; let checks = 0;
+    const check = (ok, kind) => { checks++; if (!ok) failures.push({kind:'pool-' + kind}); };
+    const saved = collectSettings(), query = poolSearch.value, filters = [...selectedPoolProperties];
+    const open = poolGroups.map(group => [group.details, group.details.open]);
+    const search = (text = '', properties = []) => {
+      poolSearch.value = text; selectedPoolProperties.clear();
+      properties.forEach(id => selectedPoolProperties.add(id)); refreshPoolSearch();
+    };
+    try {
+      search();
+      check(poolGroups.length === expansions.length && new Set(poolGroups.map(group => group.expansion)).size === expansions.length, 'unique-expansions');
+      const promo = poolGroups.find(group => group.expansion === 'promos');
+      const main = promo.sections.find(section => section.area === 'pool');
+      const land = promo.sections.find(section => section.area === 'land-pool');
+      check(main.items.length === 11 && land.items.length === 1 && land.items[0].card.id === 'summon', 'twelve-promos');
+      check(promo.items.length === 12 && promo.details.querySelectorAll('details').length === 0, 'flat-sections');
+      check(promo.sections[0] === main && promo.sections[1] === land, 'section-order');
+      check(new Set([...poolChoices.values()].map(field => field.id)).size === poolChoices.size, 'unique-choice-controls');
+      promo.details.open = false;
+      search('summon');
+      check(main.element.hidden && !land.element.hidden && !promo.details.hidden && promo.details.open, 'landscape-search');
+      check(poolSearchHits === 1 && land.items[0].item.hidden === false, 'search-count');
+      search();
+      check(!main.element.hidden && !land.element.hidden && !promo.details.open, 'search-reset');
+      search('', ['land-type-event']);
+      check(main.element.hidden && !land.element.hidden && !land.items[0].item.hidden, 'landscape-property-filter');
+      check(poolGroups.every(group => group.items.every(entry => entry.item.hidden || entry.area === 'land-pool')), 'property-role');
+      search('black_market');
+      check(!main.element.hidden && land.element.hidden, 'main-search');
+      search();
+      for (const id of promo.items.map(entry => entry.card.id)) poolChoices.get(id).value = 'random';
+      poolChoices.get('black_market').value = 'pinned';
+      poolChoices.get('summon').value = 'excluded';
+      const settings = collectSettings();
+      check(settings.cardChoices.black_market === 'pinned' && settings.cardChoices.summon === 'excluded', 'save-both-sections');
+      poolChoices.get('black_market').value = 'random'; poolChoices.get('summon').value = 'random';
+      applySettings(settings);
+      check(poolChoices.get('black_market').value === 'pinned' && poolChoices.get('summon').value === 'excluded', 'restore-both-sections');
+      poolChoices.get('black_market').value = 'excluded'; poolChoices.get('summon').value = 'pinned';
+      check(collectSettings().cardChoices.summon === 'pinned' && collectSettings().cardChoices.black_market === 'excluded', 'independent-choices');
+      for (const entry of promo.items) entry.choice.value = 'random';
+      pinnedPriority.checked = false;
+      rangeInputs.get('exp-promos')[0].value = '0'; rangeInputs.get('exp-promos')[1].value = '0';
+      expansionModes.get('promos').value = 'off';
+      rangeInputs.get('land-exp-promos')[0].value = '0'; rangeInputs.get('land-exp-promos')[1].value = '1';
+      setInterfaceLanguage('de'); updatePoolGroups();
+      check(promo.summaryText.textContent.includes('1 verfügbar'), 'explicit-landscape-quota');
+      rangeInputs.get('land-exp-promos')[1].value = '0'; updatePoolGroups();
+      check(promo.summaryText.textContent.includes('0 verfügbar'), 'disabled-expansion-and-landscapes');
+      rangeInputs.get('exp-promos')[1].value = '10'; expansionModes.get('promos').value = 'always';
+      rangeInputs.get('land-exp-promos')[0].value = ''; rangeInputs.get('land-exp-promos')[1].value = '';
+      updatePoolGroups();
+      check(promo.summaryText.textContent.includes('12 verfügbar'), 'combined-availability');
+      poolChoices.get('black_market').value = 'pinned'; poolChoices.get('summon').value = 'excluded'; updatePoolGroups();
+      check(promo.summaryText.textContent.includes('11 verfügbar') && promo.summaryText.textContent.includes('1 fest') && promo.summaryText.textContent.includes('1 ausgeschlossen'), 'combined-counts');
+      for (const language of ['en', 'de']) {
+        setInterfaceLanguage(language);
+        for (const group of poolGroups) for (const section of group.sections) {
+          const titles = [...section.list.children].map(item => {
+            const entry = section.items.find(entry => entry.item === item);
+            return cardTitle(entry.card, language);
+          });
+          check(titles.every((title, i) => !i || titles[i-1].localeCompare(title, uiLocale()) <= 0), 'sort-' + group.expansion + '-' + section.area + '-' + language);
+        }
+        check(main.heading.textContent === (language === 'de' ? 'Hauptstapel' : 'Kingdom piles') && land.heading.textContent === (language === 'de' ? 'Landschaften' : 'Landscapes'), 'translated-headings-' + language);
+      }
+    } finally {
+      applySettings(saved); search(query, filters); updatePoolGroups();
+      for (const [details, wasOpen] of open) details.open = wasOpen;
+    }
+    return JSON.stringify({checks, failures});
+  })()`));
+  await browser.evaluate(`(() => {
+    const promo = poolGroups.find(group => group.expansion === 'promos');
+    const states = []; let element = promo.details;
+    while (element) { if (element.tagName === 'DETAILS') { states.push([element, element.open]); element.open = true; } element = element.parentElement; }
+    window.__poolLayoutStates = states;
+  })()`);
+  result.screenshots = [];
+  try {
+    for (const width of [390, 1920]) {
+      await browser.viewport(width); await delay(80);
+      const geometry = JSON.parse(await browser.evaluate(`(() => {
+        const promo = poolGroups.find(group => group.expansion === 'promos');
+        promo.details.scrollIntoView();
+        const [main, land] = promo.sections;
+        const gap = land.heading.getBoundingClientRect().top - main.element.getBoundingClientRect().bottom;
+        const style = getComputedStyle(land.heading), halfLine = (parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.2) / 2;
+        return JSON.stringify({gap, halfLine, overflow:document.documentElement.scrollWidth > innerWidth + 1,
+          mainHeight:main.element.getBoundingClientRect().height,landHeight:land.element.getBoundingClientRect().height,
+          mainCardWidth:main.items[0].item.getBoundingClientRect().width,landCardWidth:land.items[0].item.getBoundingClientRect().width});
+      })()`));
+      result.checks++;
+      if (geometry.overflow || geometry.gap < -1 || geometry.gap > geometry.halfLine + 1 || !geometry.mainHeight || !geometry.landHeight || Math.abs(geometry.mainCardWidth - geometry.landCardWidth) > 1) {
+        result.failures.push({kind:'pool-section-layout', width, ...geometry});
+      }
+      const screenshot = path.join(os.tmpdir(), 'dominion-pool-' + browser.version.split(/[ /]/)[0] + '-' + width + '.png');
+      fs.writeFileSync(screenshot, Buffer.from(await browser.screenshot(), 'base64'));
+      result.screenshots.push(screenshot);
+    }
+  } finally {
+    await browser.evaluate("for(const [element,open] of window.__poolLayoutStates)element.open=open;delete window.__poolLayoutStates;");
+  }
+  return result;
+}
+
+async function exerciseLotteryWeights(browser) {
+  const result = JSON.parse(await browser.evaluate(`(() => {
+    const failures = []; let checks = 0;
+    const check = (ok, kind) => { checks++; if (!ok) failures.push({kind:'lottery-weight-' + kind}); };
+    const saved = collectSettings(), language = uiLanguage;
+    const ids = ['intrigue', 'prosperity', 'seaside'];
+    const modes = Object.fromEntries(expansions.map(id => [id, id === 'base' ? 'always' : ids.includes(id) ? 'random' : 'off']));
+    const total = () => [...expansionModes].filter(([,field]) => field.value === 'random')
+      .reduce((sum,[id]) => sum + expansionWeights.get(id), 0);
+    const cancel = () => { clearTimeout(ruleCheckTimer); ruleCheckTimer = undefined; stopAnalysis(); };
+    const input = (id, value) => {
+      const field = expansionWeightInputs.get(id).field;
+      field.value = String(value); field.dispatchEvent(new Event('input', {bubbles:true}));
+      field.dispatchEvent(new Event('change', {bubbles:true})); cancel();
+    };
+    try {
+      cancel();
+      applyExpansionModes(modes, 1);
+      check(total() === 1000 && Math.max(...ids.map(id => expansionWeights.get(id))) - Math.min(...ids.map(id => expansionWeights.get(id))) <= 1, 'initial-equal-rounding');
+      const first = expansionWeightInputs.get(ids[0]);
+      check(!first.wrapper.hidden && !first.field.disabled && first.field.min === '0' && first.field.max === '100' && first.field.step === '0.1', 'percentage-input');
+      check(expansionWeightInputs.get('base').wrapper.hidden && expansionWeightInputs.get('base').field.getBoundingClientRect().height === 0, 'always-weight-hidden');
+      check(first.field.getAttribute('aria-label')?.length > 0 || first.field.labels?.length > 0, 'accessible-label');
+      preparedDraw = {result:{fixture:true}};
+      input(ids[0], 70);
+      check(preparedDraw === null, 'input-invalidates-draw');
+      check(expansionWeights.get(ids[0]) === 700 && total() === 1000 && ids.slice(1).every(id => Math.abs(expansionWeights.get(id) - 150) <= 1), 'edit-proportional');
+      input(ids[0], 70.1);
+      check(expansionWeights.get(ids[0]) === 701 && total() === 1000, 'tenth-percent');
+      input(ids[0], 100);
+      check(expansionWeights.get(ids[0]) === 1000 && ids.slice(1).every(id => expansionWeights.get(id) === 0), 'hundred-percent');
+      input(ids[0], 60);
+      check(expansionWeights.get(ids[0]) === 600 && ids.slice(1).every(id => expansionWeights.get(id) === 200), 'zero-remainder-equal');
+      input(ids[1], 0);
+      check(expansionWeights.get(ids[1]) === 0 && total() === 1000, 'zero-percent');
+      const weighted = collectSettings();
+      const serialized = JSON.stringify(weighted);
+      check(JSON.stringify(readSettings(serialized).expansionWeights) === JSON.stringify(weighted.expansionWeights), 'validate-export');
+      equalExpansionWeights.click(); cancel();
+      check(total() === 1000 && Math.max(...ids.map(id => expansionWeights.get(id))) - Math.min(...ids.map(id => expansionWeights.get(id))) <= 1, 'equal-button');
+      applySettings(readSettings(serialized));
+      check(ids.every(id => expansionWeights.get(id) === weighted.expansionWeights[id]), 'settings-roundtrip');
+      const legacy = {...weighted}; delete legacy.expansionWeights;
+      applySettings(readSettings(JSON.stringify(legacy)));
+      check(total() === 1000 && Math.max(...ids.map(id => expansionWeights.get(id))) - Math.min(...ids.map(id => expansionWeights.get(id))) <= 1, 'legacy-equal-default');
+      const rejects = weights => {
+        try { readSettings(JSON.stringify({...weighted, expansionWeights:weights})); return false; } catch { return true; }
+      };
+      check(rejects({...weighted.expansionWeights, [ids[0]]:-1}), 'reject-negative');
+      check(rejects({...weighted.expansionWeights, [ids[0]]:1.5}), 'reject-fractional-units');
+      check(rejects({...weighted.expansionWeights, [ids[0]]:'700'}), 'reject-nonnumeric');
+      check(rejects({...weighted.expansionWeights, unknown_expansion:1}), 'reject-unknown-expansion');
+      check(rejects({...weighted.expansionWeights, [ids[0]]:0, [ids[1]]:0, [ids[2]]:0}), 'reject-wrong-sum');
+      applyExpansionModes(modes, 1); input(ids[0], 70);
+      const before = new Map(ids.map(id => [id, expansionWeights.get(id)]));
+      setExpansionMode('adventures', 'random');
+      check(expansionWeights.get('adventures') === 250 && total() === 1000 && ids.every(id => Math.abs(expansionWeights.get(id) - before.get(id) * .75) <= 1), 'add-random-preserves-ratios');
+      setExpansionMode('adventures', 'off');
+      check(total() === 1000 && expansionWeightInputs.get('adventures').wrapper.hidden && ids.every(id => Math.abs(expansionWeights.get(id) - before.get(id)) <= 2), 'remove-random-preserves-ratios');
+      setExpansionMode(ids[1], 'off'); setExpansionMode(ids[2], 'off');
+      check(expansionWeights.get(ids[0]) === 1000 && first.field.disabled, 'single-fixed-hundred');
+      setExpansionMode(ids[1], 'random');
+      check(total() === 1000 && expansionWeights.get(ids[0]) === 500 && expansionWeights.get(ids[1]) === 500, 'readd-equal-start');
+      input(ids[0], 60);
+      enableRandomExpansions.click(); cancel();
+      const randomIds = expansions.filter(id => expansionModes.get(id).value === 'random');
+      check(total() === 1000 && randomIds.length === expansions.length - 1 && Math.abs(expansionWeights.get(ids[0]) / expansionWeights.get(ids[1]) - 1.5) < .05, 'bulk-enable-preserves-ratios');
+      applyExpansionModes(modes, 3); input(ids[0], 100);
+      let insufficient = '';
+      try { readDrawRequest(); } catch (error) { insufficient = error.message; }
+      check(/positiv|positive|Gewicht|weight|über 0|above 0/.test(insufficient), 'too-few-positive-error');
+      for (const lang of ['en', 'de']) {
+        setInterfaceLanguage(lang);
+        const label = first.field.getAttribute('aria-label') ?? first.field.labels?.[0]?.textContent ?? '';
+        check(label.length > 0 && equalExpansionWeights.textContent.includes(lang === 'en' ? 'Equal' : 'gleich'), 'translated-controls-' + lang);
+      }
+    } finally {
+      cancel(); applySettings(saved); setInterfaceLanguage(language); saveSettings(); updatePoolGroups();
+    }
+    return JSON.stringify({checks, failures});
+  })()`));
+  await browser.evaluate(`(() => {
+    window.__weightLayoutSettings = collectSettings();
+    const panel = document.getElementById('expansion-settings'); window.__weightLayoutOpen = panel.open; panel.open = true;
+    const ids = ['intrigue','prosperity','seaside'];
+    applyExpansionModes(Object.fromEntries(expansions.map(id => [id,id === 'base' ? 'always' : ids.includes(id) ? 'random' : 'off'])), 1);
+    window.__weightLayoutLanguage = uiLanguage; setInterfaceLanguage('en');
+  })()`);
+  result.screenshots = [];
+  try {
+    for (const width of [390, 1920]) {
+      await browser.viewport(width); await delay(80);
+      const geometry = JSON.parse(await browser.evaluate(`(() => {
+        const field = expansionWeightInputs.get('intrigue').field; field.scrollIntoView({block:'center'});
+        const fields = ['intrigue','prosperity','seaside'].map(id => {
+          const entry = expansionWeightInputs.get(id), rect = entry.field.getBoundingClientRect();
+          const style = getComputedStyle(entry.field), canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d'); context.font = style.font;
+          const textWidth = context.measureText(entry.field.value.replace('.', ',')).width + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 2;
+          return {visible:!entry.wrapper.hidden && rect.height > 0,width:rect.width,left:rect.left,right:rect.right,textWidth};
+        });
+        return JSON.stringify({viewport:innerWidth,scroll:document.documentElement.scrollWidth,fields});
+      })()`));
+      result.checks++;
+      if (geometry.scroll > geometry.viewport + 1 || geometry.fields.some(field => !field.visible || field.width < Math.max(25, field.textWidth) || field.left < -1 || field.right > geometry.viewport + 1)) {
+        result.failures.push({kind:'lottery-weight-layout',width,...geometry});
+      }
+      const screenshot = path.join(os.tmpdir(), 'dominion-weights-' + browser.version.split(/[ /]/)[0] + '-' + width + '.png');
+      fs.writeFileSync(screenshot, Buffer.from(await browser.screenshot(), 'base64')); result.screenshots.push(screenshot);
+    }
+  } finally {
+    await browser.evaluate("applySettings(window.__weightLayoutSettings);setInterfaceLanguage(window.__weightLayoutLanguage);document.getElementById('expansion-settings').open=window.__weightLayoutOpen;updatePoolGroups();delete window.__weightLayoutSettings;delete window.__weightLayoutLanguage;delete window.__weightLayoutOpen;");
+  }
+  return result;
+}
+
 async function exercise(browser) {
   for (let i = 0; i < 100; i++) {
     if (await browser.evaluate("typeof fitCardFace === 'function' && typeof catalog !== 'undefined'")) break;
     await delay(100);
   }
   const report = {browser: browser.version, checks: 0, failures: [], pageWidths: []};
+  report.pool = await exercisePool(browser);
+  report.checks += report.pool.checks;
+  report.failures.push(...report.pool.failures);
+  report.weights = await exerciseLotteryWeights(browser);
+  report.checks += report.weights.checks;
+  report.failures.push(...report.weights.failures);
   await browser.evaluate("themeSelect.value='dark';themeSelect.dispatchEvent(new Event('change'))");
   for (const width of [390, 900, 1920, 2560]) {
     await browser.viewport(width);

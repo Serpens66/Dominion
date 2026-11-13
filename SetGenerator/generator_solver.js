@@ -373,28 +373,99 @@ function analyzeKingdom(input, onFound, deadline = Date.now() + 4800, sampleOnly
   }
 }
 
-function analyzeExpansionLottery(request, onFound, deadline = Date.now() + 4800) {
-  const { always, required, optional, count, autoLandscapes } = request.expansionLottery;
-  const remaining = count - required.length;
-  if (remaining < 0 || remaining > optional.length) return { total: 0n, result: null };
-  const combinations = [];
-  const extra = [];
-
-  function collect(index, remaining) {
-    if (!remaining) {
-      combinations.push([...extra]);
+// Probability of each unordered set under sequential weighted sampling without
+// replacement. Memoized subset probabilities sum all possible draw orders.
+function expansionCombinationProbabilities(optional, count, weights, deadline = Date.now() + 4800) {
+  let steps = 0;
+  const tick = () => {
+    if ((steps++ & 127) === 0 && Date.now() >= deadline) throw timedOut;
+  };
+  tick();
+  const entries = optional.map(id => {
+    const weight = weights?.[id] ?? 1;
+    if (!Number.isFinite(weight) || weight < 0) throw new Error("Invalid expansion lottery weight.");
+    return { id, weight };
+  }).filter(entry => entry.weight > 0);
+  if (count < 0 || count > entries.length) return [];
+  if (!count) return [{ ids: [], probability: 1 }];
+  if (count === entries.length) return [{ ids: entries.map(entry => entry.id), probability: 1 }];
+  const totalWeight = entries.reduce((sum, entry) => sum + entry.weight, 0);
+  const memo = new Map([["", 1]]);
+  function probability(indices, sum) {
+    tick();
+    const key = indices.join(",");
+    if (memo.has(key)) return memo.get(key);
+    let value = 0;
+    for (let i = 0; i < indices.length; i++) {
+      const weight = entries[indices[i]].weight;
+      const prior = indices.slice(0, i).concat(indices.slice(i + 1));
+      value += probability(prior, sum - weight) * weight / (totalWeight - sum + weight);
+    }
+    memo.set(key, value);
+    return value;
+  }
+  const combinations = [], indices = [];
+  function collect(start, left, sum) {
+    tick();
+    if (!left) {
+      combinations.push({ ids: indices.map(index => entries[index].id), probability: probability(indices, sum) });
       return;
     }
-    for (let next = index; next <= optional.length - remaining; next++) {
-      extra.push(optional[next]);
-      collect(next + 1, remaining - 1);
-      extra.pop();
+    for (let i = start; i <= entries.length - left; i++) {
+      indices.push(i);
+      collect(i + 1, left - 1, sum + entries[i].weight);
+      indices.pop();
     }
   }
+  collect(0, count, 0);
+  return combinations;
+}
 
-  collect(0, remaining);
+function weightedExpansionOrder(combinations, deadline = Date.now() + 4800) {
+  let steps = 0;
+  const tick = () => {
+    if ((steps++ & 127) === 0 && Date.now() >= deadline) throw timedOut;
+  };
+  // Independent exponential clocks produce a weighted permutation. Removing
+  // impossible sets preserves the relative probability of all feasible sets.
+  const ranked = combinations.map(entry => {
+    tick();
+    return { ids: entry.ids, rank: -Math.log1p(-Math.random()) / entry.probability };
+  });
+  ranked.sort((a, b) => { tick(); return a.rank - b.rank; });
+  return ranked.map(entry => entry.ids);
+}
+
+function analyzeExpansionLottery(request, onFound, deadline = Date.now() + 4800) {
+  const { always, required, optional, count, autoLandscapes, weights } = request.expansionLottery;
+  const remaining = count - required.length;
+  if (remaining < 0 || remaining > optional.length) return { total: 0n, result: null };
+  let ordered;
+  try {
+    if (weights !== undefined) {
+      ordered = weightedExpansionOrder(expansionCombinationProbabilities(optional, remaining, weights, deadline), deadline);
+    } else {
+      // Preserve the existing equal-weight permutation for old callers.
+      const combinations = [], extra = [];
+      let steps = 0;
+      function collect(index, left) {
+        if ((steps++ & 127) === 0 && Date.now() >= deadline) throw timedOut;
+        if (!left) { combinations.push([...extra]); return; }
+        for (let next = index; next <= optional.length - left; next++) {
+          extra.push(optional[next]);
+          collect(next + 1, left - 1);
+          extra.pop();
+        }
+      }
+      collect(0, remaining);
+      ordered = shuffled(combinations);
+    }
+  } catch (error) {
+    if (error !== timedOut) throw error;
+    return { total: null, result: null };
+  }
   const inherited = new Set(autoLandscapes);
-  for (const picked of shuffled(combinations)) {
+  for (const picked of ordered) {
     if (Date.now() >= deadline) return { total: null, result: null };
     const randomExpansions = [...required, ...picked];
     const selected = new Set([...always, ...randomExpansions]);

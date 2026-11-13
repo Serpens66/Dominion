@@ -403,7 +403,7 @@ const researchContext = {
   editionInputs: new Map(), isFirstEdition: card => card.edition === "first",
   randomExpansionCount: {value: "2"}, coloniesMode: {value: "always"}, sheltersMode: {value: "rules"}, requireLoot: {checked: false},
   poolChoices: new Map(all.map(card => [card.id, {value: card.id === "research" ? "pinned" : "random"}])),
-  rangeInputs: new Map(), expansionModes: new Map(), uiLanguage: "de",
+  rangeInputs: new Map(), expansionModes: new Map(), expansionWeights: new Map(), expansionWeightInputs: new Map(), uiLanguage: "de",
   pinnedQuotaNotes: new Map(),
   tr: de => de, ruleLabel: rule => rule.label, cardTitle: card => card.text.de[0], expansionName: id => catalog.expansions[id],
 };

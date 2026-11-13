@@ -14,6 +14,12 @@ Ein **Steam-Teilcode** nennt unter dem Ausgabefeld die fehlenden Aufbau-Auswahle
 
 Unter **Erweiterungen und Editionen** garantiert **Immer** mindestens einen Stapel aus dem Set. **Zufall** nimmt das Set in den Lostopf auf. Mit **Von** und **Bis** bestimmst du die Stapelzahl pro Set. Bei Zufall gelten diese Quoten, sobald das Set ausgelost wurde. Festgehaltene Karten machen ihre Herkunft erforderlich und belegen bei Zufallssets einen Lostopfplatz. Über **Einstellungen sichern oder laden** kannst du deine Auswahl in einen anderen Browser übertragen.
 
+Unter **Festhalten** enthält jeder Erweiterungsreiter Hauptstapel und Landschaften in getrennt beschrifteten Gruppen. Die Suche blendet Gruppen ohne Treffer aus. Bei Promos stehen damit alle elf Hauptstapel und das Ereignis Einladung im selben Reiter.
+
+Bei Erweiterungen auf **Zufall** kannst du ihre **Lostopfchance** in Schritten von 0,1 % einstellen. Die Anteile ergeben zusammen 100 %; Änderungen verteilen den Rest proportional auf die übrigen Zufallserweiterungen. **Lostopf gleich gewichten** stellt gleiche Chancen wieder her. Neue Zufallserweiterungen erhalten einen gleichen Startanteil, die bisherigen behalten ihr Verhältnis. Die Gewichte werden mit den Einstellungen gespeichert und geladen.
+
+Mehrere Erweiterungen werden ohne Zurücklegen gezogen. Die Prozentangaben gelten für die erste Ziehung, nicht für die Wahrscheinlichkeit, im fertigen Königreich enthalten zu sein. Durch feste Karten erforderliche Erweiterungen sind weiterhin garantiert; für die freien Plätze werden die verbleibenden Gewichte neu normiert. 0 % schließt eine Erweiterung von der freiwilligen Auslosung aus. Unmögliche Kombinationen werden unter Beibehaltung der relativen Wahrscheinlichkeiten übersprungen. Alte Einstellungsdateien ohne Gewichte starten mit gleichen Chancen.
+
 Mit **Festgehaltene Karten haben Vorrang** dürfen feste Karten Quoten überschreiten und aus gesperrten Erweiterungen oder Editionen stammen. Sie erfüllen weiterhin Mindestquoten; die übrigen Plätze bleiben an die Regeln gebunden. Festhalten allein belegt dann keinen Zufallsset-Platz. Unter den Filtern steht, was noch ergänzt werden darf.
 
 Mit **Zusatzkarten bei Eigenschaften berücksichtigen** zählen feste Kartenreihen und bekannte Zusatzstapel bei den Eigenschaftsquoten mit. Zufällige Aufbaukarten wie beim Weg der Maus bleiben ausgenommen. **Verbunden mit** in der Kartenvorschau zeigt die zugehörigen Karten.

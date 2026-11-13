@@ -352,6 +352,15 @@
     padding: .25rem .65rem .55rem;
     border-inline-start-width: 1px;
   }
+  .pool-section { padding: 0; border: 0; border-radius: 0; background: transparent; }
+  .pool-section:not([hidden]) ~ .pool-section { margin-block-start: .4em; }
+  .pool-section > h4 {
+    margin: 0;
+    font-size: .82rem;
+    line-height: 1.25;
+    color: var(--muted);
+  }
+  .pool-section > .card-pool-grid { margin-block-start: .1em; }
   .rules-overview {
     display: flex;
     flex-wrap: wrap;
@@ -408,7 +417,13 @@
     gap: .35rem;
     padding: .45rem .55rem;
   }
-  #exp-ranges .expansion-mode { min-width: 0; padding-inline: .35rem; }
+  .expansion-selection { min-width: 0; }
+  .expansion-weight { margin-top: .2rem; font-size: .8rem; }
+  .expansion-weight:not([hidden]) { display: flex; align-items: center; gap: .15rem; }
+  .expansion-weight input { flex: 1; min-width: 0; appearance: textfield; -moz-appearance: textfield; }
+  .expansion-weight input::-webkit-inner-spin-button,
+  .expansion-weight input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+  #exp-ranges .expansion-mode { min-width: 0; padding-inline: .35rem; font-size: .85rem; }
   @media (max-width: 29rem) {
     #exp-ranges > .quota-table { grid-template-columns: minmax(0, 1fr) 3.5rem 3.5rem; }
     #exp-ranges .quota-table > :is(h3, .range-rule-name) { grid-column: 1 / -1; }
@@ -564,7 +579,7 @@
   .card-pool-grid {
     display: grid;
     /* Fit as many 17rem columns as possible, up to five. */
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, max(17rem, calc((100% - 4rem) / 5))), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, max(17rem, calc((100% - 4rem) / 5))), 1fr));
     column-gap: 1rem;
     list-style: none;
     padding: 0;
@@ -959,9 +974,11 @@
             <label for="random-expansion-count" data-en="Additional expansions from the lottery">Zusätzlich aus dem Lostopf</label>
             <select id="random-expansion-count" aria-describedby="expansion-lottery-help"></select>
             <button type="button" id="enable-random-expansions" class="secondary" data-en="Add remaining expansions to the lottery">Übrige für Zufall freigeben</button>
+            <button type="button" id="equal-expansion-weights" class="secondary" data-en="Equal lottery weights">Lostopf gleich gewichten</button>
             <button type="button" id="reset-expansions" class="secondary" data-en="Reset expansions">Erweiterungen zurücksetzen</button>
           </div>
           <p class="muted" id="expansion-lottery-help" data-en="Always guarantees at least one Kingdom pile from the set. Random enters the set in the lottery. From and To set the number of piles per set. For Random, these quotas apply once the set is drawn.">'Immer' garantiert mindestens einen Königreichstapel aus dem Set. 'Zufall' legt das Set in den Lostopf. Mit Von und Bis legst du die Stapelzahl pro Set fest. Bei Zufall gelten Von und Bis, sobald das Set ausgelost wurde.</p>
+          <p class="muted" id="expansion-weight-help" data-en="Percentages add up to 100%. Editing one share adjusts the others proportionally. Multiple expansions are drawn without replacement; the percentages describe the first draw, not inclusion in the final Kingdom. Required expansions from pinned cards are guaranteed; the remaining shares are rescaled. 0% excludes an expansion from voluntary draws.">Die Anteile ergeben zusammen 100 %. Änderungen passen die übrigen proportional an. Mehrere Erweiterungen werden ohne Zurücklegen gezogen; die Prozentwerte gelten für die erste Ziehung, nicht für die Aufnahme ins fertige Königreich. Durch feste Karten erforderliche Erweiterungen sind garantiert; die übrigen Anteile werden neu verteilt. 0 % schließt eine Erweiterung von freiwilligen Ziehungen aus.</p>
           <div id="exp-ranges" class="quota-columns"></div>
         </div>
       </details>
@@ -1654,28 +1671,99 @@ function analyzeKingdom(input, onFound, deadline = Date.now() + 4800, sampleOnly
   }
 }
 
-function analyzeExpansionLottery(request, onFound, deadline = Date.now() + 4800) {
-  const { always, required, optional, count, autoLandscapes } = request.expansionLottery;
-  const remaining = count - required.length;
-  if (remaining < 0 || remaining > optional.length) return { total: 0n, result: null };
-  const combinations = [];
-  const extra = [];
-
-  function collect(index, remaining) {
-    if (!remaining) {
-      combinations.push([...extra]);
+// Probability of each unordered set under sequential weighted sampling without
+// replacement. Memoized subset probabilities sum all possible draw orders.
+function expansionCombinationProbabilities(optional, count, weights, deadline = Date.now() + 4800) {
+  let steps = 0;
+  const tick = () => {
+    if ((steps++ & 127) === 0 && Date.now() >= deadline) throw timedOut;
+  };
+  tick();
+  const entries = optional.map(id => {
+    const weight = weights?.[id] ?? 1;
+    if (!Number.isFinite(weight) || weight < 0) throw new Error("Invalid expansion lottery weight.");
+    return { id, weight };
+  }).filter(entry => entry.weight > 0);
+  if (count < 0 || count > entries.length) return [];
+  if (!count) return [{ ids: [], probability: 1 }];
+  if (count === entries.length) return [{ ids: entries.map(entry => entry.id), probability: 1 }];
+  const totalWeight = entries.reduce((sum, entry) => sum + entry.weight, 0);
+  const memo = new Map([["", 1]]);
+  function probability(indices, sum) {
+    tick();
+    const key = indices.join(",");
+    if (memo.has(key)) return memo.get(key);
+    let value = 0;
+    for (let i = 0; i < indices.length; i++) {
+      const weight = entries[indices[i]].weight;
+      const prior = indices.slice(0, i).concat(indices.slice(i + 1));
+      value += probability(prior, sum - weight) * weight / (totalWeight - sum + weight);
+    }
+    memo.set(key, value);
+    return value;
+  }
+  const combinations = [], indices = [];
+  function collect(start, left, sum) {
+    tick();
+    if (!left) {
+      combinations.push({ ids: indices.map(index => entries[index].id), probability: probability(indices, sum) });
       return;
     }
-    for (let next = index; next <= optional.length - remaining; next++) {
-      extra.push(optional[next]);
-      collect(next + 1, remaining - 1);
-      extra.pop();
+    for (let i = start; i <= entries.length - left; i++) {
+      indices.push(i);
+      collect(i + 1, left - 1, sum + entries[i].weight);
+      indices.pop();
     }
   }
+  collect(0, count, 0);
+  return combinations;
+}
 
-  collect(0, remaining);
+function weightedExpansionOrder(combinations, deadline = Date.now() + 4800) {
+  let steps = 0;
+  const tick = () => {
+    if ((steps++ & 127) === 0 && Date.now() >= deadline) throw timedOut;
+  };
+  // Independent exponential clocks produce a weighted permutation. Removing
+  // impossible sets preserves the relative probability of all feasible sets.
+  const ranked = combinations.map(entry => {
+    tick();
+    return { ids: entry.ids, rank: -Math.log1p(-Math.random()) / entry.probability };
+  });
+  ranked.sort((a, b) => { tick(); return a.rank - b.rank; });
+  return ranked.map(entry => entry.ids);
+}
+
+function analyzeExpansionLottery(request, onFound, deadline = Date.now() + 4800) {
+  const { always, required, optional, count, autoLandscapes, weights } = request.expansionLottery;
+  const remaining = count - required.length;
+  if (remaining < 0 || remaining > optional.length) return { total: 0n, result: null };
+  let ordered;
+  try {
+    if (weights !== undefined) {
+      ordered = weightedExpansionOrder(expansionCombinationProbabilities(optional, remaining, weights, deadline), deadline);
+    } else {
+      // Preserve the existing equal-weight permutation for old callers.
+      const combinations = [], extra = [];
+      let steps = 0;
+      function collect(index, left) {
+        if ((steps++ & 127) === 0 && Date.now() >= deadline) throw timedOut;
+        if (!left) { combinations.push([...extra]); return; }
+        for (let next = index; next <= optional.length - left; next++) {
+          extra.push(optional[next]);
+          collect(next + 1, left - 1);
+          extra.pop();
+        }
+      }
+      collect(0, remaining);
+      ordered = shuffled(combinations);
+    }
+  } catch (error) {
+    if (error !== timedOut) throw error;
+    return { total: null, result: null };
+  }
   const inherited = new Set(autoLandscapes);
-  for (const picked of shuffled(combinations)) {
+  for (const picked of ordered) {
     if (Date.now() >= deadline) return { total: null, result: null };
     const randomExpansions = [...required, ...picked];
     const selected = new Set([...always, ...randomExpansions]);
@@ -1718,8 +1806,6 @@ if (typeof self !== "undefined") self.onmessage = ({ data }) => {
     self.postMessage({ type: "error", message: error === timedOut ? "Zeitlimit erreicht." : error.message });
   }
 };
-
-
 </script>
 <script>
 "use strict";
@@ -1806,8 +1892,10 @@ function setInterfaceLanguage(language) {
   interfaceLabels.forEach(render => render());
   renderPoolSearchChips();
   for (const group of poolGroups) {
-    group.items.sort((a, b) => cardTitle(a.card, uiLanguage).localeCompare(cardTitle(b.card, uiLanguage), uiLocale()));
-    group.list.replaceChildren(...group.items.map(entry => entry.item));
+    for (const section of group.sections) {
+      section.items.sort((a, b) => cardTitle(a.card, uiLanguage).localeCompare(cardTitle(b.card, uiLanguage), uiLocale()));
+      section.list.replaceChildren(...section.items.map(entry => entry.item));
+    }
     for (const { card, cost } of group.items) renderCardCost(cost, card, uiLanguage);
   }
   updatePoolGroups();
@@ -2254,6 +2342,9 @@ const kingdomSizeSelect = document.getElementById("kingdom-size");
 const expansionOverview = document.getElementById("expansion-overview");
 const randomExpansionCount = document.getElementById("random-expansion-count");
 const expansionModes = new Map();
+const expansionWeights = new Map();
+const expansionWeightInputs = new Map();
+const equalExpansionWeights = document.getElementById("equal-expansion-weights");
 const enableRandomExpansions = document.getElementById("enable-random-expansions");
 const planningResult = document.getElementById("planning-result");
 const planningCards = document.getElementById("planning-cards");
@@ -3129,7 +3220,57 @@ function allowsEdition(card) {
   return !isFirstEdition(card) || card.expansion === "promos" || editionInputs.get(card.expansion)?.checked;
 }
 
-function setExpansionMode(id, mode) {
+function allocateExpansionWeights(ids, total, basis = {}) {
+  if (!ids.length) return {};
+  const sum = ids.reduce((value, id) => value + (basis[id] ?? 0), 0);
+  const shares = ids.map((id, index) => {
+    const exact = total * (sum ? (basis[id] ?? 0) / sum : 1 / ids.length);
+    return { id, index, units: Math.floor(exact), remainder: exact - Math.floor(exact) };
+  });
+  let remaining = total - shares.reduce((value, share) => value + share.units, 0);
+  for (const share of [...shares].sort((a, b) => b.remainder - a.remainder || a.index - b.index)) {
+    if (remaining-- <= 0) break;
+    share.units++;
+  }
+  return Object.fromEntries(shares.map(share => [share.id, share.units]));
+}
+
+function renderExpansionWeights(preserveInput) {
+  const count = expansionWeights.size;
+  for (const [id, { field, wrapper }] of expansionWeightInputs) {
+    const random = expansionModes.get(id).value === "random";
+    wrapper.hidden = !random;
+    field.disabled = !random || count === 1;
+    if (id !== preserveInput) field.value = String((expansionWeights.get(id) ?? 0) / 10);
+  }
+  equalExpansionWeights.disabled = count < 2;
+}
+
+function syncExpansionWeights(savedWeights) {
+  const ids = [...expansionModes].filter(([, mode]) => mode.value === "random").map(([id]) => id);
+  const existing = ids.filter(id => expansionWeights.has(id));
+  const newcomers = ids.filter(id => !expansionWeights.has(id));
+  const basis = {};
+  const sum = existing.reduce((value, id) => value + expansionWeights.get(id), 0);
+  for (const id of existing) basis[id] = newcomers.length
+    ? (sum ? expansionWeights.get(id) * existing.length / sum : 1) : expansionWeights.get(id);
+  for (const id of newcomers) basis[id] = 1;
+  const normalized = allocateExpansionWeights(ids, 1000, savedWeights ?? basis);
+  expansionWeights.clear();
+  for (const id of ids) expansionWeights.set(id, normalized[id]);
+  renderExpansionWeights();
+}
+
+function editExpansionWeight(id, units, preserveInput = false) {
+  if (!expansionWeights.has(id) || !Number.isInteger(units) || units < 0 || units > 1000) return;
+  const others = [...expansionWeights.keys()].filter(other => other !== id);
+  const normalized = allocateExpansionWeights(others, 1000 - units, Object.fromEntries(expansionWeights));
+  expansionWeights.set(id, others.length ? units : 1000);
+  for (const other of others) expansionWeights.set(other, normalized[other]);
+  renderExpansionWeights(preserveInput ? id : undefined);
+}
+
+function setExpansionMode(id, mode, updateWeights = true) {
   const [from, to] = rangeInputs.get("exp-" + id);
   expansionModes.get(id).value = mode;
   from.disabled = to.disabled = mode === "off";
@@ -3140,6 +3281,7 @@ function setExpansionMode(id, mode) {
   } else if (mode === "always" && from.valueAsNumber === 0) {
     from.value = from.min;
   }
+  if (updateWeights) syncExpansionWeights();
 }
 
 function expansionInPossiblePool(id) {
@@ -3233,6 +3375,12 @@ function validateRemainingQuotas(fixed, landPinned, pool, landPool, quotas, land
 }
 
 function readDrawRequest() {
+  for (const [id, { field }] of expansionWeightInputs) {
+    if (expansionModes.get(id).value === "random" && !field.validity.valid) {
+      throw new Error(tr("Gib für „" + expansionName(id) + "“ einen Prozentwert von 0 bis 100 in Schritten von 0,1 ein.",
+        "Enter a percentage from 0 to 100 in steps of 0.1 for “" + expansionName(id) + "”."));
+    }
+  }
   const count = Number(randomExpansionCount.value);
   const always = expansions.filter(id => expansionModes.get(id).value === "always");
   const random = expansions.filter(id => expansionModes.get(id).value === "random");
@@ -3259,6 +3407,13 @@ function readDrawRequest() {
   if (count > random.length) {
     throw new Error(tr(`Im Lostopf sind nur ${random.length} Erweiterungen für ${count} zusätzliche Plätze.`,
       `Only ${random.length} expansions are in the lottery for ${count} additional slots.`));
+  }
+  const optional = random.filter(id => !required.includes(id));
+  const weights = Object.fromEntries(random.map(id => [id, expansionWeights.get(id) ?? 1]));
+  const positive = optional.filter(id => weights[id] > 0).length;
+  if (count - required.length > positive) {
+    throw new Error(tr(`Für die verbleibenden ${count - required.length} Lostopfplätze haben nur ${positive} Erweiterungen eine Chance über 0 %.`,
+      `Only ${positive} expansions have a chance above 0% for the remaining ${count - required.length} lottery slots.`));
   }
   const expansionQuotas = new Map(expansions.map(id => [
     id, expansionInPossiblePool(id) ? ranges.get(id) : { min: 0, max: 0 },
@@ -3308,7 +3463,7 @@ function readDrawRequest() {
     if (min > landscapeCount.max) throw new Error(tr("Die Landschaftsquoten verlangen mehr Landschaften als die eingestellte Gesamtzahl erlaubt.", "The Landscape quotas require more Landscapes than the total allows."));
   }
   const expansionLottery = count ? {
-    count, always, required, optional: random.filter(id => !required.includes(id)), autoLandscapes,
+    count, always, required, optional, autoLandscapes, weights,
   } : undefined;
   return {
     kingdomSize, expansionLottery, pinnedPriority: pinnedPriority.checked, includeRelated: includeRelated.checked, fixed: fixed.map(solverCard),
@@ -3416,6 +3571,16 @@ function readSettings(source) {
       (additional !== undefined && !isValidRangeBound(additional, expansions.length))) {
     throw new Error(tr("Die Auswahl der Erweiterungen ist ungültig.", "The expansion selection is invalid."));
   }
+  if (settings.expansionWeights !== undefined) {
+    const weights = settings.expansionWeights;
+    const random = Object.keys(modes ?? {}).filter(id => modes[id] === "random");
+    if (!isRecord(weights) || Object.keys(weights).length !== random.length ||
+        random.some(id => !Number.isInteger(weights[id]) || weights[id] < 0 || weights[id] > 1000) ||
+        Object.keys(weights).some(id => !random.includes(id)) ||
+        Object.values(weights).reduce((sum, units) => sum + units, 0) !== (random.length ? 1000 : 0)) {
+      throw new Error(tr("Die Prozentgewichte des Erweiterungs-Lostopfs sind ungültig.", "The expansion lottery percentages are invalid."));
+    }
+  }
   const size = settings.kingdomSize ?? standardKingdomSize;
   for (const rule of [...countRules, ...landRules]) {
     if (Object.hasOwn(settings.ranges, rule.id) && !validRangePair(rule, settings.ranges[rule.id], size, settings.includeRelated ?? false)) {
@@ -3459,7 +3624,7 @@ function collectSettings() {
   const editions = Object.fromEntries([...editionInputs].map(([id, field]) => [id, field.checked]));
   const modes = Object.fromEntries([...expansionModes].map(([id, field]) => [id, field.value]));
   return { version: 2, kingdomSize, pinnedPriority: pinnedPriority.checked, includeRelated: includeRelated.checked, ranges, cardChoices, editions, expansionModes: modes,
-    randomExpansionCount: Number(randomExpansionCount.value), requireLoot: requireLoot.checked,
+    randomExpansionCount: Number(randomExpansionCount.value), expansionWeights: Object.fromEntries(expansionWeights), requireLoot: requireLoot.checked,
     colonies: coloniesMode.value, shelters: sheltersMode.value, interfaceLanguage: uiLanguage,
     setName: setName.value };
 }
@@ -3490,12 +3655,14 @@ function applyRangeSettings(rules, savedRanges = {}) {
   }
 }
 
-function applyExpansionModes(modes = {}, additional = 0) {
+function applyExpansionModes(modes = {}, additional = 0, weights) {
   randomExpansionCount.value = String(additional);
   for (const id of expansions) {
     const maximum = rangeInputs.get("exp-" + id)[1].valueAsNumber;
-    setExpansionMode(id, modes[id] ?? (maximum > 0 ? "always" : "off"));
+    setExpansionMode(id, modes[id] ?? (maximum > 0 ? "always" : "off"), false);
   }
+  expansionWeights.clear();
+  syncExpansionWeights(weights);
 }
 
 function applySettings(settings) {
@@ -3503,7 +3670,7 @@ function applySettings(settings) {
   includeRelated.checked = settings.includeRelated ?? false;
   setKingdomSize(settings.kingdomSize ?? standardKingdomSize);
   applyRangeSettings([...countRules, ...landRules], settings.ranges);
-  applyExpansionModes(settings.expansionModes, settings.randomExpansionCount);
+  applyExpansionModes(settings.expansionModes, settings.randomExpansionCount, settings.expansionWeights);
   for (const [id, field] of poolChoices) field.value = settings.cardChoices[id] ?? "random";
   for (const [id, field] of editionInputs) field.checked = settings.editions?.[id] ?? false;
   requireLoot.checked = settings.requireLoot ?? false;
@@ -3797,7 +3964,7 @@ function renderPoolSearchChips() {
   poolSearchChips.replaceChildren(...chips);
 }
 
-function makePoolGroup(expansion, entries, area) {
+function makePoolGroup(expansion) {
   const details = document.createElement("details");
   details.className = "pool-details";
   const summary = document.createElement("summary");
@@ -3805,48 +3972,64 @@ function makePoolGroup(expansion, entries, area) {
   const summaryText = document.createElement("span");
   if (gameIcons["exp-" + expansion]) summary.append(makeGameIcon("exp-" + expansion));
   summary.append(summaryText);
-  const list = document.createElement("ul");
-  list.className = "card-pool-grid";
   const body = document.createElement("div");
   body.className = "section-body pool-body";
-  body.append(list);
   details.append(summary, body);
   pool.append(details);
-  const items = [];
-  for (const card of [...entries].sort((a, b) => cardTitle(a).localeCompare(cardTitle(b), "de"))) {
-    const item = document.createElement("li");
-    const cardLabel = document.createElement("div");
-    cardLabel.className = "pool-card-label";
-    const typeBadges = document.createElement("span");
-    typeBadges.className = "pool-card-types";
-    const types = card.types.filter(type => cardTypeIcons[type] || Object.hasOwn(landscapeTypes, type));
-    const shownTypes = types.length > 1 ? types.filter(type => type !== "action") : types;
-    for (const type of shownTypes) {
-      const icon = makeGameIcon(cardTypeIcons[type] ?? "landscape", catalog.types[uiLanguage][type] ?? type);
-      interfaceLabels.push(() => { icon.alt = catalog.types[uiLanguage][type] ?? type; });
-      typeBadges.append(icon);
+  const sections = [];
+  for (const [area, entries, de, en] of [
+    ["pool", cards.filter(card => card.expansion === expansion), "Hauptstapel", "Kingdom piles"],
+    ["land-pool", landscapes.filter(card => card.expansion === expansion), "Landschaften", "Landscapes"],
+  ]) {
+    if (!entries.length) continue;
+    const element = document.createElement("section");
+    element.className = "pool-section";
+    const heading = document.createElement("h4");
+    heading.id = "pool-heading-" + expansion + "-" + area;
+    bindInterfaceLabel(heading, () => tr(de, en));
+    element.setAttribute("aria-labelledby", heading.id);
+    const list = document.createElement("ul");
+    list.className = "card-pool-grid";
+    element.append(heading, list);
+    body.append(element);
+    const items = [];
+    for (const card of [...entries].sort((a, b) => cardTitle(a).localeCompare(cardTitle(b), "de"))) {
+      const item = document.createElement("li");
+      const cardLabel = document.createElement("div");
+      cardLabel.className = "pool-card-label";
+      const typeBadges = document.createElement("span");
+      typeBadges.className = "pool-card-types";
+      const types = card.types.filter(type => cardTypeIcons[type] || Object.hasOwn(landscapeTypes, type));
+      const shownTypes = types.length > 1 ? types.filter(type => type !== "action") : types;
+      for (const type of shownTypes) {
+        const icon = makeGameIcon(cardTypeIcons[type] ?? "landscape", catalog.types[uiLanguage][type] ?? type);
+        interfaceLabels.push(() => { icon.alt = catalog.types[uiLanguage][type] ?? type; });
+        typeBadges.append(icon);
+      }
+      cardLabel.append(typeBadges);
+      const name = addCardPreview(cardLabel, card, area);
+      const cost = document.createElement("span");
+      cost.className = "pool-card-cost";
+      const choice = document.createElement("select");
+      choice.id = "pool-choice-" + card.id;
+      choice.setAttribute("aria-labelledby", name.id);
+      renderCardCost(cost, card, uiLanguage);
+      for (const [de, en, value] of [["Zufall", "Random", "random"], ["Festhalten", "Pin", "pinned"], ["Ausschließen", "Exclude", "excluded"]]) {
+        const option = new Option(de, value);
+        bindInterfaceLabel(option, () => tr(de, en));
+        choice.add(option);
+      }
+      choice.addEventListener("change", () => updateCardChoice(card.id));
+      poolChoices.set(card.id, choice);
+      item.append(cardLabel, cost, choice);
+      list.append(item);
+      const searchNames = [card.id, cardTitle(card), cardTitle(card, "en"), ...(card.alternateTitles ?? [])].map(normalizePoolSearch);
+      items.push({ card, item, choice, cost, searchNames, area });
     }
-    cardLabel.append(typeBadges);
-    const name = addCardPreview(cardLabel, card, area);
-    const cost = document.createElement("span");
-    cost.className = "pool-card-cost";
-    const choice = document.createElement("select");
-    choice.id = "pool-choice-" + card.id;
-    choice.setAttribute("aria-labelledby", name.id);
-    renderCardCost(cost, card, uiLanguage);
-    for (const [de, en, value] of [["Zufall", "Random", "random"], ["Festhalten", "Pin", "pinned"], ["Ausschließen", "Exclude", "excluded"]]) {
-      const option = new Option(de, value);
-      bindInterfaceLabel(option, () => tr(de, en));
-      choice.add(option);
-    }
-    choice.addEventListener("change", () => updateCardChoice(card.id));
-    poolChoices.set(card.id, choice);
-    item.append(cardLabel, cost, choice);
-    list.append(item);
-    const searchNames = [card.id, cardTitle(card), cardTitle(card, "en"), ...(card.alternateTitles ?? [])].map(normalizePoolSearch);
-    items.push({ card, item, choice, cost, searchNames });
+    sections.push({ area, element, heading, list, items });
   }
-  poolGroups.push({ expansion, details, summary, summaryText, list, items, area });
+  const items = sections.flatMap(section => section.items);
+  poolGroups.push({ expansion, details, summary, summaryText, sections, items });
 }
 
 function hidePoolItem(item, hidden) {
@@ -3873,12 +4056,17 @@ function updatePoolSearch() {
   poolSearchHits = 0;
   for (const group of poolGroups) {
     let found = 0;
-    for (const { card, item, searchNames } of group.items) {
-      const match = required.every(property => property.matches(card, group.area)) &&
-        (!query || searchNames.some(title => title.includes(query)) ||
-          textProperties.some(property => property.matches(card, group.area)));
-      hidePoolItem(item, !match);
-      if (match) found++;
+    for (const section of group.sections) {
+      let sectionFound = 0;
+      for (const { card, item, searchNames, area } of section.items) {
+        const match = required.every(property => property.matches(card, area)) &&
+          (!query || searchNames.some(title => title.includes(query)) ||
+            textProperties.some(property => property.matches(card, area)));
+        hidePoolItem(item, !match);
+        if (match) sectionFound++;
+      }
+      hidePoolItem(section.element, !sectionFound);
+      found += sectionFound;
     }
     poolSearchHits += found;
     hidePoolItem(group.details, searching && !found);
@@ -3909,15 +4097,15 @@ function updatePoolGroups() {
   for (const group of poolGroups) {
     const maximum = rangeInputs.get("exp-" + group.expansion)[1].valueAsNumber;
     const landMax = rangeNumber(rangeInputs.get("land-exp-" + group.expansion)?.[1]);
-    const explicitLandscape = group.area === "land-pool" && Number.isFinite(landMax);
-    const enabled = explicitLandscape ? landMax > 0 : maximum > 0 && expansionInPossiblePool(group.expansion);
+    const expansionEnabled = maximum > 0 && expansionInPossiblePool(group.expansion);
     let available = 0, pinned = 0, excluded = 0;
-    for (const { card, choice } of group.items) {
+    for (const { card, choice, area } of group.items) {
+      const enabled = area === "land-pool" && Number.isFinite(landMax) ? landMax > 0 : expansionEnabled;
       if (choice.value === "excluded") excluded++;
       else if ((enabled && allowsEdition(card)) || (pinnedPriority.checked && choice.value === "pinned")) available++;
       if (choice.value === "pinned") pinned++;
     }
-    const label = expansionName(group.expansion) + (group.area === "land-pool" ? " · " + tr("Landschaften", "Landscapes") : "");
+    const label = expansionName(group.expansion);
     const text = label + " · " + available + tr(" verfügbar · ", " available · ") +
       pinned + tr(" fest · ", " pinned · ") + excluded + tr(" ausgeschlossen", " excluded");
     if (group.summaryText.textContent !== text) group.summaryText.textContent = text;
@@ -4159,8 +4347,29 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
       bindInterfaceLabel(option, () => tr(de, en));
       mode.add(option);
     }
-    group.insertBefore(mode, from);
+    const selection = document.createElement("div");
+    selection.className = "expansion-selection";
+    const weight = document.createElement("label");
+    weight.className = "expansion-weight";
+    const field = document.createElement("input");
+    field.type = "number";
+    field.min = "0"; field.max = "100"; field.step = "0.1"; field.required = true;
+    field.id = "weight-expansion-" + kingdomExpansion;
+    field.setAttribute("aria-describedby", "expansion-weight-help");
+    const labelWeight = () => field.setAttribute("aria-label", tr("Lostopfchance für ", "Lottery chance for ") + expansionName(kingdomExpansion));
+    interfaceLabels.push(labelWeight);
+    labelWeight();
+    weight.append(field, "%");
+    selection.append(mode, weight);
+    group.insertBefore(selection, from);
     expansionModes.set(kingdomExpansion, mode);
+    expansionWeightInputs.set(kingdomExpansion, { field, wrapper: weight });
+    field.addEventListener("input", () => {
+      if (field.validity.valid) editExpansionWeight(kingdomExpansion, Math.round(field.valueAsNumber * 10), true);
+    });
+    field.addEventListener("change", () => {
+      if (field.validity.valid) editExpansionWeight(kingdomExpansion, Math.round(field.valueAsNumber * 10));
+    });
     setExpansionMode(kingdomExpansion, initialMax > 0 ? "always" : "off");
     mode.addEventListener("input", () => {
       if (mode.value === "random" && from.min === "1" && from.valueAsNumber === 1) from.value = "0";
@@ -4332,12 +4541,7 @@ for (const rule of landRules.filter(rule => !rule.inherited)) addRange(rule, "la
 addQuotaColumns("exp-ranges", countRules.filter(rule => rule.group === "exp"),
   "exp-column", ["Erweiterung", "Expansion"], 5, { withMode: true });
 addQuotaColumns("land-quotas", landRules.filter(rule => rule.inherited), "land-column", ["Herkunft", "Source expansion"], 5);
-for (const expansion of expansions) {
-  makePoolGroup(expansion, cards.filter(card => card.expansion === expansion), "pool");
-}
-for (const expansion of landscapeExpansions) {
-  makePoolGroup(expansion, landscapes.filter(card => card.expansion === expansion), "land-pool");
-}
+for (const expansion of expansions) makePoolGroup(expansion);
 const colonyNames = document.getElementById("colonies-card-names");
 addCardPreview(colonyNames, cardById.get("platinum"), "setup-option");
 const coloniesAnd = document.createElement("span");
@@ -4400,8 +4604,14 @@ for (let count = 0; count <= expansions.length; count++) {
 }
 enableRandomExpansions.addEventListener("click", () => {
   for (const [id, mode] of expansionModes) {
-    if (mode.value === "off") setExpansionMode(id, "random");
+    if (mode.value === "off") setExpansionMode(id, "random", false);
   }
+  syncExpansionWeights();
+  scheduleRuleCheck();
+});
+equalExpansionWeights.addEventListener("click", () => {
+  expansionWeights.clear();
+  syncExpansionWeights();
   scheduleRuleCheck();
 });
 document.getElementById("expansion-settings").addEventListener("input", scheduleRuleCheck);
