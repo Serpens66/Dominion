@@ -62,3 +62,9 @@ Die Prüfungen erfolgen ohne Vordergrundwechsel und ohne physische Maus-/Tastatu
 Die Tests beweisen nicht die Spielwirkung sämtlicher 89 Effekte. Der Wirkungs-/Mehrfachprüfstand bleibt getrennt dokumentiert: Taifun ist seit dem Nutzertest vom 13. November bei einfacher Aktivierung bestätigt, Mehrfachwirkung bleibt offen. Die sichtbare Abnahme im echten Spiel erfolgt durch den Nutzer.
 
 Beim parallelen Start zweier isolierter Injector-Smoke-Tests wurde ein normaler Installationsversuch einmal abgelehnt. Der dabei angehängte Win32-Wert 1812 war kein belastbarer Ursachenhinweis. Ein frischer normaler Einzellauf und anschließend die mit verbesserter Exitcode-/Ausgabediagnose nacheinander ausgeführten normalen und Online-Diagnose-Läufe bestanden. Eine konkrete Ursache des ersten Abbruchs wurde nicht nachgewiesen; der produktive Installer ist in diesem Änderungsschritt unverändert. Es erfolgt kein erneuter Patchversuch im selben Prozess.
+
+## Checkboxdarstellung: Prüfgrenze und Testpaket v0.1.1
+
+Die bisherige Beschreibung heller Checkboxen war kein ausreichender Nachweis ihrer tatsächlichen Darstellung im Spiel. Funktionierende Mehrfachauswahl und isolierte Steuerelementtests belegen nicht, dass die Auswahlkästchen auf dem verwendeten Hintergrund lesbar sind. Der ursprüngliche Fehler betrifft das veröffentlichte v0.1.0; der neue Testfix ist davon getrennt zu bewerten.
+
+v0.1.1 verwendet eigene deckende Checkbox-Bilder ohne Windows-Automatik. 18 Dialogfälle im isolierten Spielprozess, Pixelprüfungen einschließlich Außenrand, Maus-/Leertastennachrichten und die bestehenden Editorprüfungen bestehen. Die sichtbare Abnahme erfolgt weiterhin beim Nutzer. [Befunde und Prüfgrenzen](Checkbox_Visibility_Fix.md) Das Paket bleibt bis dahin GitHub-Entwurf. Das öffentliche v0.1.0 und seine Downloads werden nicht ersetzt.

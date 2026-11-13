@@ -63,6 +63,8 @@ struct Picker {
     bool rendering = false;
     std::unique_ptr<DialogSkin> skin{};
     HIMAGELIST expansion_images = nullptr;
+    HIMAGELIST checks_images = nullptr;
+    HWND checks_tree = nullptr;
     std::map<std::string, int, std::less<>> expansion_icons{};
 
     bool multiple() const { return mode != CardSelection::single; }
@@ -70,7 +72,19 @@ struct Picker {
         return std::find(selected.begin(), selected.end(), card) != selected.end();
     }
 
+    void release_checks() noexcept {
+        if (checks_images) {
+            if (checks_tree && IsWindow(checks_tree) &&
+                TreeView_GetImageList(checks_tree, TVSIL_STATE) == checks_images)
+                TreeView_SetImageList(checks_tree, nullptr, TVSIL_STATE);
+            ImageList_Destroy(checks_images);
+            checks_images = nullptr;
+        }
+        checks_tree = nullptr;
+    }
+
     ~Picker() {
+        release_checks();
         image.reset();
         if (graphics) Gdiplus::GdiplusShutdown(graphics);
     }
@@ -192,7 +206,7 @@ HTREEITEM insert_row(HWND tree, HTREEITEM parent, const wchar_t* title, const Ca
     row.item.state = multiple && card ? INDEXTOSTATEIMAGEMASK(checked ? 2 : 1) : 0;
     row.item.iImage = row.item.iSelectedImage = image;
     const auto item = TreeView_InsertItem(tree, &row);
-    // The control initializes the state image itself on insertion.
+    // State images are supplied by the picker, including state 0 for groups.
     row.item.hItem = item;
     row.item.mask = TVIF_STATE;
     if (item) TreeView_SetItem(tree, &row.item);
@@ -302,6 +316,10 @@ LRESULT CALLBACK tree_proc(HWND tree, UINT message, WPARAM wparam, LPARAM lparam
         } else if (message == WM_KEYDOWN && wparam == VK_SPACE && picker.multiple()) {
             if (!(lparam & (1 << 30))) {if(picker.mode==CardSelection::ordered)add_selected_pile(dialog,picker);else toggle_card(dialog, picker, TreeView_GetSelection(tree));}
             return 0;
+        } else if (message == WM_CHAR && wparam == L' ' && picker.multiple()) {
+            // WM_KEYDOWN already handled Space. Letting the native tree search
+            // for a name starting with a space can trigger the Windows beep.
+            return 0;
         }
     } catch (...) {
         return 0;
@@ -316,7 +334,8 @@ void change_order(HWND dialog, Picker& picker, unsigned command) {
         const auto* card = picker.selected[row];
         picker.selected.erase(picker.selected.begin() + row);
         for (const auto& [item, visible_card] : picker.visible) {
-            if (visible_card == card) TreeView_SetCheckState(GetDlgItem(dialog, IDC_CARD_TREE), item, FALSE);
+            if (visible_card == card && picker.mode == CardSelection::multiple)
+                TreeView_SetCheckState(GetDlgItem(dialog, IDC_CARD_TREE), item, FALSE);
         }
         if (row == static_cast<LRESULT>(picker.selected.size())) --row;
     } else {
@@ -417,10 +436,18 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             picker.expansion_images = ImageList_Create(icon_size, icon_size, ILC_COLOR32, 16, 4);
             if (picker.expansion_images) TreeView_SetImageList(tree, picker.expansion_images, TVSIL_NORMAL);
             if (picker.mode==CardSelection::multiple) {
-                SetWindowLongPtrW(tree, GWL_STYLE, GetWindowLongPtrW(tree, GWL_STYLE) | TVS_CHECKBOXES);
-                if (const auto checks = picker.skin->checks()) {
-                    const auto native_checks = TreeView_SetImageList(tree, checks, TVSIL_STATE);
-                    if (native_checks) ImageList_Destroy(native_checks);
+                // Do not enable TVS_CHECKBOXES: native automatic state images
+                // would compete with our explicit mouse/keyboard state handling.
+                picker.checks_images = picker.skin->checks();
+                if (!picker.checks_images) {
+                    EndDialog(dialog, -1);
+                    return TRUE;
+                }
+                picker.checks_tree = tree;
+                TreeView_SetImageList(tree, picker.checks_images, TVSIL_STATE);
+                if (TreeView_GetImageList(tree, TVSIL_STATE) != picker.checks_images) {
+                    EndDialog(dialog, -1);
+                    return TRUE;
                 }
             }
             SetWindowSubclass(tree, tree_proc, 1, 0);
@@ -471,10 +498,7 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             KillTimer(dialog, 7634);
             const auto tree = GetDlgItem(dialog, IDC_CARD_TREE);
             RemoveWindowSubclass(tree, tree_proc, 1);
-            if (picker.multiple()) {
-                const auto images = TreeView_SetImageList(tree, nullptr, TVSIL_STATE);
-                if (images) ImageList_Destroy(images);
-            }
+            picker.release_checks();
             if (picker.expansion_images) {
                 TreeView_SetImageList(tree, nullptr, TVSIL_NORMAL);
                 ImageList_Destroy(picker.expansion_images);

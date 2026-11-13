@@ -31,7 +31,7 @@ function Assert-SupportedGame {
     if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Die Spiel-EXE darf keine Verknuepfung sein.' }
     if ((Get-Content -LiteralPath (Join-Path $Directory 'build_number.txt') -Raw).Trim() -ne '3315' -or
         (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash -ne $script:SupportedExeHash) {
-        throw 'Nicht unterstuetzte Dominion-Version. v0.1.0 benoetigt den geprueften Spielbuild 3315. Es wurde nichts gepatcht.'
+        throw 'Nicht unterstuetzte Dominion-Version. v0.1.1 benoetigt den geprueften Spielbuild 3315. Es wurde nichts gepatcht.'
     }
     if (!(Test-Path -LiteralPath (Join-Path $Directory 'Dominion.xpack') -PathType Leaf)) {
         throw 'Dominion.xpack fehlt in der Spielinstallation.'
@@ -139,7 +139,7 @@ function Assert-ModPackage {
     $manifestPath = Join-Path $PackageRoot 'package.json'
     if (!(Test-Path -LiteralPath $manifestPath -PathType Leaf)) { throw 'package.json fehlt. Bitte das vollstaendige Release-ZIP entpacken.' }
     $manifest = [IO.File]::ReadAllText($manifestPath) | ConvertFrom-Json
-    if ($manifest.version -ne '0.1.0' -or $manifest.gameBuild -ne '3315') { throw 'Unbekanntes Release-Paket.' }
+    if ($manifest.version -ne '0.1.1' -or $manifest.gameBuild -ne '3315') { throw 'Unbekanntes Release-Paket.' }
     foreach ($name in 'attach.exe', 'KingdomEffectsPatch.dll') {
         $path = Join-Path $PackageRoot "bin\$name"
         $expected = $manifest.files.PSObject.Properties["bin/$name"]

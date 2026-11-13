@@ -11,7 +11,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Effekttests fehlgeschlagen.' }
 if (!$OutputDirectory) { $OutputDirectory = Join-Path $PSScriptRoot ('out\releases\' + (Get-Date -Format 'yyyyMMdd-HHmmss')) }
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 Assert-NormalDirectory $OutputDirectory
-$package = Join-Path $OutputDirectory 'KingdomEffectsPatch-v0.1.0'
+$package = Join-Path $OutputDirectory 'KingdomEffectsPatch-v0.1.1'
 if (Test-Path -LiteralPath $package) { throw 'Ausgabeordner bereits vorhanden. Bitte einen neuen Ausgabeordner waehlen.' }
 New-Item -ItemType Directory -Path (Join-Path $package 'bin') -Force | Out-Null
 # Explicit allowlist: no source game, user data, logs, test fixtures or build intermediates.
@@ -30,10 +30,10 @@ $revision = & git -C $PSScriptRoot rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Git-Quellstand konnte nicht ermittelt werden.' }
 $changes = @(& git -C $PSScriptRoot status --porcelain)
 if ($LASTEXITCODE -ne 0) { throw 'Git-Arbeitsstand konnte nicht ermittelt werden.' }
-$manifest = [ordered]@{ version = '0.1.0'; gameBuild = '3315'; steamBuild = '17683350'; exeSha256 = $script:SupportedExeHash; sourceCommit = $revision; sourceDirty = ($changes.Count -ne 0); files = $files }
+$manifest = [ordered]@{ version = '0.1.1'; gameBuild = '3315'; steamBuild = '17683350'; exeSha256 = $script:SupportedExeHash; sourceCommit = $revision; sourceDirty = ($changes.Count -ne 0); files = $files }
 [IO.File]::WriteAllText((Join-Path $package 'package.json'), ($manifest | ConvertTo-Json -Depth 4), $script:Utf8)
 Assert-ModPackage $package
-$archive = Join-Path $OutputDirectory 'KingdomEffectsPatch-v0.1.0-windows.zip'
+$archive = Join-Path $OutputDirectory 'KingdomEffectsPatch-v0.1.1-windows.zip'
 Compress-Archive -LiteralPath $package -DestinationPath $archive -CompressionLevel Optimal
 $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
 [IO.File]::WriteAllText((Join-Path $OutputDirectory 'SHA256SUMS.txt'), "$hash  $([IO.Path]::GetFileName($archive))`r`n", $script:Utf8)

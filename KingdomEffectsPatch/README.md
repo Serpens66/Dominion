@@ -1,8 +1,10 @@
-# Dominion Kingdom Effects Patch v0.1.0
+# Dominion Kingdom Effects Patch v0.1.1 — test package / Testpaket
 
 [English](#english) · [Deutsch](#deutsch)
 
 ## English
+
+**Test package, not yet released.** v0.1.1 remains a GitHub draft until visual acceptance. The published v0.1.0 download stays unchanged. This test version replaces the black squares in card selection with light checkboxes and dark checkmarks. Automated display checks pass; please confirm the appearance on your screen.
 
 An unofficial mod for **Dominion on Windows/Steam, game build 3315**. Choose from 89 campaign effects, combine up to 32 entries, and customize your Kingdom in a bilingual F8 editor. A separately installed copy of Dominion is required; this mod does not unlock DLC.
 
@@ -48,6 +50,8 @@ To play without the mod, close the game and start it normally through Steam. To 
 [Effect guide and test status](https://github.com/Serpens66/Dominion/blob/main/Documentation/Steam_Spielanleitung.md) · [Known limitations](https://github.com/Serpens66/Dominion/blob/main/Documentation/Known_Issues.md) · [Technical documentation](https://github.com/Serpens66/Dominion/blob/main/Documentation/README.md)
 
 ## Deutsch
+
+**Testpaket, noch nicht veröffentlicht.** v0.1.1 bleibt bis zur sichtbaren Abnahme ein GitHub-Entwurf. Der veröffentlichte v0.1.0-Download bleibt unverändert. Die schwarzen Kästchen der Kartenauswahl werden durch helle Checkboxen mit dunklem Haken ersetzt. Die automatisierten Bildprüfungen bestehen; bitte die Darstellung auf deinem Bildschirm bestätigen.
 
 Ein inoffizieller Mod für **Dominion unter Windows/Steam, Spielbuild 3315**. Im zweisprachigen F8-Editor stehen 89 Kampagneneffekte zur Auswahl; bis zu 32 Einträge lassen sich kombinieren. Eine eigene Dominion-Installation ist erforderlich. Der Mod schaltet keine DLCs frei.
 

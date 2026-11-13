@@ -1,8 +1,10 @@
-# v0.1.0
+# v0.1.1 — draft / Entwurf
 
 ## English
 
-First public release for **Dominion on Windows/Steam, game build 3315**.
+Test update for **Dominion on Windows/Steam, game build 3315**. This GitHub draft must not be published before visual acceptance; the public v0.1.0 release remains unchanged.
+
+**Test fix:** Light card-selection checkboxes with clear dark checkmarks replace the black squares. Selection is preserved while searching. Space toggles the choice without requesting a Windows warning sound. Automated in-game-process display checks pass; visual confirmation on your screen is still needed.
 
 - Customize local and pass-and-play Kingdoms with **89 selectable campaign effects**, combining up to **32 entries**.
 - Use **F8** to search and filter effects, read their prerequisites and test status, choose multiple card targets, and add intentional repeats. For example, double Village and Market together to start with 20 cards in each pile.
@@ -19,7 +21,9 @@ To play without the mod, restart Dominion normally through Steam.
 
 ## Deutsch
 
-Erstes öffentliches Release für **Dominion unter Windows/Steam, Spielbuild 3315**.
+Testupdate für **Dominion unter Windows/Steam, Spielbuild 3315**. Dieser GitHub-Entwurf darf vor der sichtbaren Abnahme nicht veröffentlicht werden; das öffentliche Release v0.1.0 bleibt unverändert.
+
+**Testkorrektur:** Helle Auswahlkästchen mit deutlichem dunklem Haken ersetzen die schwarzen Flächen. Die Auswahl bleibt beim Suchen erhalten. Die Leertaste schaltet um, ohne einen Windows-Warnton anzufordern. Die automatisierten Bildprüfungen im Spielprozess bestehen; die sichtbare Bestätigung auf deinem Bildschirm steht noch aus.
 
 - Königreiche in **Lokal spielen und Weitergeben** mit **89 auswählbaren Kampagneneffekten** gestalten; bis zu **32 Einträge** kombinieren.
 - In **F8** Effekte suchen und filtern, Voraussetzungen und Teststand lesen, mehrere Zielkarten wählen und Effekte bewusst wiederholen. Beispielsweise Dorf und Markt gemeinsam auf jeweils 20 Karten verdoppeln.

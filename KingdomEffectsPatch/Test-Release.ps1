@@ -6,7 +6,7 @@ New-Item -ItemType Directory -Path $scratch | Out-Null
 if ($ArchivePath) {
     $unpacked = Join-Path $scratch ('Release entpackt ' + [char]0x00E4)
     Expand-Archive -LiteralPath $ArchivePath -DestinationPath $unpacked
-    $PackageDirectory = Join-Path $unpacked 'KingdomEffectsPatch-v0.1.0'
+    $PackageDirectory = Join-Path $unpacked 'KingdomEffectsPatch-v0.1.1'
 }
 if (!$PackageDirectory) { throw 'Bitte -ArchivePath oder -PackageDirectory angeben.' }
 . (Join-Path $PackageDirectory 'ReleaseSupport.ps1')

@@ -37,6 +37,8 @@ cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0roundtrip_
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0startup_effect_test.cpp" /link /OUT:startup_effect_test.exe bcrypt.lib user32.lib || goto fail
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0clear_kingdom_test.cpp" /link /OUT:clear_kingdom_test.exe bcrypt.lib user32.lib || goto fail
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0native_effect_regression_test.cpp" /link /OUT:native_effect_regression_test.exe bcrypt.lib user32.lib || goto fail
+cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT /LD "%~dp0checkbox_game_probe.cpp" "%~dp0dialog_skin.cpp" "%~dp0game_resources.cpp" effect_editor.res /link /OUT:checkbox_game_probe.dll user32.lib gdi32.lib comctl32.lib gdiplus.lib || goto fail
+cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0checkbox_game_test.cpp" /link /OUT:checkbox_game_test.exe bcrypt.lib user32.lib || goto fail
 goto done
 :background
 cl /I "%PATCH_OUT%" /nologo /W4 /O2 /EHsc /std:c++17 /utf-8 /MT "%~dp0background_effect_test.cpp" /link /OUT:background_effect_test.exe bcrypt.lib user32.lib || goto fail

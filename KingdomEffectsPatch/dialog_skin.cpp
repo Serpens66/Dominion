@@ -220,15 +220,83 @@ int DialogSkin::add_icon(HIMAGELIST images, std::string_view name) const {
 }
 
 HIMAGELIST DialogSkin::checks() const {
-    const auto size = units({0, 0, 10, 9}).right;
-    const auto images = ImageList_Create(size, size, ILC_COLOR24|ILC_MASK, 3, 0);
-    if (!images) return nullptr;
-    const auto dc=GetDC(dialog_),buffer=CreateCompatibleDC(dc);
-    const auto bitmap=CreateCompatibleBitmap(dc,size,size);const auto old=SelectObject(buffer,bitmap);
-    for(int state=0;state<3;++state){RECT rect{0,0,size,size};SetDCBrushColor(buffer,paper);FillRect(buffer,&rect,static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
-        InflateRect(&rect,-1,-1);DrawFrameControl(buffer,&rect,DFC_BUTTON,DFCS_BUTTONCHECK|(state==2?DFCS_CHECKED:0)|DFCS_FLAT);
-        if(ImageList_AddMasked(images,bitmap,RGB(255,0,255))<0){SelectObject(buffer,old);DeleteObject(bitmap);DeleteDC(buffer);ReleaseDC(dialog_,dc);ImageList_Destroy(images);return nullptr;}}
-    SelectObject(buffer,old);DeleteObject(bitmap);DeleteDC(buffer);ReleaseDC(dialog_,dc);return images;
+    // Tree-view state indices are one-based: image 0 is deliberately unused.
+    // Draw directly into a top-down BGRA DIB. No theme-dependent frame control,
+    // display-compatible bitmap, or colour-key mask participates in rendering.
+    const int size = (std::max)(12L, units({0, 0, 10, 9}).right);
+    if (size > 256) return nullptr;
+    struct ImageOwner {
+        HIMAGELIST value = nullptr;
+        ~ImageOwner() { if (value) ImageList_Destroy(value); }
+    } images{ImageList_Create(size, size, ILC_COLOR32, 3, 0)};
+    if (!images.value) return nullptr;
+    BITMAPINFO info{};
+    info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info.bmiHeader.biWidth = size * 3;
+    info.bmiHeader.biHeight = -size;
+    info.bmiHeader.biPlanes = 1;
+    info.bmiHeader.biBitCount = 32;
+    info.bmiHeader.biCompression = BI_RGB;
+    struct Pixel { unsigned char blue, green, red, alpha; };
+    static_assert(sizeof(Pixel) == 4, "BGRA pixels must occupy four bytes");
+    void* storage = nullptr;
+    struct BitmapOwner {
+        HBITMAP value = nullptr;
+        ~BitmapOwner() { if (value) DeleteObject(value); }
+    } bitmap{CreateDIBSection(nullptr, &info, DIB_RGB_COLORS, &storage, nullptr, 0)};
+    if (!bitmap.value || !storage) return nullptr;
+    auto* pixels = static_cast<Pixel*>(storage);
+    const double margin = (std::max)(1.0, size / 12.0);
+    const double border = (std::max)(1.0, size / 13.0);
+    const auto near_segment = [](double x, double y, double ax, double ay,
+                                 double bx, double by, double radius) {
+        const double dx = bx - ax, dy = by - ay;
+        const double t = (std::max)(0.0, (std::min)(1.0,
+            ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)));
+        const double ex = x - ax - t * dx, ey = y - ay - t * dy;
+        return ex * ex + ey * ey <= radius * radius;
+    };
+    // Four-by-four coverage sampling keeps the same shape at fractional DPI.
+    // Real checkbox images are fully opaque, including their paper-coloured
+    // margin: older common controls in the game can ignore per-pixel alpha.
+    // Only the unused index 0 is transparent.
+    for (int state = 0; state < 3; ++state) {
+        for (int y = 0; y < size; ++y) {
+            for (int x = 0; x < size; ++x) {
+                unsigned red = 0, green = 0, blue = 0, alpha = 0;
+                for (int sy = 0; sy < 4; ++sy) for (int sx = 0; sx < 4; ++sx) {
+                    const double px = x + (sx + 0.5) / 4.0;
+                    const double py = y + (sy + 0.5) / 4.0;
+                    if (!state) continue;
+                    unsigned r = paper & 0xFFu, g = (paper >> 8) & 0xFFu, b = (paper >> 16) & 0xFFu;
+                    if (px >= margin && py >= margin && px < size - margin && py < size - margin) {
+                        r = 255; g = 250; b = 232;
+                        if (px < margin + border || py < margin + border ||
+                            px >= size - margin - border || py >= size - margin - border) {
+                            r = 116; g = 79; b = 42;
+                        } else if (state == 2 &&
+                            (near_segment(px, py, size * 0.26, size * 0.50,
+                                          size * 0.44, size * 0.69, size * 0.065) ||
+                             near_segment(px, py, size * 0.44, size * 0.69,
+                                          size * 0.76, size * 0.31, size * 0.065))) {
+                            r = 56; g = 35; b = 20;
+                        }
+                    }
+                    red += r; green += g; blue += b; alpha += 255;
+                }
+                pixels[y * size * 3 + state * size + x] = {
+                    static_cast<unsigned char>((blue + 8) / 16),
+                    static_cast<unsigned char>((green + 8) / 16),
+                    static_cast<unsigned char>((red + 8) / 16),
+                    static_cast<unsigned char>((alpha + 8) / 16)};
+            }
+        }
+    }
+    if (ImageList_Add(images.value, bitmap.value, nullptr) != 0 ||
+        ImageList_GetImageCount(images.value) != 3) return nullptr;
+    const auto result = images.value;
+    images.value = nullptr;
+    return result;
 }
 
 void DialogSkin::paint_background(HDC dc) const {

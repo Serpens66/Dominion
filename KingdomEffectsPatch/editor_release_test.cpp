@@ -4,6 +4,7 @@
 #define EFFECT_TABLE_TEST_CLIPBOARD
 #include "effect_editor.cpp"
 #include "card_picker.cpp"
+#include "checkbox_render_checks.hpp"
 #include <cstdio>
 #include <stdexcept>
 #pragma comment(lib, "oleaut32.lib")
@@ -268,6 +269,9 @@ BOOL CALLBACK inspect_picker(HWND dialog, LPARAM) {
             check(rect.top>=0 && rect.bottom<=client.bottom && rect.bottom>rect.top,"Limited-height layout clips controls.");
         }
         check(kingdom::resource_cache_bytes()<=96u*1024u*1024u,"Shared cache limit exceeded.");
+        checkbox_checks::Session checkbox_session;
+        checkbox_session.begin(dialog,L"KingdomEffectsPatch/out/staging/ui-check",L"standalone-"+std::to_wstring(picker_ticks)+(missing_art?L"-missing":L"-game")+L"-"+std::to_wstring(picker.skin->logical_height()));
+        checkbox_session.run(dialog,picker);
         SetDlgItemTextW(dialog, IDC_CARD_QUERY, L"city_quarter");
         picker_checked=true;
     } catch (const std::exception& error) { failure=error.what(); }
