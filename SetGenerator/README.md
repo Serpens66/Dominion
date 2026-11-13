@@ -8,6 +8,10 @@
 2. Klicke auf **Königreich ziehen** und dann auf **Für Dominion kopieren**.
 3. Füge den Code in das Kartensuchfeld der Königreich-Auswahl in Dominion ein.
 
+Der Kingdom-Code enthält auch die gezogenen Landschaften, Verbündeten, Prophezeiungen und Zusatzkarten-Zuordnungen sowie die konkrete Auswahl für Platin/Kolonien und Unterschlüpfe. Ausgeschaltete Optionen werden ausdrücklich mitgegeben. Automatisch benötigtes Material wie Pferde und Ruinen folgt den ausgewählten Karten.
+
+Ein **Steam-Teilcode** nennt unter dem Ausgabefeld die fehlenden Aufbau-Auswahlen. Das betrifft das noch nicht unterstützte Schwarzmarktdeck, mehr als vier Landschaftseinträge einschließlich Verbündeten und Prophezeiungen sowie Ziele außerhalb der ersten zehn Hauptstapel. Der Hinweis auf ausstehende Steam-Importtests bleibt sichtbar; die Syntax ist statisch geprüft. [Exportbefund und Grenzen](../Documentation/Kingdom_Code_Extras.md)
+
 Unter **Erweiterungen und Editionen** garantiert **Immer** mindestens einen Stapel aus dem Set. **Zufall** nimmt das Set in den Lostopf auf. Mit **Von** und **Bis** bestimmst du die Stapelzahl pro Set. Bei Zufall gelten diese Quoten, sobald das Set ausgelost wurde. Festgehaltene Karten machen ihre Herkunft erforderlich und belegen bei Zufallssets einen Lostopfplatz. Über **Einstellungen sichern oder laden** kannst du deine Auswahl in einen anderen Browser übertragen.
 
 Mit **Festgehaltene Karten haben Vorrang** dürfen feste Karten Quoten überschreiten und aus gesperrten Erweiterungen oder Editionen stammen. Sie erfüllen weiterhin Mindestquoten; die übrigen Plätze bleiben an die Regeln gebunden. Festhalten allein belegt dann keinen Zufallsset-Platz. Unter den Filtern steht, was noch ergänzt werden darf.

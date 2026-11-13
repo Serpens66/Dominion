@@ -6,6 +6,7 @@ Ziel ist die Steam-Version von Dominion von Temple Gates Games. Die erste Unters
 | --- | --- |
 | Kingdom Effects Patch starten oder ein Release vorbereiten | [Release-Anleitung](../KingdomEffectsPatch/README.md) und [Release-Prüfung](../KingdomEffectsPatch/RELEASING.md) |
 | Eigene Kingdoms speichern, laden oder teilen | [Speicherformat, Zwischenablage und Offline-Test](Kingdom_Sets.md) |
+| Landschaften und Sonderkarten im Generatorcode ergänzen | [Syntax, native Grenzen und Exportbefund](Kingdom_Code_Extras.md) |
 | Regelbasierten Kingdom-Generator entwerfen | [SetGenerator](../SetGenerator/README.md) |
 | Erweiterungsquoten und Steam-Import abnehmen | [Testliste zum Generator](Generator_Erweiterungen_Tests.md) |
 | Offene Wünsche an den Web-Randomizer mit unserem Generator abgleichen | [KingdomCreator als Referenz](KingdomCreator.md) |
@@ -57,6 +58,7 @@ Katalog und Zieh-Worker aus dem Projektordner aktualisieren und prüfen. Passe d
 ```powershell
 python .\SetGenerator\generator_catalog.py "E:\ProgrammeE\Steam\steamapps\common\Dominion\Dominion.xpack"
 node .\SetGenerator\test_generator_solver.js
+node .\SetGenerator\test_kingdom_export.js
 python .\SetGenerator\test_generator_catalog.py
 ```
 

@@ -1,0 +1,320 @@
+{
+  "version": 2,
+  "kingdomSize": 10,
+  "pinnedPriority": false,
+  "includeRelated": false,
+  "ranges": {
+    "actions": [
+      "1",
+      "10"
+    ],
+    "cards": [
+      "1",
+      "10"
+    ],
+    "buy": [
+      "1",
+      "10"
+    ],
+    "trash": [
+      "0",
+      "2"
+    ],
+    "attack": [
+      "0",
+      "0"
+    ],
+    "defense": [
+      "0",
+      "2"
+    ],
+    "attack-reaction": [
+      "0",
+      "2"
+    ],
+    "other-reaction": [
+      "0",
+      "2"
+    ],
+    "cost-1": [
+      "0",
+      "1"
+    ],
+    "cost-2": [
+      "1",
+      "2"
+    ],
+    "cost-3": [
+      "2",
+      "4"
+    ],
+    "cost-4": [
+      "2",
+      "4"
+    ],
+    "cost-5": [
+      "2",
+      "4"
+    ],
+    "cost-6": [
+      "0",
+      "2"
+    ],
+    "cost-7": [
+      "0",
+      "1"
+    ],
+    "cost-8": [
+      "0",
+      "1"
+    ],
+    "potions": [
+      "0",
+      "3"
+    ],
+    "debt": [
+      "0",
+      "3"
+    ],
+    "non-action": [
+      "0",
+      "3"
+    ],
+    "type-duration": [
+      "0",
+      "3"
+    ],
+    "type-night": [
+      "0",
+      "3"
+    ],
+    "type-treasure": [
+      "0",
+      "3"
+    ],
+    "type-victory": [
+      "0",
+      "3"
+    ],
+    "type-liaison": [
+      "0",
+      "3"
+    ],
+    "type-omen": [
+      "0",
+      "3"
+    ],
+    "gain-coffers": [
+      "0",
+      "3"
+    ],
+    "gain-villagers": [
+      "0",
+      "3"
+    ],
+    "gain-favors": [
+      "0",
+      "3"
+    ],
+    "gain-sun": [
+      "0",
+      "3"
+    ],
+    "gain-vp": [
+      "0",
+      "3"
+    ],
+    "gain-horse": [
+      "0",
+      "3"
+    ],
+    "gain-loot": [
+      "0",
+      "3"
+    ],
+    "exp-base": [
+      "1",
+      "10"
+    ],
+    "exp-adventures": [
+      "1",
+      "4"
+    ],
+    "exp-alchemy": [
+      "0",
+      "0"
+    ],
+    "exp-prosperity": [
+      "1",
+      "4"
+    ],
+    "exp-dark_ages": [
+      "0",
+      "0"
+    ],
+    "exp-guilds": [
+      "0",
+      "0"
+    ],
+    "exp-intrigue": [
+      "1",
+      "4"
+    ],
+    "exp-empires": [
+      "0",
+      "0"
+    ],
+    "exp-hinterlands": [
+      "0",
+      "0"
+    ],
+    "exp-menagerie": [
+      "1",
+      "4"
+    ],
+    "exp-nocturne": [
+      "1",
+      "4"
+    ],
+    "exp-plunder": [
+      "0",
+      "0"
+    ],
+    "exp-promos": [
+      "1",
+      "2"
+    ],
+    "exp-cornucopia": [
+      "0",
+      "0"
+    ],
+    "exp-renaissance": [
+      "1",
+      "4"
+    ],
+    "exp-rising_sun": [
+      "0",
+      "0"
+    ],
+    "exp-seaside": [
+      "0",
+      "0"
+    ],
+    "exp-allies": [
+      "0",
+      "0"
+    ],
+    "land-total": [
+      "2",
+      "4"
+    ],
+    "land-distinct": [
+      "0",
+      "4"
+    ],
+    "land-type-event": [
+      "0",
+      "2"
+    ],
+    "land-type-landmark": [
+      "0",
+      "2"
+    ],
+    "land-type-project": [
+      "0",
+      "2"
+    ],
+    "land-type-way": [
+      "0",
+      "2"
+    ],
+    "land-type-trait": [
+      "0",
+      "0"
+    ],
+    "land-exp-adventures": [
+      "",
+      ""
+    ],
+    "land-exp-empires": [
+      "",
+      ""
+    ],
+    "land-exp-menagerie": [
+      "",
+      ""
+    ],
+    "land-exp-plunder": [
+      "",
+      ""
+    ],
+    "land-exp-promos": [
+      "",
+      ""
+    ],
+    "land-exp-renaissance": [
+      "",
+      ""
+    ],
+    "land-exp-rising_sun": [
+      "",
+      ""
+    ]
+  },
+  "cardChoices": {
+    "moneylender": "excluded",
+    "chapel": "excluded",
+    "sentry": "excluded",
+    "raze": "excluded",
+    "bishop": "excluded",
+    "investment": "excluded",
+    "trade_route": "excluded",
+    "forge": "excluded",
+    "loan": "excluded",
+    "trading_post": "excluded",
+    "masquerade": "excluded",
+    "goatherd": "excluded",
+    "cemetery": "excluded",
+    "monastery": "excluded",
+    "recruiter": "excluded",
+    "research": "excluded",
+    "priest": "excluded",
+    "hideout": "excluded"
+  },
+  "editions": {
+    "base": false,
+    "prosperity": false,
+    "guilds": false,
+    "intrigue": false,
+    "hinterlands": false,
+    "cornucopia": false,
+    "seaside": false
+  },
+  "expansionModes": {
+    "base": "always",
+    "adventures": "random",
+    "alchemy": "off",
+    "prosperity": "always",
+    "dark_ages": "off",
+    "guilds": "off",
+    "intrigue": "always",
+    "empires": "off",
+    "hinterlands": "off",
+    "menagerie": "random",
+    "nocturne": "random",
+    "plunder": "off",
+    "promos": "random",
+    "cornucopia": "off",
+    "renaissance": "random",
+    "rising_sun": "off",
+    "seaside": "off",
+    "allies": "off"
+  },
+  "randomExpansionCount": 2,
+  "requireLoot": false,
+  "colonies": "always",
+  "shelters": "rules",
+  "interfaceLanguage": "de",
+  "setName": "Doppelte Stapel",
+  "theme": "system"
+}

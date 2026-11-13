@@ -3569,6 +3569,57 @@ function generate() {
   checkRules();
 }
 
+function buildKingdomCode(result, mainIds) {
+  const omitted = [];
+  const assignments = new Map(result.assignments.filter(item => item.source).map(item => [item.source, item]));
+  const supported = new Set(["young_witch", "ferryman", "riverboat", "way_of_the_mouse", "obelisk", "druid", "approaching_army"]);
+  const planned = new Set(result.main.filter(id => !mainIds.includes(id)));
+  const included = new Set();
+  function encode(id, parents = new Set()) {
+    included.add(id);
+    const assignment = assignments.get(id);
+    if (!assignment) return id;
+    if ((!supported.has(id) && !cardById.get(id)?.types.includes("trait")) ||
+        assignment.targets.some(target => planned.has(target) || parents.has(target))) {
+      omitted.push(assignment);
+      return id;
+    }
+    const next = new Set([...parents, id]);
+    return id + "(" + assignment.targets.map(target => encode(target, next)).join(", ") + ")";
+  }
+  const tokens = mainIds.map(id => encode(id));
+  const landscapes = [...new Set(result.landscapes)];
+  const exportedLandscapes = landscapes.slice(0, 4);
+  for (const id of exportedLandscapes) tokens.push(encode(id));
+  for (const id of landscapes.slice(4)) omitted.push({ role: "Landschaften", targets: [id] });
+  let landscapeSlots = exportedLandscapes.length;
+  for (const assignment of result.assignments.filter(item => !item.source)) {
+    for (const id of assignment.targets) {
+      if (included.has(id)) continue;
+      const types = cardById.get(id)?.types ?? [];
+      const trigger = types.includes("ally") ? "liaison" : types.includes("prophecy") ? "omen" : null;
+      if (!trigger || ![...included].some(source => cardById.get(source)?.types.includes(trigger))) {
+        omitted.push({ ...assignment, targets: [id] });
+        continue;
+      }
+      if (landscapeSlots >= 4) {
+        omitted.push({ ...assignment, targets: [id] });
+        continue;
+      }
+      tokens.push(encode(id));
+      landscapeSlots++;
+    }
+  }
+  if (result.withColonies) tokens.push("colonies");
+  if (result.withShelters) tokens.push("shelters");
+  // Ally and Prophecy have their own setup rules; this quota covers the
+  // ordinary Landscapes selected by the generator, including Traits.
+  const modifiers = ["Landscapes(" + exportedLandscapes.length + "," + exportedLandscapes.length + ")"];
+  if (!result.withColonies) modifiers.push("NoColonies");
+  if (!result.withShelters) modifiers.push("NoShelters");
+  return { code: "-k " + tokens.join(", ") + " -m " + modifiers.join(", "), omitted };
+}
+
 function showDraw(result) {
   if (!result) {
     status.className = "error";
@@ -3583,20 +3634,25 @@ function showDraw(result) {
   const planned = sortedCards(result.main.slice(standardKingdomSize));
   const ids = drawn.map(card => card.id);
   const experimental = planned.length > 0;
-  const partial = result.needsSteamCheck.length > 0;
-  output.value = "-k " + ids.join(", ");
+  const exported = buildKingdomCode(result, ids);
+  const partial = exported.omitted.length > 0;
+  output.value = exported.code;
   effects.value = formatDoublePiles(ids);
   copy.disabled = false;
-  document.getElementById("output-label").textContent = experimental ? tr("Steam-Teilcode", "Partial Steam code") :
-    partial ? tr("Hauptstapel-Teilcode", "Partial code for Kingdom piles") : tr("Kingdom-Code", "Kingdom code");
-  copy.textContent = experimental ? tr("Steam-Teilcode kopieren", "Copy partial Steam code") :
-    partial ? tr("Hauptstapel-Teilcode kopieren", "Copy partial code") : tr("Für Dominion kopieren", "Copy into Dominion");
+  document.getElementById("output-label").textContent = experimental || partial
+    ? tr("Steam-Teilcode", "Partial Steam code") : tr("Kingdom-Code", "Kingdom code");
+  copy.textContent = experimental || partial
+    ? tr("Steam-Teilcode kopieren", "Copy partial Steam code") : tr("Für Dominion kopieren", "Copy into Dominion");
   const warnings = [];
   if (experimental) warnings.push(tr(
-    "Steam-Teilcode und Verdopplung enthalten nur die ersten zehn Stapel. Nur für die Planung: ",
-    "The partial Steam code and doubling effects contain only the first ten piles. For planning only: "
+    "Steam-Code und Verdopplung enthalten nur die ersten zehn Hauptstapel. Nur für die Planung: ",
+    "The Steam code and doubling effects contain only the first ten Kingdom piles. For planning only: "
   ) + planned.map(card => cardTitle(card, uiLanguage)).join(", ") + ".");
-  if (partial) warnings.push(tr("Für Steam steht die Prüfung folgender Zuordnungen aus: ",
+  if (partial) warnings.push(tr("Im Teilcode fehlen folgende Aufbau-Auswahlen; ergänze sie in Dominion: ",
+    "These setup choices are missing from the partial code; add them in Dominion: ") + exported.omitted.map(item =>
+      setupTerm(item.role) + (item.source ? " (" + cardTitle(cardById.get(item.source), uiLanguage) + ")" : "") + ": " +
+      item.targets.map(id => cardTitle(cardById.get(id), uiLanguage)).join(", ")).join("; ") + ".");
+  if (result.needsSteamCheck.length) warnings.push(tr("Für Steam steht der Importtest folgender Aufbau-Auswahlen aus: ",
     "These setup choices still need to be verified in Steam: ") + result.needsSteamCheck.map(setupTerm).join(", ") + ".");
   if (result.ignoredRandomSources?.length) warnings.push(tr(
     "Eigenschaftsquoten berücksichtigen keine zufälligen Aufbaukarten für: ",
