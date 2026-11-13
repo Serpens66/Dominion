@@ -418,7 +418,7 @@
     gap: .35rem;
     padding: .45rem .55rem;
   }
-  .expansion-selection { display: flex; align-items: center; gap: .25rem; min-width: 0; }
+  .expansion-selection { display: flex; justify-content: flex-end; align-items: center; gap: .25rem; min-width: 0; }
   .expansion-weight { margin: 0; font-size: .8rem; }
   .expansion-weight:not([hidden]) { display: flex; align-items: center; gap: .25rem; }
   .expansion-chance { flex: none; text-align: start; color: var(--muted); font-size: .75rem; line-height: 1.15; white-space: nowrap; }
@@ -4369,8 +4369,8 @@ function addRange(rule, groupName, group = document.getElementById(groupName + "
     chance.className = "expansion-chance";
     chance.id = "chance-expansion-" + kingdomExpansion;
     field.setAttribute("aria-describedby", "expansion-weight-help " + chance.id);
-    weight.append(field, chance);
-    selection.append(mode, weight);
+    weight.append(chance, field);
+    selection.append(weight, mode);
     group.insertBefore(selection, from);
     expansionModes.set(kingdomExpansion, mode);
     expansionWeightInputs.set(kingdomExpansion, { field, wrapper: weight, chance });

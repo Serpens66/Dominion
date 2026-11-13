@@ -355,13 +355,15 @@ async function exerciseLotteryWeights(browser) {
           const compactWidth = context.measureText('00').width + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 2;
           setExpansionMode(id,'always');
           const always = selection.getBoundingClientRect(), afterFrom = from.getBoundingClientRect(), afterTo = to.getBoundingClientRect();
+          const alwaysMode = expansionModes.get(id).getBoundingClientRect();
           setExpansionMode(id,'random');
           return {visible:!entry.wrapper.hidden && rect.height > 0 && chance.height > 0,width:rect.width,compactWidth,
             inline:Math.abs(center(mode)-center(rect)) <= 2 && Math.abs(center(rect)-center(chance)) <= 2,
-            ordered:mode.right <= rect.left + 1 && rect.right <= chance.left + 1 && chance.right <= fromBox.left + 1,
-            within:rect.left >= cell.left - 1 && chance.right <= cell.right + 1,
+            ordered:chance.right <= rect.left + 1 && rect.right <= mode.left + 1 && mode.right <= fromBox.left + 1,
+            within:chance.left >= cell.left - 1 && mode.right <= cell.right + 1,
             noOverlap:![nameBox,edition,fromBox,toBox].filter(Boolean).some(box => overlaps(box,cell)),
             sameHeight:Math.abs(always.height-cell.height) <= 1,
+            alignedMode:Math.abs(alwaysMode.right-mode.right) <= 1 && Math.abs(mode.right-cell.right) <= 1,
             stableBounds:Math.abs(afterFrom.left-fromBox.left) <= 1 && Math.abs(afterTo.left-toBox.left) <= 1,
             readableName:titleBox.height <= titleLine * 2 + 1,
             columns:getComputedStyle(table).gridTemplateColumns.split(' ').length,
@@ -372,7 +374,7 @@ async function exerciseLotteryWeights(browser) {
         return JSON.stringify({viewport:innerWidth,scroll:document.documentElement.scrollWidth,fields});
       })()`));
       result.checks++;
-      if (geometry.scroll > geometry.viewport + 1 || geometry.fields.some(field => !field.visible || !field.inline || !field.ordered || !field.within || !field.noOverlap || !field.sameHeight || !field.stableBounds || !field.oneInput || !field.tooltip || !field.readableName || ![3,4].includes(field.columns) || field.width < 18 || field.width > field.compactWidth + 12)) {
+      if (geometry.scroll > geometry.viewport + 1 || geometry.fields.some(field => !field.visible || !field.inline || !field.ordered || !field.within || !field.noOverlap || !field.sameHeight || !field.alignedMode || !field.stableBounds || !field.oneInput || !field.tooltip || !field.readableName || ![3,4].includes(field.columns) || field.width < 18 || field.width > field.compactWidth + 12)) {
         result.failures.push({kind:'lottery-weight-inline-layout',width,language,zoom,...geometry});
       }
       const screenshot = path.join(os.tmpdir(), 'dominion-weights-' + browser.version.split(/[ /]/)[0] + '-' + width + '-' + language + '-' + zoom + '.png');

@@ -212,3 +212,8 @@ Stand 13. November 2026. Modusauswahl, Gewicht und berechnete Chance stehen nebe
 **Browserprüfung:** `node SetGenerator/test_card_layout.js edge --smoke` und `node SetGenerator/test_card_layout.js firefox --smoke`, Edge 157 und Firefox 160. Je 41 Gewichtungs-/Layoutprüfungen und 72 Erweiterungsreiter-Prüfungen ohne Fehler. Die neuen Geometrieprüfungen decken 390/900/1920 Pixel, beide Oberflächensprachen und 125 % Wurzelschriftgröße ab: gemeinsame Zeile, schmales Feld, Reihenfolge der Bedienelemente, keine Überschneidung mit Namen/Edition/Von/Bis, höchstens zwei Namenszeilen, unveränderte Von-/Bis-Positionen bei Moduswechsel sowie gleiche Bedienhöhe und kein horizontaler Überlauf. Werte 1, 25 und 23,9 einschließlich vollständigem Tooltip wurden geprüft und Screenshots visuell kontrolliert. Zwei Firefox-Starts erreichten ein Protokoll-Zeitlimit bei script.evaluate beziehungsweise browsingContext.navigate; der anschließende separate Lauf mit Fortschrittsausgabe bestand vollständig.
 
 Solver-, Gewichts-, theoretische Lostopf-, Kingdom-Export-, Namensumwandlungs- und Python-Katalogtests bestehen. Ziehung und Einstellungsformat bleiben unverändert.
+
+
+### Reihenfolge Prozentzahl, Gewicht, Auswahl
+
+Am 13. November 2026 auf Chance → Gewicht → Modus umgestellt und die gesamte Auswahlzelle rechts ausgerichtet. Dadurch stehen Aus/Immer/Zufall bündig direkt vor Von/Bis; bei ausgeblendeten Gewichten bleibt der freie Platz links. Die Browserprüfungen prüfen zusätzlich die identische rechte Position der Auswahl bei Moduswechsel. Edge und Firefox bestehen jeweils alle 41 Gewichtungs-/Layoutprüfungen und 72 Erweiterungsreiter-Prüfungen bei unverändertem Prüfumfang; Solver- und Gewichtstests bestehen ebenfalls.
