@@ -901,6 +901,11 @@
   .game-value-debt { color: #fff4dc; text-shadow: 0 1px 2px #382014; }
   .game-value-vp { color: #fff; text-shadow: 0 0 .15em #18131e, 0 1px #18131e; }
   footer { margin-top: 1.35rem; color: var(--muted); font-size: .85rem; }
+  .kingdom-total { margin-top: .25rem; font-size: .8rem; }
+  .kingdom-total img { height: 1.15em; width: auto; vertical-align: -.2em; }
+  .kingdom-total details { margin-top: .2rem; }
+  .kingdom-total summary { cursor: pointer; }
+  .kingdom-total p { margin: .3rem 0 0; max-width: 65ch; }
   a { color: var(--accent-text); }
 </style>
 </head>
@@ -1167,7 +1172,16 @@
     <p class="muted" id="profile-fallback" hidden data-en="Direct saving is unavailable in this browser. Copy and paste the XML entry manually.">In diesem Browser steht direktes Speichern nicht zur Verfügung. Du kannst den XML-Eintrag kopieren und selbst einfügen.</p>
     <p id="profile-status" role="status"></p>
   </section>
-  <footer data-en="Card data from Dominion build 3315">Kartendaten aus Dominion-Build 3315</footer>
+  <footer>
+    <span data-en="Card data from Dominion build 3315">Kartendaten aus Dominion-Build 3315</span>
+    <div id="kingdom-total" class="kingdom-total" hidden>
+      <span data-en="A total of ">Insgesamt wurden bereits </span><span id="kingdom-total-badge"></span><span data-en=" Kingdoms were already generated."> Königreiche generiert.</span>
+      <details>
+        <summary data-en="About the counter">Zum Zähler</summary>
+        <p data-en="Visitor Badge counts clicks on Draw Kingdom, including repeated clicks, starting when this counter was added. Loading the number and counting a click connects your browser to visitor-badge.one9x.com, which receives your IP address and browser information. We do not enable its unique-visitor mode. The count is approximate and may be unavailable.">Visitor Badge zählt seit Einbau dieses Zählers Klicks auf Königreich ziehen, auch wiederholte Klicks. Zum Laden der Zahl und Zählen eines Klicks verbindet sich dein Browser mit visitor-badge.one9x.com. Der Dienst erhält dabei deine IP-Adresse und Browserinformationen. Sein Modus zur Wiedererkennung unterschiedlicher Besucher ist nicht aktiviert. Die Zahl ist ungefähr und kann zeitweise fehlen.</p>
+      </details>
+    </div>
+  </footer>
 </main>
 <aside id="expansion-info" class="expansion-info" aria-labelledby="expansion-info-title" hidden>
   <strong id="expansion-info-title"></strong>
@@ -4631,7 +4645,58 @@ includeRelated.addEventListener("input", () => {
   setKingdomSize(kingdomSize, true);
   refreshPoolSearch();
 });
+// The service does not allow cross-origin JSON reads; display its read-only SVG.
+function setupKingdomCounter() {
+  if (location.protocol !== "https:" || location.hostname !== "serpens66.github.io" ||
+      !["/Dominion/", "/Dominion/index.html"].includes(location.pathname)) return;
+
+  const total = document.getElementById("kingdom-total");
+  const badgeSlot = document.getElementById("kingdom-total-badge");
+  const endpoint = "https://visitor-badge.one9x.com/";
+  const pageId = "serpens66.github.io.Dominion.draw-clicks";
+  let readSequence = 0;
+  let displayedBadge = null;
+
+  function renderCounterLabel() {
+    if (displayedBadge) displayedBadge.alt = tr("Anzahl der Ziehungen", "Number of draws");
+  }
+
+  function refreshCounter() {
+    const sequence = ++readSequence;
+    const badge = new Image();
+    const url = new URL("badge", endpoint);
+    // Omit `unique` entirely: this server treats even `unique=false` as true.
+    url.search = new URLSearchParams({
+      page_id: pageId, read: "true", left_text: "", right_color: "#6b7280",
+      _: Date.now() + "-" + sequence,
+    }).toString();
+    badge.referrerPolicy = "no-referrer";
+    badge.onload = () => {
+      if (sequence !== readSequence) return;
+      displayedBadge = badge;
+      renderCounterLabel();
+      badgeSlot.replaceChildren(badge);
+      total.hidden = false;
+    };
+    badge.onerror = () => {}; // Keep the last successfully loaded number.
+    badge.src = url.href;
+  }
+
+  interfaceLabels.push(renderCounterLabel);
+  drawButton.addEventListener("click", () => {
+    const url = new URL("count", endpoint);
+    url.search = new URLSearchParams({ page_id: pageId }).toString();
+    // No retries: an unreadable response may still have incremented the count.
+    void fetch(url.href, {
+      mode: "no-cors", credentials: "omit", cache: "no-store",
+      referrerPolicy: "no-referrer", signal: AbortSignal.timeout(5000),
+    }).then(refreshCounter).catch(() => {});
+  });
+  refreshCounter();
+}
+
 drawButton.addEventListener("click", generate);
+setupKingdomCounter();
 setupNameConverter();
 for (const node of document.querySelectorAll("[data-en]")) {
   staticTranslations.push({ node, de: node.innerHTML, en: node.getAttribute("data-en") });

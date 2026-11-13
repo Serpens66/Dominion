@@ -30,6 +30,7 @@ jobs:
       - uses: actions/configure-pages@v5
       - run: node SetGenerator/test_generator_solver.js
       - run: node SetGenerator/test_name_converter.js
+      - run: node SetGenerator/test_kingdom_counter.js
       - run: python SetGenerator/test_generator_catalog.py
       - name: Prepare static HTML files
         run: |

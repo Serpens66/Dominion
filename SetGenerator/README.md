@@ -35,3 +35,11 @@ Die Umwandlung unterstützt einen bis zehn Hauptstapel und bis zu vier nachfolge
 ## Generator offline nutzen
 
 Speichere die HTML-Datei und öffne sie lokal im Browser. Für die Kartenvorschau mit Bildern gehört der Ordner `card-images` daneben. Auf der Website werden die Bilder beim Öffnen einer Vorschau automatisch geladen. [HTML-Datei](Dominion-Generator.html) · [Bilddateien](card-images) · [Bilder aktualisieren](../Documentation/README.md#kartenbilder-erstellen)
+
+## Klickzähler der Website
+
+Der kleine Zähler im Seitenfuß verwendet Visitor Badge ohne Konto und zählt seit seiner Einbindung Klicks auf **Königreich ziehen**, auch wiederholte Klicks und erfolglose Ziehversuche. Die Zahl ist öffentlich und ungefähr; es gibt keinen Tagesverlauf. Nur die veröffentlichte HTTPS-Seite unter `serpens66.github.io/Dominion/` beziehungsweise `Dominion/index.html` fragt den Dienst ab. Lokale Kopien bleiben davon ausgenommen.
+
+Beim Laden wird ein SVG-Zahlenbild mit `read=true` abgefragt. Jeder Klick sendet genau eine separate Zählanfrage; danach wird das Zahlenbild erneut gelesen. Die Zählanfrage lässt Cookies weg, das eingebettete Bild kann vorhandene Drittanbieter-Cookies mitsenden. Der Parameter `unique` wird vollständig weggelassen: Der geprüfte Dienst wertet selbst die Zeichenfolge `false` als wahr aus. Im einfachen Zählmodus setzt der geprüfte Anwendungscode keine Wiedererkennungs-Cookies. Das ist keine Zusage über zukünftige Änderungen oder die vorgeschaltete Hosting-Infrastruktur.
+
+Der Dienst erhält bei Anfragen IP-Adresse und Browserinformationen. Auf der Seite erklärt **Zum Zähler / About the counter** die Einbindung. Dieser technische Hinweis ersetzt keine Prüfung der datenschutzrechtlichen Grundlage und Informationspflichten. Blockierte Anfragen und Dienstausfälle dürfen die Ziehung nicht beeinträchtigen; bei Ladefehlern bleibt die letzte erfolgreich geladene Zahl erhalten oder die Zeile verborgen.
