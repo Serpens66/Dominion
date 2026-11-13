@@ -2,42 +2,34 @@
 
 ## English
 
-For **Dominion on Windows/Steam, game build 3315**. This version replaces v0.1.0.
+Customize your Kingdoms in **Dominion for Windows/Steam (game build 3315)** with an in-game editor for **89 campaign effects**.
 
-**New in v0.1.1:** Typhoon now has the same checkboxes as pile doubling: click a checkbox or press Space to select or deselect a pile. Clicking a card name only updates the preview; double-clicking the name adds it without removing an existing choice. The numbered list and checkmarks stay synchronized; deselecting removes the pile and selecting it again appends it at the end. The add button reads **Already selected** and is disabled for a selected pile. Checkboxes use white fill, a strong dark-brown outline and tick, and an opaque paper-colored outer edge. Single-target selection and expansion headings keep no checkboxes.
+- **Combine up to 32 effect entries:** double Supply piles, change starting conditions or add special rules. Effects can be repeated where supported; the editor shows their prerequisites and test status.
+- **Configure everything with F8:** search by name or effect ID, filter by effect type or trigger, choose suitable target cards and arrange effects in execution order.
+- **Browse cards comfortably:** grouped expansion lists, card previews, expansion rules and checkboxes for multiple targets. Reorder lists by dragging or with Alt+Up/Down; Delete removes a selected entry.
+- **Use Deutsch or English:** switch the editor language with **Language:**.
+- **Manage larger online ban lists:** use the game's existing collection to exclude more than five cards, up to 700 cards and landscapes combined.
+- **Keep private games private:** choosing Clear or applying effects preserves the selected private-game mode.
 
-- Customize local and pass-and-play Kingdoms with **89 selectable campaign effects**, combining up to **32 entries**.
-- Use **F8** to search and filter effects, read their prerequisites and test status, choose multiple card targets, and add intentional repeats. For example, double Village and Market together to start with 20 cards in each pile.
-- Switch the editor between **Deutsch / English** using **Language:**. Browse card previews and scrollable expansion rules.
-- Set more than five online bans using the game's existing collection, up to **700 cards and landscapes combined** in your online list.
-- Keep private games private when choosing **Clear**.
-- Double-click launcher, normal Steam installation and profile, automatic rotation of three profile backups. No Python, Visual Studio, separate game copy or test profile required.
+**Card access:** Target selection includes suitable cards from every expansion Dominion officially makes playable for your account, including temporary free access. Unavailable cards are hidden. All 89 effects are selectable; their expansion and mechanic notes explain what they need to have an effect. Imported and saved targets are checked as well.
 
-**Install:** Extract the entire ZIP, close Dominion and double-click **Dominion-mit-Mod-starten.cmd**. Wait for **Bereit**, then press **F8** in Kingdom selection. See README.md for a step-by-step example.
+**Installation:** Extract the entire ZIP, close Dominion and double-click **Dominion-mit-Mod-starten.cmd**. Wait for **Bereit**, then press **F8** in Kingdom selection. The launcher uses your normal Steam installation and profile and keeps up to three automatic profile backups. Python, Visual Studio and a separate game copy are not required. To play without the mod, close Dominion and launch it normally through Steam.
 
-**Limits:** Campaign effects currently work in local play and pass-and-play; the online editor cannot add server support. Automatic doubling of random piles is local-only. Some effects and repeat combinations remain untested. Larger ban lists have been tested in private games, but matchmaking and the full capacity remain open. The campaign-features popup can overflow; close it or hide it with **Don't show again**. DLC ownership is unchanged.
-
-To play without the mod, restart Dominion normally through Steam.
-
-**Card access:** Effect targets now follow the cards Dominion officially makes playable for your account, including temporary access. Unavailable cards are hidden; imported and saved effect targets are checked too. All 89 effects remain available, including Typhoon with Base-game cards. Existing invalid targets can be removed or replaced; a rejected list stays intact.
+**Limits:** Campaign effects work in local play and pass-and-play. F8 is also available in online Kingdom selection, but the server currently does not apply these effects. Automatic doubling of randomly drawn piles is local-only. Some effects and repeat combinations remain untested. Larger ban lists have been tested in private games; matchmaking and the full capacity remain unverified. The game's campaign-features popup can overflow with many effects; close it or choose **Don't show again**.
 
 ## Deutsch
 
-Für **Dominion unter Windows/Steam, Spielbuild 3315**. Diese Version ersetzt v0.1.0.
+Gestalte deine Königreiche in **Dominion für Windows/Steam (Spielbuild 3315)** mit einem direkt im Spiel erreichbaren Editor für **89 Kampagneneffekte**.
 
-**Neu in v0.1.1:** Taifun erhält dieselben Checkboxen wie die Stapelverdopplung: Klick auf das Kästchen oder Leertaste wählt einen Stapel an beziehungsweise ab. Ein Klick auf den Kartennamen ändert nur die Vorschau; ein Doppelklick fügt die Karte hinzu, ohne eine vorhandene Auswahl zu entfernen. Nummerierte Liste und Haken bleiben synchron; Abwählen entfernt den Stapel, erneutes Anwählen hängt ihn hinten an. Für bereits gewählte Stapel ist der Hinzufügen-Button mit **Bereits gewählt** beschriftet und deaktiviert. Die Kästchen erhalten weiße Füllung, kräftige dunkelbraune Kontur und Haken sowie einen deckenden papierfarbenen Außenrand. Einzelzielauswahl und Erweiterungsüberschriften bleiben ohne Checkboxen.
+- **Bis zu 32 Effekteinträge kombinieren:** Vorratsstapel verdoppeln, Startbedingungen verändern oder besondere Regeln verwenden. Effekte lassen sich wiederholen, soweit sie das unterstützen; der Editor zeigt Voraussetzungen und Teststand.
+- **Alles über F8 einstellen:** Nach Namen oder Effekt-ID suchen, nach Effektart oder Auslöser filtern, passende Zielkarten auswählen und die Ausführungsreihenfolge festlegen.
+- **Karten übersichtlich auswählen:** Nach Erweiterungen gruppierte Listen, Kartenvorschauen, Erweiterungsregeln und Checkboxen für mehrere Ziele. Listen per Ziehen oder Alt+Pfeil hoch/runter sortieren; Entf entfernt den ausgewählten Eintrag.
+- **Deutsch oder English verwenden:** Die Menüsprache lässt sich mit **Language:** umschalten.
+- **Größere Online-Bannlisten führen:** Über die vorhandene Sammlung mehr als fünf Karten ausschließen, bis zu 700 Karten und Querkarten zusammen.
+- **Private Spiele bleiben privat:** Leer und die Effektübernahme erhalten den gewählten Privatspiel-Modus.
 
-- Königreiche in **Lokal spielen und Weitergeben** mit **89 auswählbaren Kampagneneffekten** gestalten; bis zu **32 Einträge** kombinieren.
-- In **F8** Effekte suchen und filtern, Voraussetzungen und Teststand lesen, mehrere Zielkarten wählen und Effekte bewusst wiederholen. Beispielsweise Dorf und Markt gemeinsam auf jeweils 20 Karten verdoppeln.
-- Mit **Language:** zwischen **Deutsch / English** umschalten. Kartenvorschauen und scrollbare Erweiterungsregeln direkt ansehen.
-- Mehr als fünf Online-Banns über die vorhandene Sammlung setzen: bis zu **700 Karten und Querkarten zusammen** in der eigenen Online-Liste.
-- **Privates Spiel** bleibt beim Anklicken von **Leer** privat.
-- Doppelklick-Starter mit normaler Steam-Installation und normalem Profil sowie bis zu drei automatischen Profilsicherungen. Kein Python, Visual Studio, keine Spielkopie und kein Testprofil erforderlich.
+**Kartenfreigabe:** Die Zielauswahl umfasst passende Karten aus allen Erweiterungen, die Dominion für dein Konto offiziell zum Spielen freigibt, einschließlich zeitweiliger kostenloser Freigaben. Nicht verfügbare Karten sind ausgeblendet. Alle 89 Effekte sind wählbar; Hinweise zu Erweiterungen und Mechaniken erklären ihre Wirkungsvoraussetzungen. Eingefügte und gespeicherte Ziele werden ebenfalls geprüft.
 
-**Installation:** ZIP vollständig entpacken, Dominion schließen und **Dominion-mit-Mod-starten.cmd** doppelklicken. Auf **Bereit** warten und in der Königreich-Auswahl **F8** drücken. Ein konkretes Beispiel steht in README.md.
+**Installation:** ZIP vollständig entpacken, Dominion schließen und **Dominion-mit-Mod-starten.cmd** doppelklicken. Auf **Bereit** warten und in der Königreich-Auswahl **F8** drücken. Der Starter verwendet deine normale Steam-Installation und dein normales Profil und bewahrt bis zu drei automatische Profilsicherungen auf. Python, Visual Studio und eine separate Spielkopie sind nicht erforderlich. Für eine Partie ohne Mod Dominion schließen und normal über Steam starten.
 
-**Grenzen:** Kampagneneffekte funktionieren aktuell lokal und in Weitergeben; der Online-Editor ergänzt keine Serverunterstützung. Das automatische Verdoppeln zufälliger Stapel bleibt lokal. Einige Effekte und Wiederholungen sind noch ungetestet. Größere Bannlisten wurden privat geprüft, Matchmaking und volle Kapazität sind offen. Der Hinweis **Kampagnen-Features** kann überlaufen; schließen oder **Nicht wieder anzeigen** wählen. DLC-Besitz bleibt unverändert.
-
-Für eine Partie ohne Mod Dominion normal über Steam neu starten.
-
-**Kartenfreigabe:** Effektziele berücksichtigen jetzt die offizielle Spielfreigabe deines Kontos, einschließlich zeitweiliger Freigaben. Nicht verfügbare Karten sind ausgeblendet; eingefügte und gespeicherte Effektziele werden ebenfalls geprüft. Alle 89 Effekte bleiben wählbar, auch Taifun mit Basisspielkarten. Vorhandene unzulässige Ziele lassen sich entfernen oder ersetzen; eine abgelehnte Liste bleibt vollständig erhalten.
+**Grenzen:** Kampagneneffekte funktionieren in Lokal spielen und Weitergeben. F8 ist auch in der Online-Königreich-Auswahl verfügbar, der Server wendet diese Effekte derzeit jedoch nicht an. Die automatische Verdopplung zufällig gezogener Stapel ist auf lokale Partien beschränkt. Einige Effekte und Wiederholungen sind noch ungetestet. Größere Bannlisten wurden in privaten Spielen geprüft; Matchmaking und die volle Kapazität sind noch nicht bestätigt. Der Spielhinweis Kampagnen-Features kann bei vielen Effekten überlaufen; schließen oder **Nicht wieder anzeigen** wählen.
