@@ -225,74 +225,93 @@ async function exerciseLotteryWeights(browser) {
     const saved = collectSettings(), language = uiLanguage;
     const ids = ['intrigue', 'prosperity', 'seaside'];
     const modes = Object.fromEntries(expansions.map(id => [id, id === 'base' ? 'always' : ids.includes(id) ? 'random' : 'off']));
-    const total = () => [...expansionModes].filter(([,field]) => field.value === 'random')
-      .reduce((sum,[id]) => sum + expansionWeights.get(id), 0);
     const cancel = () => { clearTimeout(ruleCheckTimer); ruleCheckTimer = undefined; stopAnalysis(); };
     const input = (id, value) => {
       const field = expansionWeightInputs.get(id).field;
       field.value = String(value); field.dispatchEvent(new Event('input', {bubbles:true}));
       field.dispatchEvent(new Event('change', {bubbles:true})); cancel();
     };
+    const percent = id => {
+      const match = expansionWeightInputs.get(id).chance.textContent.match(/[0-9]+(?:[,.][0-9]+)?/);
+      return match ? Number(match[0].replace(',', '.')) : NaN;
+    };
     try {
       cancel();
       applyExpansionModes(modes, 1);
-      check(total() === 1000 && Math.max(...ids.map(id => expansionWeights.get(id))) - Math.min(...ids.map(id => expansionWeights.get(id))) <= 1, 'initial-equal-rounding');
+      check(expansions.every(id => expansionWeights.get(id) === 1), 'initial-default-one');
+      check(ids.every(id => percent(id) === 33.3), 'rounded-equal-chances');
       const first = expansionWeightInputs.get(ids[0]);
-      check(!first.wrapper.hidden && !first.field.disabled && first.field.min === '0' && first.field.max === '100' && first.field.step === '0.1', 'percentage-input');
-      check(expansionWeightInputs.get('base').wrapper.hidden && expansionWeightInputs.get('base').field.getBoundingClientRect().height === 0, 'always-weight-hidden');
+      check(!first.wrapper.hidden && !first.field.disabled && first.field.min === '0' && first.field.max === '1000' && first.field.step === '0.1', 'relative-input');
+      const base = expansionWeightInputs.get('base');
+      check(base.wrapper.hidden && base.field.getBoundingClientRect().height === 0 && base.chance.getBoundingClientRect().height === 0, 'always-weight-and-chance-hidden');
       check(first.field.getAttribute('aria-label')?.length > 0 || first.field.labels?.length > 0, 'accessible-label');
       preparedDraw = {result:{fixture:true}};
-      input(ids[0], 70);
+      input(ids[0], 5); input(ids[1], 3); input(ids[2], 2);
       check(preparedDraw === null, 'input-invalidates-draw');
-      check(expansionWeights.get(ids[0]) === 700 && total() === 1000 && ids.slice(1).every(id => Math.abs(expansionWeights.get(id) - 150) <= 1), 'edit-proportional');
-      input(ids[0], 70.1);
-      check(expansionWeights.get(ids[0]) === 701 && total() === 1000, 'tenth-percent');
-      input(ids[0], 100);
-      check(expansionWeights.get(ids[0]) === 1000 && ids.slice(1).every(id => expansionWeights.get(id) === 0), 'hundred-percent');
-      input(ids[0], 60);
-      check(expansionWeights.get(ids[0]) === 600 && ids.slice(1).every(id => expansionWeights.get(id) === 200), 'zero-remainder-equal');
-      input(ids[1], 0);
-      check(expansionWeights.get(ids[1]) === 0 && total() === 1000, 'zero-percent');
-      const weighted = collectSettings();
-      const serialized = JSON.stringify(weighted);
-      check(JSON.stringify(readSettings(serialized).expansionWeights) === JSON.stringify(weighted.expansionWeights), 'validate-export');
+      check(ids.every((id,i) => expansionWeights.get(id) === [5,3,2][i] && Number(expansionWeightInputs.get(id).field.value) === [5,3,2][i]), 'independent-five-three-two-inputs');
+      check(ids.every((id,i) => percent(id) === [50,30,20][i]), 'five-three-two-chances');
+      input(ids[0], 5.1);
+      check(expansionWeights.get(ids[0]) === 5.1 && expansionWeights.get(ids[1]) === 3 && expansionWeights.get(ids[2]) === 2, 'tenths-without-other-edits');
+      input(ids[0], 1000);
+      check(expansionWeights.get(ids[0]) === 1000 && expansionWeights.get(ids[1]) === 3 && expansionWeights.get(ids[2]) === 2, 'maximum-weight');
+      input(ids[0], 0);
+      check(expansionWeights.get(ids[0]) === 0 && percent(ids[0]) === 0 && percent(ids[1]) === 60 && percent(ids[2]) === 40, 'zero-weight');
+      setExpansionMode('adventures', 'random'); input('adventures', 17.5); setExpansionMode('adventures', 'off');
+      const weighted = collectSettings(), serialized = JSON.stringify(weighted);
+      check(weighted.expansionWeights === undefined && weighted.expansionRelativeWeights.adventures === 17.5 && Object.keys(weighted.expansionRelativeWeights).length === expansions.length, 'save-active-and-inactive');
+      check(JSON.stringify(readSettings(serialized).expansionRelativeWeights) === JSON.stringify(weighted.expansionRelativeWeights), 'validate-export');
       equalExpansionWeights.click(); cancel();
-      check(total() === 1000 && Math.max(...ids.map(id => expansionWeights.get(id))) - Math.min(...ids.map(id => expansionWeights.get(id))) <= 1, 'equal-button');
+      check(ids.every(id => expansionWeights.get(id) === 1 && percent(id) === 33.3) && expansionWeights.get('adventures') === 17.5, 'equal-active-only');
       applySettings(readSettings(serialized));
-      check(ids.every(id => expansionWeights.get(id) === weighted.expansionWeights[id]), 'settings-roundtrip');
-      const legacy = {...weighted}; delete legacy.expansionWeights;
-      applySettings(readSettings(JSON.stringify(legacy)));
-      check(total() === 1000 && Math.max(...ids.map(id => expansionWeights.get(id))) - Math.min(...ids.map(id => expansionWeights.get(id))) <= 1, 'legacy-equal-default');
-      const rejects = weights => {
-        try { readSettings(JSON.stringify({...weighted, expansionWeights:weights})); return false; } catch { return true; }
-      };
-      check(rejects({...weighted.expansionWeights, [ids[0]]:-1}), 'reject-negative');
-      check(rejects({...weighted.expansionWeights, [ids[0]]:1.5}), 'reject-fractional-units');
-      check(rejects({...weighted.expansionWeights, [ids[0]]:'700'}), 'reject-nonnumeric');
-      check(rejects({...weighted.expansionWeights, unknown_expansion:1}), 'reject-unknown-expansion');
-      check(rejects({...weighted.expansionWeights, [ids[0]]:0, [ids[1]]:0, [ids[2]]:0}), 'reject-wrong-sum');
-      applyExpansionModes(modes, 1); input(ids[0], 70);
-      const before = new Map(ids.map(id => [id, expansionWeights.get(id)]));
+      check(expansions.every(id => expansionWeights.get(id) === weighted.expansionRelativeWeights[id]), 'settings-roundtrip');
       setExpansionMode('adventures', 'random');
-      check(expansionWeights.get('adventures') === 250 && total() === 1000 && ids.every(id => Math.abs(expansionWeights.get(id) - before.get(id) * .75) <= 1), 'add-random-preserves-ratios');
+      check(expansionWeights.get('adventures') === 17.5 && Number(expansionWeightInputs.get('adventures').field.value) === 17.5, 'mode-restores-weight');
       setExpansionMode('adventures', 'off');
-      check(total() === 1000 && expansionWeightInputs.get('adventures').wrapper.hidden && ids.every(id => Math.abs(expansionWeights.get(id) - before.get(id)) <= 2), 'remove-random-preserves-ratios');
+      const legacy = {...weighted, expansionWeights:{intrigue:500,prosperity:300,seaside:200}};
+      delete legacy.expansionRelativeWeights;
+      applySettings(readSettings(JSON.stringify(legacy)));
+      check(ids.every((id,i) => expansionWeights.get(id) === [50,30,20][i] && percent(id) === [50,30,20][i]) && expansionWeights.get('adventures') === 1, 'legacy-percentage-migration');
+      delete legacy.expansionWeights;
+      applySettings(readSettings(JSON.stringify(legacy)));
+      check(expansions.every(id => expansionWeights.get(id) === 1) && ids.every(id => percent(id) === 33.3), 'legacy-no-weights-default');
+      const rejects = weights => {
+        try { readSettings(JSON.stringify({...weighted, expansionRelativeWeights:weights})); return false; } catch { return true; }
+      };
+      check(rejects({...weighted.expansionRelativeWeights, [ids[0]]:-1}), 'reject-negative');
+      check(rejects({...weighted.expansionRelativeWeights, [ids[0]]:1000.1}), 'reject-over-maximum');
+      check(rejects({...weighted.expansionRelativeWeights, [ids[0]]:1.25}), 'reject-extra-precision');
+      check(rejects({...weighted.expansionRelativeWeights, [ids[0]]:'5'}), 'reject-nonnumeric');
+      check(rejects({...weighted.expansionRelativeWeights, unknown_expansion:1}), 'reject-unknown-expansion');
+      const partial = {...weighted, expansionRelativeWeights:{intrigue:5}};
+      applySettings(readSettings(JSON.stringify(partial)));
+      check(expansionWeights.get('intrigue') === 5 && expansions.filter(id => id !== 'intrigue').every(id => expansionWeights.get(id) === 1), 'partial-table-defaults');
+      applyExpansionModes(modes, 1); input(ids[0], 5); input(ids[1], 3); input(ids[2], 2);
+      const before = new Map(expansionWeights);
+      setExpansionMode('adventures', 'random');
+      check(expansionWeights.get('adventures') === 1 && ids.every(id => expansionWeights.get(id) === before.get(id)), 'add-no-renormalization');
+      setExpansionMode('adventures', 'off');
+      check(expansionWeightInputs.get('adventures').wrapper.hidden && ids.every(id => expansionWeights.get(id) === before.get(id)), 'remove-no-renormalization');
       setExpansionMode(ids[1], 'off'); setExpansionMode(ids[2], 'off');
-      check(expansionWeights.get(ids[0]) === 1000 && first.field.disabled, 'single-fixed-hundred');
+      check(expansionWeights.get(ids[0]) === 5 && !first.field.disabled && percent(ids[0]) === 100, 'single-editable-with-full-chance');
+      input(ids[0], 7);
+      check(expansionWeights.get(ids[0]) === 7 && percent(ids[0]) === 100, 'single-keeps-raw-weight');
       setExpansionMode(ids[1], 'random');
-      check(total() === 1000 && expansionWeights.get(ids[0]) === 500 && expansionWeights.get(ids[1]) === 500, 'readd-equal-start');
-      input(ids[0], 60);
+      check(expansionWeights.get(ids[0]) === 7 && expansionWeights.get(ids[1]) === 3 && percent(ids[0]) === 70 && percent(ids[1]) === 30, 'readd-keeps-weight');
       enableRandomExpansions.click(); cancel();
       const randomIds = expansions.filter(id => expansionModes.get(id).value === 'random');
-      check(total() === 1000 && randomIds.length === expansions.length - 1 && Math.abs(expansionWeights.get(ids[0]) / expansionWeights.get(ids[1]) - 1.5) < .05, 'bulk-enable-preserves-ratios');
-      applyExpansionModes(modes, 3); input(ids[0], 100);
+      check(randomIds.length === expansions.length - 1 && ids.every(id => expansionWeights.get(id) === (id === ids[0] ? 7 : before.get(id))) && expansions.filter(id => !ids.includes(id)).every(id => expansionWeights.get(id) === 1), 'bulk-keeps-inputs');
+      applyExpansionModes(modes, 3); input(ids[0], 1); input(ids[1], 0); input(ids[2], 0);
       let insufficient = '';
       try { readDrawRequest(); } catch (error) { insufficient = error.message; }
       check(/positiv|positive|Gewicht|weight|über 0|above 0/.test(insufficient), 'too-few-positive-error');
+      applyExpansionModes(modes, 1); ids.forEach(id => input(id, 0));
+      let allZero = '';
+      try { readDrawRequest(); } catch (error) { allZero = error.message; }
+      check(/positiv|positive|Gewicht|weight|über 0|above 0/.test(allZero), 'all-zero-error');
       for (const lang of ['en', 'de']) {
         setInterfaceLanguage(lang);
         const label = first.field.getAttribute('aria-label') ?? first.field.labels?.[0]?.textContent ?? '';
-        check(label.length > 0 && equalExpansionWeights.textContent.includes(lang === 'en' ? 'Equal' : 'gleich'), 'translated-controls-' + lang);
+        check(label.includes(lang === 'en' ? 'weight' : 'gewicht') && equalExpansionWeights.textContent.includes(lang === 'en' ? 'Equal' : 'gleich'), 'translated-controls-' + lang);
       }
     } finally {
       cancel(); applySettings(saved); setInterfaceLanguage(language); saveSettings(); updatePoolGroups();
@@ -303,7 +322,7 @@ async function exerciseLotteryWeights(browser) {
     window.__weightLayoutSettings = collectSettings();
     const panel = document.getElementById('expansion-settings'); window.__weightLayoutOpen = panel.open; panel.open = true;
     const ids = ['intrigue','prosperity','seaside'];
-    applyExpansionModes(Object.fromEntries(expansions.map(id => [id,id === 'base' ? 'always' : ids.includes(id) ? 'random' : 'off'])), 1);
+    applyExpansionModes(Object.fromEntries(expansions.map(id => [id,id === 'base' ? 'always' : ids.includes(id) ? 'random' : 'off'])), 1, {intrigue:5,prosperity:3,seaside:2});
     window.__weightLayoutLanguage = uiLanguage; setInterfaceLanguage('en');
   })()`);
   result.screenshots = [];
@@ -314,15 +333,19 @@ async function exerciseLotteryWeights(browser) {
         const field = expansionWeightInputs.get('intrigue').field; field.scrollIntoView({block:'center'});
         const fields = ['intrigue','prosperity','seaside'].map(id => {
           const entry = expansionWeightInputs.get(id), rect = entry.field.getBoundingClientRect();
+          const chance = entry.chance.getBoundingClientRect(), selection = entry.field.closest('.expansion-selection');
+          const cell = selection.getBoundingClientRect();
           const style = getComputedStyle(entry.field), canvas = document.createElement('canvas');
           const context = canvas.getContext('2d'); context.font = style.font;
           const textWidth = context.measureText(entry.field.value.replace('.', ',')).width + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 2;
-          return {visible:!entry.wrapper.hidden && rect.height > 0,width:rect.width,left:rect.left,right:rect.right,textWidth};
+          return {visible:!entry.wrapper.hidden && rect.height > 0 && chance.height > 0,width:rect.width,left:rect.left,right:rect.right,textWidth,
+            below:chance.top >= rect.bottom - 1,within:chance.left >= cell.left - 1 && chance.right <= cell.right + 1,
+            oneInput:selection.querySelectorAll('input').length === 1};
         });
         return JSON.stringify({viewport:innerWidth,scroll:document.documentElement.scrollWidth,fields});
       })()`));
       result.checks++;
-      if (geometry.scroll > geometry.viewport + 1 || geometry.fields.some(field => !field.visible || field.width < Math.max(25, field.textWidth) || field.left < -1 || field.right > geometry.viewport + 1)) {
+      if (geometry.scroll > geometry.viewport + 1 || geometry.fields.some(field => !field.visible || !field.below || !field.within || !field.oneInput || field.width < Math.max(25, field.textWidth) || field.left < -1 || field.right > geometry.viewport + 1)) {
         result.failures.push({kind:'lottery-weight-layout',width,...geometry});
       }
       const screenshot = path.join(os.tmpdir(), 'dominion-weights-' + browser.version.split(/[ /]/)[0] + '-' + width + '.png');

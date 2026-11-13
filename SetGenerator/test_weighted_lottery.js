@@ -14,6 +14,10 @@ const pairs = probabilities(["a", "b", "c"], 2, {a:500,b:250,c:250});
 assert.deepEqual(Array.from(pairs, entry => entry.ids.join()), ["a,b", "a,c", "b,c"]);
 pairs.forEach((entry, i) => near(entry.probability, [5/12,5/12,1/6][i]));
 near(pairs.reduce((sum, entry) => sum + entry.probability, 0), 1);
+// Raw relative and decimal weights preserve the same sampling distribution.
+for (const weights of [{a:5,b:2.5,c:2.5}, {a:.2,b:.1,c:.1}]) {
+  probabilities(["a", "b", "c"], 2, weights).forEach((entry, i) => near(entry.probability, pairs[i].probability));
+}
 const diverse = probabilities(["a", "b", "c", "d"], 3, {a:1,b:3,c:11,d:29});
 near(diverse.reduce((sum, entry) => sum + entry.probability, 0), 1);
 const equal = probabilities(["a", "b", "c", "d"], 2);
