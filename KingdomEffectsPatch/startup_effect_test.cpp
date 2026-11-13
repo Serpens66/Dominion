@@ -53,6 +53,7 @@ int wmain(int argc,wchar_t** argv) {
    write_profile(folder,probe,1,setup?"setupData":"kingdomData");
    Child child(exe,name);const auto base=child.image_base();redirect_save_folder(child,base,folder);child.resume();
    const auto client=wait_for_client(child,base,folder);if(patched) require(load_patch(child,dll)==0,"Patch initialization failed.");
+   require(load_patch(child,dll,42)==0,"Native collection grant preparation failed.");
    start_local_game(child,base,client,folder);
    std::vector<DWORD> ids; for(unsigned i=0;i<32;++i) {const auto id=child.read(base+game_state+0x1280+i*0x14);if(!id) break;ids.push_back(id);}
    const bool ok=ids==test.ids; if(!ok) ++failed;

@@ -4,7 +4,7 @@
 
 ## English
 
-**Test package, not yet released.** v0.1.1 remains a GitHub draft until visual acceptance. The published v0.1.0 download stays unchanged. The Typhoon picker is being revised to offer visible checkboxes as well as its numbered list. The revised behavior still needs testing and visual acceptance.
+**Test package, not yet released.** v0.1.1 remains a GitHub draft until visual acceptance. The published v0.1.0 download stays unchanged. The Typhoon picker is being revised to offer visible checkboxes as well as its numbered list. Automated checks pass; visual acceptance is still pending.
 
 An unofficial mod for **Dominion on Windows/Steam, game build 3315**. Choose from 89 campaign effects, combine up to 32 entries, and customize your Kingdom in a bilingual F8 editor. A separately installed copy of Dominion is required; this mod does not unlock DLC.
 
@@ -50,6 +50,8 @@ Some effects and combinations are still untested. The game's campaign-features p
 To play without the mod, close the game and start it normally through Steam. To remove it, delete the extracted mod folder. Saved sets and bans remain in your profile. Game files are not modified; the download contains no game artwork.
 
 [Effect guide and test status](https://github.com/Serpens66/Dominion/blob/main/Documentation/Steam_Spielanleitung.md) · [Known limitations](https://github.com/Serpens66/Dominion/blob/main/Documentation/Known_Issues.md) · [Technical documentation](https://github.com/Serpens66/Dominion/blob/main/Documentation/README.md)
+
+Only cards currently authorized by Dominion for your account are offered as effect targets, including official temporary access. Unavailable cards and empty expansion groups are hidden. All 89 effects remain selectable: Typhoon works with Base-game targets even without the expansion referenced by the effect. Existing invalid targets remain visible so you can remove or replace them; importing, applying or starting a set with unavailable targets is rejected without silently shortening the list. If authorization is not ready, reopen the normal Collection/Kingdom selection and retry. The mod reads the game's published access cache and does not initialize or change your licenses.
 
 ## Deutsch
 
@@ -99,3 +101,9 @@ Einige Effekte und Kombinationen sind noch ungetestet. Der Hinweis **Kampagnen-F
 Für eine Partie ohne Mod Dominion schließen und normal über Steam starten. Zum Entfernen den entpackten Modordner löschen. Gespeicherte Sets und Banns bleiben im Profil. Die Spieldateien werden nicht verändert; der Download enthält keine Spielgrafiken.
 
 [Spielanleitung und Teststand](https://github.com/Serpens66/Dominion/blob/main/Documentation/Steam_Spielanleitung.md) · [Bekannte Grenzen](https://github.com/Serpens66/Dominion/blob/main/Documentation/Known_Issues.md) · [Technische Dokumentation](https://github.com/Serpens66/Dominion/blob/main/Documentation/README.md)
+
+### Freigegebene Zielkarten
+
+Als Effektziele stehen nur Karten zur Auswahl, die Dominion für dein Konto aktuell offiziell zum Spielen freigibt, einschließlich zeitweiliger kostenloser Freigaben. Andere Karten und leere Erweiterungsgruppen sind ausgeblendet. Die für Zufallsauswahl aktivierten Erweiterungen schränken diese Zielauswahl nicht zusätzlich ein.
+
+Alle 89 Effekte bleiben wählbar. Taifun mit Basisspielkarten benötigt keinen Kauf der beim Effekt genannten Erweiterung. Bestehende unzulässige Ziele bleiben zum Entfernen oder Ersetzen sichtbar; Import, Übernahme und Start betroffener Sets werden mit verständlicher Meldung verhindert. Es werden keine Karten oder nachfolgenden Effekte still gelöscht. Bei noch unbekannter Freigabe die normale Sammlung/Königreich-Auswahl erneut öffnen und anschließend F8 erneut versuchen. Der Patch liest den offiziellen Freigabe-Cache; Freischaltungen werden nicht geändert.

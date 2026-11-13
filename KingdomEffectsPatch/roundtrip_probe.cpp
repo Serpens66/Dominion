@@ -35,6 +35,8 @@ const char* target(TargetKind kind, bool second=false) {
 #include "clear_probe.hpp"
 #include "editor_apply_probe.hpp"
 #include "translation_probe.hpp"
+#include "native_target_access_probe.hpp"
+#include "online_access_hook_test.hpp"
 
 DWORD run_roundtrip(void* argument) {
     const auto base=reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
@@ -63,6 +65,16 @@ DWORD run_roundtrip(void* argument) {
         if(std::memcmp(reinterpret_cast<void*>(base+caption.rva),caption.original,caption.length)!=0)return 601;
         return change_site(reinterpret_cast<std::byte*>(base),caption,true)?0:602;
     }
+    if(phase==42) {
+        // Fixture preparation: imitate the native collection/Kingdom UI,
+        // which publishes grants before the user can choose target cards.
+        using Get=int(__fastcall*)(const DWORD**,const DWORD**);
+        const DWORD *ids=nullptr,*sources=nullptr;
+        const auto count=reinterpret_cast<Get>(base+0xDAF40)(&ids,&sources);
+        return count>0 && count<=128?0:761;
+    }
+    if(phase==41) return run_online_access_hook_checks();
+    if(phase==40) return run_native_target_access_checks();
     if(phase>=20) return run_editor_apply_checks(phase);
     if(phase>=10) return run_clear_checks(phase);
     if (phase==1) return install_patch(reinterpret_cast<void*>(2));

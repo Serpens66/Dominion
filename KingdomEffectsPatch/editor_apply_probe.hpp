@@ -1,5 +1,6 @@
 // Runs the same production apply function used by F8, without opening a window.
 DWORD run_editor_apply_checks(std::uintptr_t request) {
+    struct FixtureAccess { FixtureAccess(){test_card_access=[](std::string_view){return kingdom::CardAccess::allowed;};} ~FixtureAccess(){test_card_access={};} } fixture_access;
     image_base=reinterpret_cast<std::byte*>(GetModuleHandleW(nullptr));
     const auto base=reinterpret_cast<std::uintptr_t>(image_base);
     native_save_profiles=base+0xD8AD0;

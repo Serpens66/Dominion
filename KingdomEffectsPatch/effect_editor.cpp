@@ -3,6 +3,7 @@
 #include <windows.h>
 
 #include "effect_editor.hpp"
+#include "target_access_runtime.hpp"
 #include "effect_editor_ids.h"
 #include "card_picker.hpp"
 #include "dialog_skin.hpp"
@@ -364,6 +365,7 @@ std::string effect_command(const EffectDefinition& effect, const CardTargets& ta
 }
 
 std::wstring add_commands(HWND dialog, Draft& draft, const EffectCommands& commands, bool skip_existing) {
+    if (const auto failure = check_target_access(commands)) return target_access_message(failure);
     const auto previous = draft.effects.size();
     const auto result = append_editor_effects(draft.effects, commands, skip_existing);
     if (const auto* known = known_failure_message(result.error)) return ui::tr(known);
@@ -390,12 +392,22 @@ void choose_targets(HWND dialog, Draft& draft, bool second) {
                       multiplier(effect) ? CardSelection::multiple : CardSelection::single;
     const auto mask = kind_mask(kind == TargetKind::pile_list ? TargetKind::kingdom_pile : kind);
     CardTargets cards, current;
+    bool unknown_access=false;
     for (const auto& card : target_catalog) {
-        if (card.kinds & mask) cards.push_back(&card);
+        if (!(card.kinds & mask)) continue;
+        const auto access=target_card_access(card.id);
+        if (access==CardAccess::allowed) cards.push_back(&card);
+        else if (access==CardAccess::unknown) unknown_access=true;
     }
     if (mode == CardSelection::multiple) {
         for (const auto* card : draft.fixed)
-            if (card->kinds & mask) current.push_back(card);
+            if ((card->kinds & mask) && target_card_access(card->id) == CardAccess::allowed) current.push_back(card);
+    }
+    if (cards.empty()) {
+        const auto message=unknown_access ? target_access_message({CardAccess::unknown,effect.id,"",false}) :
+            std::wstring(ui::pick(L"Für diese Zielart sind derzeit keine Karten für dein Konto zum Spielen freigegeben.", L"No cards of this target type are currently available to play on your account."));
+        SetDlgItemTextW(dialog,IDC_STATUS,message.c_str());
+        return;
     }
     const auto title = std::wstring(effect_title(effect)) + L" · " + target_label(kind);
     pick_cards(dialog, title.c_str(), cards, current, mode, [&](const CardTargets& targets, bool repeat) {
@@ -556,6 +568,19 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
     }
 }
 
+}
+
+std::wstring target_access_message(const TargetAccessFailure& failure) {
+    std::wstring effect(failure.effect_id.begin(), failure.effect_id.end());
+    for (const auto& definition : effect_catalog) if (failure.effect_id == definition.id) { effect = effect_title(definition) + std::wstring(L" (") + effect + L")"; break; }
+    const auto canonical = canonical_access_id(failure.target_id);
+    std::wstring card(failure.target_id.begin(), failure.target_id.end()), expansion;
+    for (const auto& target : target_catalog) if (canonical == target.id) { card = card_title(target); expansion = card_expansion(target); break; }
+    const auto prefix = ui::pick(L"Effekt ", L"Effect ") + effect + (card.empty() ? L"" : L" · " + card) + L": ";
+    if (failure.state == CardAccess::denied)
+        return prefix + ui::pick(L"Diese Zielkarte ist für dein Konto derzeit nicht zum Spielen freigegeben", L"This target card is not currently available to play on your account") +
+            (expansion.empty() ? L"" : L" (" + expansion + L")") + ui::pick(L". Entferne oder ersetze sie. Die bisherige Auswahl bleibt erhalten.", L". Remove or replace it. Your previous selection is preserved.");
+    return prefix + ui::pick(L"Die Spielfreigabe dieser Zielkarte konnte nicht zuverlässig geprüft werden. Öffne die normale Sammlung oder Königreich-Auswahl erneut und versuche es dann noch einmal. Die bisherige Auswahl bleibt erhalten.", L"Play access for this target card could not be verified. Reopen the normal Collection or Kingdom selection and try again. Your previous selection is preserved.");
 }
 
 bool edit_effects(void* owner, std::string_view kingdom_text, const EffectCommands& effects, bool& automatic,

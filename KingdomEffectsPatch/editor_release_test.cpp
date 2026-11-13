@@ -19,6 +19,8 @@ kingdom::CardTargets expected_ordered_commit;
 bool missing_art=false;
 bool online_checked = false;
 bool online_cancel = false;
+unsigned access_editors_checked=0, access_pickers_checked=0;
+kingdom::CardSelection access_expected_mode=kingdom::CardSelection::single;
 UINT_PTR timer = 0;
 void check(bool condition, const char* message) { if (!condition) throw std::runtime_error(message); }
 
@@ -223,6 +225,90 @@ BOOL CALLBACK inspect_online(HWND dialog, LPARAM) {
     return FALSE;
 }
 void CALLBACK inspect_online_dialog(HWND, UINT, UINT_PTR, DWORD) { EnumThreadWindows(GetCurrentThreadId(),inspect_online,0); }
+BOOL CALLBACK inspect_access_picker(HWND dialog,LPARAM) {
+    if (!GetDlgItem(dialog,IDC_CARD_TREE)) return TRUE;
+    KillTimer(nullptr,timer);
+    try {
+        auto& picker=*reinterpret_cast<kingdom::Picker*>(GetWindowLongPtrW(dialog,DWLP_USER));
+        const auto tree=GetDlgItem(dialog,IDC_CARD_TREE);
+        check(picker.mode==access_expected_mode,"Entitlement check opened the wrong target mode.");
+        check(!picker.cards.empty(),"Entitlement filter lost available Base cards.");
+        for(const auto* card:picker.cards)
+            check(std::string_view(card->expansion_id)=="base" && kingdom::target_card_access(card->id)==kingdom::CardAccess::allowed,"Unavailable card remains in target catalog.");
+        for(const auto* card:picker.current)
+            check(std::string_view(card->id)!="lighthouse" && kingdom::target_card_access(card->id)==kingdom::CardAccess::allowed,"Unavailable fixed Kingdom target remains selectable.");
+        if(picker.mode==kingdom::CardSelection::multiple) {
+            check(picker.current.size()==1 && std::string_view(picker.current.front()->id)=="village","Fixed Kingdom target filter is incomplete.");
+            SendDlgItemMessageW(dialog,IDC_CARD_SCOPE,CB_SETCURSEL,1,0);
+            SendMessageW(dialog,WM_COMMAND,MAKEWPARAM(IDC_CARD_SCOPE,CBN_SELCHANGE),0);
+        }
+        check(picker.visible.size()==picker.cards.size(),"Allowed catalog is not fully represented.");
+        unsigned groups=0;
+        for(auto group=TreeView_GetRoot(tree);group;group=TreeView_GetNextSibling(tree,group)) {
+            ++groups;
+            const auto found=picker.groups.find(group);
+            check(found!=picker.groups.end() && std::string_view(found->second->id)=="base","Empty or unavailable expansion group remains visible.");
+            check(TreeView_GetChild(tree,group)!=nullptr,"Empty expansion group remains visible.");
+        }
+        check(groups==1,"Expected only the available Base expansion group.");
+        SetDlgItemTextW(dialog,IDC_CARD_QUERY,L"lighthouse");
+        check(picker.visible.empty() && !TreeView_GetRoot(tree),"Denied Seaside card appears through search.");
+        SetDlgItemTextW(dialog,IDC_CARD_QUERY,L"city_quarter");
+        check(picker.visible.empty() && !TreeView_GetRoot(tree),"Unknown-access card appears through search.");
+        SetDlgItemTextW(dialog,IDC_CARD_QUERY,L"village");
+        check(picker.visible.size()==1 && std::string_view(picker.visible.front().second->id)=="village","Available Base card is not searchable.");
+        const auto item=picker.visible.front().first;
+        TreeView_SelectItem(tree,item);SetFocus(tree);
+        silent_control_test::guard.attach(tree);const auto beeps=silent_control_test::blocked.load();
+        SendMessageW(tree,WM_KEYDOWN,VK_SPACE,1);SendMessageW(tree,WM_CHAR,L' ',1);SendMessageW(tree,WM_KEYUP,VK_SPACE,0xC0000001);
+        check(silent_control_test::blocked.load()==beeps,"Filtered target Space requested a Windows alert.");
+        check(picker.selected.size()==1 && std::string_view(picker.selected.front()->id)=="village" && TreeView_GetCheckState(tree,item),"Allowed Base target cannot be selected.");
+        checkbox_checks::selection_invariants(dialog,picker);
+        ++access_pickers_checked;
+    }catch(const std::exception& error){failure=error.what();}
+    PostMessageW(dialog,WM_COMMAND,IDCANCEL,0);return FALSE;
+}
+void CALLBACK inspect_access_picker_dialog(HWND,UINT,UINT_PTR,DWORD){EnumThreadWindows(GetCurrentThreadId(),inspect_access_picker,0);}
+BOOL CALLBACK inspect_access_editor(HWND dialog,LPARAM) {
+    if (!GetDlgItem(dialog,IDC_CATALOG)) return TRUE;
+    KillTimer(nullptr,timer);
+    try {
+        const auto list=GetDlgItem(dialog,IDC_CATALOG);
+        auto& draft=*reinterpret_cast<kingdom::Draft*>(GetWindowLongPtrW(dialog,DWLP_USER));
+        check(SendMessageW(list,LB_GETCOUNT,0,0)==89,"Card entitlement removed effects from the catalog.");
+        const auto before=draft.effects;
+        check(before==kingdom::EffectCommands{"twist_typhoon(lighthouse,village)"},"Existing denied target was silently removed.");
+        check(SendDlgItemMessageW(dialog,IDC_ACTIVE,LB_GETCOUNT,0,0)==1,"Existing denied effect is absent from active list.");
+        for(const auto* id:{L"start_double_pile",L"twist_typhoon"}) {
+            SetDlgItemTextW(dialog,IDC_QUERY,id);
+            check(SendMessageW(list,LB_GETCOUNT,0,0)==1,"Available effect cannot be found by ID.");
+            SendMessageW(list,LB_SETCURSEL,0,0);
+            SendMessageW(dialog,WM_COMMAND,MAKEWPARAM(IDC_CATALOG,LBN_SELCHANGE),0);
+            check(draft.selected && IsWindowEnabled(GetDlgItem(dialog,IDC_TARGET)),"Effect target picker is blocked by effect expansion metadata.");
+            access_expected_mode=std::wstring_view(id)==L"twist_typhoon"?kingdom::CardSelection::ordered:kingdom::CardSelection::multiple;
+            const auto checked_before=access_pickers_checked;
+            timer=SetTimer(nullptr,0,100,inspect_access_picker_dialog);
+            kingdom::choose_targets(dialog,draft,false);
+            KillTimer(nullptr,timer);
+            check(failure.empty() && access_pickers_checked==checked_before+1,"Filtered target picker check did not complete.");
+            check(draft.effects==before,"Cancel changed an existing denied effect.");
+        }
+        const auto provider=kingdom::editor_card_access;
+        for (const auto state:{kingdom::CardAccess::denied,kingdom::CardAccess::unknown}) {
+            kingdom::editor_card_access=[state](std::string_view){return state;};
+            kingdom::choose_targets(dialog,draft,false);
+            wchar_t status[2048]{};GetDlgItemTextW(dialog,IDC_STATUS,status,2048);
+            check(*status,"Empty target catalog has no explanation.");
+            if(state==kingdom::CardAccess::denied) check(std::wstring(status).find(kingdom::ui::pick(L"keine Karten",L"No cards"))!=std::wstring::npos,"Denied targets were described as an unknown authorization source.");
+            else check(std::wstring(status).find(kingdom::ui::pick(L"zuverlässig",L"verified"))!=std::wstring::npos,"Missing authorization has no retry explanation.");
+            check(draft.effects==before,"Empty target catalog changed existing draft.");
+        }
+        kingdom::editor_card_access=provider;
+        ++access_editors_checked;
+    }catch(const std::exception& error){if(failure.empty())failure=error.what();}
+    PostMessageW(dialog,WM_COMMAND,IDCANCEL,0);return FALSE;
+}
+void CALLBACK inspect_access_editor_dialog(HWND,UINT,UINT_PTR,DWORD){EnumThreadWindows(GetCurrentThreadId(),inspect_access_editor,0);}
 BOOL CALLBACK inspect_picker(HWND dialog, LPARAM) {
     if (!GetDlgItem(dialog, IDC_CARD_TREE)) return TRUE;
     if (!IsWindowVisible(dialog)) return FALSE;
@@ -341,6 +427,7 @@ void CALLBACK inspect_card_dialog(HWND, UINT, UINT_PTR, DWORD) { EnumThreadWindo
 }
 
 int main() {
+    kingdom::editor_card_access=[](std::string_view){return kingdom::CardAccess::allowed;};
     wchar_t package[32768]{};
     if (GetEnvironmentVariableW(L"DOMINION_RESOURCE_TEST_PACKAGE",package,32768)) {
         if (!kingdom::set_resource_package_for_test(package)) return 1;
@@ -374,6 +461,25 @@ int main() {
     online_cancel=true; online_checked=false; timer=SetTimer(nullptr,0,150,inspect_online_dialog);
     check(!kingdom::edit_effects(nullptr,"-k village, market",{},local_automatic,
         [&](const kingdom::EffectCommands&) { applied=true; return true; },kingdom::EditorContext::online) && online_checked && !applied && local_automatic, "Online cancel changed the saved selection.");
+    const auto previous_access=kingdom::editor_card_access;
+    kingdom::editor_card_access=[](std::string_view id) {
+        for(const auto& card:kingdom::target_catalog)if(id==card.id) {
+            if(std::string_view(card.expansion_id)=="base")return kingdom::CardAccess::allowed;
+            if(std::string_view(card.expansion_id)=="seaside")return kingdom::CardAccess::denied;
+        }
+        return kingdom::CardAccess::unknown;
+    };
+    for(const auto language:{kingdom::ui::Language::de,kingdom::ui::Language::en})
+        for(const auto context:{kingdom::EditorContext::local,kingdom::EditorContext::online}) {
+            if(!failure.empty())break;
+            kingdom::ui::selected=language;timer=SetTimer(nullptr,0,100,inspect_access_editor_dialog);
+            bool committed=false;bool auto_option=false;
+            check(!kingdom::edit_effects(nullptr,"-k village, lighthouse",{"twist_typhoon(lighthouse,village)"},auto_option,
+                [&](const kingdom::EffectCommands&){committed=true;return true;},context) && !committed,"Filtered editor Cancel committed changes.");
+            KillTimer(nullptr,timer);
+        }
+    kingdom::editor_card_access=previous_access;kingdom::ui::selected=kingdom::ui::Language::de;
+    if(failure.empty())check(access_editors_checked==4 && access_pickers_checked==8,"Filtered local/online bilingual checks did not all run.");
     if (*package) {
         kingdom::CardTargets cards;
         for (const auto& card:kingdom::target_catalog) cards.push_back(&card);

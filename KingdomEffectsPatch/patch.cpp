@@ -5,6 +5,8 @@
 
 #include "effects.hpp"
 #include "effect_editor.hpp"
+#include "target_access_runtime.hpp"
+#include "native_card_access.hpp"
 #include "ui_language.hpp"
 #include "effect_text_fix.hpp"
 #include "ban_hint_fix.hpp"
@@ -68,6 +70,7 @@ void __cdecl end_local_normalize() { --local_normalize_depth; }
 bool __cdecl keep_explicit_local_effects() { return local_normalize_depth!=0; }
 void log_commands(const char*, const kingdom::EffectCommands&);
 void trace_local_prepared(const std::byte*);
+bool validate_config_targets(const std::byte*);
 bool validate_native_import(const char*);
 
 void log(const char* event, const kingdom::Effects* list = nullptr) {
@@ -91,6 +94,38 @@ void log(const char* event, const kingdom::Effects* list = nullptr) {
     DWORD written;
     WriteFile(file, line, static_cast<DWORD>(used), &written, nullptr);
     CloseHandle(file);
+}
+
+#ifdef KINGDOM_EFFECT_TEXT_TEST
+// Only test fixtures can substitute a changing authorization source.
+kingdom::CardAccessQuery test_card_access;
+bool test_suppress_access_messages=false;
+#endif
+void refresh_target_access() {
+#ifdef KINGDOM_EFFECT_TEXT_TEST
+    if (test_card_access) { kingdom::editor_card_access=test_card_access; return; }
+#endif
+    const auto snapshot=kingdom::NativeCardAccess::capture(image_base);
+    kingdom::editor_card_access=[snapshot](std::string_view id) {
+        const auto* card=kingdom::access_native_card(id);
+        return card?snapshot.query_native(card->native_id):kingdom::CardAccess::unknown;
+    };
+}
+std::wstring target_access_error(const kingdom::EffectCommands& commands) {
+    refresh_target_access();
+    const auto failure=kingdom::check_target_access(commands);
+    if (!failure) return {};
+    log_commands(failure.state==kingdom::CardAccess::denied?"target access denied":"target access unknown",{failure.effect_id+"("+failure.target_id+")"});
+    return kingdom::target_access_message(failure);
+}
+bool allow_target_commands(const kingdom::EffectCommands& commands) {
+    const auto error=target_access_error(commands);
+    if (error.empty()) return true;
+#ifdef KINGDOM_EFFECT_TEXT_TEST
+    if (test_suppress_access_messages) return false;
+#endif
+    MessageBoxW(GetActiveWindow(),error.c_str(),kingdom::ui::pick(L"Dominion – Königreich-Effekte",L"Dominion – Kingdom effects"),MB_OK);
+    return false;
 }
 
 void reject(kingdom::Error error) {
@@ -265,6 +300,7 @@ bool __cdecl allow_local_start() {
             return false;
         }
     }
+    if (!validate_config_targets(config)) return false;
     trace_local_prepared(config);
     return true;
 }
@@ -403,6 +439,18 @@ kingdom::Setup resolve_config(const std::byte* config) {
     return result;
 }
 
+bool validate_config_targets(const std::byte* config) {
+    // The resolver may detach a preset. Resolve borrowed fields in a copy so
+    // a rejected preflight cannot change the real configuration.
+    std::array<std::byte,0x38> candidate{};
+    std::memcpy(candidate.data(),config,candidate.size());
+    const auto setup=resolve_config(candidate.data());
+    const NativeSetupText text(setup,*reinterpret_cast<const DWORD*>(config+0x28));
+    kingdom::EffectCommands commands;
+    if (!kingdom::read_effect_commands(text.view(),commands)) return false;
+    return allow_target_commands(commands);
+}
+
 void trace_local_prepared(const std::byte* config) {
     log_config_snapshot("local start configuration",config);
     const auto setup=resolve_config(config);
@@ -458,7 +506,7 @@ bool validate_native_import(const char* text) {
     kingdom::Setup parsed{}; reinterpret_cast<Parse>(native_parser)(text,&parsed);
     const auto effects=kingdom::read_effects(parsed.data()); log("import parsed",&effects);
     std::size_t mismatch=0;
-    if(parsed_effects_match(parsed,commands,&mismatch)) return true;
+    if(parsed_effects_match(parsed,commands,&mismatch)) return measure_only || allow_target_commands(commands);
     const auto& command=commands[(std::min)(mismatch,commands.size()-1)];
     const std::wstring message=kingdom::ui::tr(L"Der Import wurde bei Effekt ")+std::to_wstring(mismatch+1)+L" ("+
         std::wstring(command.begin(),command.end())+kingdom::ui::tr(L") nicht vollständig eingelesen. Die bisherige Auswahl bleibt erhalten.");
@@ -473,6 +521,8 @@ bool apply_editor_effects(kingdom::Setup* current,std::byte* config,
                          std::wstring& apply_error) {
     const DWORD version=*reinterpret_cast<const DWORD*>(config+0x28);
     apply_error.clear();
+    apply_error=target_access_error(edited);
+    if (!apply_error.empty()) return false;
     if (edited == effects) return true;
     std::size_t mismatch=0;
     const auto fail=[&](const wchar_t* stage) {
@@ -570,6 +620,7 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
             !parsed_effects_match(*current, effects)) {
             throw kingdom::Error::malformed;
         }
+        refresh_target_access();
         bool automatic = automatic_enabled;
         std::wstring apply_error;
         const auto apply = [&](const kingdom::EffectCommands& edited) {
@@ -623,8 +674,12 @@ void log_online_text(const char* stage, const char* field, const char* data) {
     log(event);
 }
 
-void __cdecl trace_online_before_filter(const std::byte* config) {
+bool __cdecl trace_online_before_filter(const std::byte* config) {
+    if (!measure_only) {
+        if (!validate_config_targets(config)) return false;
+    }
     log_online_text("before filter", "kingdomData", *reinterpret_cast<const char* const*>(config + 0x30));
+    return true;
 }
 
 void __cdecl trace_online_send(const std::byte* message) {
@@ -923,9 +978,18 @@ __declspec(naked) void online_filter_hook() {
         push ecx
         call trace_online_before_filter
         add esp, 4
+        test al, al
+        jz rejected
         popad
         popfd
         jmp dword ptr [native_online_filter]
+    rejected:
+        popad
+        popfd
+        // Discard our return address and two caller-owned argument/alignment
+        // words; rejoin the audited DomCreateClick failure epilogue.
+        add esp, 12
+        jmp dword ptr [create_cancel]
     }
 }
 
@@ -1056,7 +1120,7 @@ const Site sites[] = {
     {0x0B24BF, "\xC7\x87\x44\x50\x00\x00\x00\x00\x00\x00", 10, local_dispatch_hook, true, local_modes},
     {0x0B1EC6, "\xE8\xA5\x21\x17\x00", 5, local_load_hook, false, local_modes},
     {0x1E9F57, "\xE8\x14\xB4\xEF\xFF", 5, automatic_extras_hook, false, local_modes},
-    {0x1FFA03, "\xE8\xE8\xC4\xED\xFF", 5, online_filter_hook, false, online_mode},
+    {0x1FFA03, "\xE8\xE8\xC4\xED\xFF", 5, online_filter_hook, false, local_modes | online_mode},
     {0x1FFAF5, "\xE8\x26\xBC\x08\x00", 5, online_send_hook, false, online_mode},
     {0x0B7965, "\xE8\x86\xCF\xFF\xFF", 5, online_receive_hook, false, online_mode},
     {0x0B0DF3, "\xE8\x78\x32\x17\x00", 5, online_load_hook, false, online_mode},

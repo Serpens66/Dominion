@@ -278,6 +278,18 @@ def main(output, xpack):
     properties = json.loads((DOCS / "Card_Properties.json").read_text(encoding="utf-8"))
     aliases = {key: data["aliasFor"] for key, data in properties["cards"].items() if data and "aliasFor" in data}
     targets = read_targets(catalog, aliases)
+    access_rows = ["// Generated target arities and native identities; no purchase data.", "namespace kingdom::access_catalog {", "inline constexpr TargetAccessRule rules[]{"]
+    for command, _, _, _, _, first, second in read_effects():
+        count = 0 if first == "none" else (2 if second != "none" else 1)
+        access_rows.append("    {" + literal(command) + ", " + str(count) + ", " + str(20 if first == "pile_list" else count) + "},")
+    access_rows += ["};", "inline constexpr TargetAccessNativeCard cards[]{"]
+    for card in catalog["cards"]:
+        access_rows.append("    {" + literal(card["id"]) + ", " + str(card["nativeId"]) + "},")
+    access_rows += ["};", "inline constexpr std::pair<std::string_view, std::string_view> aliases[]{"]
+    for alias, canonical in aliases.items():
+        access_rows.append("    {" + literal(alias) + ", " + literal(canonical) + "},")
+    access_rows += ["};", "}"]
+    (output.parent / "target_access.generated.hpp").write_text("\n".join(access_rows) + "\n", encoding="utf-8")
     english_effects=read_english_effects()
     requirement_data=json.loads((DOCS/'Effect_Requirements.json').read_text(encoding='utf-8'))
     assert requirement_data['exeSha256']==catalog['nativeIds']['exeSha256']

@@ -69,6 +69,7 @@ BOOL CALLBACK benchmark(HWND dialog,LPARAM) {
 void CALLBACK poll(HWND,UINT,UINT_PTR,DWORD){EnumThreadWindows(GetCurrentThreadId(),benchmark,0);}
 }
 int wmain(int argc,wchar_t** argv) {
+    kingdom::editor_card_access=[](std::string_view){return kingdom::CardAccess::allowed;};
     if(argc!=2)return 2;
     report.open(argv[1],std::ios::binary);if(!report)return 3;
     report<<"language\tround\taction\tmilliseconds\n";

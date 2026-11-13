@@ -19,6 +19,8 @@ Test update for **Dominion on Windows/Steam, game build 3315**. This GitHub draf
 
 To play without the mod, restart Dominion normally through Steam.
 
+**Card access:** Effect targets now follow the cards Dominion officially makes playable for your account, including temporary access. Unavailable cards are hidden; imported and saved effect targets are checked too. All 89 effects remain available, including Typhoon with Base-game cards. Existing invalid targets can be removed or replaced; a rejected list stays intact.
+
 ## Deutsch
 
 Testupdate für **Dominion unter Windows/Steam, Spielbuild 3315**. Dieser GitHub-Entwurf darf vor der sichtbaren Abnahme nicht veröffentlicht werden; das öffentliche Release v0.1.0 bleibt unverändert.
@@ -37,3 +39,5 @@ Testupdate für **Dominion unter Windows/Steam, Spielbuild 3315**. Dieser GitHub
 **Grenzen:** Kampagneneffekte funktionieren aktuell lokal und in Weitergeben; der Online-Editor ergänzt keine Serverunterstützung. Das automatische Verdoppeln zufälliger Stapel bleibt lokal. Einige Effekte und Wiederholungen sind noch ungetestet. Größere Bannlisten wurden privat geprüft, Matchmaking und volle Kapazität sind offen. Der Hinweis **Kampagnen-Features** kann überlaufen; schließen oder **Nicht wieder anzeigen** wählen. DLC-Besitz bleibt unverändert.
 
 Für eine Partie ohne Mod Dominion normal über Steam neu starten.
+
+**Kartenfreigabe:** Effektziele berücksichtigen jetzt die offizielle Spielfreigabe deines Kontos, einschließlich zeitweiliger Freigaben. Nicht verfügbare Karten sind ausgeblendet; eingefügte und gespeicherte Effektziele werden ebenfalls geprüft. Alle 89 Effekte bleiben wählbar, auch Taifun mit Basisspielkarten. Vorhandene unzulässige Ziele lassen sich entfernen oder ersetzen; eine abgelehnte Liste bleibt vollständig erhalten.
