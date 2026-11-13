@@ -320,6 +320,7 @@ async function exerciseLotteryWeights(browser) {
   })()`));
   await browser.evaluate(`(() => {
     window.__weightLayoutSettings = collectSettings();
+    window.__weightLayoutFontSize = document.documentElement.style.fontSize;
     const panel = document.getElementById('expansion-settings'); window.__weightLayoutOpen = panel.open; panel.open = true;
     const ids = ['intrigue','prosperity','seaside'];
     applyExpansionModes(Object.fromEntries(expansions.map(id => [id,id === 'base' ? 'always' : ids.includes(id) ? 'random' : 'off'])), 1, {intrigue:5,prosperity:3,seaside:2});
@@ -327,32 +328,58 @@ async function exerciseLotteryWeights(browser) {
   })()`);
   result.screenshots = [];
   try {
-    for (const width of [390, 1920]) {
-      await browser.viewport(width); await delay(80);
+    const scenarios = [390, 900, 1920].flatMap(width => ['de','en'].map(language => ({width,language,zoom:100})));
+    scenarios.push({width:1920,language:'de',zoom:125});
+    for (const {width,language,zoom} of scenarios) {
+      await browser.viewport(width);
+      await browser.evaluate(`document.documentElement.style.fontSize='${zoom}%';setInterfaceLanguage('${language}');`);
+      await delay(80);
       const geometry = JSON.parse(await browser.evaluate(`(() => {
         const field = expansionWeightInputs.get('intrigue').field; field.scrollIntoView({block:'center'});
-        const fields = ['intrigue','prosperity','seaside'].map(id => {
+        const overlaps = (a,b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
+        const center = rect => rect.top + rect.height / 2;
+        const fields = ['intrigue','prosperity','seaside'].map((id,index) => {
+          const value = [1,25,23.9][index]; editExpansionWeight(id,value);
           const entry = expansionWeightInputs.get(id), rect = entry.field.getBoundingClientRect();
           const chance = entry.chance.getBoundingClientRect(), selection = entry.field.closest('.expansion-selection');
-          const cell = selection.getBoundingClientRect();
+          const cell = selection.getBoundingClientRect(), mode = expansionModes.get(id).getBoundingClientRect();
+          const name = selection.previousElementSibling, from = selection.nextElementSibling, to = from.nextElementSibling;
+          const nameBox = name.getBoundingClientRect(), fromBox = from.getBoundingClientRect(), toBox = to.getBoundingClientRect();
+          const edition = name.querySelector('.edition-option')?.getBoundingClientRect();
+          const table = selection.closest('.quota-table');
+          const title = name.querySelector('.range-rule-title') ?? name.querySelector('button');
+          const titleStyle = getComputedStyle(title), titleBox = title.getBoundingClientRect();
+          const titleLine = parseFloat(titleStyle.lineHeight) || parseFloat(titleStyle.fontSize) * 1.5;
           const style = getComputedStyle(entry.field), canvas = document.createElement('canvas');
           const context = canvas.getContext('2d'); context.font = style.font;
-          const textWidth = context.measureText(entry.field.value.replace('.', ',')).width + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 2;
-          return {visible:!entry.wrapper.hidden && rect.height > 0 && chance.height > 0,width:rect.width,left:rect.left,right:rect.right,textWidth,
-            below:chance.top >= rect.bottom - 1,within:chance.left >= cell.left - 1 && chance.right <= cell.right + 1,
-            oneInput:selection.querySelectorAll('input').length === 1};
+          const compactWidth = context.measureText('00').width + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 2;
+          setExpansionMode(id,'always');
+          const always = selection.getBoundingClientRect(), afterFrom = from.getBoundingClientRect(), afterTo = to.getBoundingClientRect();
+          setExpansionMode(id,'random');
+          return {visible:!entry.wrapper.hidden && rect.height > 0 && chance.height > 0,width:rect.width,compactWidth,
+            inline:Math.abs(center(mode)-center(rect)) <= 2 && Math.abs(center(rect)-center(chance)) <= 2,
+            ordered:mode.right <= rect.left + 1 && rect.right <= chance.left + 1 && chance.right <= fromBox.left + 1,
+            within:rect.left >= cell.left - 1 && chance.right <= cell.right + 1,
+            noOverlap:![nameBox,edition,fromBox,toBox].filter(Boolean).some(box => overlaps(box,cell)),
+            sameHeight:Math.abs(always.height-cell.height) <= 1,
+            stableBounds:Math.abs(afterFrom.left-fromBox.left) <= 1 && Math.abs(afterTo.left-toBox.left) <= 1,
+            readableName:titleBox.height <= titleLine * 2 + 1,
+            columns:getComputedStyle(table).gridTemplateColumns.split(' ').length,
+            oneInput:selection.querySelectorAll('input').length === 1,
+            tooltip:entry.field.title.replace(',', '.').includes(String(value)),
+            value:entry.field.value};
         });
         return JSON.stringify({viewport:innerWidth,scroll:document.documentElement.scrollWidth,fields});
       })()`));
       result.checks++;
-      if (geometry.scroll > geometry.viewport + 1 || geometry.fields.some(field => !field.visible || !field.below || !field.within || !field.oneInput || field.width < Math.max(25, field.textWidth) || field.left < -1 || field.right > geometry.viewport + 1)) {
-        result.failures.push({kind:'lottery-weight-layout',width,...geometry});
+      if (geometry.scroll > geometry.viewport + 1 || geometry.fields.some(field => !field.visible || !field.inline || !field.ordered || !field.within || !field.noOverlap || !field.sameHeight || !field.stableBounds || !field.oneInput || !field.tooltip || !field.readableName || ![3,4].includes(field.columns) || field.width < 18 || field.width > field.compactWidth + 12)) {
+        result.failures.push({kind:'lottery-weight-inline-layout',width,language,zoom,...geometry});
       }
-      const screenshot = path.join(os.tmpdir(), 'dominion-weights-' + browser.version.split(/[ /]/)[0] + '-' + width + '.png');
+      const screenshot = path.join(os.tmpdir(), 'dominion-weights-' + browser.version.split(/[ /]/)[0] + '-' + width + '-' + language + '-' + zoom + '.png');
       fs.writeFileSync(screenshot, Buffer.from(await browser.screenshot(), 'base64')); result.screenshots.push(screenshot);
     }
   } finally {
-    await browser.evaluate("applySettings(window.__weightLayoutSettings);setInterfaceLanguage(window.__weightLayoutLanguage);document.getElementById('expansion-settings').open=window.__weightLayoutOpen;updatePoolGroups();delete window.__weightLayoutSettings;delete window.__weightLayoutLanguage;delete window.__weightLayoutOpen;");
+    await browser.evaluate("document.documentElement.style.fontSize=window.__weightLayoutFontSize;applySettings(window.__weightLayoutSettings);setInterfaceLanguage(window.__weightLayoutLanguage);document.getElementById('expansion-settings').open=window.__weightLayoutOpen;updatePoolGroups();delete window.__weightLayoutSettings;delete window.__weightLayoutLanguage;delete window.__weightLayoutOpen;delete window.__weightLayoutFontSize;");
   }
   return result;
 }
@@ -363,9 +390,11 @@ async function exercise(browser) {
     await delay(100);
   }
   const report = {browser: browser.version, checks: 0, failures: [], pageWidths: []};
+  if (process.env.DOMINION_LAYOUT_PROGRESS) console.error(browser.version, "pool checks");
   report.pool = await exercisePool(browser);
   report.checks += report.pool.checks;
   report.failures.push(...report.pool.failures);
+  if (process.env.DOMINION_LAYOUT_PROGRESS) console.error(browser.version, "weight checks");
   report.weights = await exerciseLotteryWeights(browser);
   report.checks += report.weights.checks;
   report.failures.push(...report.weights.failures);
