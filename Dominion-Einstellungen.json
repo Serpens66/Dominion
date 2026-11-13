@@ -154,19 +154,19 @@
     ],
     "exp-guilds": [
       "0",
-      "0"
+      "10"
     ],
     "exp-intrigue": [
-      "1",
+      "0",
       "4"
     ],
     "exp-empires": [
       "0",
-      "0"
+      "10"
     ],
     "exp-hinterlands": [
       "0",
-      "0"
+      "10"
     ],
     "exp-menagerie": [
       "1",
@@ -181,12 +181,12 @@
       "0"
     ],
     "exp-promos": [
-      "1",
-      "2"
+      "0",
+      "1"
     ],
     "exp-cornucopia": [
       "0",
-      "0"
+      "10"
     ],
     "exp-renaissance": [
       "1",
@@ -276,6 +276,16 @@
     "goatherd": "excluded",
     "cemetery": "excluded",
     "monastery": "excluded",
+    "dismantle": "excluded",
+    "walled_village": "excluded",
+    "stash": "excluded",
+    "envoy": "excluded",
+    "governor": "excluded",
+    "marchland": "excluded",
+    "captain": "excluded",
+    "prince": "excluded",
+    "sauna": "excluded",
+    "church": "excluded",
     "recruiter": "excluded",
     "research": "excluded",
     "priest": "excluded",
@@ -297,7 +307,7 @@
     "prosperity": "always",
     "dark_ages": "off",
     "guilds": "off",
-    "intrigue": "always",
+    "intrigue": "off",
     "empires": "off",
     "hinterlands": "off",
     "menagerie": "random",
@@ -311,6 +321,26 @@
     "allies": "off"
   },
   "randomExpansionCount": 2,
+  "expansionRelativeWeights": {
+    "base": 1,
+    "adventures": 10,
+    "alchemy": 1,
+    "prosperity": 1,
+    "dark_ages": 1,
+    "guilds": 1,
+    "intrigue": 1,
+    "empires": 1,
+    "hinterlands": 1,
+    "menagerie": 10,
+    "nocturne": 10,
+    "plunder": 1,
+    "promos": 1,
+    "cornucopia": 1,
+    "renaissance": 10,
+    "rising_sun": 1,
+    "seaside": 1,
+    "allies": 1
+  },
   "requireLoot": false,
   "colonies": "always",
   "shelters": "rules",

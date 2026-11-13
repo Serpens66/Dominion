@@ -4,7 +4,7 @@ Stand: 13. November 2026. Webprüfung; kein Bezug zum Spielbuild erforderlich.
 
 ## Verhalten
 
-Die Website zeigt rechts neben dem Kartendaten-Hinweis einen kleinen, zweisprachigen Gesamtstand. Auf schmalen Bildschirmen darf die Fußzeile umbrechen. Gezählt werden Klicks auf **Königreich ziehen**, einschließlich wiederholter und erfolgloser Ziehversuche, keine unterschiedlichen Personen. Lokale Kopien bleiben ohne Anfragen. Ausfälle lassen die Ziehung unbeeinträchtigt; die letzte erfolgreiche Anzeige bleibt stehen oder die Zeile verborgen.
+Die Website zeigt rechts neben dem Kartendaten-Hinweis einen kleinen, zweisprachigen Gesamtstand. Der aufklappbare Hinweis **Zum Zähler / About the counter** steht rechts daneben und nennt nur das Startdatum 13. November 2026 sowie die Übermittlung von IP-Adresse und Browserinformationen an Visitor Badge. Auf schmalen Bildschirmen darf die Fußzeile umbrechen. Gezählt werden Klicks auf **Königreich ziehen**, einschließlich wiederholter und erfolgloser Ziehversuche, keine unterschiedlichen Personen. Lokale Kopien bleiben ohne Anfragen. Ausfälle lassen die Ziehung unbeeinträchtigt; die letzte erfolgreiche Anzeige bleibt stehen oder die Zeile verborgen.
 
 ## Geprüfter Dienst
 

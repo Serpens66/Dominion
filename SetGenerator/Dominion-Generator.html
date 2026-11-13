@@ -901,9 +901,10 @@
   .game-value-debt { color: #fff4dc; text-shadow: 0 1px 2px #382014; }
   .game-value-vp { color: #fff; text-shadow: 0 0 .15em #18131e, 0 1px #18131e; }
   footer { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem 1rem; margin-top: 1.35rem; color: var(--muted); font-size: .85rem; }
-  .kingdom-total { min-width: 0; font-size: .8rem; }
+  .kingdom-total { min-width: 0; max-width: 100%; font-size: .8rem; }
+  .kingdom-total:not([hidden]) { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem .75rem; }
   .kingdom-total img { height: 1.15em; width: auto; vertical-align: -.2em; }
-  .kingdom-total details { margin-top: .2rem; }
+  .kingdom-total details { min-width: 0; max-width: 100%; }
   .kingdom-total summary { cursor: pointer; }
   .kingdom-total p { margin: .3rem 0 0; max-width: 65ch; }
   a { color: var(--accent-text); }
@@ -1175,10 +1176,10 @@
   <footer>
     <span data-en="Card data from Dominion build 3315">Kartendaten aus Dominion-Build 3315</span>
     <div id="kingdom-total" class="kingdom-total" hidden>
-      <span data-en="A total of ">Insgesamt wurden bereits </span><span id="kingdom-total-badge"></span><span data-en=" Kingdoms were already generated."> Königreiche generiert.</span>
+      <span><span data-en="A total of ">Insgesamt wurden bereits </span><span id="kingdom-total-badge"></span><span data-en=" Kingdoms were already generated."> Königreiche generiert.</span></span>
       <details>
         <summary data-en="About the counter">Zum Zähler</summary>
-        <p data-en="Visitor Badge counts clicks on Draw Kingdom, including repeated clicks, starting when this counter was added. Loading the number and counting a click connects your browser to visitor-badge.one9x.com, which receives your IP address and browser information. We do not enable its unique-visitor mode. The count is approximate and may be unavailable.">Visitor Badge zählt seit Einbau dieses Zählers Klicks auf Königreich ziehen, auch wiederholte Klicks. Zum Laden der Zahl und Zählen eines Klicks verbindet sich dein Browser mit visitor-badge.one9x.com. Der Dienst erhält dabei deine IP-Adresse und Browserinformationen. Sein Modus zur Wiedererkennung unterschiedlicher Besucher ist nicht aktiviert. Die Zahl ist ungefähr und kann zeitweise fehlen.</p>
+        <p data-en="Click counter since 13 November 2026. Loading and counting sends your IP address and browser information to Visitor Badge.">Klickzähler seit 13. November 2026. Beim Laden und Zählen erhält Visitor Badge deine IP-Adresse und Browserinformationen.</p>
       </details>
     </div>
   </footer>
