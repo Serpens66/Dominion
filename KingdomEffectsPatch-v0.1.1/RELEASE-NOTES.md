@@ -1,8 +1,10 @@
-# v0.1.0
+# Dominion Kingdom Effects Patch v0.1.1
 
 ## English
 
-First public release for **Dominion on Windows/Steam, game build 3315**.
+For **Dominion on Windows/Steam, game build 3315**. This version replaces v0.1.0.
+
+**New in v0.1.1:** Typhoon now has the same checkboxes as pile doubling: click a checkbox or press Space to select or deselect a pile. Clicking a card name only updates the preview; double-clicking the name adds it without removing an existing choice. The numbered list and checkmarks stay synchronized; deselecting removes the pile and selecting it again appends it at the end. The add button reads **Already selected** and is disabled for a selected pile. Checkboxes use white fill, a strong dark-brown outline and tick, and an opaque paper-colored outer edge. Single-target selection and expansion headings keep no checkboxes.
 
 - Customize local and pass-and-play Kingdoms with **89 selectable campaign effects**, combining up to **32 entries**.
 - Use **F8** to search and filter effects, read their prerequisites and test status, choose multiple card targets, and add intentional repeats. For example, double Village and Market together to start with 20 cards in each pile.
@@ -17,9 +19,13 @@ First public release for **Dominion on Windows/Steam, game build 3315**.
 
 To play without the mod, restart Dominion normally through Steam.
 
+**Card access:** Effect targets now follow the cards Dominion officially makes playable for your account, including temporary access. Unavailable cards are hidden; imported and saved effect targets are checked too. All 89 effects remain available, including Typhoon with Base-game cards. Existing invalid targets can be removed or replaced; a rejected list stays intact.
+
 ## Deutsch
 
-Erstes öffentliches Release für **Dominion unter Windows/Steam, Spielbuild 3315**.
+Für **Dominion unter Windows/Steam, Spielbuild 3315**. Diese Version ersetzt v0.1.0.
+
+**Neu in v0.1.1:** Taifun erhält dieselben Checkboxen wie die Stapelverdopplung: Klick auf das Kästchen oder Leertaste wählt einen Stapel an beziehungsweise ab. Ein Klick auf den Kartennamen ändert nur die Vorschau; ein Doppelklick fügt die Karte hinzu, ohne eine vorhandene Auswahl zu entfernen. Nummerierte Liste und Haken bleiben synchron; Abwählen entfernt den Stapel, erneutes Anwählen hängt ihn hinten an. Für bereits gewählte Stapel ist der Hinzufügen-Button mit **Bereits gewählt** beschriftet und deaktiviert. Die Kästchen erhalten weiße Füllung, kräftige dunkelbraune Kontur und Haken sowie einen deckenden papierfarbenen Außenrand. Einzelzielauswahl und Erweiterungsüberschriften bleiben ohne Checkboxen.
 
 - Königreiche in **Lokal spielen und Weitergeben** mit **89 auswählbaren Kampagneneffekten** gestalten; bis zu **32 Einträge** kombinieren.
 - In **F8** Effekte suchen und filtern, Voraussetzungen und Teststand lesen, mehrere Zielkarten wählen und Effekte bewusst wiederholen. Beispielsweise Dorf und Markt gemeinsam auf jeweils 20 Karten verdoppeln.
@@ -33,3 +39,5 @@ Erstes öffentliches Release für **Dominion unter Windows/Steam, Spielbuild 331
 **Grenzen:** Kampagneneffekte funktionieren aktuell lokal und in Weitergeben; der Online-Editor ergänzt keine Serverunterstützung. Das automatische Verdoppeln zufälliger Stapel bleibt lokal. Einige Effekte und Wiederholungen sind noch ungetestet. Größere Bannlisten wurden privat geprüft, Matchmaking und volle Kapazität sind offen. Der Hinweis **Kampagnen-Features** kann überlaufen; schließen oder **Nicht wieder anzeigen** wählen. DLC-Besitz bleibt unverändert.
 
 Für eine Partie ohne Mod Dominion normal über Steam neu starten.
+
+**Kartenfreigabe:** Effektziele berücksichtigen jetzt die offizielle Spielfreigabe deines Kontos, einschließlich zeitweiliger Freigaben. Nicht verfügbare Karten sind ausgeblendet; eingefügte und gespeicherte Effektziele werden ebenfalls geprüft. Alle 89 Effekte bleiben wählbar, auch Taifun mit Basisspielkarten. Vorhandene unzulässige Ziele lassen sich entfernen oder ersetzen; eine abgelehnte Liste bleibt vollständig erhalten.

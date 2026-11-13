@@ -1,10 +1,11 @@
-# Dominion Kingdom Effects Patch v0.1.0
+# Dominion Kingdom Effects Patch v0.1.1
 
 [English](#english) · [Deutsch](#deutsch)
 
 ## English
 
-An unofficial mod for **Dominion on Windows/Steam, game build 3315**. Choose from 89 campaign effects, combine up to 32 entries, and customize your Kingdom in a bilingual F8 editor. A separately installed copy of Dominion is required; this mod does not unlock DLC.
+
+An unofficial mod for **Dominion on Windows/Steam, game build 3315**. Choose from 89 campaign effects, combine up to 32 entries, and customize your Kingdom in a bilingual F8 editor. An installed Steam version of Dominion is required; this mod does not unlock DLC.
 
 ### Start playing
 
@@ -27,6 +28,8 @@ Search by English or German name, effect ID, or description. Filters include eff
 
 Card selection supports multiple targets, card previews, and expansion descriptions followed directly by scrollable rules. Reorder active effects or Typhoon targets by dragging, or use **Alt+Up/Down**; **Delete** removes the selected entry while its list has focus. **Cancel** discards your effect changes.
 
+Typhoon uses the same checkboxes as pile doubling: click a checkbox or press Space to select or deselect a pile. Clicking a card name only updates the preview; double-clicking the name adds it without removing an existing choice. The numbered list and checkmarks stay synchronized; deselecting removes the pile and selecting it again appends it at the end. The add button reads **Already selected** and is disabled for a selected pile. Checkboxes use white fill, a strong dark-brown outline and tick, and an opaque paper-colored outer edge. Single-target selection and expansion headings keep no checkboxes.
+
 ### Online play and bans
 
 Campaign-effect gameplay is supported for **local play and pass-and-play**. F8 also opens in online/private Kingdom selection, but the server currently does not apply these effects. The automatic doubling of randomly drawn piles is local-only.
@@ -47,7 +50,10 @@ To play without the mod, close the game and start it normally through Steam. To 
 
 [Effect guide and test status](https://github.com/Serpens66/Dominion/blob/main/Documentation/Steam_Spielanleitung.md) · [Known limitations](https://github.com/Serpens66/Dominion/blob/main/Documentation/Known_Issues.md) · [Technical documentation](https://github.com/Serpens66/Dominion/blob/main/Documentation/README.md)
 
+Only cards currently authorized by Dominion for your account are offered as effect targets, including official temporary access. Unavailable cards and empty expansion groups are hidden. All 89 effects remain selectable: Typhoon works with Base-game targets even without the expansion referenced by the effect. Existing invalid targets remain visible so you can remove or replace them; importing, applying or starting a set with unavailable targets is rejected without silently shortening the list. If authorization is not ready, reopen the normal Collection/Kingdom selection and retry. The mod reads the game's published access cache and does not initialize or change your licenses.
+
 ## Deutsch
+
 
 Ein inoffizieller Mod für **Dominion unter Windows/Steam, Spielbuild 3315**. Im zweisprachigen F8-Editor stehen 89 Kampagneneffekte zur Auswahl; bis zu 32 Einträge lassen sich kombinieren. Eine eigene Dominion-Installation ist erforderlich. Der Mod schaltet keine DLCs frei.
 
@@ -72,6 +78,8 @@ Die Suche findet deutsche und englische Namen, Effekt-IDs und Beschreibungstexte
 
 Die Kartenauswahl bietet mehrere Ziele, Kartenvorschauen sowie Erweiterungsbeschreibungen mit direkt anschließenden scrollbaren Regeln. Aktive Effekte und Taifun-Ziele lassen sich durch Ziehen oder **Alt+Pfeil hoch/runter** sortieren. **Entf** entfernt den gewählten Eintrag bei Fokus in seiner Liste. **Abbrechen** verwirft die Effektänderungen.
 
+Taifun verwendet dieselben Checkboxen wie die Stapelverdopplung: Klick auf das Kästchen oder Leertaste wählt einen Stapel an beziehungsweise ab. Ein Klick auf den Kartennamen ändert nur die Vorschau; ein Doppelklick fügt die Karte hinzu, ohne eine vorhandene Auswahl zu entfernen. Nummerierte Liste und Haken bleiben synchron; Abwählen entfernt den Stapel, erneutes Anwählen hängt ihn hinten an. Für bereits gewählte Stapel ist der Hinzufügen-Button mit **Bereits gewählt** beschriftet und deaktiviert. Die Kästchen erhalten weiße Füllung, kräftige dunkelbraune Kontur und Haken sowie einen deckenden papierfarbenen Außenrand. Einzelzielauswahl und Erweiterungsüberschriften bleiben ohne Checkboxen.
+
 ### Online-Spiel und Banns
 
 Die Spielwirkung der Kampagneneffekte ist für **Lokal spielen und Weitergeben** vorgesehen. F8 ist auch bei der Online-/Privatspiel-Auswahl verfügbar; der Server übernimmt diese Effekte aktuell jedoch nicht. Das automatische Verdoppeln zufällig gezogener Stapel bleibt auf lokale Partien beschränkt.
@@ -91,3 +99,9 @@ Einige Effekte und Kombinationen sind noch ungetestet. Der Hinweis **Kampagnen-F
 Für eine Partie ohne Mod Dominion schließen und normal über Steam starten. Zum Entfernen den entpackten Modordner löschen. Gespeicherte Sets und Banns bleiben im Profil. Die Spieldateien werden nicht verändert; der Download enthält keine Spielgrafiken.
 
 [Spielanleitung und Teststand](https://github.com/Serpens66/Dominion/blob/main/Documentation/Steam_Spielanleitung.md) · [Bekannte Grenzen](https://github.com/Serpens66/Dominion/blob/main/Documentation/Known_Issues.md) · [Technische Dokumentation](https://github.com/Serpens66/Dominion/blob/main/Documentation/README.md)
+
+### Freigegebene Zielkarten
+
+Als Effektziele stehen nur Karten zur Auswahl, die Dominion für dein Konto aktuell offiziell zum Spielen freigibt, einschließlich zeitweiliger kostenloser Freigaben. Andere Karten und leere Erweiterungsgruppen sind ausgeblendet. Die für Zufallsauswahl aktivierten Erweiterungen schränken diese Zielauswahl nicht zusätzlich ein.
+
+Alle 89 Effekte bleiben wählbar. Taifun mit Basisspielkarten benötigt keinen Kauf der beim Effekt genannten Erweiterung. Bestehende unzulässige Ziele bleiben zum Entfernen oder Ersetzen sichtbar; Import, Übernahme und Start betroffener Sets werden mit verständlicher Meldung verhindert. Es werden keine Karten oder nachfolgenden Effekte still gelöscht. Bei noch unbekannter Freigabe die normale Sammlung/Königreich-Auswahl erneut öffnen und anschließend F8 erneut versuchen. Der Patch liest den offiziellen Freigabe-Cache; Freischaltungen werden nicht geändert.

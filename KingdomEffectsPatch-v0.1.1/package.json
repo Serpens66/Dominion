@@ -1,0 +1,17 @@
+{
+  "version": "0.1.1",
+  "gameBuild": "3315",
+  "steamBuild": "17683350",
+  "exeSha256": "56e8d563320b7d6c0cf68ae11cdf2c0aa971dbff44bb296651b630815c548877",
+  "sourceCommit": "da7db88597c9c7906d7b8f75359b8f1468b7cdf7",
+  "sourceDirty": false,
+  "files": {
+    "bin/attach.exe": "263ea4db921cbca52b00659088e0e6f53bc2b880eb2b617a0f80d220612a56e2",
+    "bin/KingdomEffectsPatch.dll": "51eadeffaca63ea4c2a9e5380e21551d88155be680b8bfda05fad3d989587e37",
+    "Dominion-mit-Mod-starten.cmd": "fa4ce315be527540608e2b21ba2c2c3d86a16a2a64ffb094d68677e37fa5b6a0",
+    "README.md": "3cea58b1e3ea50508c632387655f209885a747509a697f06221b3aa0e677cedf",
+    "RELEASE-NOTES.md": "5b2ce48c7c6497c4196915aeffa18ba717f01ecc987da4554b1b6903997e1ec4",
+    "ReleaseSupport.ps1": "50381eb1aa7373005519a20a40de17e2063229633ebdfe447b9a88211c3f5870",
+    "Start-Mod.ps1": "7286986034af4971a610e9356df2d76c2f0c8003af55353ca8d01f664e1e3638"
+  }
+}
