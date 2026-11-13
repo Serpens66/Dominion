@@ -1,4 +1,4 @@
-# Dominion-Generator und Konverter
+# Dominion-Generator
 
 **[Dominion-Generator direkt im Browser öffnen](https://serpens66.github.io/Dominion/)**
 
@@ -18,11 +18,9 @@ Mit **Zusatzkarten bei Eigenschaften berücksichtigen** zählen feste Kartenreih
 
 ## Web-Namenslisten umwandeln
 
-Kopiere deine Auswahl aus dem Dominion Randomizer oder gib die Kartennamen selbst ein. Füge die Namen im Konverter ein und klicke auf **Kartenliste bestätigen**. Den erzeugten Code fügst du in Dominion ins Kartensuchfeld ein. [Dominion Randomizer](https://dominionrandomizer.com/) · [Konverter im Browser öffnen](https://serpens66.github.io/Dominion/Dominion-Konverter.html) · [HTML-Konverter herunterladen](https://github.com/Serpens66/Dominion/releases/latest/download/Dominion-Konverter.html)
+Öffne in **2. Für Dominion kopieren** den zugeklappten Bereich **Namensliste vom Randomizer umwandeln**. Füge kommagetrennte Kartennamen ein und klicke auf **Umwandeln**. **Code kopieren** liefert den Steam-Code, ohne deine Ziehung oder Einstellungen zu ändern. Die Sprache wird automatisch erkannt; bei mehrdeutigen Namen kannst du sie auswählen. [Dominion Randomizer](https://dominionrandomizer.com/)
 
-### HTML-Konverter mit doppelten Stapeln
-
-Der Konverter erstellt im Abschnitt **Stapel verdoppeln** einen XML-Eintrag für ein separates Effektset. Die Schritte zum Speichern und Laden in Dominion stehen in der [Steam-Spielanleitung](../Documentation/Steam_Spielanleitung.md#mehrere-stapel-über-ein-gespeichertes-set-verdoppeln).
+Die Umwandlung unterstützt einen bis zehn Hauptstapel und bis zu vier nachfolgende Landschaften. Dominion ergänzt freie Hauptstapelplätze zufällig. Besondere Setup-Zuordnungen werden als noch nicht unterstützt gemeldet.
 
 ## Generator offline nutzen
 

@@ -29,12 +29,12 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/configure-pages@v5
       - run: node SetGenerator/test_generator_solver.js
+      - run: node SetGenerator/test_name_converter.js
       - run: python SetGenerator/test_generator_catalog.py
       - name: Prepare static HTML files
         run: |
           mkdir -p _site
           cp SetGenerator/Dominion-Generator.html _site/index.html
-          cp SetGenerator/Dominion-Konverter.html _site/Dominion-Konverter.html
           cp -R SetGenerator/card-images _site/card-images
           cmp SetGenerator/Dominion-Generator.html _site/index.html
       - uses: actions/upload-pages-artifact@v4

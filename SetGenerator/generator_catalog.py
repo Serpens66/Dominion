@@ -9,6 +9,7 @@ import struct
 
 ROOT = Path(__file__).resolve().parent
 CATALOG = ROOT.parent / "Documentation" / "Card_Properties.json"
+WEB_NAMES = ROOT.parent / "Documentation" / "KingdomCreator_Card_Names.json"
 XPACK_HASH = "e3cf4242c2756f9120901c28f2dbdbe636b1d7235cbec9616f0c622d65d90047"
 EXE_HASH = "56e8d563320b7d6c0cf68ae11cdf2c0aa971dbff44bb296651b630815c548877"
 
@@ -337,6 +338,43 @@ def load_catalog(xpack, exe=None):
             "types": types, "cards": cards}
 
 
+def load_web_name_catalog(catalog):
+    """Build the offline name-conversion data from its canonical source JSON.
+
+    Website edition rows can repeat a name mapping. Keep distinct translated
+    variants, but use only one metadata record per canonical Steam card ID.
+    """
+    web = json.loads(WEB_NAMES.read_text(encoding="utf-8"))
+    if web["gameBuild"] != catalog["nativeIds"]["gameBuild"]:
+        raise ValueError("Web-Namensdaten und Kartenkatalog gehören zu verschiedenen Spielbuilds.")
+    by_id = {card["id"]: card for card in catalog["cards"]}
+    names = []
+    seen = set()
+    for row in web["cards"].values():
+        if row["id"] is None or row["kind"] == "other":
+            continue
+        if row["id"] not in by_id:
+            raise ValueError("Web-Namensdaten enthalten eine unbekannte Steam-ID: " + row["id"])
+        titles = row["titles"]
+        if not titles.get("en"):
+            raise ValueError("Englischer Web-Kartentitel fehlt: " + row["id"])
+        key = (row["id"], json.dumps(titles, ensure_ascii=False, sort_keys=True))
+        if key in seen:
+            continue
+        seen.add(key)
+        names.append({"id": row["id"], "titles": titles})
+    cards = {}
+    for card_id in sorted({row["id"] for row in names}):
+        card = by_id[card_id]
+        cards[card_id] = {
+            "title": card["text"]["de"][0],
+            "kingdom": card["kingdomPile"],
+            "landscape": bool(set(card["types"]) & {"event", "landmark", "project", "way"}),
+            "firstEdition": card["edition"] == "first",
+        }
+    return {"languages": web["languages"], "names": names, "cards": cards}
+
+
 def replace_script(source, marker, contents):
     pattern = re.compile(re.escape(marker) + r"[\s\S]*?(?=</script>)")
     updated, count = pattern.subn(lambda _: marker + "\n" + contents + "\n", source)
@@ -362,6 +400,8 @@ def main():
     catalog = load_catalog(args.xpack, exe)
     source = args.html.read_text(encoding="utf-8")
     source = replace_script(source, '<script type="application/json" id="catalog">', script_json(catalog))
+    source = replace_script(source, '<script type="application/json" id="web-card-names">',
+                            script_json(load_web_name_catalog(catalog)))
     worker = (ROOT / "generator_solver.js").read_text(encoding="utf-8")
     source = replace_script(source, '<script type="text/plain" id="generator-solver">', worker)
     args.html.write_bytes(source.replace("\n", "\r\n").encode("utf-8"))

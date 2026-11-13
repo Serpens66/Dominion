@@ -11,7 +11,7 @@ Ziel ist die Steam-Version von Dominion von Temple Gates Games. Die erste Unters
 | Offene Wünsche an den Web-Randomizer mit unserem Generator abgleichen | [KingdomCreator als Referenz](KingdomCreator.md) |
 | Deutsche Kartentitel als Kingdom-IDs nachschlagen | [Kartentitel und IDs (JSON)](Card_Titles_de.json) |
 | Königreichstapel, Kartentypen, Kosten und Filter nachschlagen | [Karteneigenschaften (JSON)](Card_Properties.json) |
-| Kopierte Kartennamen von dominionrandomizer.com umwandeln | [Web-Namenslisten im Konverter](Kingdom_Sets.md#web-namenslisten-im-konverter) |
+| Kopierte Kartennamen von dominionrandomizer.com umwandeln | [Namensumwandlung im Generator](Kingdom_Sets.md#web-namenslisten-im-generator) |
 | Ohne Mods spielen und eigene Varianten ausprobieren | [Steam-Spielanleitung](Steam_Spielanleitung.md) |
 | Kingdom-Syntax, Kampagneneffekte und Modding-Befunde nachschlagen | [Technische Referenz](Modding_Overview.md#kingdom-text-und-kampagneneffekte) |
 | Native Mod für doppelte Königreichstapel untersuchen | [Aufbau, lokale Abgrenzung und Offline-Testplan](Doppelte_Koenigreichstapel_Mod.md) |
@@ -61,4 +61,4 @@ python .\SetGenerator\test_generator_catalog.py
 
 Für die Katalogerzeugung wird zusätzlich `pefile` benötigt. Die passende `Dominion.exe` wird neben `Dominion.xpack` erwartet; bei abweichendem Pfad `--exe` verwenden. Der Build prüft beide Spieldateien gegen die registrierten Hashes und bettet die numerischen Profil-IDs ein. Die XML-Tests bearbeiten ausschließlich synthetische Profile.
 
-Bei Änderungen am Generator auf `main` veröffentlicht GitHub Actions die HTML-Datei unverändert als `index.html` und legt `Dominion-Konverter.html` sowie den Ordner `card-images` daneben. Du kannst die Veröffentlichung auch über **Actions → Publish Dominion Generator → Run workflow** starten. [Workflow](https://github.com/Serpens66/Dominion/actions/workflows/generator-pages.yml)
+Bei Änderungen am Generator auf `main` veröffentlicht GitHub Actions die HTML-Datei unverändert als `index.html` und legt den Ordner `card-images` daneben. Die Namensumwandlung ist in derselben HTML-Datei enthalten. Du kannst die Veröffentlichung auch über **Actions → Publish Dominion Generator → Run workflow** starten. [Workflow](https://github.com/Serpens66/Dominion/actions/workflows/generator-pages.yml)

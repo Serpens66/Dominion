@@ -48,7 +48,7 @@ Spielbuild 3315, Steam-Build 17683350. Bei jedem Steam-Test Eingabe, Modus, Soll
 
 Die automatisierte Browser-Prüfung lief über einen lokalen Testserver mit temporären Profilen in Edge (390 und 1440 Pixel) und Firefox (500 und 1440 Pixel). Das lokale Bildpaket enthält 842 Illustrationen und je 26 fertige Vorderseiten auf Deutsch und Englisch. Firefox und Edge haben die automatische Bildladung am lokalen Server sowie Ziehung, Sprachwechsel und Einstellungen in der Ausgabe für GitHub Pages geprüft.
 
-Die unveränderte Pages-Ausgabe wurde in Firefox und Edge unter dem lokalen Pfad `/Dominion/` geprüft. Beide Browser zeigten deutsche und englische Karten- und Erweiterungsregeln, die Kartenrahmen und 43 unterschiedliche Spielsymbole. Die Ziehung ergab zehn Stapel. Der Kopiertest verglich den übergebenen Kingdom-Code über eine simulierte Zwischenablage und prüfte die manuelle Textauswahl bei verweigertem Zugriff. Der Link im Generator öffnete den mitgelieferten Konverter.
+Die unveränderte Pages-Ausgabe wurde in Firefox und Edge unter dem lokalen Pfad `/Dominion/` geprüft. Beide Browser zeigten deutsche und englische Karten- und Erweiterungsregeln, die Kartenrahmen und 43 unterschiedliche Spielsymbole. Die Ziehung ergab zehn Stapel. Der Kopiertest verglich den übergebenen Kingdom-Code über eine simulierte Zwischenablage und prüfte die manuelle Textauswahl bei verweigertem Zugriff. Der Link im Generator öffnete damals den separat mitgelieferten Konverter; diese historische Browser-Abnahme gilt nicht für den inzwischen integrierten Bereich.
 
 Die bedingten Quoten der Zufallssets wurden am 11. November 2026 in Firefox und Edge auf Deutsch und Englisch geprüft. Einstellungsdateien der Version 2, gespeicherte Werte nach dem Neuladen, wiederholte Ziehungen und die letzte sichtbare Ziehung bei einem Konflikt wurden dabei mitgeprüft.
 
@@ -135,3 +135,20 @@ Feste Hauptstapel und Landschaften bleiben auch bei gesperrter Herkunft oder Edi
 | Offen | Erweiterungssymbole vor den Gruppenüberschriften für Hauptstapel und Landschaften nach Suche, Quoteneingabe, Reset und Sprachwechsel prüfen. |
 
 Die Karten werden erst für tatsächlich angezeigte Ergebnisse oder geöffnete Vorschauen aufgebaut. Für die 26 Basiskarten werden vorhandene vollständige Vorderseiten genutzt; andere Karten verwenden Illustration, Rahmen und Spieltext. Das Ergebnisraster hat höchstens vier Spalten mit ungefähr 10–18 rem breiten Karten. Beim Ersetzen einer Ziehung werden auch festgehaltene Regelverweise der direkten Kartenansichten freigegeben. Eine visuelle Browser-Abnahme dieser Änderungen wurde in diesem Durchlauf nicht durchgeführt.
+
+## Integrierte Namensumwandlung und Patch-Hinweis
+
+Stand 13. November 2026. Die Namensumwandlung sitzt als standardmäßig geschlossener Bereich in Abschnitt 2 direkt über dem Kingdom-Code. Ihr Ein- und Ausgabefeld ist von Ziehung, Filtern und Bannlisten unabhängig. Der Patch-Hinweis im Seitenkopf verwendet die versionsunabhängige Release-Übersicht.
+
+| Status | Fall und Erwartung |
+| --- | --- |
+| Technisch geprüft | Namensauflösung in Deutsch, Englisch, Spanisch, Französisch, Italienisch, Niederländisch und Polnisch, einschließlich fehlender Übersetzung mit englischem Ersatznamen. |
+| Technisch geprüft | Einen bis zehn Hauptstapel sowie bis zu vier nachfolgende einfache Landschaften umwandeln. Teilmengen nennen die Zahl der von Dominion zufällig ergänzten Plätze. |
+| Technisch geprüft | Aliasnamen und gemischte Stapel ergeben kanonische IDs. Unbekannte Titel, Duplikate, Mehrdeutigkeiten und nicht unterstützte Sonderzuordnungen melden den konkreten Fehler. |
+| Technisch geprüft | Umwandlung und Kopieren samt manuellem Fallback erhalten letzte Ziehung, Kingdom-Code, Einstellungen und Bannlisten unverändert. Ein geänderter Eingabetext darf keinen veralteten Konvertierungscode kopierbar lassen. |
+| Offen | Kopfbereich und zugeklappten Konvertierungsbereich in beiden Oberflächensprachen, Hell/Dunkel und bei 390/1440 Pixeln prüfen. Patch-Link öffnet die Release-Übersicht in einem neuen Tab. |
+| Technisch geprüft | Reproduzierbarer Build enthält die Namensdaten offline. Pages baut ohne separate Konverter-HTML-Datei. Aktuelle Links verweisen auf den integrierten Bereich; historische Befunde und Lizenzhinweise bleiben erhalten. |
+
+Die technische Prüfung verwendet `node SetGenerator/test_name_converter.js` sowie den Katalog- und Solver-Test. Kopieren und manueller Fallback sind mit einem DOM-/Zwischenablagenmodell geprüft; reale Browserabläufe bleiben offen. Der Katalog-Build wurde lokal mit unverändertem Ausgabehash wiederholt.
+
+Die ältere Browser-Abnahme des separaten Konverters ist oben als historischer Befund erhalten. Eine neue Übernahme der erzeugten Codes im Steam-Spiel bleibt ein eigener Spieltest.

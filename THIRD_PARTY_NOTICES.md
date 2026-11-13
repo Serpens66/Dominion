@@ -1,6 +1,6 @@
 # Drittanbieterhinweise
 
-Die vom Konverter verwendeten Namensdaten von Dominion Randomizer stammen aus KingdomCreator. Der Lizenzhinweis unten gehört zu diesem Quellprojekt. [Quelle](https://github.com/blakevanlan/KingdomCreator/blob/d9a802db2e41d52786eaa02097279cbf1b64c778/LICENSE)
+Die für die Namensumwandlung im Generator verwendeten Daten von Dominion Randomizer stammen aus KingdomCreator. Der Lizenzhinweis unten gehört zu diesem Quellprojekt. [Quelle](https://github.com/blakevanlan/KingdomCreator/blob/d9a802db2e41d52786eaa02097279cbf1b64c778/LICENSE)
 
 ```text
 The MIT License (MIT)
