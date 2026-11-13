@@ -300,6 +300,14 @@ Die vier nativen Banntexte bestehen die Text-, Ownership-, Cache- und Sprachwech
 
 ## Testpaket v0.1.1: automatisiert geprüft, Sichtabnahme offen
 
-Die frühere Aussage zu hellen Checkboxen war unzureichend visuell geprüft. Auswahlfunktion und isolierte Dialogtests sind von der tatsächlichen Lesbarkeit der Kästchen im Spiel zu trennen. Die korrigierten Bilder bestehen 18 Dialogfälle im isolierten Dominion-Prozess, sechs Pixel-Testpaare mit vollständig geprüften Außenrändern und die bestehenden Editorprüfungen. Die vollständige Leertastenfolge fordert keinen zusätzlichen Windows-Warnton an; die Testprozesse sind gegen solche Warntöne gesondert abgesichert. [Befunde und Grenzen](../Documentation/Checkbox_Visibility_Fix.md)
+Die frühere Aussage zu hellen Checkboxen war unzureichend visuell geprüft. Auswahlfunktion und isolierte Dialogtests sind von der tatsächlichen Lesbarkeit der Kästchen im Spiel zu trennen. Die korrigierten Bilder bestehen 18 Dialogfälle im isolierten Dominion-Prozess, zwölf Pixel-Testpaare mit vollständig geprüften Außenrändern und die bestehenden Editorprüfungen. Die vollständige Leertastenfolge fordert keinen zusätzlichen Windows-Warnton an; die Testprozesse sind gegen solche Warntöne gesondert abgesichert. [Befunde und Grenzen](../Documentation/Checkbox_Visibility_Fix.md)
 
 Die automatisierte Prüfung ist bestanden; erforderlich bleibt die sichtbare Nutzerabnahme im normalen Spiel. Bis dahin nur als GitHub-Entwurf bereitstellen und nicht veröffentlichen. Das öffentliche v0.1.0 bleibt unverändert. Der historische Release-Kandidat v0.1.0 am Anfang dieses Dokuments behält seine damalige Versionsbezeichnung.
+
+## Überarbeiteter Taifun-Picker: neue Prüfung bestanden
+
+Der gemeldete Screenshot betrifft Taifun, wo zuvor absichtlich keine Checkboxen erzeugt wurden. Das ist kein Nachweis eines neuen Rendererdefekts; aktiver OS-Dunkelmodus beweist keine Ursache. Die bisherigen 18 Fälle bestätigen nur den damaligen Prüfstand.
+
+Taifun erhält dieselben Checkboxen wie die Stapelverdopplung: Klick auf das Kästchen oder Leertaste wählt einen Stapel an beziehungsweise ab. Ein Klick auf den Kartennamen ändert nur die Vorschau; ein Doppelklick fügt die Karte hinzu, ohne eine vorhandene Auswahl zu entfernen. Nummerierte Liste und Haken bleiben synchron; Abwählen entfernt den Stapel, erneutes Anwählen hängt ihn hinten an. Für bereits gewählte Stapel ist der Hinzufügen-Button mit **Bereits gewählt** beschriftet und deaktiviert. Die Kästchen erhalten weiße Füllung, kräftige dunkelbraune Kontur und Haken sowie einen deckenden papierfarbenen Außenrand. Einzelzielauswahl und Erweiterungsüberschriften bleiben ohne Checkboxen. Die automatisierten Prüfungen bestehen; die sichtbare Abnahme durch den Nutzer bleibt offen.
+
+Zusätzlich geprüft sind die Übereinstimmung von Haken, nummerierter Liste und internem Zielarray, beide Umschaltwege, Namens-Doppelklick ohne Abwahl, deaktivierter Bereits-gewählt-Button, Suche mit erhaltener Auswahl, Entfernen und erneutes Anhängen sowie Reihenfolgeänderungen. Einzelziel und Erweiterungsüberschriften dürfen weiterhin keine Checkboxen erhalten. Noch kein neuer Testerfolg dokumentiert.

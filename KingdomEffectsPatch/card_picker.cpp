@@ -169,7 +169,10 @@ void selection_status(HWND dialog, const Picker& picker) {
             SendDlgItemMessageW(dialog, IDC_CARD_SELECTION, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(label.c_str()));
         }
         const auto* candidate=card_at(GetDlgItem(dialog,IDC_CARD_TREE),TreeView_GetSelection(GetDlgItem(dialog,IDC_CARD_TREE)));
-        EnableWindow(GetDlgItem(dialog,IDC_CARD_ADD),candidate && !picker.has(candidate) && picker.selected.size()<replacement_limit);
+        const bool already_selected = candidate && picker.has(candidate);
+        SetDlgItemTextW(dialog, IDC_CARD_ADD, kingdom::ui::tr(
+            already_selected ? L"Bereits gewählt" : L"Stapel hinzufügen"));
+        EnableWindow(GetDlgItem(dialog,IDC_CARD_ADD),candidate && !already_selected && picker.selected.size()<replacement_limit);
     }
     const auto status = std::to_wstring(picker.visible.size()) + kingdom::ui::tr(L" Treffer · ") +
         std::to_wstring(picker.selected.size()) +
@@ -184,13 +187,14 @@ void toggle_card(HWND dialog, Picker& picker, HTREEITEM item) {
     if (!card) return;
     const auto position = std::find(picker.selected.begin(), picker.selected.end(), card);
     const bool adding = position == picker.selected.end();
-    if (adding && picker.mode == CardSelection::ordered && picker.selected.size() == replacement_limit) {
+    if (adding && picker.mode == CardSelection::ordered && picker.selected.size() >= replacement_limit) {
+        TreeView_SetCheckState(tree, item, FALSE);
         SetDlgItemTextW(dialog, IDC_CARD_STATUS, kingdom::ui::tr(L"Taifun erlaubt bis zu 20 Ersatzstapel."));
         return;
     }
     if (adding) picker.selected.push_back(card);
     else picker.selected.erase(position);
-    if(picker.mode==CardSelection::multiple) TreeView_SetCheckState(tree, item, adding);
+    if (picker.multiple()) TreeView_SetCheckState(tree, item, adding);
     selection_status(dialog, picker);
 }
 
@@ -247,7 +251,7 @@ void render_cards(HWND dialog, Picker& picker) {
             group = insert_row(tree, TVI_ROOT, card_expansion(*card), nullptr, false, false, icon->second);
             picker.groups[group]=expansion_info(card->expansion_id);
         }
-        const auto item = insert_row(tree, group, card_title(*card), card, picker.mode==CardSelection::multiple, picker.has(card));
+        const auto item = insert_row(tree, group, card_title(*card), card, picker.multiple(), picker.has(card));
         if (item) picker.visible.emplace_back(item, card);
         if (card == focused) focus = item;
     }
@@ -305,7 +309,7 @@ LRESULT CALLBACK tree_proc(HWND tree, UINT message, WPARAM wparam, LPARAM lparam
                 }
             } else if(message==WM_LBUTTONDBLCLK && card && picker.mode==CardSelection::ordered && (hit.flags&TVHT_ONITEMLABEL)) {
                 TreeView_SelectItem(tree,item);add_selected_pile(dialog,picker);return 0;
-            } else if (picker.mode==CardSelection::multiple && card && (hit.flags & TVHT_ONITEMSTATEICON)) {
+            } else if (picker.multiple() && card && (hit.flags & TVHT_ONITEMSTATEICON)) {
                 if (message == WM_LBUTTONDOWN) {
                     SetFocus(tree);
                     TreeView_SelectItem(tree, item);
@@ -314,7 +318,7 @@ LRESULT CALLBACK tree_proc(HWND tree, UINT message, WPARAM wparam, LPARAM lparam
                 return 0;
             }
         } else if (message == WM_KEYDOWN && wparam == VK_SPACE && picker.multiple()) {
-            if (!(lparam & (1 << 30))) {if(picker.mode==CardSelection::ordered)add_selected_pile(dialog,picker);else toggle_card(dialog, picker, TreeView_GetSelection(tree));}
+            if (!(lparam & (1 << 30))) toggle_card(dialog, picker, TreeView_GetSelection(tree));
             return 0;
         } else if (message == WM_CHAR && wparam == L' ' && picker.multiple()) {
             // WM_KEYDOWN already handled Space. Letting the native tree search
@@ -334,7 +338,7 @@ void change_order(HWND dialog, Picker& picker, unsigned command) {
         const auto* card = picker.selected[row];
         picker.selected.erase(picker.selected.begin() + row);
         for (const auto& [item, visible_card] : picker.visible) {
-            if (visible_card == card && picker.mode == CardSelection::multiple)
+            if (visible_card == card && picker.multiple())
                 TreeView_SetCheckState(GetDlgItem(dialog, IDC_CARD_TREE), item, FALSE);
         }
         if (row == static_cast<LRESULT>(picker.selected.size())) --row;
@@ -435,7 +439,7 @@ INT_PTR CALLBACK picker_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             const auto icon_size = picker.skin->units({0, 0, 10, 9}).right;
             picker.expansion_images = ImageList_Create(icon_size, icon_size, ILC_COLOR32, 16, 4);
             if (picker.expansion_images) TreeView_SetImageList(tree, picker.expansion_images, TVSIL_NORMAL);
-            if (picker.mode==CardSelection::multiple) {
+            if (picker.multiple()) {
                 // Do not enable TVS_CHECKBOXES: native automatic state images
                 // would compete with our explicit mouse/keyboard state handling.
                 picker.checks_images = picker.skin->checks();

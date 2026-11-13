@@ -60,6 +60,32 @@ inline RECT checkbox_rect(HWND tree,HTREEITEM item) {
  // SysTreeView32 draws the state image at the right edge of its hit region.
  return {right-size,y-height/2,right,y-height/2+height};
 }
+inline std::wstring text(HWND control) {
+ const auto length=GetWindowTextLengthW(control);std::wstring value(length+1,L'\0');GetWindowTextW(control,value.data(),length+1);value.resize(length);return value;
+}
+inline void selection_invariants(HWND dialog,const kingdom::Picker& picker) {
+ const auto tree=GetDlgItem(dialog,IDC_CARD_TREE);
+ for(const auto& entry:picker.visible) {
+  const auto state=TreeView_GetItemState(tree,entry.first,TVIS_STATEIMAGEMASK)&TVIS_STATEIMAGEMASK;
+  const auto expected=static_cast<UINT>(INDEXTOSTATEIMAGEMASK(picker.has(entry.second)?2:1));
+  if(state!=expected)throw std::runtime_error("Checkbox bits disagree: "+std::string(entry.second->id)+" actual="+std::to_string(state)+" expected="+std::to_string(expected)+" mode="+std::to_string(unsigned(picker.mode)));
+ }
+ require(bool(IsWindowEnabled(GetDlgItem(dialog,IDOK)))==!picker.selected.empty(),"Done state disagrees with selected cards.");
+ if(picker.mode!=kingdom::CardSelection::ordered)return;
+ const auto* candidate=kingdom::card_at(tree,TreeView_GetSelection(tree));
+ if(candidate) {
+  const auto chosen=picker.has(candidate);
+  require(text(GetDlgItem(dialog,IDC_CARD_ADD))==kingdom::ui::tr(chosen?L"Bereits gewählt":L"Stapel hinzufügen"),"Ordered Add caption is not localized for chosen state.");
+  require(bool(IsWindowEnabled(GetDlgItem(dialog,IDC_CARD_ADD)))==(!chosen && picker.selected.size()<20),"Ordered Add enabled state is incorrect.");
+ }
+ const auto list=GetDlgItem(dialog,IDC_CARD_SELECTION);
+ require(SendMessageW(list,LB_GETCOUNT,0,0)==static_cast<LRESULT>(picker.selected.size()),"Ordered list count disagrees with selected cards.");
+ for(std::size_t i=0;i<picker.selected.size();++i) {
+  const auto length=SendMessageW(list,LB_GETTEXTLEN,i,0);require(length>=0,"Missing ordered label.");
+  std::wstring label(static_cast<std::size_t>(length)+1,L'\0');SendMessageW(list,LB_GETTEXT,i,reinterpret_cast<LPARAM>(label.data()));label.resize(static_cast<std::size_t>(length));
+  require(label==std::to_wstring(i+1)+L". "+kingdom::card_title(*picker.selected[i]),"Ordered labels or numbering disagree with selected cards.");
+ }
+}
 struct Session {
  HIMAGELIST initial=nullptr;std::filesystem::path output;std::wstring name;
  void begin(HWND dialog,const std::filesystem::path& directory,std::wstring label) {
@@ -70,24 +96,25 @@ struct Session {
   initial=TreeView_GetImageList(tree,TVSIL_STATE);
   const auto& picker=*reinterpret_cast<const kingdom::Picker*>(GetWindowLongPtrW(dialog,DWLP_USER));
   require(initial==picker.checks_images,"Attached image list differs from picker-owned list at initialization.");
-  if(picker.mode==kingdom::CardSelection::multiple)require(initial && ImageList_GetImageCount(initial)>=3,"Custom checkbox image list missing at initialization.");
-  else require(initial==nullptr,"Single/ordered selection has a state image list.");
+  if(picker.mode!=kingdom::CardSelection::single)require(initial && ImageList_GetImageCount(initial)>=3,"Custom checkbox image list missing at initialization.");
+  else require(initial==nullptr,"Single selection has a state image list.");
  }
  void stable(HWND tree)const{require(TreeView_GetImageList(tree,TVSIL_STATE)==initial,"Checkbox image list replaced after initial creation.");}
  void run(HWND dialog,kingdom::Picker& picker) {
   const auto tree=GetDlgItem(dialog,IDC_CARD_TREE);stable(tree);
   require(initial==picker.checks_images,"Picker lost checkbox image ownership.");
-  if(picker.mode!=kingdom::CardSelection::multiple) {
-   require(!(GetWindowLongPtrW(tree,GWL_STYLE)&TVS_CHECKBOXES),"Single/ordered selection has native checkboxes.");
+  if(picker.mode==kingdom::CardSelection::single) {
+   require(!(GetWindowLongPtrW(tree,GWL_STYLE)&TVS_CHECKBOXES),"Single selection has native checkboxes.");
    for(const auto* query:{L"",L"village",L"market",L""}) {
     SetDlgItemTextW(dialog,IDC_CARD_QUERY,query);
     for(auto group=TreeView_GetRoot(tree);group;group=TreeView_GetNextSibling(tree,group))TreeView_Expand(tree,group,TVE_EXPAND);
     RedrawWindow(tree,nullptr,nullptr,RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);stable(tree);
-    for(const auto& entry:picker.visible)require(TreeView_GetItemState(tree,entry.first,TVIS_STATEIMAGEMASK)==0,"Single/ordered card has state-image bits.");
+    for(const auto& entry:picker.visible)require((TreeView_GetItemState(tree,entry.first,TVIS_STATEIMAGEMASK)&TVIS_STATEIMAGEMASK)==0,"Single card has state-image bits.");
    }
    Snapshot full(dialog);full.save(output/(name+L"-no-checkbox-dialog.png"));return;
   }
   require(picker.selected.empty(),"Fixture starts with selected cards.");
+  selection_invariants(dialog,picker);
   SetDlgItemTextW(dialog,IDC_CARD_QUERY,L"");
   for(auto group=TreeView_GetRoot(tree);group;group=TreeView_GetNextSibling(tree,group))TreeView_Expand(tree,group,TVE_EXPAND);
   RedrawWindow(tree,nullptr,nullptr,RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);stable(tree);
@@ -100,6 +127,7 @@ struct Session {
   const auto click=MAKELPARAM((rect.left+rect.right)/2,(rect.top+rect.bottom)/2);
   SendMessageW(tree,WM_LBUTTONDOWN,MK_LBUTTON,click);SendMessageW(tree,WM_LBUTTONUP,0,click);
   require(picker.selected.size()==1 && std::string_view(picker.selected.front()->id)=="village" && TreeView_GetCheckState(tree,first),"Checkbox mouse message did not select Village.");
+  selection_invariants(dialog,picker);
   RedrawWindow(tree,nullptr,nullptr,RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);stable(tree);
   Snapshot checked(tree);no_black_margin(checked.dc,rect);const auto checked_pixels=measure(checked.dc,rect);checked.save(output/(name+L"-checked-tree.png"));
   {Snapshot full(dialog);full.save(output/(name+L"-checked-dialog.png"));}
@@ -107,16 +135,60 @@ struct Session {
   require(empty_pixels.bright*100>=empty_pixels.total*65 && empty_pixels.luminance>=170,"Empty checkbox interior is dark.");
   require(checked_pixels.dark>=empty_pixels.dark+3 && checked_pixels.luminance+5<empty_pixels.luminance,"Checked checkbox has no visible dark checkmark.");
   const auto space=[&]{const auto beeps=silent_control_test::blocked.load();SendMessageW(tree,WM_KEYDOWN,VK_SPACE,1);SendMessageW(tree,WM_CHAR,L' ',1);SendMessageW(tree,WM_KEYUP,VK_SPACE,0xC0000001);require(silent_control_test::blocked.load()==beeps,"Space requested a Windows alert (silenced in test).");};
-  SetFocus(tree);space();require(picker.selected.empty() && !TreeView_GetCheckState(tree,first),"Space down/char/up did not toggle exactly once to empty.");
-  space();require(picker.selected.size()==1 && TreeView_GetCheckState(tree,first),"Space down/char/up did not toggle exactly once to checked.");
+  SetFocus(tree);space();require(picker.selected.empty() && !TreeView_GetCheckState(tree,first),"Space down/char/up did not toggle exactly once to empty.");selection_invariants(dialog,picker);
+  space();require(picker.selected.size()==1 && TreeView_GetCheckState(tree,first),"Space down/char/up did not toggle exactly once to checked.");selection_invariants(dialog,picker);
   const auto selected=picker.selected;
   for(const auto* query:{L"market",L"smithy",L"village",L""}) {
    SetDlgItemTextW(dialog,IDC_CARD_QUERY,query);UpdateWindow(tree);stable(tree);
    require(picker.selected==selected,"Search changed selected cards.");
-   for(const auto& entry:picker.visible)require(bool(TreeView_GetCheckState(tree,entry.first))==picker.has(entry.second),"Search renders wrong checkbox state.");
+   selection_invariants(dialog,picker);
   }
   for(auto group=TreeView_GetRoot(tree);group;group=TreeView_GetNextSibling(tree,group)){TreeView_Expand(tree,group,TVE_COLLAPSE);TreeView_Expand(tree,group,TVE_EXPAND);}
   UpdateWindow(tree);stable(tree);require(picker.selected==selected,"Expansion changed selected cards.");
+  selection_invariants(dialog,picker);
+  if(picker.mode==kingdom::CardSelection::ordered)ordered(dialog,picker);
+ }
+ void ordered(HWND dialog,kingdom::Picker& picker) {
+  const auto progress=[&](const char* stage){std::ofstream file(output/(name+L"-progress.txt"),std::ios::app);file<<stage<<std::endl;};
+  progress("ordered-start");
+  const auto tree=GetDlgItem(dialog,IDC_CARD_TREE),list=GetDlgItem(dialog,IDC_CARD_SELECTION);
+  silent_control_test::guard.attach(tree);
+  const auto validate=[&]{stable(tree);selection_invariants(dialog,picker);};
+  const auto select=[&](const char* id){const auto item=card_item(picker,id);require(item!=nullptr,"Missing ordered fixture card.");TreeView_EnsureVisible(tree,item);TreeView_SelectItem(tree,item);return item;};
+  const auto mouse=[&](HTREEITEM item){const auto r=checkbox_rect(tree,item);const auto xy=MAKELPARAM((r.left+r.right)/2,(r.top+r.bottom)/2);SendMessageW(tree,WM_LBUTTONDOWN,MK_LBUTTON,xy);SendMessageW(tree,WM_LBUTTONUP,0,xy);validate();};
+  const auto twice=[&](HTREEITEM item){RECT r{};require(TreeView_GetItemRect(tree,item,&r,TRUE)!=FALSE,"Missing double-click label.");const auto xy=MAKELPARAM(r.left+3,(r.top+r.bottom)/2);PostMessageW(tree,WM_LBUTTONDOWN,MK_LBUTTON,xy);PostMessageW(tree,WM_LBUTTONUP,0,xy);PostMessageW(tree,WM_LBUTTONDBLCLK,MK_LBUTTON,xy);PostMessageW(tree,WM_LBUTTONUP,0,xy);MSG message{};unsigned count=0;while(count++<16 && PeekMessageW(&message,tree,WM_MOUSEFIRST,WM_MOUSELAST,PM_REMOVE))DispatchMessageW(&message);validate();};
+  progress("before-double-clicks");
+  const auto village=select("village");twice(village);require(picker.selected.size()==1,"Double-click removed an already chosen card.");
+  const auto market=select("market");twice(market);require(picker.selected.size()==2,"Double-click failed to add card.");twice(market);require(picker.selected.size()==2,"Double-click duplicated chosen card.");
+  mouse(select("village"));require(picker.selected.size()==1,"Unchecking failed to remove ordered card.");mouse(select("village"));require(picker.selected.size()==2 && std::string_view(picker.selected.back()->id)=="village","Rechecking did not append at end.");
+  SendMessageW(list,LB_SETCURSEL,0,0);SendMessageW(dialog,WM_COMMAND,IDC_CARD_REMOVE,0);validate();require(picker.selected.size()==1 && !picker.has(kingdom::card_at(tree,market)),"Lower Remove did not clear corresponding checkbox.");
+  progress("before-capacity");
+  require(picker.cards.size()>=21,"Ordered capacity fixture needs at least 21 cards.");
+  for(const auto& entry:picker.visible) {
+   if(picker.selected.size()==20)break;if(picker.has(entry.second))continue;
+   TreeView_SelectItem(tree,entry.first);SendMessageW(dialog,WM_COMMAND,IDC_CARD_ADD,0);validate();
+  }
+  require(picker.selected.size()==20,"Could not fill 20 ordered slots.");
+  const auto saved=picker.selected;
+  for(const auto& entry:picker.visible)if(!picker.has(entry.second)) {
+   TreeView_EnsureVisible(tree,entry.first);TreeView_SelectItem(tree,entry.first);SendMessageW(dialog,WM_COMMAND,IDC_CARD_ADD,0);validate();require(picker.selected==saved,"21st Add changed ordered selection.");
+   mouse(entry.first);require(picker.selected==saved,"21st checkbox changed ordered selection.");
+   const auto beeps=silent_control_test::blocked.load();SetFocus(tree);SendMessageW(tree,WM_KEYDOWN,VK_SPACE,1);SendMessageW(tree,WM_CHAR,L' ',1);SendMessageW(tree,WM_KEYUP,VK_SPACE,0xC0000001);validate();
+   require(picker.selected==saved,"21st Space sequence changed ordered selection.");require(silent_control_test::blocked.load()==beeps,"Rejected ordered Space requested an alert.");break;
+  }
+  progress("before-drag");
+  SendMessageW(list,LB_SETTOPINDEX,0,0);RECT first{},second{};SendMessageW(list,LB_GETITEMRECT,0,reinterpret_cast<LPARAM>(&first));SendMessageW(list,LB_GETITEMRECT,1,reinterpret_cast<LPARAM>(&second));
+  SendMessageW(list,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(8,first.top+2));SendMessageW(list,WM_MOUSEMOVE,MK_LBUTTON,MAKELPARAM(8,second.bottom-1));SendMessageW(list,WM_LBUTTONUP,0,MAKELPARAM(8,second.bottom-1));validate();require(picker.selected[1]==saved[0] && picker.selected[0]==saved[1],"Ordered drag failed.");
+  progress("before-alt");
+  SendMessageW(list,LB_SETCURSEL,1,0);const auto beeps=silent_control_test::blocked.load();SendMessageW(list,WM_SYSKEYDOWN,VK_UP,1L<<29);validate();require(picker.selected==saved,"Ordered Alt+Up failed.");require(silent_control_test::blocked.load()==beeps,"Ordered Alt+Up requested an alert.");
+  progress("before-delete");
+  SendMessageW(list,LB_SETCURSEL,0,0);SetFocus(list);SendMessageW(list,WM_KEYDOWN,VK_DELETE,1);SendMessageW(list,WM_KEYUP,VK_DELETE,0xC0000001);validate();require(picker.selected.size()==19,"Ordered Delete failed.");
+  progress("before-clear");
+  for(unsigned tries=0;!picker.selected.empty() && tries<21;++tries){SendMessageW(list,LB_SETCURSEL,0,0);SendMessageW(dialog,WM_COMMAND,IDC_CARD_REMOVE,0);validate();}
+  progress("after-clear");
+  require(picker.selected.empty(),"Ordered Remove did not clear the selection within 21 attempts.");
+  require(!IsWindowEnabled(GetDlgItem(dialog,IDOK)),"Empty ordered selection can be accepted.");
+  const auto root=TreeView_GetRoot(tree);if(root)TreeView_EnsureVisible(tree,root);
  }
 };
 }

@@ -4,7 +4,7 @@
 
 ## English
 
-**Test package, not yet released.** v0.1.1 remains a GitHub draft until visual acceptance. The published v0.1.0 download stays unchanged. This test version replaces the black squares in card selection with light checkboxes and dark checkmarks. Automated display checks pass; please confirm the appearance on your screen.
+**Test package, not yet released.** v0.1.1 remains a GitHub draft until visual acceptance. The published v0.1.0 download stays unchanged. The Typhoon picker is being revised to offer visible checkboxes as well as its numbered list. The revised behavior still needs testing and visual acceptance.
 
 An unofficial mod for **Dominion on Windows/Steam, game build 3315**. Choose from 89 campaign effects, combine up to 32 entries, and customize your Kingdom in a bilingual F8 editor. A separately installed copy of Dominion is required; this mod does not unlock DLC.
 
@@ -29,6 +29,8 @@ Search by English or German name, effect ID, or description. Filters include eff
 
 Card selection supports multiple targets, card previews, and expansion descriptions followed directly by scrollable rules. Reorder active effects or Typhoon targets by dragging, or use **Alt+Up/Down**; **Delete** removes the selected entry while its list has focus. **Cancel** discards your effect changes.
 
+Typhoon is being given the same checkboxes as pile doubling: click a checkbox or press Space to select or deselect a pile. Clicking a card name only updates the preview; double-clicking the name adds it without removing an existing choice. The numbered list and checkmarks stay synchronized; deselecting removes the pile and selecting it again appends it at the end. The add button reads **Already selected** and is disabled for a selected pile. Checkboxes use white fill, a strong dark-brown outline and tick, and an opaque paper-colored outer edge. Single-target selection and expansion headings keep no checkboxes. Automated checks pass; visual acceptance by the user is still pending.
+
 ### Online play and bans
 
 Campaign-effect gameplay is supported for **local play and pass-and-play**. F8 also opens in online/private Kingdom selection, but the server currently does not apply these effects. The automatic doubling of randomly drawn piles is local-only.
@@ -51,7 +53,7 @@ To play without the mod, close the game and start it normally through Steam. To 
 
 ## Deutsch
 
-**Testpaket, noch nicht veröffentlicht.** v0.1.1 bleibt bis zur sichtbaren Abnahme ein GitHub-Entwurf. Der veröffentlichte v0.1.0-Download bleibt unverändert. Die schwarzen Kästchen der Kartenauswahl werden durch helle Checkboxen mit dunklem Haken ersetzt. Die automatisierten Bildprüfungen bestehen; bitte die Darstellung auf deinem Bildschirm bestätigen.
+**Testpaket, noch nicht veröffentlicht.** v0.1.1 bleibt bis zur sichtbaren Abnahme ein GitHub-Entwurf. Der veröffentlichte v0.1.0-Download bleibt unverändert. Die Taifun-Auswahl erhält sichtbare Checkboxen zusätzlich zur nummerierten Liste. Die automatisierte Prüfung besteht; die sichtbare Nutzerabnahme bleibt offen.
 
 Ein inoffizieller Mod für **Dominion unter Windows/Steam, Spielbuild 3315**. Im zweisprachigen F8-Editor stehen 89 Kampagneneffekte zur Auswahl; bis zu 32 Einträge lassen sich kombinieren. Eine eigene Dominion-Installation ist erforderlich. Der Mod schaltet keine DLCs frei.
 
@@ -75,6 +77,8 @@ Beide Stapel beginnen mit **20 statt 10 Karten**. Für eine bewusste Wiederholun
 Die Suche findet deutsche und englische Namen, Effekt-IDs und Beschreibungstexte. Filter berücksichtigen Effektart und Auslösezeitpunkt. Die Tabelle zeigt Wirkung, Voraussetzungen und Teststand. **Ungetestete** Effekte bleiben auswählbar; einfache und mehrfache Anwendung können unterschiedlich weit geprüft sein.
 
 Die Kartenauswahl bietet mehrere Ziele, Kartenvorschauen sowie Erweiterungsbeschreibungen mit direkt anschließenden scrollbaren Regeln. Aktive Effekte und Taifun-Ziele lassen sich durch Ziehen oder **Alt+Pfeil hoch/runter** sortieren. **Entf** entfernt den gewählten Eintrag bei Fokus in seiner Liste. **Abbrechen** verwirft die Effektänderungen.
+
+Taifun erhält dieselben Checkboxen wie die Stapelverdopplung: Klick auf das Kästchen oder Leertaste wählt einen Stapel an beziehungsweise ab. Ein Klick auf den Kartennamen ändert nur die Vorschau; ein Doppelklick fügt die Karte hinzu, ohne eine vorhandene Auswahl zu entfernen. Nummerierte Liste und Haken bleiben synchron; Abwählen entfernt den Stapel, erneutes Anwählen hängt ihn hinten an. Für bereits gewählte Stapel ist der Hinzufügen-Button mit **Bereits gewählt** beschriftet und deaktiviert. Die Kästchen erhalten weiße Füllung, kräftige dunkelbraune Kontur und Haken sowie einen deckenden papierfarbenen Außenrand. Einzelzielauswahl und Erweiterungsüberschriften bleiben ohne Checkboxen. Die automatisierten Prüfungen bestehen; die sichtbare Abnahme durch den Nutzer bleibt offen.
 
 ### Online-Spiel und Banns
 

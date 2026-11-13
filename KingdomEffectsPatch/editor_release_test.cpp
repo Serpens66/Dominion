@@ -15,6 +15,7 @@ bool checked = false;
 bool picker_checked = false;
 unsigned picker_ticks = 0;
 bool ordered_checked=false;
+kingdom::CardTargets expected_ordered_commit;
 bool missing_art=false;
 bool online_checked = false;
 bool online_cancel = false;
@@ -282,7 +283,10 @@ BOOL CALLBACK inspect_ordered(HWND dialog,LPARAM) {
     KillTimer(nullptr,timer);
     try {
         auto& picker=*reinterpret_cast<kingdom::Picker*>(GetWindowLongPtrW(dialog,DWLP_USER));const auto tree=GetDlgItem(dialog,IDC_CARD_TREE);
-        check(picker.mode==kingdom::CardSelection::ordered && !(GetWindowLongPtrW(tree,GWL_STYLE)&TVS_CHECKBOXES),"Typhoon has unwanted checkboxes.");
+        check(picker.mode==kingdom::CardSelection::ordered && !(GetWindowLongPtrW(tree,GWL_STYLE)&TVS_CHECKBOXES),"Typhoon still uses native checkboxes.");
+        checkbox_checks::Session checkbox_session;
+        checkbox_session.begin(dialog,L"KingdomEffectsPatch/out/staging/ui-check",kingdom::ui::english()?L"ordered-en":L"ordered-de");
+        checkbox_session.run(dialog,picker);
         check(!IsWindowEnabled(GetDlgItem(dialog,IDOK)),"Empty Typhoon can be accepted.");
         const auto group=TreeView_GetRoot(tree);RECT label{};TreeView_GetItemRect(tree,group,&label,TRUE);
         SendMessageW(tree,WM_MOUSEMOVE,0,MAKELPARAM(label.left+3,(label.top+label.bottom)/2));
@@ -303,19 +307,19 @@ BOOL CALLBACK inspect_ordered(HWND dialog,LPARAM) {
         // Hover cannot choose the Add button's target.
         TreeView_Expand(tree,group,TVE_EXPAND);const auto first=TreeView_GetChild(tree,group),second=TreeView_GetNextSibling(tree,first);
         TreeView_SelectItem(tree,first);const auto* chosen=kingdom::card_at(tree,first);kingdom::preview(dialog,picker,kingdom::card_at(tree,second));
-        SendMessageW(dialog,WM_COMMAND,IDC_CARD_ADD,0);check(picker.selected.size()==1 && picker.selected.front()==chosen,"Hover replaced the chosen target.");
-        SendMessageW(dialog,WM_COMMAND,IDC_CARD_ADD,0);check(picker.selected.size()==1,"Duplicate Typhoon pile accepted.");
-        TreeView_SelectItem(tree,second);SendMessageW(tree,WM_KEYDOWN,VK_SPACE,0);check(picker.selected.size()==2,"Space does not add selected pile.");
+        SendMessageW(dialog,WM_COMMAND,IDC_CARD_ADD,0);check(picker.selected.size()==1 && picker.selected.front()==chosen,"Hover replaced the chosen target.");checkbox_checks::selection_invariants(dialog,picker);
+        SendMessageW(dialog,WM_COMMAND,IDC_CARD_ADD,0);check(picker.selected.size()==1,"Duplicate Typhoon pile accepted.");checkbox_checks::selection_invariants(dialog,picker);
+        TreeView_SelectItem(tree,second);SendMessageW(tree,WM_KEYDOWN,VK_SPACE,0);SendMessageW(tree,WM_CHAR,L' ',0);SendMessageW(tree,WM_KEYUP,VK_SPACE,0xC0000001);check(picker.selected.size()==2,"Space sequence does not add selected pile once.");checkbox_checks::selection_invariants(dialog,picker);
         SetDlgItemTextW(dialog,IDC_CARD_QUERY,L"");
-        for(const auto& entry:picker.visible){if(picker.has(entry.second))continue;TreeView_SelectItem(tree,entry.first);kingdom::add_selected_pile(dialog,picker);if(picker.selected.size()==20)break;}
+        for(const auto& entry:picker.visible){if(picker.has(entry.second))continue;TreeView_SelectItem(tree,entry.first);kingdom::add_selected_pile(dialog,picker);checkbox_checks::selection_invariants(dialog,picker);if(picker.selected.size()==20)break;}
         check(picker.selected.size()==20 && !IsWindowEnabled(GetDlgItem(dialog,IDC_CARD_ADD)),"Typhoon capacity or Add state incorrect.");
         const auto saved=picker.selected;for(const auto& entry:picker.visible)if(!picker.has(entry.second)){TreeView_SelectItem(tree,entry.first);kingdom::add_selected_pile(dialog,picker);break;}
-        check(picker.selected==saved,"21st Typhoon pile changed draft.");
+        check(picker.selected==saved,"21st Typhoon pile changed draft.");checkbox_checks::selection_invariants(dialog,picker);
         const auto list=GetDlgItem(dialog,IDC_CARD_SELECTION);SendMessageW(list,LB_SETTOPINDEX,0,0);RECT r0{},r2{};
         SendMessageW(list,LB_GETITEMRECT,0,reinterpret_cast<LPARAM>(&r0));SendMessageW(list,LB_GETITEMRECT,1,reinterpret_cast<LPARAM>(&r2));
         SendMessageW(list,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(8,r0.top+2));SendMessageW(list,WM_MOUSEMOVE,MK_LBUTTON,MAKELPARAM(8,r2.bottom-1));SendMessageW(list,WM_LBUTTONUP,0,MAKELPARAM(8,r2.bottom-1));
-        check(picker.selected[1]==saved[0] && picker.selected[0]==saved[1],"Typhoon drag reorder failed.");
-        SendMessageW(list,LB_SETCURSEL,1,0);SendMessageW(list,WM_SYSKEYDOWN,VK_UP,1L<<29);check(picker.selected==saved,"Typhoon Alt+Up failed.");
+        check(picker.selected[1]==saved[0] && picker.selected[0]==saved[1],"Typhoon drag reorder failed.");checkbox_checks::selection_invariants(dialog,picker);
+        SendMessageW(list,LB_SETCURSEL,1,0);SendMessageW(list,WM_SYSKEYDOWN,VK_UP,1L<<29);check(picker.selected==saved,"Typhoon Alt+Up failed.");checkbox_checks::selection_invariants(dialog,picker);
         RECT client{};GetClientRect(list,&client);
         const auto outside_before=picker.selected;
         SendMessageW(list,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(8,r0.top+2));SendMessageW(list,WM_MOUSEMOVE,MK_LBUTTON,MAKELPARAM(8,client.bottom+10));SendMessageW(list,WM_LBUTTONUP,0,MAKELPARAM(8,client.bottom+10));
@@ -326,10 +330,11 @@ BOOL CALLBACK inspect_ordered(HWND dialog,LPARAM) {
         check(SendMessageW(list,WM_GETDLGCODE,VK_ESCAPE,0)&DLGC_WANTALLKEYS,"Dialog would consume drag Escape.");
         SendMessageW(list,WM_KEYDOWN,VK_ESCAPE,0);check(picker.selected==outside_before,"Edge-scroll Escape changed order.");
         SendMessageW(list,LB_SETCURSEL,0,0);SetFocus(tree);SendMessageW(list,WM_KEYDOWN,VK_DELETE,0);check(picker.selected.size()==20,"Unfocused list consumed Delete.");
-        SetFocus(list);SendMessageW(list,WM_KEYDOWN,VK_DELETE,0);check(picker.selected.size()==19,"Typhoon Delete failed.");
+        SetFocus(list);SendMessageW(list,WM_KEYDOWN,VK_DELETE,0);check(picker.selected.size()==19,"Typhoon Delete failed.");checkbox_checks::selection_invariants(dialog,picker);
+        expected_ordered_commit=picker.selected;
         ordered_checked=true;
     }catch(const std::exception& error){failure=error.what();}
-    PostMessageW(dialog,WM_COMMAND,IDCANCEL,0);return FALSE;
+    PostMessageW(dialog,WM_COMMAND,failure.empty()?IDOK:IDCANCEL,0);return FALSE;
 }
 void CALLBACK inspect_ordered_dialog(HWND,UINT,UINT_PTR,DWORD){EnumThreadWindows(GetCurrentThreadId(),inspect_ordered,0);}
 void CALLBACK inspect_card_dialog(HWND, UINT, UINT_PTR, DWORD) { EnumThreadWindows(GetCurrentThreadId(),inspect_picker,0); }
@@ -392,9 +397,11 @@ int main() {
             KillTimer(nullptr,timer);if(!picker_checked && failure.empty())failure="Scaled picker check did not run.";
         }
         if(failure.empty()) for(const auto language:{kingdom::ui::Language::de,kingdom::ui::Language::en}){
-            kingdom::ui::selected=language;ordered_checked=false;timer=SetTimer(nullptr,0,100,inspect_ordered_dialog);
-            kingdom::pick_cards(nullptr,kingdom::ui::pick(L"Taifun",L"Typhoon"),cards,{},kingdom::CardSelection::ordered,[](const kingdom::CardTargets&,bool){return std::wstring{};});
+            kingdom::ui::selected=language;ordered_checked=false;expected_ordered_commit.clear();timer=SetTimer(nullptr,0,100,inspect_ordered_dialog);
+            kingdom::CardTargets accepted;
+            kingdom::pick_cards(nullptr,kingdom::ui::pick(L"Taifun",L"Typhoon"),cards,{},kingdom::CardSelection::ordered,[&](const kingdom::CardTargets& selected,bool repeat){check(!repeat,"Unexpected Typhoon repeat flag.");accepted=selected;return std::wstring{};});
             KillTimer(nullptr,timer);if(!ordered_checked && failure.empty())failure="Ordered picker test did not run.";
+            if(failure.empty())check(accepted.size()==19 && accepted==expected_ordered_commit,"Done did not submit the current ordered target IDs.");
         }
         kingdom::ui::selected=kingdom::ui::Language::de;
         if (failure.empty()) {

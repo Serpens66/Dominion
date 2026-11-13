@@ -14,7 +14,7 @@ int wmain(int argc,wchar_t** argv) {
   const auto folder=fs::temp_directory_path()/name;require(fs::create_directory(folder),"Scratch exists.");
   const Probe probe{"twist_big_ideas",0,{5,5},Metric::hand,0,0,1,base_kingdom};write_profile(folder,probe,0);
   Child child(exe,name);const auto base=child.image_base();redirect_save_folder(child,base,folder);child.resume();wait_for_client(child,base,folder);
-  const auto result=clear_request(child,dll,0);std::printf("Game-hosted checkbox result: %lu\n",result);std::wprintf(L"Disposable profile: %ls\n",folder.c_str());
+  const auto result=clear_request(child,dll,0,60000);std::printf("Game-hosted checkbox result: %lu\n",result);std::wprintf(L"Disposable profile: %ls\n",folder.c_str());
   return result?1:0;
  }catch(const std::exception& e){std::fprintf(stderr,"%s\n",e.what());return 1;}
 }

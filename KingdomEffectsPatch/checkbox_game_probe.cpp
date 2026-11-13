@@ -9,6 +9,14 @@ const kingdom::CardTarget fixtures[]{
  {"village",L"Dorf",L"Basisspiel",L"dorf village",L"Aktion",L"3",L"+1 Karte\r\n+2 Aktionen","base","actions",3,0,0,1},
  {"market",L"Markt",L"Basisspiel",L"markt market",L"Aktion",L"5",L"+1 Karte\r\n+1 Aktion\r\n+1 Kauf\r\n+1 Münze","base","actions",5,0,0,1},
  {"smithy",L"Schmiede",L"Basisspiel",L"schmiede smithy",L"Aktion",L"4",L"+3 Karten","base","actions",4,0,0,1},
+#define CHECKBOX_FIXTURE(id,title) {id,title,L"Basisspiel",L##id,L"Aktion",L"3",L"Testkarte","base","actions",3,0,0,1}
+ CHECKBOX_FIXTURE("cellar",L"Keller"),CHECKBOX_FIXTURE("chapel",L"Kapelle"),CHECKBOX_FIXTURE("moat",L"Burggraben"),
+ CHECKBOX_FIXTURE("harbinger",L"Vorbotin"),CHECKBOX_FIXTURE("merchant",L"Händlerin"),CHECKBOX_FIXTURE("vassal",L"Vasall"),
+ CHECKBOX_FIXTURE("workshop",L"Werkstatt"),CHECKBOX_FIXTURE("bureaucrat",L"Bürokrat"),CHECKBOX_FIXTURE("gardens",L"Gärten"),
+ CHECKBOX_FIXTURE("militia",L"Miliz"),CHECKBOX_FIXTURE("moneylender",L"Geldverleiher"),CHECKBOX_FIXTURE("poacher",L"Wilddiebin"),
+ CHECKBOX_FIXTURE("remodel",L"Umbau"),CHECKBOX_FIXTURE("throne_room",L"Thronsaal"),CHECKBOX_FIXTURE("bandit",L"Banditin"),
+ CHECKBOX_FIXTURE("council_room",L"Ratsversammlung"),CHECKBOX_FIXTURE("festival",L"Jahrmarkt"),CHECKBOX_FIXTURE("laboratory",L"Laboratorium"),
+#undef CHECKBOX_FIXTURE
 };
 INT_PTR CALLBACK dialog_proc(HWND dialog,UINT message,WPARAM wparam,LPARAM lparam) {
  const auto value=kingdom::picker_proc(dialog,message,wparam,lparam);
@@ -61,7 +69,7 @@ extern "C" DWORD WINAPI checkbox_game_probe(void*) {
  using namespace checkbox_game;EnumWindows(find,reinterpret_cast<LPARAM>(&owner));if(!owner)return 921;
  done=CreateEventW(nullptr,TRUE,FALSE,nullptr);if(!done)return 922;
  if(!SetTimer(owner,0x7350,20,launch))return 923;
- if(WaitForSingleObject(done,25000)!=WAIT_OBJECT_0)return 924;
+ if(WaitForSingleObject(done,55000)!=WAIT_OBJECT_0)return 924;
  CloseHandle(done);done=nullptr;return result;
 }
 #pragma comment(linker,"/EXPORT:RoundtripProbe=_checkbox_game_probe@4")

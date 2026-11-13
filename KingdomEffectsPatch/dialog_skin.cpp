@@ -247,7 +247,7 @@ HIMAGELIST DialogSkin::checks() const {
     if (!bitmap.value || !storage) return nullptr;
     auto* pixels = static_cast<Pixel*>(storage);
     const double margin = (std::max)(1.0, size / 12.0);
-    const double border = (std::max)(1.0, size / 13.0);
+    const double border = (std::max)(2.0, size / 10.0);
     const auto near_segment = [](double x, double y, double ax, double ay,
                                  double bx, double by, double radius) {
         const double dx = bx - ax, dy = by - ay;
@@ -270,10 +270,10 @@ HIMAGELIST DialogSkin::checks() const {
                     if (!state) continue;
                     unsigned r = paper & 0xFFu, g = (paper >> 8) & 0xFFu, b = (paper >> 16) & 0xFFu;
                     if (px >= margin && py >= margin && px < size - margin && py < size - margin) {
-                        r = 255; g = 250; b = 232;
+                        r = 255; g = 255; b = 255;
                         if (px < margin + border || py < margin + border ||
                             px >= size - margin - border || py >= size - margin - border) {
-                            r = 116; g = 79; b = 42;
+                            r = 86; g = 55; b = 29;
                         } else if (state == 2 &&
                             (near_segment(px, py, size * 0.26, size * 0.50,
                                           size * 0.44, size * 0.69, size * 0.065) ||

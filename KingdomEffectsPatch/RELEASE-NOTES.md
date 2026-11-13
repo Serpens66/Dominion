@@ -4,7 +4,7 @@
 
 Test update for **Dominion on Windows/Steam, game build 3315**. This GitHub draft must not be published before visual acceptance; the public v0.1.0 release remains unchanged.
 
-**Test fix:** Light card-selection checkboxes with clear dark checkmarks replace the black squares. Selection is preserved while searching. Space toggles the choice without requesting a Windows warning sound. Automated in-game-process display checks pass; visual confirmation on your screen is still needed.
+**Test update:** Typhoon now has the same checkboxes as pile doubling: click a checkbox or press Space to select or deselect a pile. Clicking a card name only updates the preview; double-clicking the name adds it without removing an existing choice. The numbered list and checkmarks stay synchronized; deselecting removes the pile and selecting it again appends it at the end. The add button reads **Already selected** and is disabled for a selected pile. Checkboxes use white fill, a strong dark-brown outline and tick, and an opaque paper-colored outer edge. Single-target selection and expansion headings keep no checkboxes. Automated checks pass; visual acceptance by the user is still pending.
 
 - Customize local and pass-and-play Kingdoms with **89 selectable campaign effects**, combining up to **32 entries**.
 - Use **F8** to search and filter effects, read their prerequisites and test status, choose multiple card targets, and add intentional repeats. For example, double Village and Market together to start with 20 cards in each pile.
@@ -23,7 +23,7 @@ To play without the mod, restart Dominion normally through Steam.
 
 Testupdate für **Dominion unter Windows/Steam, Spielbuild 3315**. Dieser GitHub-Entwurf darf vor der sichtbaren Abnahme nicht veröffentlicht werden; das öffentliche Release v0.1.0 bleibt unverändert.
 
-**Testkorrektur:** Helle Auswahlkästchen mit deutlichem dunklem Haken ersetzen die schwarzen Flächen. Die Auswahl bleibt beim Suchen erhalten. Die Leertaste schaltet um, ohne einen Windows-Warnton anzufordern. Die automatisierten Bildprüfungen im Spielprozess bestehen; die sichtbare Bestätigung auf deinem Bildschirm steht noch aus.
+**Testkorrektur:** Taifun erhält dieselben Checkboxen wie die Stapelverdopplung: Klick auf das Kästchen oder Leertaste wählt einen Stapel an beziehungsweise ab. Ein Klick auf den Kartennamen ändert nur die Vorschau; ein Doppelklick fügt die Karte hinzu, ohne eine vorhandene Auswahl zu entfernen. Nummerierte Liste und Haken bleiben synchron; Abwählen entfernt den Stapel, erneutes Anwählen hängt ihn hinten an. Für bereits gewählte Stapel ist der Hinzufügen-Button mit **Bereits gewählt** beschriftet und deaktiviert. Die Kästchen erhalten weiße Füllung, kräftige dunkelbraune Kontur und Haken sowie einen deckenden papierfarbenen Außenrand. Einzelzielauswahl und Erweiterungsüberschriften bleiben ohne Checkboxen. Die automatisierten Prüfungen bestehen; die sichtbare Abnahme durch den Nutzer bleibt offen.
 
 - Königreiche in **Lokal spielen und Weitergeben** mit **89 auswählbaren Kampagneneffekten** gestalten; bis zu **32 Einträge** kombinieren.
 - In **F8** Effekte suchen und filtern, Voraussetzungen und Teststand lesen, mehrere Zielkarten wählen und Effekte bewusst wiederholen. Beispielsweise Dorf und Markt gemeinsam auf jeweils 20 Karten verdoppeln.
