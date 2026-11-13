@@ -1,0 +1,35 @@
+# v0.1.0
+
+## English
+
+First public release for **Dominion on Windows/Steam, game build 3315**.
+
+- Customize local and pass-and-play Kingdoms with **89 selectable campaign effects**, combining up to **32 entries**.
+- Use **F8** to search and filter effects, read their prerequisites and test status, choose multiple card targets, and add intentional repeats. For example, double Village and Market together to start with 20 cards in each pile.
+- Switch the editor between **Deutsch / English** using **Language:**. Browse card previews and scrollable expansion rules.
+- Set more than five online bans using the game's existing collection, up to **700 cards and landscapes combined** in your online list.
+- Keep private games private when choosing **Clear**.
+- Double-click launcher, normal Steam installation and profile, automatic rotation of three profile backups. No Python, Visual Studio, separate game copy or test profile required.
+
+**Install:** Extract the entire ZIP, close Dominion and double-click **Dominion-mit-Mod-starten.cmd**. Wait for **Bereit**, then press **F8** in Kingdom selection. See README.md for a step-by-step example.
+
+**Limits:** Campaign effects currently work in local play and pass-and-play; the online editor cannot add server support. Automatic doubling of random piles is local-only. Some effects and repeat combinations remain untested. Larger ban lists have been tested in private games, but matchmaking and the full capacity remain open. The campaign-features popup can overflow; close it or hide it with **Don't show again**. DLC ownership is unchanged.
+
+To play without the mod, restart Dominion normally through Steam.
+
+## Deutsch
+
+Erstes öffentliches Release für **Dominion unter Windows/Steam, Spielbuild 3315**.
+
+- Königreiche in **Lokal spielen und Weitergeben** mit **89 auswählbaren Kampagneneffekten** gestalten; bis zu **32 Einträge** kombinieren.
+- In **F8** Effekte suchen und filtern, Voraussetzungen und Teststand lesen, mehrere Zielkarten wählen und Effekte bewusst wiederholen. Beispielsweise Dorf und Markt gemeinsam auf jeweils 20 Karten verdoppeln.
+- Mit **Language:** zwischen **Deutsch / English** umschalten. Kartenvorschauen und scrollbare Erweiterungsregeln direkt ansehen.
+- Mehr als fünf Online-Banns über die vorhandene Sammlung setzen: bis zu **700 Karten und Querkarten zusammen** in der eigenen Online-Liste.
+- **Privates Spiel** bleibt beim Anklicken von **Leer** privat.
+- Doppelklick-Starter mit normaler Steam-Installation und normalem Profil sowie bis zu drei automatischen Profilsicherungen. Kein Python, Visual Studio, keine Spielkopie und kein Testprofil erforderlich.
+
+**Installation:** ZIP vollständig entpacken, Dominion schließen und **Dominion-mit-Mod-starten.cmd** doppelklicken. Auf **Bereit** warten und in der Königreich-Auswahl **F8** drücken. Ein konkretes Beispiel steht in README.md.
+
+**Grenzen:** Kampagneneffekte funktionieren aktuell lokal und in Weitergeben; der Online-Editor ergänzt keine Serverunterstützung. Das automatische Verdoppeln zufälliger Stapel bleibt lokal. Einige Effekte und Wiederholungen sind noch ungetestet. Größere Bannlisten wurden privat geprüft, Matchmaking und volle Kapazität sind offen. Der Hinweis **Kampagnen-Features** kann überlaufen; schließen oder **Nicht wieder anzeigen** wählen. DLC-Besitz bleibt unverändert.
+
+Für eine Partie ohne Mod Dominion normal über Steam neu starten.

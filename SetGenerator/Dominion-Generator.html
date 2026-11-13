@@ -553,9 +553,10 @@
   .setup-group ul {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
-    column-gap: 1rem;
+    gap: .75rem;
     margin: 0;
-    padding-inline-start: 1.5rem;
+    padding: 0;
+    list-style: none;
   }
   #setup-result > p { max-width: none; }
   #setup-result li { position: relative; margin-block: .3rem; }
@@ -603,13 +604,15 @@
     /* Up to four complete card faces, approximately 10–18rem each. */
     max-inline-size: 73.65rem;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, max(10rem, calc((100% - 1.65rem) / 4))), 1fr));
-    align-items: start;
+    align-items: stretch;
     gap: .55rem;
     padding: 0;
     margin: .85rem 0 0;
     list-style: none;
   }
   :is(#cards, #planning-cards) li {
+    display: flex;
+    flex-direction: column;
     position: relative;
     padding: .55rem .7rem;
     background: var(--soft-bg);
@@ -702,10 +705,12 @@
     box-shadow: 0 .35rem 1rem var(--shadow);
     font-size: .9rem;
   }
-  :is(.card-preview, .result-card-visual) .card-art { width: 100%; height: auto; border-radius: .25rem; }
+  :is(.card-preview, .result-card-visual) .card-art { display: block; width: 100%; height: auto; border-radius: .25rem; }
   .result-card-visual { min-width: 0; margin-block: .4rem; }
   .result-card-visual .preview-edition { font-size: .8rem; color: var(--muted); margin: 0 0 .25rem; }
   .result-card-visual details { font-size: .85rem; }
+  :is(#cards, #planning-cards) li > label { margin-top: auto; padding-top: .35rem; }
+  .setup-group li { min-width: 0; }
   .related-mode { display: inline-flex; align-items: baseline; gap: .45rem; }
   #related-mode-help { font-size: .85rem; margin-top: .3rem; }
   .related-cards { margin-top: .5rem; padding-top: .5rem; border-top: 1px solid var(--line); }
@@ -735,11 +740,14 @@
     color: #19150f;
     font-family: Georgia, serif;
     isolation: isolate;
+    position: relative;
+    aspect-ratio: 344 / 524;
   }
+  .preview-face-landscape { aspect-ratio: 524 / 344; }
   :is(.card-preview, .result-card-visual) > [hidden], .preview-face .preview-face-art[hidden] { display: none; }
   .preview-face-title, .preview-face-footer {
     z-index: 1;
-    position: relative;
+    position: absolute;
     margin: 0;
     display: grid;
     place-items: center;
@@ -750,16 +758,18 @@
     overflow-wrap: anywhere;
   }
   .preview-face-title {
-    min-height: 15cqi;
+    inset: 0 0 auto;
+    height: 10%;
+    min-height: 0;
     background-image: var(--frame-top);
     font-size: clamp(.92rem, 7.2cqi, 1.4rem);
     line-height: 1.05;
   }
   .preview-face-body {
     /* The paper continues behind the transparent top of the footer sprite. */
-    --footer-overlap: 7cqi;
     min-width: 0;
-    margin-block-start: -1cqi;
+    position: absolute;
+    inset: 10% 0 0;
     background:
       var(--frame-paper) center top / calc(100% - 7cqi) calc(100% - 3cqi) no-repeat,
       var(--frame-pole) left 1.2cqi top / 2.3cqi calc(100% - 3cqi) no-repeat,
@@ -768,16 +778,19 @@
   .preview-face .preview-face-art {
     display: block;
     width: calc(100% - 7cqi);
-    aspect-ratio: 292 / 216;
-    margin-inline: auto;
+    position: absolute;
+    top: 0;
+    left: 3.5%;
+    height: 48%;
     object-fit: cover;
   }
   .preview-face-text {
-    min-height: 48cqi;
+    position: absolute;
+    inset: 48% 3.5% 7%;
+    min-height: 0;
     display: grid;
     align-items: center;
-    margin-inline: 3.5cqi;
-    padding: 6cqi 6cqi calc(6cqi + var(--footer-overlap));
+    padding: 4cqi 6cqi 5cqi;
     background: var(--frame-lip) top / 100% 3cqi no-repeat;
     font-size: clamp(.76rem, 4.8cqi, .92rem);
     line-height: 1.26;
@@ -794,10 +807,11 @@
   .preview-face-night .preview-face-title, .preview-face-night .preview-face-footer { color: #fff8eb; }
   .preview-face-footer .game-value-coin { color: #19150f; }
   .preview-face-footer {
-    grid-template-columns: 18cqi 1fr 12cqi;
+    inset: auto 0 0;
+    grid-template-columns: 22cqi 1fr 12cqi;
     gap: 1cqi;
-    min-height: 15cqi;
-    margin-block-start: calc(-1 * var(--footer-overlap));
+    height: 12%;
+    min-height: 0;
     background-image: var(--frame-bottom);
     font-size: clamp(.67rem, 4.6cqi, .88rem);
     line-height: 1.1;
@@ -805,13 +819,32 @@
   .preview-face-cost {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     gap: .12em;
     font-size: clamp(.65rem, 4.8cqi, 1rem);
   }
   .preview-face-cost .game-value { font-size: clamp(.78rem, 7cqi, 1.2rem); }
+  .preview-face-cost:has(.game-value + .game-value) { font-size: 4cqi; }
+  .preview-face-cost:has(.game-value + .game-value) .game-value { font-size: 5cqi; }
   .preview-face-expansion { width: 8cqi; height: 8cqi; }
+  .preview-face-footer > span { min-width: 0; max-height: 100%; }
+  .preview-face-types { display: block; }
+  .preview-face-text > .card-rules { width: 100%; min-width: 0; }
+  .preview-face:has(.preview-face-art[hidden]) .preview-face-text { top: 0; }
+  .preview-face-landscape .preview-face-title { height: 15%; font-size: 5cqi; }
+  .preview-face-landscape .preview-face-body { top: 15%; }
+  .preview-face-landscape .preview-face-art { width: 43%; height: 83%; }
+  .preview-face-landscape .preview-face-text {
+    inset: 0 3.5% 12% 47%;
+    padding: 3cqi 2cqi;
+    background: none;
+    font-size: 3.5cqi;
+  }
+  .preview-face-landscape:has(.preview-face-art[hidden]) .preview-face-text { left: 3.5%; }
+  .preview-face-landscape .preview-face-footer { height: 20%; font-size: 3cqi; }
+  .preview-face-landscape .preview-face-expansion { width: 5cqi; height: 5cqi; }
+  .card-transcript .printed-card-value .game-value { font-size: 2rem; }
   .preview-face-expansion .game-icon { width: 100%; height: 100%; filter: brightness(0); }
   .preview-face-night .preview-face-expansion .game-icon { filter: brightness(0) invert(1); }
   .preview-face .card-reference-hint { color: var(--ink); font-family: system-ui, sans-serif; }
@@ -2563,6 +2596,7 @@ function renderRelatedSection(state, card) {
   for (const preview of previews) {
     if (body.contains(preview.panel)) { closeCardPreview(preview); previews.delete(preview); }
   }
+  releaseCardVisuals(body);
   body.replaceChildren();
   const grouped = new Map();
   for (const group of card.relatedGroups ?? []) {
@@ -2609,28 +2643,70 @@ function renderRelatedSection(state, card) {
 
 function updatePreview(preview) {
   updateCardVisual(preview);
-  preview.button.setAttribute("aria-describedby", preview.content.rules.id);
+  preview.button.setAttribute("aria-describedby", preview.content.textRules.id);
 }
 
-function updateCardVisual(preview) {
-  const { card, button, panel } = preview;
-  const language = uiLanguage;
-  const pack = imageData;
-  if (preview.rendered?.language === language && preview.rendered.pack === pack) return;
-  const render = { language, pack };
-  preview.rendered = render;
-  const { face, heading, cost, typeLine, image, fullImage, rules, ruleBody, transcript, summary, editionNote } =
-    preview.content ??= buildPreviewContent(panel, card, Boolean(button));
-  const english = language === "en";
-  const [title, gameRules] = card.text[language];
-  heading.textContent = title;
-  panel.lang = language;
-  if (button) {
-    button.textContent = title;
-    button.lang = language;
+// Observe the fixed card frame, never the fitted text, to avoid resize loops.
+const pendingCardFits = new Set();
+let cardFitFrame = 0;
+const cardFaceObserver = new ResizeObserver(entries => {
+  for (const { target } of entries) scheduleCardFit(target);
+});
+document.fonts.ready.then(() => {
+  for (const face of document.querySelectorAll(".preview-face")) scheduleCardFit(face);
+});
+
+function scheduleCardFit(face) {
+  pendingCardFits.add(face);
+  if (cardFitFrame) return;
+  cardFitFrame = requestAnimationFrame(() => {
+    cardFitFrame = 0;
+    for (const target of pendingCardFits) {
+      if (target.isConnected && !target.hidden && target.clientWidth) fitCardFace(target);
+    }
+    pendingCardFits.clear();
+  });
+}
+
+function fitCardFace(face) {
+  const fit = (element, width, height) => {
+    if (!element || width <= 0 || height <= 0) return;
+    element.style.removeProperty("font-size");
+    const maximum = parseFloat(getComputedStyle(element).fontSize);
+    const fits = () => element.scrollWidth <= width + 1 && element.scrollHeight <= height + 1;
+    if (fits()) return;
+    let low = .5, high = maximum;
+    for (let step = 0; step < 12; step++) {
+      const middle = (low + high) / 2;
+      element.style.fontSize = middle + "px";
+      if (fits()) low = middle; else high = middle;
+    }
+    element.style.fontSize = low + "px";
+  };
+  const heading = face.querySelector(".preview-face-title");
+  fit(heading, heading.clientWidth, heading.clientHeight);
+  const body = face.querySelector(".preview-face-text");
+  const padding = getComputedStyle(body);
+  fit(body.firstElementChild,
+    body.clientWidth - parseFloat(padding.paddingLeft) - parseFloat(padding.paddingRight),
+    body.clientHeight - parseFloat(padding.paddingTop) - parseFloat(padding.paddingBottom));
+  const footer = face.querySelector(".preview-face-footer");
+  const footerStyle = getComputedStyle(footer);
+  const types = footer.children[1];
+  fit(types, types.clientWidth,
+    footer.clientHeight - parseFloat(footerStyle.paddingTop) - parseFloat(footerStyle.paddingBottom));
+}
+
+function releaseCardVisuals(container) {
+  for (const face of container.querySelectorAll(".preview-face")) {
+    cardFaceObserver.unobserve(face);
+    pendingCardFits.delete(face);
   }
-  renderCardCost(cost, card, language);
-  typeLine.textContent = card.types.map(type => catalog.types[language][type] ?? type).join(" · ");
+}
+
+function renderCardRules(rules, card, language) {
+  const english = language === "en";
+  const gameRules = card.text[language][1];
   const text = formatGameRules(gameRules);
   const paragraphs = (text || (english ? "See game setup." : "Siehe Spielaufbau.")).split(/\n\s*---\s*\n/);
   releaseTooltipPins(rules);
@@ -2646,15 +2722,39 @@ function updateCardVisual(preview) {
     const [kind, amount] = printedValue;
     rules.replaceChildren(makeGameValue(kind, amount || "1", language, amount !== ""));
   }
+}
+
+function updateCardVisual(preview) {
+  const { card, button, panel } = preview;
+  const language = uiLanguage;
+  const pack = imageData;
+  if (preview.rendered?.language === language && preview.rendered.pack === pack) return;
+  const render = { language, pack };
+  preview.rendered = render;
+  const { face, heading, cost, typeLine, image, fullImage, rules, textRules, transcript, summary, editionNote } =
+    preview.content ??= buildPreviewContent(panel, card, Boolean(button));
+  const english = language === "en";
+  const [title] = card.text[language];
+  heading.textContent = title;
+  panel.lang = language;
+  if (button) {
+    button.textContent = title;
+    button.lang = language;
+  }
+  renderCardCost(cost, card, language);
+  typeLine.textContent = card.types.map(type => catalog.types[language][type] ?? type).join(" · ");
+  renderCardRules(rules, card, language);
+  renderCardRules(textRules, card, language);
   if (editionNote) editionNote.textContent = english ? "First edition" : "1. Edition";
   if (preview.content.relatedSection) renderRelatedSection(preview.content.relatedSection, card);
   face.hidden = false;
-  transcript.hidden = fullImage.hidden = image.hidden = true;
+  transcript.hidden = false;
+  fullImage.hidden = image.hidden = true;
   fullImage.removeAttribute("src");
   image.removeAttribute("src");
   fullImage.alt = title;
   summary.textContent = english ? "Effect as text" : "Effekt als Text";
-  ruleBody.append(rules);
+  scheduleCardFit(face);
 
   const complete = pack.cards?.[language]?.[card.id];
   const illustration = pack.images[card.id];
@@ -2664,15 +2764,14 @@ function updateCardVisual(preview) {
 }
 
 async function showPreviewImages(preview, render, complete, illustration) {
-  const { face, image, fullImage, rules, transcript } = preview.content;
+  const { face, image, fullImage } = preview.content;
   if (complete) {
     fullImage.src = complete;
     const decoded = await fullImage.decode().then(() => true, () => false);
     if (preview.rendered !== render) return;
     if (decoded) {
       face.hidden = true;
-      fullImage.hidden = transcript.hidden = false;
-      transcript.append(rules);
+      fullImage.hidden = false;
       if (preview.button) positionRelatedPreview(preview);
       return;
     }
@@ -2684,6 +2783,7 @@ async function showPreviewImages(preview, render, complete, illustration) {
     if (preview.rendered !== render) return;
     image.hidden = !decoded;
     if (!decoded) image.removeAttribute("src");
+    scheduleCardFit(face);
     if (preview.button) positionRelatedPreview(preview);
   }
 }
@@ -2700,21 +2800,28 @@ function buildPreviewContent(panel, card, withRelated = true) {
   const footer = document.createElement("div");
   const emblem = document.createElement("span");
   const rules = document.createElement("div");
+  const textRules = document.createElement("div");
   const transcript = document.createElement("details");
   const summary = document.createElement("summary");
   rules.id = panel.id + "-rules";
+  textRules.id = panel.id + "-text-rules";
   face.className = card.types.includes("night") ? "preview-face preview-face-night" : "preview-face";
+  const landscape = card.types.some(type => Object.hasOwn(specialCardFrames, type));
+  if (landscape) face.classList.add("preview-face-landscape");
   face.setAttribute("style", cardFrameStyle(card));
   faceBody.className = "preview-face-body";
   heading.className = "preview-face-title";
+  typeLine.className = "preview-face-types";
   cost.className = "preview-face-cost";
   image.className = "preview-face-art";
   image.alt = "";
   fullImage.className = "card-art";
-  fullImage.width = 344;
-  fullImage.height = 524;
+  fullImage.width = landscape ? 524 : 344;
+  fullImage.height = landscape ? 344 : 524;
   ruleBody.className = "preview-face-text";
   rules.className = "card-rules";
+  textRules.className = "card-rules";
+  transcript.className = "card-transcript";
   footer.className = "preview-face-footer";
   emblem.className = "preview-face-expansion";
   const expansionIcon = "exp-" + card.expansion;
@@ -2723,7 +2830,7 @@ function buildPreviewContent(panel, card, withRelated = true) {
   ruleBody.append(rules);
   faceBody.append(image, ruleBody, footer);
   face.append(heading, faceBody);
-  transcript.append(summary);
+  transcript.append(summary, textRules);
   let editionNote;
   if (isFirstEdition(card)) {
     editionNote = document.createElement("p");
@@ -2731,8 +2838,9 @@ function buildPreviewContent(panel, card, withRelated = true) {
     panel.append(editionNote);
   }
   panel.append(face, fullImage, transcript);
+  cardFaceObserver.observe(face);
   const relatedSection = withRelated ? addRelatedSection(panel, card) : null;
-  return { face, heading, cost, typeLine, image, fullImage, rules, ruleBody, transcript, summary, editionNote, relatedSection };
+  return { face, heading, cost, typeLine, image, fullImage, rules, textRules, ruleBody, transcript, summary, editionNote, relatedSection };
 }
 
 function addCardPreview(item, card, area) {
@@ -2789,15 +2897,19 @@ function addCardPreview(item, card, area) {
   return button;
 }
 
+function appendCardVisual(item, card, area) {
+  addCardPreview(item, card, area);
+  const visual = document.createElement("div");
+  visual.id = "result-face-" + area + "-" + card.id;
+  visual.className = "result-card-visual";
+  item.append(visual);
+  updateCardVisual({ card, panel: visual });
+}
+
 function showCards(result, list = cardsList) {
   for (const card of result) {
     const item = document.createElement("li");
-    addCardPreview(item, card, "result");
-    const visual = document.createElement("div");
-    visual.id = "result-face-" + list.id + "-" + card.id;
-    visual.className = "result-card-visual";
-    item.append(visual);
-    updateCardVisual({ card, panel: visual });
+    appendCardVisual(item, card, list.id);
     const pin = document.createElement("input");
     const label = document.createElement("label");
     const choice = poolChoices.get(card.id);
@@ -2826,7 +2938,10 @@ function clearOutputs() {
   status.className = "";
   copyStatus.textContent = "";
   setPreview(null);
-  for (const container of [cardsList, planningCards, setupResult]) releaseTooltipPins(container);
+  for (const container of [cardsList, planningCards, setupResult]) {
+    releaseTooltipPins(container);
+    releaseCardVisuals(container);
+  }
   for (const preview of previews) {
     if (cardsList.contains(preview.button) || planningCards.contains(preview.button) || setupResult.contains(preview.button)) previews.delete(preview);
   }
@@ -3515,7 +3630,7 @@ function showSetup(result) {
   let previewNumber = 0;
   function appendCard(item, id) {
     const card = cardById.get(id);
-    if (card) addCardPreview(item, card, "setup-" + previewNumber++);
+    if (card) appendCardVisual(item, card, "setup-" + previewNumber++);
   }
   function appendList(title, ids) {
     if (!ids.length) return;

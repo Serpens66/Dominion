@@ -152,3 +152,19 @@ Stand 13. November 2026. Die Namensumwandlung sitzt als standardmäßig geschlos
 Die technische Prüfung verwendet `node SetGenerator/test_name_converter.js` sowie den Katalog- und Solver-Test. Kopieren und manueller Fallback sind mit einem DOM-/Zwischenablagenmodell geprüft; reale Browserabläufe bleiben offen. Der Katalog-Build wurde lokal mit unverändertem Ausgabehash wiederholt.
 
 Die ältere Browser-Abnahme des separaten Konverters ist oben als historischer Befund erhalten. Eine neue Übernahme der erzeugten Codes im Steam-Spiel bleibt ein eigener Spieltest.
+
+## Einheitliche Kartenansichten und bebilderter Spielaufbau
+
+Stand 13. November 2026. Zusammengesetzte Hochformatkarten verwenden wie die vollständigen Basiskarten das feste Verhältnis 344:524. Landschaften und querformatige Sonderkarten verwenden 524:344. Ein gemeinsamer Renderer zeigt Hauptstapel und Aufbaukarten; Titel, Regeltext und Typzeile werden im verfügbaren Platz eingepasst. Der vollständige Effekt bleibt unabhängig davon in „Effekt als Text“ lesbar. Vollständige Bilddateien werden unverändert angezeigt.
+
+| Status | Fall und Ergebnis |
+| --- | --- |
+| Technisch geprüft | Bestehende Solver-, Namenskonvertierungs- und Katalogtests bestehen; eingebetteter Worker und Solver-Quelle stimmen überein. |
+| Technisch geprüft | Edge 157 und Firefox 160: alle 853 Karten in Deutsch und Englisch bei 180 und 288 Pixeln Kartenbreite (je Browser 3.412 Ansichten). Feste Proportionen, Titel, Textbereich einschließlich Innenabstand, Typzeile und Kosten passen ohne Überlauf. Zusammengesetzte Münz-/Trank- und Münz-/Schuldenkosten bleiben in einer Zeile. |
+| Technisch geprüft | Screenshots der realen Browser: Keller, Gewölbe, Münzer und Duplikat nebeneinander mit einheitlichen Kartenproportionen; Querformat-Landschaften und Artefakte sowie Champion, Platin, Trank und Fluch im Spielaufbau direkt bebildert. |
+| Technisch geprüft | Firefox und Edge: Ergebnisraster bei 390/900/1920/2560 Pixeln ohne horizontalen Überlauf und mit gleichen Feldhöhen je Zeile. Automatische Textanpassung nach Breiten- und Sprachwechsel, geschlossene Textbereiche mit identischen Texten/Symbolen, fehlende Bilder, Hell/Englisch und Dunkel/Deutsch geprüft. |
+| Technisch geprüft | Automatisierte Bedienprüfung in beiden realen Browsern: Titel-Hover und Fokus öffnen, Klick hält fest, Verlassen schließt eine festgehaltene Vorschau nicht, Außenklick und Esc schließen. Page → Champion sowie Kupfer-Verweis im aufgeklappten Effekttext behalten Eltern- und Kindvorschau gemeinsam offen; keine doppelten DOM-IDs. |
+
+Reproduzierbar lokal mit Node.js 22 oder neuer: `node SetGenerator/test_card_layout.js` (beide installierten Browser), alternativ `edge` oder `firefox` als Argument; `--smoke` überspringt nur die vollständige Katalogrunde und prüft Darstellung und Bedienung. Der Test verwendet einen lokalen Server, temporäre Browserprofile und keine npm-Abhängigkeiten; Spielprofile bleiben unverändert. Screenshots entstehen im temporären Ordner.
+
+Neue Kartentextbereiche starten zugeklappt. Änderungen an der Fensterbreite, geladene Illustrationen und Schriftbereitschaft lösen die Textanpassung erneut aus. Entfernte Ergebnisansichten werden vom gemeinsamen ResizeObserver abgemeldet.
