@@ -901,6 +901,8 @@
   .game-value-debt { color: #fff4dc; text-shadow: 0 1px 2px #382014; }
   .game-value-vp { color: #fff; text-shadow: 0 0 .15em #18131e, 0 1px #18131e; }
   footer { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem 1rem; margin-top: 1.35rem; color: var(--muted); font-size: .85rem; }
+  .generator-alternatives { flex-basis: 100%; }
+  .generator-alternatives a { white-space: nowrap; }
   .kingdom-total { min-width: 0; max-width: 100%; font-size: .8rem; }
   .kingdom-total:not([hidden]) { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem .75rem; }
   .kingdom-total img { height: 1.15em; width: auto; vertical-align: -.2em; }
@@ -1181,6 +1183,11 @@
         <summary data-en="About the counter">Zum Zähler</summary>
         <p data-en="Click counter since 13 November 2026. Loading and counting sends your IP address and browser information to Visitor Badge.">Klickzähler seit 13. November 2026. Beim Laden und Zählen erhält Visitor Badge deine IP-Adresse und Browserinformationen.</p>
       </details>
+    </div>
+    <div class="generator-alternatives">
+      <span data-en="Other Kingdom generators:">Weitere Set-Generatoren:</span>
+      <a href="https://dominionrandomizer.com/" target="_blank" rel="noopener">Dominion Randomizer</a>
+      · <a href="https://randomkingdominion.streamlit.app/" target="_blank" rel="noopener">RandomKingdominion</a>
     </div>
   </footer>
 </main>
