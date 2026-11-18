@@ -1,4 +1,4 @@
-# Dominion Kingdom Effects Patch v0.1.1
+# Dominion Kingdom Effects Patch v0.1.2
 
 ## English
 
@@ -8,6 +8,7 @@ Customize your Kingdoms in **Dominion for Windows/Steam (game build 3315)** with
 - **Configure everything with F8:** search by name or effect ID, filter by effect type or trigger, choose suitable target cards and arrange effects in execution order.
 - **Browse cards comfortably:** grouped expansion lists, card previews, expansion rules and checkboxes for multiple targets. Reorder lists by dragging or with Alt+Up/Down; Delete removes a selected entry.
 - **Use Deutsch or English:** switch the editor language with **Language:**.
+- **Import complete Kingdom codes:** pasted card selections include their explicit Platinum/Colony, Shelter and landscape-count settings. Unspecified options keep your current settings; account card access is respected.
 - **Manage larger online ban lists:** use the game's existing collection to exclude more than five cards, up to 700 cards and landscapes combined.
 - **Keep private games private:** choosing Clear or applying effects preserves the selected private-game mode.
 
@@ -25,6 +26,7 @@ Gestalte deine Königreiche in **Dominion für Windows/Steam (Spielbuild 3315)**
 - **Alles über F8 einstellen:** Nach Namen oder Effekt-ID suchen, nach Effektart oder Auslöser filtern, passende Zielkarten auswählen und die Ausführungsreihenfolge festlegen.
 - **Karten übersichtlich auswählen:** Nach Erweiterungen gruppierte Listen, Kartenvorschauen, Erweiterungsregeln und Checkboxen für mehrere Ziele. Listen per Ziehen oder Alt+Pfeil hoch/runter sortieren; Entf entfernt den ausgewählten Eintrag.
 - **Deutsch oder English verwenden:** Die Menüsprache lässt sich mit **Language:** umschalten.
+- **Vollständige Königreich-Codes einfügen:** Ausdrückliche Vorgaben für Platin/Kolonien, Unterschlüpfe und die Landschaftszahl werden mit der Kartenauswahl übernommen. Nicht angegebene Optionen bleiben wie eingestellt; die Kartenfreigabe des Kontos gilt weiterhin.
 - **Größere Online-Bannlisten führen:** Über die vorhandene Sammlung mehr als fünf Karten ausschließen, bis zu 700 Karten und Querkarten zusammen.
 - **Private Spiele bleiben privat:** Leer und die Effektübernahme erhalten den gewählten Privatspiel-Modus.
 

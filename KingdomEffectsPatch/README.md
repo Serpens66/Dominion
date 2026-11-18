@@ -1,4 +1,4 @@
-# Dominion Kingdom Effects Patch v0.1.1
+# Dominion Kingdom Effects Patch v0.1.2
 
 [English](#english) · [Deutsch](#deutsch)
 
@@ -15,6 +15,10 @@ An unofficial mod for **Dominion on Windows/Steam, game build 3315**. Choose fro
 4. Use **Language: Deutsch / English** at the bottom to choose the editor language. The label **Language:** stays English in both languages.
 
 Steam and your internet connection can stay on. No Python or Visual Studio is needed. The launcher uses your normal Steam installation and normal profile, with no separate game copy or test profile.
+
+### Import a Kingdom code
+
+In Kingdom selection, clear the previous card selection and paste the full code into the card search field or use the game's clipboard import. Explicit Platinum/Colony, Shelter and landscape-count settings are preserved. For example, `colonies` requests Platinum and Colonies; `NoShelters` requests Estates in starting decks; `Landscapes(0,0)` requests no random landscapes. Unspecified options keep your existing settings. All imported cards must be officially available for your account. Fixed cards do not require changing your expansion randomizer pool.
 
 ### Example: double Village and Market
 
@@ -65,6 +69,10 @@ Ein inoffizieller Mod für **Dominion unter Windows/Steam, Spielbuild 3315**. Im
 4. Unten mit **Language: Deutsch / English** die Menüsprache wählen. Die Beschriftung **Language:** bleibt in beiden Sprachen englisch.
 
 Steam und Internet können eingeschaltet bleiben. Python und Visual Studio werden nicht benötigt. Verwendet werden die normale Steam-Installation und dein normales Profil, ohne Spielkopie oder Testprofil.
+
+### Königreich-Code einfügen
+
+In der Königreich-Auswahl die bisherige Kartenauswahl leeren und den vollständigen Code ins Kartensuchfeld einfügen oder die Zwischenablage-Funktion des Spiels verwenden. Ausdrückliche Vorgaben für Platin/Kolonien, Unterschlüpfe und Landschaftszahl bleiben erhalten. Beispielsweise fordert `colonies` Platin und Kolonien an, `NoShelters` Startanwesen und `Landscapes(0,0)` keine zufälligen Landschaften. Nicht angegebene Optionen bleiben wie eingestellt. Alle importierten Karten müssen für dein Konto offiziell freigegeben sein. Für fest vorgegebene Karten muss der Erweiterungs-Zufallspool nicht umgestellt werden.
 
 ### Beispiel: Dorf und Markt verdoppeln
 

@@ -63,3 +63,7 @@ Nach dem tatsächlichen gepatchten Import wird das Zehn-Basiskarten-Königreich 
 Die Prüfhilfe bindet für direkte Aufrufe der nativen Importmethoden kurzzeitig denselben gültigen Client-Kontext, den ein reguläres Spiel-UI-Ereignis bereitstellt, und stellt den vorherigen Zustand anschließend wieder her. Das ist ausschließlich Testcode im nicht ausgelieferten Probe-DLL, keine zusätzliche Laufzeitkorrektur des Patches. Ohne diesen Ereigniskontext würde der native `GetClient`-Aufruf der Prüfhilfe abbrechen; ein solcher fehlender Testkontext wird nicht als Fehler des Importpatches behandelt.
 
 Die bestehende Kartenfreigabeprüfung (853 native Kartenvergleiche, Ablehnungen ohne Konfigurationsverlust und synthetischer Online-Vorfilter ohne Netzwerk) besteht erneut. Auch die bisherigen 356 Parser-/Rundreisefälle, 216 nativen Leer-Vergleiche, 468 F8-Speicherprüfungen samt Privatstatus und die isolierten Editor-/Zielauswahlprüfungen in beiden Sprachen bestehen erneut. Sichtbare Nutzerabnahme und etwaige Veröffentlichung bleiben getrennte Schritte. Das veröffentlichte v0.1.1-Release wird durch diese Entwicklungsarbeit nicht aktualisiert.
+
+## Nutzerabnahme und Release v0.1.2
+
+Der Nutzer bestätigt die sichtbare Funktion des Import-Teststands und beauftragt am 19. November 2026 die Veröffentlichung als neue Version. Die Korrektur ist Bestandteil von v0.1.2; die oben dokumentierten Grenzen und ausstehenden Einzel-Effektprüfungen bleiben bestehen. v0.1.1 bleibt als vorherige Version erhalten.
