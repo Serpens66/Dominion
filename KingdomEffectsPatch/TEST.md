@@ -321,3 +321,11 @@ Die alten Speicher-Fixtures verwenden einen ausdrücklich erlaubten Testanbieter
 ## Nutzerabnahme und Veröffentlichung
 
 Am 13. November 2026 bestätigt der Nutzer die Funktion der Zielkartenfreigabe und beauftragt die Veröffentlichung von v0.1.1. Die Checkboxdarstellung war bereits bestätigt. Die frühere Veröffentlichungssperre ist damit aufgehoben; das alte Patch-Release v0.1.0 und veraltete lokale Patch-Pakete werden auf ausdrücklichen Wunsch entfernt. Historische Messungen und Testgrenzen bleiben dokumentiert.
+
+## Unveröffentlichte Importkorrektur, 18. November 2026
+
+Ausdrücklich angegebene Platin-/Kolonien-, Unterschlupf- und Landschaftsoptionen werden beim Import über Suche oder Zwischenablage übernommen. Nicht angegebene Optionen und Erweiterungs-Zufallspools bleiben unverändert. Drei eng begrenzte Normalisierungs-/Ausgabehooks erhalten negative Schalter ohne Freigabe zusätzlicher Inhalte sowie die ausdrücklich leere Landschaftsquote. [Audit, Originalbytes, Vorbereitung und Grenzen](../Documentation/Kingdom_Import_Setup_Fix.md)
+
+Die bestehenden Prüfroutinen enthalten die neuen Tests: `effects_test.exe` prüft Präsenz, native Werte und atomare Validierung. `target_access_native_test.exe <getrennte Dominion.exe> <roundtrip_probe.dll> --import-options` vergleicht 82 ungepatchte und 86 gepatchte Importfälle und startet anschließend das importierte Zehn-Basiskarten-Königreich. Platin/Kolonien sind vorhanden, Startanwesen und fehlende Unterschlüpfe bestätigt. Die reine Options-/Speicherprüfung ist von einem Wirkungstest jeder möglichen Landschaft und Erweiterung getrennt. Die bisherigen Freigabe-, Parser-, Leer-, Speicher- und Editorprüfungen bestehen; positive Unterschlüpfe wurden mangels tatsächlicher Freigabe nicht als Partie erzwungen.
+
+Es gibt keine zusätzlichen ausführbaren „setup“-Prüfprogramme, keine Änderung globaler Sicherheits- oder Soundeinstellungen, keine physische Eingabe und keine Benutzung des normalen Profils für automatisierte Tests. Das veröffentlichte v0.1.1 bleibt unverändert; der lokale Teststarter nutzt einen eigenen Paketordner mit normaler Steam-Installation und normalem Profil für die sichtbare Nutzerabnahme.

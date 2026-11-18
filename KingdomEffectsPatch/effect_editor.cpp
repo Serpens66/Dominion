@@ -576,7 +576,8 @@ std::wstring target_access_message(const TargetAccessFailure& failure) {
     const auto canonical = canonical_access_id(failure.target_id);
     std::wstring card(failure.target_id.begin(), failure.target_id.end()), expansion;
     for (const auto& target : target_catalog) if (canonical == target.id) { card = card_title(target); expansion = card_expansion(target); break; }
-    const auto prefix = ui::pick(L"Effekt ", L"Effect ") + effect + (card.empty() ? L"" : L" · " + card) + L": ";
+    const auto prefix = failure.effect_id.empty() ? ui::pick(L"Karte ",L"Card ")+card+L": " :
+        ui::pick(L"Effekt ", L"Effect ") + effect + (card.empty() ? L"" : L" · " + card) + L": ";
     if (failure.state == CardAccess::denied)
         return prefix + ui::pick(L"Diese Zielkarte ist für dein Konto derzeit nicht zum Spielen freigegeben", L"This target card is not currently available to play on your account") +
             (expansion.empty() ? L"" : L" (" + expansion + L")") + ui::pick(L". Entferne oder ersetze sie. Die bisherige Auswahl bleibt erhalten.", L". Remove or replace it. Your previous selection is preserved.");

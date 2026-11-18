@@ -3,8 +3,10 @@
 #include "background_effect_test.cpp"
 #undef wmain
 #include "probe_request.hpp"
+#include "import_native_checks.hpp"
 
 int wmain(int argc,wchar_t** argv) {
+    if(argc==4 && std::wstring_view(argv[3])==L"--import-options")return run_import_native_checks(argc-1,argv);
     try {
         require(argc==3,"target_access_native_test <separate Dominion.exe> <roundtrip_probe.dll>");
         const auto exe=fs::canonical(argv[1]),dll=fs::canonical(argv[2]);

@@ -37,6 +37,7 @@ const char* target(TargetKind kind, bool second=false) {
 #include "translation_probe.hpp"
 #include "native_target_access_probe.hpp"
 #include "online_access_hook_test.hpp"
+#include "import_setup_probe.hpp"
 
 DWORD run_roundtrip(void* argument) {
     const auto base=reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
@@ -47,6 +48,13 @@ DWORD run_roundtrip(void* argument) {
         reinterpret_cast<LPCWSTR>(&run_roundtrip),&self);
     wchar_t path[32768]{}; GetModuleFileNameW(self,path,32768);
     const auto phase=reinterpret_cast<std::uintptr_t>(argument);
+    if(phase & 0x80000000u){
+        auto* client=reinterpret_cast<std::byte*>(phase & 0x7FFFFFFFu);
+        DWORD state=0;
+        if(!kingdom::access_detail::read(client+0x5068,state) || state>1)return 841;
+        import_setup_fixture::client_for_checks=client;return 0;
+    }
+
     if(phase==11) return install_patch(reinterpret_cast<void*>(3));
     if(phase==14) return install_patch(reinterpret_cast<void*>(4));
     if(phase==15) return install_patch(reinterpret_cast<void*>(1));
@@ -65,6 +73,7 @@ DWORD run_roundtrip(void* argument) {
         if(std::memcmp(reinterpret_cast<void*>(base+caption.rva),caption.original,caption.length)!=0)return 601;
         return change_site(reinterpret_cast<std::byte*>(base),caption,true)?0:602;
     }
+    if(phase==50 || phase==51 || phase==52 || phase==53 || phase==55) return run_import_setup_checks(phase);
     if(phase==42) {
         // Fixture preparation: imitate the native collection/Kingdom UI,
         // which publishes grants before the user can choose target cards.
@@ -177,7 +186,7 @@ BOOL CALLBACK find_window(HWND window,LPARAM parameter) {
 }
 extern "C" DWORD WINAPI roundtrip_probe(void* argument) {
     const auto request=reinterpret_cast<std::uintptr_t>(argument);
-    if (request==1 || request==11 || request==14 || request==15) return run_roundtrip(argument);
+    if ((request & 0x80000000u) || request==1 || request==11 || request==14 || request==15) return run_roundtrip(argument);
     HWND window=nullptr; EnumWindows(find_window,reinterpret_cast<LPARAM>(&window));
     if(!window) return 201;
     completed=CreateEventW(nullptr,TRUE,FALSE,nullptr); if(!completed) return 202;

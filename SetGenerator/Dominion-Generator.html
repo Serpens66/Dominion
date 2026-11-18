@@ -1125,7 +1125,7 @@
               <p id="name-converter-copy-status" role="status" aria-live="polite"></p>
             </div>
           </details>
-          <p class="muted" id="output-help" data-en="Paste the code into the card search field in Dominion’s Kingdom selection.">Füge die fertige Zeile ins Kartensuchfeld der Kingdom-Auswahl im Spiel ein.</p>
+          <p class="muted" id="output-help" data-en="Paste the code into the card search field in Dominion’s Kingdom selection. Without the import patch, check Platinum/Colonies, Shelters and the Landscape count in the game.">Füge die fertige Zeile ins Kartensuchfeld der Kingdom-Auswahl im Spiel ein. Ohne Import-Patch Platin/Kolonien, Unterschlüpfe und Landschaftszahl im Spiel prüfen.</p>
           <label class="field" for="output" id="output-label" data-en="Kingdom code">Kingdom-Code</label>
           <p id="export-warning" class="muted" hidden></p>
           <textarea id="output" readonly spellcheck="false" aria-describedby="output-help" placeholder="Hier erscheint die fertige -k-Zeile." data-en-placeholder="The finished -k line will appear here."></textarea>
@@ -3803,12 +3803,19 @@ function buildKingdomCode(result, mainIds) {
   }
   if (result.withColonies) tokens.push("colonies");
   if (result.withShelters) tokens.push("shelters");
+  // Only sources used by the exported code, not the generator's random pool
+  // or omitted planning cards. Automatic material follows its parent cards.
+  const sources = new Set([...included].map(id => cardById.get(id)?.expansion)
+    .filter(expansion => expansion && expansion !== "basic"));
+  if (result.withColonies) sources.add("prosperity");
+  if (result.withShelters) sources.add("dark_ages");
+  const expansionCode = sources.size ? " -e " + [...sources].sort().join(", ") : "";
   // Ally and Prophecy have their own setup rules; this quota covers the
   // ordinary Landscapes selected by the generator, including Traits.
   const modifiers = ["Landscapes(" + exportedLandscapes.length + "," + exportedLandscapes.length + ")"];
   if (!result.withColonies) modifiers.push("NoColonies");
   if (!result.withShelters) modifiers.push("NoShelters");
-  return { code: "-k " + tokens.join(", ") + " -m " + modifiers.join(", "), omitted };
+  return { code: "-k " + tokens.join(", ") + expansionCode + " -m " + modifiers.join(", "), omitted };
 }
 
 function showDraw(result) {

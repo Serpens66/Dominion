@@ -6,6 +6,7 @@ Ziel ist die Steam-Version von Dominion von Temple Gates Games. Die erste Unters
 | --- | --- |
 | Kingdom Effects Patch starten oder ein Release vorbereiten | [Release-Anleitung](../KingdomEffectsPatch/README.md) und [Release-Prüfung](../KingdomEffectsPatch/RELEASING.md) |
 | Eigene Kingdoms speichern, laden oder teilen | [Speicherformat, Zwischenablage und Offline-Test](Kingdom_Sets.md) |
+| Ausdrückliche Aufbauoptionen beim Einfügen übernehmen | [Unveröffentlichte Importkorrektur und native Vergleichstests](Kingdom_Import_Setup_Fix.md) |
 | Landschaften und Sonderkarten im Generatorcode ergänzen | [Syntax, native Grenzen und Exportbefund](Kingdom_Code_Extras.md) |
 | Regelbasierten Kingdom-Generator entwerfen | [SetGenerator](../SetGenerator/README.md) |
 | Klickzähler der Generator-Website und Prüfstand | [Visitor-Badge-Einbindung](Generator_Click_Counter.md) |

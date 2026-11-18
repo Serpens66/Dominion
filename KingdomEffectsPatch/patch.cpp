@@ -7,6 +7,7 @@
 #include "effect_editor.hpp"
 #include "target_access_runtime.hpp"
 #include "native_card_access.hpp"
+#include "import_setup_runtime.hpp"
 #include "ui_language.hpp"
 #include "effect_text_fix.hpp"
 #include "ban_hint_fix.hpp"
@@ -20,6 +21,12 @@ namespace {
 
 std::uintptr_t native_parser;
 std::uintptr_t native_local_normalize;
+std::uintptr_t native_colonies_filter_after;
+std::uintptr_t native_shelters_filter_after;
+std::uintptr_t native_landscape_range_caller;
+std::uintptr_t native_setup_landscape_range_caller;
+std::uintptr_t native_range_zero_branch;
+std::uintptr_t native_range_print;
 std::uintptr_t native_effect_requirements;
 std::uintptr_t native_effect_advance;
 std::uintptr_t native_clipboard;
@@ -58,6 +65,7 @@ struct ImportState {
 };
 
 thread_local ImportState pending{};
+thread_local kingdom::ImportedSetupOptions pending_import_options{};
 thread_local bool from_clipboard;
 thread_local bool clipboard_rejected;
 thread_local const std::byte* automatic_save;
@@ -72,6 +80,7 @@ void log_commands(const char*, const kingdom::EffectCommands&);
 void trace_local_prepared(const std::byte*);
 bool validate_config_targets(const std::byte*);
 bool validate_native_import(const char*);
+bool plan_import_setup(void*,const void*,const kingdom::ImportedSetupOptions&);
 
 void log(const char* event, const kingdom::Effects* list = nullptr) {
     char line[3072];
@@ -167,7 +176,19 @@ bool validate(const char* text) {
     return false;
 }
 
+bool import_problem(const std::wstring& error) {
+    log("import setup rejected");
+#ifdef KINGDOM_EFFECT_TEXT_TEST
+    if(test_suppress_access_messages)return false;
+#endif
+    MessageBoxW(GetActiveWindow(),error.c_str(),kingdom::ui::pick(L"Dominion – Königreich-Import",L"Dominion – Kingdom import"),MB_OK);
+    return false;
+}
+
 bool __cdecl validate_search(const char* text) {
+    pending_import_options={};
+    if(text && kingdom::scan_import_setup_options(text,pending_import_options)!=kingdom::ImportOptionsError::none)
+        return import_problem(kingdom::ui::pick(L"Die Aufbauoptionen konnten nicht gelesen werden. Landscapes benötigt eine Quote von 0 bis 4; die bisherige Auswahl bleibt erhalten.",L"The setup options could not be read. Landscapes requires a range from 0 to 4; your previous selection is preserved."));
     const bool valid=validate(text);
     kingdom::EffectCommands commands;
     if (valid && text && kingdom::read_effect_commands(text,commands)) log_commands("import requested",commands);
@@ -193,8 +214,9 @@ bool __cdecl end_clipboard() {
 
 bool __cdecl prepare_merge(void* current, const void* incoming) {
     pending = {};
+    const auto options=pending_import_options;
+    pending_import_options={};
     const auto added = kingdom::read_effects(incoming);
-    if (kingdom::count(added) == 0) return true;
     const auto existing = kingdom::read_effects(current);
     log("import existing", &existing);
     log("import incoming", &added);
@@ -210,6 +232,9 @@ bool __cdecl prepare_merge(void* current, const void* incoming) {
             return false;
         }
     }
+    // Validate explicit options and card rights before the native merge can
+    // serialize/save individual card additions. This also handles zero effects.
+    if(!plan_import_setup(current,incoming,options))return false;
     log(measure_only ? "import would write" : "import prepared", &result.list);
     if (!measure_only) pending = {current, incoming, result};
     return true;
@@ -498,15 +523,44 @@ bool parsed_effects_match(const kingdom::Setup& parsed, const kingdom::EffectCom
     return true;
 }
 
+bool plan_import_setup(void* destination,const void* incoming,const kingdom::ImportedSetupOptions& options) {
+    kingdom::Setup candidate{};std::memcpy(candidate.data(),destination,candidate.size());
+    if(kingdom::apply_import_setup_options(candidate.data(),incoming,options)!=kingdom::ImportOptionsError::none)
+        return import_problem(kingdom::ui::pick(L"Die angegebenen Aufbauoptionen sind ungültig. Die bisherige Auswahl bleibt erhalten.",L"The specified setup options are invalid. Your previous selection is preserved."));
+    const auto ids=kingdom::imported_card_ids(incoming,options);
+    refresh_target_access();
+    for(const auto id:ids){
+        const auto* card=kingdom::import_native_card(id);
+        const auto access=card?kingdom::target_card_access(card->id):kingdom::CardAccess::unknown;
+        if(!measure_only && access!=kingdom::CardAccess::allowed){
+            const auto name=card?std::string(card->id):std::string("unknown_card_")+std::to_string(id);
+            log_commands("import card access rejected",{name});
+            return import_problem(kingdom::target_access_message({access,"",name,false}));
+        }
+    }
+    if(!measure_only){
+        auto* output=static_cast<std::byte*>(destination);
+        if(options.colonies)std::memcpy(output+0xBFC,candidate.data()+0xBFC,4);
+        if(options.shelters)std::memcpy(output+0xC00,candidate.data()+0xC00,4);
+        if(options.landscapes)std::memcpy(output+0xBC8,candidate.data()+0xBC8,8);
+    }
+    log(measure_only?"import setup would apply":"import setup prepared");
+    return true;
+}
+
 bool validate_native_import(const char* text) {
     if(!text) return true;
     kingdom::EffectCommands commands;
-    if(!kingdom::read_effect_commands(text,commands) || commands.empty()) return true;
+    if(!kingdom::read_effect_commands(text,commands)) return false;
     using Parse=void (__fastcall*)(const char*,kingdom::Setup*);
     kingdom::Setup parsed{}; reinterpret_cast<Parse>(native_parser)(text,&parsed);
     const auto effects=kingdom::read_effects(parsed.data()); log("import parsed",&effects);
     std::size_t mismatch=0;
-    if(parsed_effects_match(parsed,commands,&mismatch)) return measure_only || allow_target_commands(commands);
+    if(parsed_effects_match(parsed,commands,&mismatch)) {
+        if(!measure_only && !allow_target_commands(commands))return false;
+        kingdom::Setup validation{};
+        return plan_import_setup(validation.data(),parsed.data(),pending_import_options);
+    }
     const auto& command=commands[(std::min)(mismatch,commands.size()-1)];
     const std::wstring message=kingdom::ui::tr(L"Der Import wurde bei Effekt ")+std::to_wstring(mismatch+1)+L" ("+
         std::wstring(command.begin(),command.end())+kingdom::ui::tr(L") nicht vollständig eingelesen. Die bisherige Auswahl bleibt erhalten.");
@@ -1085,6 +1139,61 @@ __declspec(naked) void effect_requirements_hook() {
     }
 }
 
+// Disabling optional components never grants a card license. Keep the
+// explicit native OFF value while retaining every original ON/default filter.
+__declspec(naked) void keep_colonies_off_hook() {
+    __asm {
+        pushfd
+        cmp dword ptr [ebp-0DA4h],2
+        je retained
+        mov dword ptr [ebp-0DA4h],0
+    retained:
+        popfd
+        jmp dword ptr [native_colonies_filter_after]
+    }
+}
+__declspec(naked) void keep_shelters_off_hook() {
+    __asm {
+        pushfd
+        cmp dword ptr [ebp-0DA0h],2
+        je retained
+        mov dword ptr [ebp-0DA0h],0
+    retained:
+        popfd
+        jmp dword ptr [native_shelters_filter_after]
+    }
+}
+
+// The generic formatter treats (0,0) as omitted. Landscapes defaults to
+// (0,2), so omission would change an explicitly empty landscape selection.
+__declspec(naked) void keep_zero_landscape_quota_hook() {
+    __asm {
+        push eax
+        mov eax,native_landscape_range_caller
+        cmp dword ptr [ebp+4],eax
+        je landscape_caller
+        mov eax,native_setup_landscape_range_caller
+        cmp dword ptr [ebp+4],eax
+        jne other_caller
+    landscape_caller:
+        pop eax
+        cmp dword ptr [ebx],0
+        jne original
+        cmp dword ptr [ebx+4],0
+        je print_range
+        jmp original
+    other_caller:
+        pop eax
+    original:
+        test ecx,ecx
+        jne print_range
+        cmp dword ptr [ebx+4],ecx
+        jmp dword ptr [native_range_zero_branch]
+    print_range:
+        jmp dword ptr [native_range_print]
+    }
+}
+
 struct Site {
     std::uintptr_t rva;
     const char* original;
@@ -1099,6 +1208,9 @@ constexpr unsigned local_modes = (1u << 2) | (1u << 3);
 constexpr unsigned online_mode = 1u << 4;
 
 const Site sites[] = {
+    {0x0DFA4F,"\x85\xC9\x75\x09\x39\x4B\x04",7,keep_zero_landscape_quota_hook,true,local_modes|online_mode},
+    {0x0DBFFC,"\xC7\x85\x5C\xF2\xFF\xFF\x00\x00\x00\x00",10,keep_colonies_off_hook,true,local_modes|online_mode},
+    {0x0DC026,"\xC7\x85\x60\xF2\xFF\xFF\x00\x00\x00\x00",10,keep_shelters_off_hook,true,local_modes|online_mode},
     // This caption caller used the command ID as an invalid mixed-case translation key.
     {0x19B3D2, "\xE8\x59\x13\x0F\x00",5,kingdom::effect_text_fix::hook_address(),false,local_modes|online_mode},
     {0x19B68C, "\xE8\x9F\x10\x0F\x00",5,kingdom::effect_text_fix::hook_address(),false,local_modes|online_mode},
@@ -1276,6 +1388,12 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
     image_base = base;
     native_parser = image + 0x0DDBB0;
     native_local_normalize = image + 0x0DBEF0;
+    native_colonies_filter_after = image + 0x0DC006;
+    native_shelters_filter_after = image + 0x0DC030;
+    native_landscape_range_caller = image + 0x0DFE80;
+    native_setup_landscape_range_caller = image + 0x0E2224;
+    native_range_zero_branch = image + 0x0DFA56;
+    native_range_print = image + 0x0DFA5C;
     native_effect_requirements = image + 0x0DC2D5;
     native_effect_advance = image + 0x0DC2F6;
     native_clipboard = image + 0x22BEA0;

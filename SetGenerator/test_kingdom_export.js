@@ -15,11 +15,21 @@ const fixture = patch => ({ main, landscapes: [], assignments: [], components: [
   material: [], needsSteamCheck: [], withColonies: false, withShelters: false, ...patch });
 const exportSet = patch => build(fixture(patch), (patch?.main ?? main).slice(0, 10));
 const plain = "-k " + main.join(", ");
-assert.equal(exportSet().code, plain + " -m Landscapes(0,0), NoColonies, NoShelters");
+assert.equal(exportSet().code, plain + " -e base -m Landscapes(0,0), NoColonies, NoShelters");
 assert.equal(exportSet({ withColonies: true, withShelters: true }).code,
-  plain + ", colonies, shelters -m Landscapes(0,0)");
+  plain + ", colonies, shelters -e base, dark_ages, prosperity -m Landscapes(0,0)");
 assert.equal(exportSet({ landscapes: ["canal", "basilica", "way_of_the_owl"] }).code,
-  plain + ", canal, basilica, way_of_the_owl -m Landscapes(3,3), NoColonies, NoShelters");
+  plain + ", canal, basilica, way_of_the_owl -e base, empires, menagerie, renaissance -m Landscapes(3,3), NoColonies, NoShelters");
+const expansionList = result => result.code.match(/ -e (.*?) -m /)?.[1].split(", ") ?? [];
+assert.deepEqual(expansionList(exportSet()), ["base"], "unused material is not an export source");
+assert.deepEqual(expansionList(exportSet({ withColonies: true })), ["base", "prosperity"]);
+assert.deepEqual(expansionList(exportSet({ withShelters: true })), ["base", "dark_ages"]);
+assert.deepEqual(expansionList(exportSet({ main: ["adventurer", ...main.slice(1)] })), ["base"]);
+assert.deepEqual(expansionList(exportSet({ main: ["sauna", ...main.slice(1)] })), ["base", "promos"]);
+const sampleMain = ["anvil", "library", "vault", "grand_market", "hostelry", "cavalry", "cellar", "laboratory", "harbinger", "sanctuary"];
+assert.deepEqual(expansionList(exportSet({ main: sampleMain,
+  landscapes: ["way_of_the_rat", "summon", "delay"], withColonies: true })),
+  ["base", "menagerie", "promos", "prosperity"]);
 for (const [id, targets] of [
   ["young_witch", ["vassal"]], ["ferryman", ["vassal"]], ["riverboat", ["witch"]],
   ["way_of_the_mouse", ["vassal"]], ["druid", ["the_moons_gift", "the_suns_gift", "the_mountains_gift"]],
@@ -32,16 +42,18 @@ let result = exportSet({ landscapes: ["obelisk", "nearby"], assignments: [
   { source: "obelisk", targets: ["village"] }, { source: "nearby", targets: ["market"] },
 ] });
 assert.ok(result.code.includes("obelisk(village), nearby(market)"));
+assert.deepEqual(expansionList(result), ["base", "empires", "plunder"]);
 // Supplemental piles may themselves require an additional setup selection.
 result = exportSet({ main: ["young_witch", ...main.slice(1)], assignments: [
   { source: "young_witch", targets: ["ferryman"] }, { source: "ferryman", targets: ["druid"] },
   { source: "druid", targets: ["the_moons_gift", "the_suns_gift", "the_mountains_gift"] },
 ] });
 assert.ok(result.code.includes("young_witch(ferryman(druid(the_moons_gift, the_suns_gift, the_mountains_gift)))"));
+assert.deepEqual(expansionList(result), ["base", "cornucopia", "nocturne"]);
 result = exportSet({ main: ["underling", "poet", ...main.slice(2)], assignments: [
   { role: "Verbündeter", targets: ["order_of_masons"] }, { role: "Prophezeiung", targets: ["enlightenment"] },
 ] });
-assert.ok(result.code.includes(", order_of_masons, enlightenment -m Landscapes(0,0)"));
+assert.ok(result.code.includes(", order_of_masons, enlightenment -e allies, base, rising_sun -m Landscapes(0,0)"));
 assert.equal(result.omitted.length, 0);
 result = exportSet({ main: ["poet", ...main.slice(1)], assignments: [
   { role: "Prophezeiung", targets: ["approaching_army"] }, { source: "approaching_army", targets: ["witch"] },
@@ -49,14 +61,16 @@ result = exportSet({ main: ["poet", ...main.slice(1)], assignments: [
 assert.ok(result.code.includes("approaching_army(witch)"));
 // Omitted choices must be returned for the visible partial-code warning.
 result = exportSet({ main: ["black_market", ...main.slice(1)], assignments: [
-  { source: "black_market", role: "Schwarzmarkt-Deck", targets: ["witch", "vassal"] },
+  { source: "black_market", role: "Schwarzmarkt-Deck", targets: ["hostelry", "vassal"] },
 ] });
 assert.ok(result.code.startsWith("-k black_market, "));
 assert.equal(result.omitted[0].role, "Schwarzmarkt-Deck");
 assert.ok(!result.code.includes("black_market("));
+assert.deepEqual(expansionList(result), ["base", "promos"], "omitted Black Market deck is not exported");
 result = exportSet({ landscapes: ["canal", "basilica", "way_of_the_owl", "nearby", "advance"] });
 assert.ok(!result.code.includes("advance"));
 assert.equal(result.omitted[0].targets[0], "advance");
+assert.ok(!expansionList(result).includes("adventures"), "fifth omitted Landscape is not a source");
 result = exportSet({ main: ["underling", ...main.slice(1)],
   landscapes: ["canal", "basilica", "way_of_the_owl", "advance"],
   assignments: [{ role: "Verbündeter", targets: ["order_of_masons"] }] });
@@ -66,6 +80,11 @@ result = exportSet({ main: [...main, "witch"], landscapes: ["obelisk"],
   assignments: [{ source: "obelisk", targets: ["witch"] }] });
 assert.ok(!result.code.includes("witch"));
 assert.equal(result.omitted[0].source, "obelisk");
+result = exportSet({ main: [...main, "hostelry"], randomExpansions: ["menagerie"] });
+assert.deepEqual(expansionList(result), ["base"], "planning-only cards and lottery sets do not affect exports");
+result = exportSet({ main: ["young_witch", ...main.slice(1), "hostelry"],
+  assignments: [{ source: "young_witch", targets: ["hostelry"] }] });
+assert.deepEqual(expansionList(result), ["base", "cornucopia"], "omitted planning targets are not export sources");
 // Use the actual renderer to verify labels and warning visibility after redraw.
 Object.assign(context, {
   standardKingdomSize: 10, uiLanguage: "de", clearOutputs() {},
@@ -78,7 +97,7 @@ Object.assign(context, {
 });
 const show = vm.runInNewContext(source("buildKingdomCode") + "\n" + source("showDraw") + "\nshowDraw", context);
 show(fixture({ landscapes: ["canal"], needsSteamCheck: ["Landschaften"] }));
-assert.ok(context.output.value.includes(", canal -m Landscapes(1,1)"));
+assert.ok(context.output.value.includes(", canal -e base, renaissance -m Landscapes(1,1)"));
 assert.equal(context.label.textContent, "Kingdom-Code");
 assert.equal(context.copy.textContent, "Für Dominion kopieren");
 assert.match(context.exportWarning.textContent, /Importtest/);

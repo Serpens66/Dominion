@@ -8,7 +8,7 @@
 2. Klicke auf **Königreich ziehen** und dann auf **Für Dominion kopieren**.
 3. Füge den Code in das Kartensuchfeld der Königreich-Auswahl in Dominion ein.
 
-Der Kingdom-Code enthält auch die gezogenen Landschaften, Verbündeten, Prophezeiungen und Zusatzkarten-Zuordnungen sowie die konkrete Auswahl für Platin/Kolonien und Unterschlüpfe. Ausgeschaltete Optionen werden ausdrücklich mitgegeben. Automatisch benötigtes Material wie Pferde und Ruinen folgt den ausgewählten Karten.
+Der Kingdom-Code enthält auch die gezogenen Landschaften, Verbündeten, Prophezeiungen und Zusatzkarten-Zuordnungen sowie die konkrete Auswahl für Platin/Kolonien und Unterschlüpfe. Ausgeschaltete Optionen werden ausdrücklich mitgegeben. Automatisch benötigtes Material wie Pferde und Ruinen folgt den ausgewählten Karten. Der Abschnitt `-e` nennt die Erweiterungen der exportierten Auswahl. Für die automatische Übernahme der Aufbauoptionen ist der passende Import-Patch nötig; ohne ihn Platin/Kolonien, Unterschlüpfe und Landschaftszahl im Spiel prüfen.
 
 Ein **Steam-Teilcode** nennt unter dem Ausgabefeld die fehlenden Aufbau-Auswahlen. Das betrifft das noch nicht unterstützte Schwarzmarktdeck, mehr als vier Landschaftseinträge einschließlich Verbündeten und Prophezeiungen sowie Ziele außerhalb der ersten zehn Hauptstapel. Der Hinweis auf ausstehende Steam-Importtests bleibt sichtbar; die Syntax ist statisch geprüft. [Exportbefund und Grenzen](../Documentation/Kingdom_Code_Extras.md)
 
