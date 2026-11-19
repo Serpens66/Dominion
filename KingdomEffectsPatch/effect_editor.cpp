@@ -353,6 +353,41 @@ void filter_catalog(HWND dialog, Draft& draft) {
     select_effect(dialog, draft);
 }
 
+void show_active_effect(HWND dialog, Draft& draft, LPARAM position) {
+    const auto active = GetDlgItem(dialog, IDC_ACTIVE);
+    auto row = SendMessageW(active, LB_GETCURSEL, 0, 0);
+    if (position != LPARAM(-1)) {
+        POINT point{GET_X_LPARAM(position), GET_Y_LPARAM(position)};
+        ScreenToClient(active, &point);
+        const auto hit = SendMessageW(active, LB_ITEMFROMPOINT, 0, MAKELPARAM(point.x, point.y));
+        RECT bounds{};
+        row = LOWORD(hit);
+        if (HIWORD(hit) || SendMessageW(active, LB_GETITEMRECT, row, reinterpret_cast<LPARAM>(&bounds)) == LB_ERR ||
+            !PtInRect(&bounds, point)) return;
+    }
+    if (row < 0 || static_cast<std::size_t>(row) >= draft.effects.size()) return;
+    const auto command = trimmed(draft.effects[static_cast<std::size_t>(row)]);
+    const auto id = trimmed(command.substr(0, command.find('(')));
+    const auto* effect = std::find_if(std::begin(effect_catalog), std::end(effect_catalog),
+        [id](const auto& entry) { return entry.id == id; });
+    if (effect == std::end(effect_catalog)) return;
+    SendMessageW(active, LB_SETCURSEL, row, 0);
+    // An incompatible category must not hide the requested effect. Search by
+    // stable ID, independently of language and the active entry's targets.
+    SendDlgItemMessageW(dialog, IDC_CATEGORY, CB_SETCURSEL, 0, 0);
+    const auto query = widen(id);
+    if (input(dialog, IDC_QUERY) == query) filter_catalog(dialog, draft);
+    else SetDlgItemTextW(dialog, IDC_QUERY, query.c_str());
+    const auto catalog = GetDlgItem(dialog, IDC_CATALOG);
+    for (LRESULT i = 0; i < SendMessageW(catalog, LB_GETCOUNT, 0, 0); ++i) {
+        if (SendMessageW(catalog, LB_GETITEMDATA, i, 0) != reinterpret_cast<LPARAM>(effect)) continue;
+        SendMessageW(catalog, LB_SETCURSEL, i, 0);
+        select_effect(dialog, draft);
+        break;
+    }
+    SetFocus(active);
+}
+
 std::string effect_command(const EffectDefinition& effect, const CardTargets& targets) {
     std::string command(effect.id);
     if (targets.empty()) return command;
@@ -510,6 +545,10 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
         if (message == WM_DRAWITEM && (wparam == IDC_CATALOG || wparam == IDC_CATALOG_HEADER)) {
             paint_table(dialog, draft, *reinterpret_cast<const DRAWITEMSTRUCT*>(lparam));
             SetWindowLongPtrW(dialog, DWLP_MSGRESULT, TRUE);
+            return TRUE;
+        }
+        if (message == WM_CONTEXTMENU && reinterpret_cast<HWND>(wparam) == GetDlgItem(dialog, IDC_ACTIVE)) {
+            show_active_effect(dialog, draft, lparam);
             return TRUE;
         }
         if (draft.skin) {

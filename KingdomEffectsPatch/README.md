@@ -32,6 +32,8 @@ For Gold, Platinum and Victory piles, switch target selection to **All cards**. 
 
 Search by English or German name, effect ID, or description. Filters include effect type and when an effect triggers. The table shows what each effect does, its prerequisites and its test status. **Untested** effects remain selectable; repeated use may have a different test status from a single application.
 
+Right-click an entry in F8’s **Active effects** list to show its effect in the left-hand table, including its description, trigger and test status. This searches by effect ID and resets the category to All categories. It does not change your effects or their order. With keyboard focus in the active list, **Shift+F10** or the context-menu key does the same.
+
 Card selection supports multiple targets, card previews, and expansion descriptions followed directly by scrollable rules. Reorder active effects or Typhoon targets by dragging, or use **Alt+Up/Down**; **Delete** removes the selected entry while its list has focus. **Cancel** discards your effect changes.
 
 Typhoon uses the same checkboxes as pile doubling: click a checkbox or press Space to select or deselect a pile. Clicking a card name only updates the preview; double-clicking the name adds it without removing an existing choice. The numbered list and checkmarks stay synchronized; deselecting removes the pile and selecting it again appends it at the end. The add button reads **Already selected** and is disabled for a selected pile. Checkboxes use white fill, a strong dark-brown outline and tick, and an opaque paper-colored outer edge. Single-target selection and expansion headings keep no checkboxes.
@@ -100,6 +102,8 @@ Beide Stapel beginnen mit **20 statt 10 Karten**. Für eine bewusste Wiederholun
 Für Gold, Platin und Punktestapel in der Zielauswahl auf **Alle Karten** wechseln. Diese Ziele sind bei offizieller Spielfreigabe bereits unterstützt. `start_add_card(gold)` oder `start_add_card(platinum)` legt eine zusätzliche Kopie ins **Startdeck jedes Spielers**, nicht zwingend in dessen erste Hand. Stapelvervielfachung verändert vorhandene Vorräte; sie erzeugt keinen fehlenden Platin-/Koloniestapel. Der native Provinz-Effekt verdoppelt zusätzlich vorhandene Kolonien.
 
 Die Suche findet deutsche und englische Namen, Effekt-IDs und Beschreibungstexte. Filter berücksichtigen Effektart und Auslösezeitpunkt. Die Tabelle zeigt Wirkung, Voraussetzungen und Teststand. **Ungetestete** Effekte bleiben auswählbar; einfache und mehrfache Anwendung können unterschiedlich weit geprüft sein.
+
+Mit Rechtsklick auf einen Eintrag in **Aktive Effekte** zeigt F8 links den passenden Effekt mit Wirkung, Auslöser und Teststand. Dafür wird die Effekt-ID gesucht und die Kategorie auf Alle Kategorien gesetzt. Effekte und Reihenfolge bleiben erhalten. Bei Fokus in der aktiven Liste geht das auch mit **Umschalt+F10** oder der Kontextmenütaste.
 
 Die Kartenauswahl bietet mehrere Ziele, Kartenvorschauen sowie Erweiterungsbeschreibungen mit direkt anschließenden scrollbaren Regeln. Aktive Effekte und Taifun-Ziele lassen sich durch Ziehen oder **Alt+Pfeil hoch/runter** sortieren. **Entf** entfernt den gewählten Eintrag bei Fokus in seiner Liste. **Abbrechen** verwirft die Effektänderungen.
 

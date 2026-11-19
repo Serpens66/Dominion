@@ -198,6 +198,37 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
         const auto drag_saved=draft.effects;SendMessageW(active,WM_LBUTTONDOWN,MK_LBUTTON,MAKELPARAM(10,2));SendMessageW(active,WM_MOUSEMOVE,MK_LBUTTON,MAKELPARAM(10,row2.bottom-1));SendMessageW(active,WM_KEYDOWN,VK_ESCAPE,0);SendMessageW(active,WM_LBUTTONUP,0,MAKELPARAM(10,row2.bottom-1));check(draft.effects==drag_saved,"Escape did not cancel drag.");
         SendMessageW(active,LB_SETCURSEL,0,0);SendMessageW(active,WM_SYSKEYDOWN,VK_DOWN,1L<<29);check(draft.effects[1]=="twist_busy_busy","Alt+Down failed.");
         SetFocus(active);SendMessageW(active,WM_KEYDOWN,VK_DELETE,0);check(draft.effects.size()==2,"Delete did not remove selected effect.");
+        draft.effects={"start_double_pile(village)","twist_busy_busy","start_double_pile(market)"};
+        kingdom::update_active(dialog,draft,1);
+        const auto lookup_effects=draft.effects;
+        for (int language=0;language<2;++language) {
+            SendDlgItemMessageW(dialog,IDC_LANGUAGE,CB_SETCURSEL,language,0);
+            SendMessageW(dialog,WM_COMMAND,MAKEWPARAM(IDC_LANGUAGE,CBN_SELCHANGE),0);
+            SendDlgItemMessageW(dialog,IDC_CATEGORY,CB_SETCURSEL,2,0);
+            SetDlgItemTextW(dialog,IDC_QUERY,L"no-such-effect");
+            RECT target{};SendMessageW(active,LB_GETITEMRECT,2,reinterpret_cast<LPARAM>(&target));
+            POINT point{target.left+8,target.top+2};ClientToScreen(active,&point);
+            SendMessageW(active,WM_CONTEXTMENU,reinterpret_cast<WPARAM>(active),MAKELPARAM(point.x,point.y));
+            check(kingdom::input(dialog,IDC_QUERY)==L"start_double_pile" && draft.selected &&
+                std::string_view(draft.selected->id)=="start_double_pile","Active right-click did not show the exact effect.");
+            check(SendDlgItemMessageW(dialog,IDC_CATEGORY,CB_GETCURSEL,0,0)==0 &&
+                SendMessageW(active,LB_GETCURSEL,0,0)==2 && draft.effects==lookup_effects,"Active lookup changed effects or retained an incompatible filter.");
+            check(GetWindowTextLengthW(GetDlgItem(dialog,IDC_EFFECT_EVIDENCE))>0,"Active lookup did not show effect details.");
+            // Blank space must not resolve to the nearest list entry.
+            point={target.left+8,target.bottom+20};ClientToScreen(active,&point);
+            SendMessageW(active,WM_CONTEXTMENU,reinterpret_cast<WPARAM>(active),MAKELPARAM(point.x,point.y));
+            check(kingdom::input(dialog,IDC_QUERY)==L"start_double_pile" &&
+                SendMessageW(active,LB_GETCURSEL,0,0)==2,"Blank-space right-click changed the selected effect.");
+            SendMessageW(active,LB_SETCURSEL,1,0);
+            SendMessageW(active,WM_CONTEXTMENU,reinterpret_cast<WPARAM>(active),LPARAM(-1));
+            check(kingdom::input(dialog,IDC_QUERY)==L"twist_busy_busy" && draft.selected &&
+                std::string_view(draft.selected->id)=="twist_busy_busy" && draft.effects==lookup_effects,"Keyboard active lookup failed.");
+        }
+        SendMessageW(active,LB_SETCURSEL,LB_ERR,0);
+        SendMessageW(active,WM_CONTEXTMENU,reinterpret_cast<WPARAM>(active),LPARAM(-1));
+        check(kingdom::input(dialog,IDC_QUERY)==L"twist_busy_busy","Lookup without a selection changed the query.");
+        SendDlgItemMessageW(dialog,IDC_LANGUAGE,CB_SETCURSEL,0,0);
+        SendMessageW(dialog,WM_COMMAND,MAKEWPARAM(IDC_LANGUAGE,CBN_SELCHANGE),0);
         draft.effects=saved_effects;kingdom::update_active(dialog,draft);
         checked = true;
     } catch (const std::exception& error) { failure = error.what(); }
@@ -218,6 +249,10 @@ BOOL CALLBACK inspect_online(HWND dialog, LPARAM) {
         const kingdom::EffectCommands pair{"start_double_pile(village)","start_double_pile(market)"};
         check(kingdom::add_commands(dialog,draft,pair,true).empty(), "Online multi-target append failed.");
         check(draft.effects==pair, "Online selection mismatch.");
+        const auto active=GetDlgItem(dialog,IDC_ACTIVE);
+        SendMessageW(active,WM_CONTEXTMENU,reinterpret_cast<WPARAM>(active),LPARAM(-1));
+        check(kingdom::input(dialog,IDC_QUERY)==L"start_double_pile" && draft.effects==pair,
+            "Online active lookup failed or changed the draft.");
         check(kingdom::add_commands(dialog,draft,{pair.front()},false).empty() && draft.effects.size()==3, "Online repeat failed.");
         while (draft.effects.size()<32) check(kingdom::add_commands(dialog,draft,{pair.front()},false).empty(), "Online capacity fill failed.");
         const auto saved=draft.effects;
