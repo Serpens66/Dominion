@@ -22,7 +22,7 @@ function Invoke-ModRelease {
             throw 'Eine alte Testsitzung hat das Originalprofil noch ausgelagert. Bitte zuerst den bisherigen Test-Starter oeffnen und die Wiederherstellung abschliessen.'
         }
         if ($CheckOnly) { Write-Host "Paket und Spielbuild geprueft: $source"; return }
-        Write-Host 'Dominion Kingdom Effects Patch v0.1.2 | Spielbuild 3315'
+        Write-Host 'Dominion Kingdom Effects Patch v0.1.3 | Spielbuild 3315'
         $game = Join-Path $source 'Dominion.exe'
         Assert-ModGameClosed
         $backup = Join-Path $state 'profile-backups'

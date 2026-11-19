@@ -333,3 +333,26 @@ Es gibt keine zusätzlichen ausführbaren „setup“-Prüfprogramme, keine Änd
 ## Release v0.1.2, 19. November 2026
 
 Die sichtbare Importabnahme ist vom Nutzer bestätigt; v0.1.2 wird auf ausdrücklichen Auftrag veröffentlicht. Die bisherigen 82 nativen Vanilla-Vergleiche, 86 Patch-Importprüfungen, der tatsächliche Start mit Platin/Kolonien und Startanwesen sowie die getrennten Kartenfreigabe-/Speicher-/Editorprüfungen gelten für die enthaltene Importkorrektur. Ungetestete Effekte und Kombinationen sind weiter als solche ausgewiesen. Release-Paketprüfung und ein erneuter Vergleich der finalen Binärdateien werden vor Veröffentlichung durchgeführt.
+
+## Teststand v0.1.3, 19. November 2026
+
+Spielbuild 3315 / Steam-Build 17683350, EXE-Hash unverändert zum Quellenregister. Die automatisierten Spieltests verwenden ausschließlich temporäre Weitergeben-Profile auf einem unsichtbaren Desktop. Keine Maus-/Tastaturübernahme, kein normales Profil und keine Änderung der Systemtöne.
+
+`startup_effect_test --basic-targets`: **30/30 bestanden**. Je 0/1/2 Anwendungen von zusätzlichem Gold/Platin für beide Spieler, verdoppeltem Gold/Platin/Anwesen/Herzogtum/Provinz/Kolonie sowie verdreifachtem Gold/Provinz. Gemessen wurden Karteninstanzen und physische Stapellisten. [Befund](../Documentation/Basic_Card_Effect_Targets.md)
+
+v0.1.3 ist zunächst ein lokales Testpaket; eine Veröffentlichung wurde für diesen Entwicklungsstand noch nicht beauftragt. Die sichtbare Schlussabnahme der neuen Bedienung bleibt offen.
+
+Weitere Schlussprüfungen desselben Builds:
+
+- `--basic-automatic`: **7/7 gepaarte Fälle bestanden** (14 Partien): ohne/mit Kolonien, ausdrückliche Goldverdopplung/-verdreifachung, Kolonie-/Provinzausnahme und beide Checkboxen gemeinsam. Die gespeicherten Partiekonfigurationen enthalten die erzeugten normalen Effektbefehle.
+- `--garbage-automation`: **1/2 Müllhaufen-Kopien bestanden**, einschließlich echter nativer Anzeige, getrennter lokaler Spieler, unverändertem Smartplay-Profil, genau 1/2 übersprungener optionaler Fragen, unveränderter Hand, unbekannter Quellen und tatsächlichem Neustart zurück auf Fragen.
+- `roundtrip_test`: **356 Parser-/Ausgabe-/Ladevergleiche bestanden** für alle 89 Effekte; diese Prüfung bestätigt Speicherung und Parameter, nicht ungeprüfte Spielwirkungen.
+- `clear_kingdom_test --editor`: **468 native F8-Übernahmeprüfungen und Neustartspeicherung bestanden**.
+- Native Kartenfreigabe-/Import-/Online-Vorprüfung bestanden; kein Netzwerkversand.
+- Echter lokaler/Online-Editor mit Checkboxen, Vorschau, Sprache, Abbrechen und 32er-Grenze bestanden.
+
+Die Checkbox-Einstellungen selbst bleiben Sitzungseinstellungen. Automatisch erzeugte native Einträge können nach dem Spielaufbau als Set gespeichert werden. Vorher ausdrücklich ausgewählte Effekte sind unabhängig davon direkt speicherbar. Die persönliche Müllhaufen-Automatik ist absichtlich kein Set-Effekt und wird beim Laden einer Partie zurückgesetzt.
+
+Abschließend bestanden: echte Checkboxdarstellung im isolierten Spielprozess sowie Paketprüfung außerhalb des Entwicklungsordners. Der tatsächlich verpackte Injector und die DLL starteten über den direkten Installationsmodus im temporären Testspiel; Große Ideen 2× ergab sieben Handkarten und zwei installierte Einträge. Bann- und Privatmodus-Patch sowie F8-Hook wurden dabei ebenfalls geprüft. Alle Testprozesse wurden beendet.
+
+Lokales Testpaket: `out/Test-v0.1.3/KingdomEffectsPatch-v0.1.3-windows.zip`, 556878 Bytes. SHA-256: `dffaabbe20994c4a987c9c3de5609d82bb4f61f3d1f5e44c3d66811b6060dfc8`. Der Doppelklick-Einstieg ist `Testversion-starten.cmd`. Keine GitHub-Veröffentlichung und keine Änderung bestehender Releases. Das Paket enthält keine Spielgrafiken, Spielinstallation, Profile oder Diagnoseprogramme. Sichtbare Nutzerabnahme offen.

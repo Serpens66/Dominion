@@ -11,6 +11,8 @@
 #include "ui_language.hpp"
 #include "effect_text_fix.hpp"
 #include "ban_hint_fix.hpp"
+#include "optional_effect_automation.hpp"
+#include "basic_pile_automatic.hpp"
 
 #include <cstdio>
 #include <vector>
@@ -54,6 +56,8 @@ std::uintptr_t merge_original_tail;
 std::uintptr_t merge_serialization;
 bool measure_only;
 bool automatic_enabled;
+bool automatic_basic_enabled;
+unsigned automatic_basic_result;
 bool local_safety_enabled;
 volatile LONG initialized;
 wchar_t log_path[MAX_PATH];
@@ -69,6 +73,7 @@ thread_local kingdom::ImportedSetupOptions pending_import_options{};
 thread_local bool from_clipboard;
 thread_local bool clipboard_rejected;
 thread_local const std::byte* automatic_save;
+thread_local const std::byte* automatic_basic_save;
 thread_local const wchar_t* automatic_failure;
 thread_local kingdom::Effects expected_local_effects{};
 thread_local bool expected_local_valid=false;
@@ -332,31 +337,37 @@ bool __cdecl allow_local_start() {
 
 void __cdecl begin_automatic(const std::byte* save) {
     automatic_save = nullptr;
+    automatic_basic_save = nullptr;
+    automatic_basic_result = 0;
     automatic_failure = nullptr;
-    if (!automatic_enabled) return;
+    if (!automatic_enabled && !automatic_basic_enabled) return;
     const auto* client = *reinterpret_cast<const std::byte* const*>(image_base + 0x8C8D5C);
     if (!client || save != client + 0x5098 || *reinterpret_cast<const DWORD*>(client + 0x5068) != 1) return;
     const auto selector = *reinterpret_cast<const DWORD*>(save + 0x1C);
     const auto flags = *reinterpret_cast<const DWORD*>(save + 0x20);
     if (selector || (flags & 0x104)) return;
-    automatic_save = save;
+    const auto* replay = *reinterpret_cast<const char* const*>(save + 0x3C);
+    if (automatic_basic_enabled && (!replay || !*replay)) automatic_basic_save = save;
+    if (automatic_enabled) automatic_save = save;
 }
 
 void __cdecl append_automatic(void* native_extras, const void* rolled_piles, const std::byte* save) {
     kingdom::Effects generated{}; std::memcpy(&generated,native_extras,sizeof generated);
     log("generator effects before text output",&generated);
-    if (!automatic_save || automatic_save != save) return;
+    const bool kingdom_automatic = automatic_save && automatic_save == save;
+    const bool basic_automatic = automatic_basic_save && automatic_basic_save == save;
+    if (!kingdom_automatic && !basic_automatic) return;
     automatic_save = nullptr;
+    automatic_basic_save = nullptr;
     kingdom::KingdomPiles piles{};
     kingdom::Effects effects{};
     std::memcpy(&piles, rolled_piles, sizeof piles);
     std::memcpy(&effects, native_extras, sizeof effects);
-    switch (kingdom::append_doublings(effects, piles)) {
+    switch (kingdom_automatic ? kingdom::append_doublings(effects, piles) : kingdom::Error::none) {
         case kingdom::Error::none:
-            std::memcpy(native_extras, &effects, sizeof effects);
-            log("automatic kingdom effects", &effects);
-            return;
+            break;
         case kingdom::Error::capacity:
+            if (basic_automatic) automatic_basic_result = 0x10000u | unsigned(kingdom::basic_pile_automatic::Result::capacity);
             automatic_failure = L"Die zehn Stapel und die vorhandenen Regeln passen nicht in die "
                                 L"32 Effektpl\u00e4tze. Die Partie verwendet die bisherigen Regeln.";
             return;
@@ -365,16 +376,34 @@ void __cdecl append_automatic(void* native_extras, const void* rolled_piles, con
                                 L"Die Partie verwendet die bisherigen Regeln.";
             return;
     }
+    if (basic_automatic) {
+        const auto plan = kingdom::basic_pile_automatic::prepare(effects, kingdom::NativeCardAccess::capture(image_base));
+        if (plan.result != kingdom::basic_pile_automatic::Result::none) {
+            automatic_basic_result = 0x10000u | unsigned(plan.result);
+            automatic_failure = plan.result == kingdom::basic_pile_automatic::Result::capacity
+                ? L"Die automatischen Verdopplungen passen zusammen mit den vorhandenen Regeln nicht in die 32 Effektplätze. Die Partie verwendet die bisherigen Regeln."
+                : L"Die zusätzlichen Geld- und Punktestapel wurden nicht verdoppelt: Ihre Spielfreigabe konnte nicht zuverlässig geprüft werden.";
+            log("automatic basic doubling rejected before serialization");
+            return;
+        }
+        effects = plan.effects;
+        automatic_basic_result = plan.added;
+    }
+    // Commit both groups together. The native serializer below writes these
+    // standard effects into the generated Kingdom/save/replay description.
+    std::memcpy(native_extras, &effects, sizeof effects);
+    log("automatic kingdom effects", &effects);
 }
 
 void __cdecl end_automatic() {
     automatic_save = nullptr;
+    automatic_basic_save = nullptr;
     kingdom::Effects installed{};
     std::memcpy(&installed,image_base+0x780AD8+0x1280,sizeof installed);
     log("local installed effects",&installed);
     const auto expected=kingdom::count(expected_local_effects);
     const auto received=kingdom::count(installed);
-    const auto compare=!expected_local_valid ? 0 : automatic_enabled ? expected : (std::max)(expected,received);
+    const auto compare=!expected_local_valid ? 0 : (automatic_enabled || automatic_basic_enabled) ? expected : (std::max)(expected,received);
     for (std::size_t i=0;i<compare;++i) {
         if (expected_local_effects[i][0]!=installed[i][0]) {
             char line[180]; std::snprintf(line,sizeof line,"local effect mismatch at %zu: expected=%X installed=%X",i+1,
@@ -386,6 +415,9 @@ void __cdecl end_automatic() {
     automatic_failure = nullptr;
     if (failure) {
         log("automatic doubling skipped");
+#ifdef KINGDOM_EFFECT_TEXT_TEST
+        if (!test_suppress_access_messages)
+#endif
         MessageBoxW(GetActiveWindow(), kingdom::ui::tr(failure), L"Dominion Kingdom Effects Patch", MB_OK | MB_ICONWARNING);
     }
 }
@@ -676,15 +708,17 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
         }
         refresh_target_access();
         bool automatic = automatic_enabled;
+        bool automatic_basic = automatic_basic_enabled;
         std::wstring apply_error;
         const auto apply = [&](const kingdom::EffectCommands& edited) {
             return apply_editor_effects(current,config,effects,edited,apply_error);
         };
         log(context == kingdom::EditorContext::online ? "effect editor opened: online" : "effect editor opened: local");
         log_commands("editor opened",effects);
-        if (kingdom::edit_effects(owner, original.view(), effects, automatic, apply, context,&apply_error) &&
+        if (kingdom::edit_effects(owner, original.view(), effects, automatic, apply, context,&apply_error,&automatic_basic) &&
             context == kingdom::EditorContext::local) {
             automatic_enabled = automatic;
+            automatic_basic_enabled = automatic_basic;
         }
     } catch (...) {
         MessageBoxW(owner, kingdom::ui::tr(L"Dominion konnte diese Effektliste nicht übernehmen. Die bisherige Auswahl bleibt erhalten."),
@@ -1208,6 +1242,12 @@ constexpr unsigned local_modes = (1u << 2) | (1u << 3);
 constexpr unsigned online_mode = 1u << 4;
 
 const Site sites[] = {
+    {0x224070,"\x53\x8B\xDC\x83\xEC\x08",6,kingdom::optional_automation::load_hook,true,local_modes|online_mode},
+    {0x21CE00,"\x55\x8B\xEC\x51\x53\x56\x57",7,reinterpret_cast<void(*)()>(kingdom::optional_automation::get_defs),true,local_modes|online_mode},
+    {0x21CEE0,"\x56\xE8\xAA\xFF\xFF\xFF",6,kingdom::optional_automation::default_hook,true,local_modes|online_mode},
+    {0x1E3EC0,"\x55\x8B\xEC\x83\xE4\xF8",6,kingdom::optional_automation::toggle_hook,true,local_modes|online_mode},
+    {0x1E3E50,"\x55\x8B\xEC\x83\xE4\xF8",6,kingdom::optional_automation::save_hook,true,local_modes|online_mode},
+    {0x2229B1,"\x8B\x47\x04\x8B\x77\x50\x89\x75\xE4",9,kingdom::optional_automation::automatic_hook,true,local_modes|online_mode},
     {0x0DFA4F,"\x85\xC9\x75\x09\x39\x4B\x04",7,keep_zero_landscape_quota_hook,true,local_modes|online_mode},
     {0x0DBFFC,"\xC7\x85\x5C\xF2\xFF\xFF\x00\x00\x00\x00",10,keep_colonies_off_hook,true,local_modes|online_mode},
     {0x0DC026,"\xC7\x85\x60\xF2\xFF\xFF\x00\x00\x00\x00",10,keep_shelters_off_hook,true,local_modes|online_mode},
@@ -1385,6 +1425,7 @@ extern "C" DWORD WINAPI install_patch(void* argument) {
     }
     const auto image = reinterpret_cast<std::uintptr_t>(base);
     kingdom::effect_text_fix::initialize(image);
+    kingdom::optional_automation::initialize(image);
     image_base = base;
     native_parser = image + 0x0DDBB0;
     native_local_normalize = image + 0x0DBEF0;

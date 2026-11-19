@@ -1,4 +1,4 @@
-# Dominion Kingdom Effects Patch v0.1.2
+# Dominion Kingdom Effects Patch v0.1.3
 
 ## English
 
@@ -7,6 +7,8 @@ Customize your Kingdoms in **Dominion for Windows/Steam (game build 3315)** with
 - **Combine up to 32 effect entries:** double Supply piles, change starting conditions or add special rules. Effects can be repeated where supported; the editor shows their prerequisites and test status.
 - **Configure everything with F8:** search by name or effect ID, filter by effect type or trigger, choose suitable target cards and arrange effects in execution order.
 - **Browse cards comfortably:** grouped expansion lists, card previews, expansion rules and checkboxes for multiple targets. Reorder lists by dragging or with Alt+Up/Down; Delete removes a selected entry.
+- **Control Garbage Heap prompts:** right-click its effect banner and choose Ask or Off (never trash through this effect). The choice is per local player and resets when starting or loading a game.
+- **Double the piles you want:** separate options cover Kingdom piles and additional Treasure/Victory piles. Generated effects can be saved in Sets after starting a game.
 - **Use Deutsch or English:** switch the editor language with **Language:**.
 - **Import complete Kingdom codes:** pasted card selections include their explicit Platinum/Colony, Shelter and landscape-count settings. Unspecified options keep your current settings; account card access is respected.
 - **Manage larger online ban lists:** use the game's existing collection to exclude more than five cards, up to 700 cards and landscapes combined.
@@ -25,6 +27,8 @@ Gestalte deine Königreiche in **Dominion für Windows/Steam (Spielbuild 3315)**
 - **Bis zu 32 Effekteinträge kombinieren:** Vorratsstapel verdoppeln, Startbedingungen verändern oder besondere Regeln verwenden. Effekte lassen sich wiederholen, soweit sie das unterstützen; der Editor zeigt Voraussetzungen und Teststand.
 - **Alles über F8 einstellen:** Nach Namen oder Effekt-ID suchen, nach Effektart oder Auslöser filtern, passende Zielkarten auswählen und die Ausführungsreihenfolge festlegen.
 - **Karten übersichtlich auswählen:** Nach Erweiterungen gruppierte Listen, Kartenvorschauen, Erweiterungsregeln und Checkboxen für mehrere Ziele. Listen per Ziehen oder Alt+Pfeil hoch/runter sortieren; Entf entfernt den ausgewählten Eintrag.
+- **Müllhaufen-Abfragen einstellen:** Rechtsklick auf die Effektanzeige, dann Fragen oder Off (durch diesen Effekt niemals entsorgen). Die Wahl gilt pro lokalem Spieler und wird beim Starten oder Laden zurückgesetzt.
+- **Gewünschte Stapel verdoppeln:** Getrennte Optionen erfassen Königreichstapel und zusätzliche Geld-/Punktestapel. Die erzeugten Effekte lassen sich nach dem Spielstart in Sets speichern.
 - **Deutsch oder English verwenden:** Die Menüsprache lässt sich mit **Language:** umschalten.
 - **Vollständige Königreich-Codes einfügen:** Ausdrückliche Vorgaben für Platin/Kolonien, Unterschlüpfe und die Landschaftszahl werden mit der Kartenauswahl übernommen. Nicht angegebene Optionen bleiben wie eingestellt; die Kartenfreigabe des Kontos gilt weiterhin.
 - **Größere Online-Bannlisten führen:** Über die vorhandene Sammlung mehr als fünf Karten ausschließen, bis zu 700 Karten und Querkarten zusammen.

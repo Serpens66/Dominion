@@ -59,6 +59,7 @@ struct Draft {
     CardTargets fixed;
     EditorContext context;
     const std::wstring* apply_error = nullptr;
+    bool automatic_basic = false;
     const EffectDefinition* selected = nullptr;
     const CardTarget* first = nullptr;
     const CardTarget* second = nullptr;
@@ -468,7 +469,12 @@ void refresh_language(HWND dialog,Draft& draft) {
     SendMessageW(category, CB_SETDROPPEDWIDTH, width, 0);
     SendMessageW(category, CB_SETMINVISIBLE, 14, 0);
     SendDlgItemMessageW(dialog, IDC_CATEGORY, CB_SETCURSEL, (std::max)(LRESULT(0),previous_category), 0);
-    if(online) SetDlgItemTextW(dialog,IDC_AUTOMATIC,ui::tr(L"Automatische Verdopplung nur lokal"));
+    SetDlgItemTextW(dialog,IDC_AUTOMATIC,ui::pick(L"Alle Königreichstapel verdoppeln",L"Double all Kingdom piles"));
+    SetDlgItemTextW(dialog,IDC_AUTOMATIC_BASIC,ui::pick(L"Alle Geld- und Punktestapel verdoppeln",L"Double all Treasure and Victory piles"));
+    if(online) {
+        SetDlgItemTextW(dialog,IDC_AUTOMATIC,ui::pick(L"Königreichstapel: Automatik nur lokal",L"Kingdom piles: automatic doubling is local-only"));
+        SetDlgItemTextW(dialog,IDC_AUTOMATIC_BASIC,ui::pick(L"Geld- und Punktestapel: Automatik nur lokal",L"Treasure and Victory piles: automatic doubling is local-only"));
+    }
     filter_catalog(dialog,draft);update_active(dialog,draft,active);update_targets(dialog,draft);
 }
 
@@ -486,7 +492,8 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
                 [dialog]{SendMessageW(dialog,WM_COMMAND,IDC_REMOVE,0);});
             CheckDlgButton(dialog, IDC_AUTOMATIC, !online && draft.automatic ? BST_CHECKED : BST_UNCHECKED);
             EnableWindow(GetDlgItem(dialog, IDC_AUTOMATIC), !online);
-            if (online) SetDlgItemTextW(dialog, IDC_AUTOMATIC, kingdom::ui::tr(L"Automatische Verdopplung nur lokal"));
+            CheckDlgButton(dialog, IDC_AUTOMATIC_BASIC, !online && draft.automatic_basic ? BST_CHECKED : BST_UNCHECKED);
+            EnableWindow(GetDlgItem(dialog, IDC_AUTOMATIC_BASIC), !online);
             return TRUE;
         }
         const auto state = GetWindowLongPtrW(dialog, DWLP_USER);
@@ -553,8 +560,10 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
                       ? draft.apply_error->c_str() : kingdom::ui::tr(L"Dominion hat die Effektliste abgelehnt. Bitte prüfe die Ziele."));
                 return TRUE;
             }
-            if (draft.context == EditorContext::local)
+            if (draft.context == EditorContext::local) {
                 draft.automatic = IsDlgButtonChecked(dialog, IDC_AUTOMATIC) == BST_CHECKED;
+                draft.automatic_basic = IsDlgButtonChecked(dialog, IDC_AUTOMATIC_BASIC) == BST_CHECKED;
+            }
             EndDialog(dialog, IDOK);
         } else if (control == IDCANCEL) {
             EndDialog(dialog, IDCANCEL);
@@ -585,7 +594,7 @@ std::wstring target_access_message(const TargetAccessFailure& failure) {
 }
 
 bool edit_effects(void* owner, std::string_view kingdom_text, const EffectCommands& effects, bool& automatic,
-                  const std::function<bool(const EffectCommands&)>& apply, EditorContext context, const std::wstring* apply_error) {
+                  const std::function<bool(const EffectCommands&)>& apply, EditorContext context, const std::wstring* apply_error, bool* automatic_basic) {
     if (context == EditorContext::none) return false;
     HMODULE module{};
     if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
@@ -593,6 +602,7 @@ bool edit_effects(void* owner, std::string_view kingdom_text, const EffectComman
     if (!register_effect_table(module)) return false;
     ui::load_language();
     Draft draft{effects, automatic, apply, fixed_targets(kingdom_text), context, apply_error};
+    draft.automatic_basic = automatic_basic && *automatic_basic;
     const auto result = DialogBoxParamW(module, MAKEINTRESOURCEW(IDD_EFFECT_EDITOR),
                                        static_cast<HWND>(owner), dialog_proc, reinterpret_cast<LPARAM>(&draft));
     if (result == -1) {
@@ -601,6 +611,7 @@ bool edit_effects(void* owner, std::string_view kingdom_text, const EffectComman
     }
     if (result != IDOK) return false;
     automatic = draft.automatic;
+    if (automatic_basic) *automatic_basic = draft.automatic_basic;
     return true;
 }
 

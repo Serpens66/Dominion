@@ -20,6 +20,8 @@ Ziel ist die Steam-Version von Dominion von Temple Gates Games. Die erste Unters
 | Native Mod für doppelte Königreichstapel untersuchen | [Aufbau, lokale Abgrenzung und Offline-Testplan](Doppelte_Koenigreichstapel_Mod.md) |
 | Verlust beim lokalen Start und Erweiterungsbezug prüfen | [Korrigierter Startpfad und Erweiterungsfilter](Effect_Startup_Tests.md) |
 | Schuldenstempel, zulässige Projektsteine und native Bannhilfe | [Korrekturen und echte Produktionsmessungen](Native_Effect_Fixes.md) |
+| Müllhaufen-Abfragen automatisch überspringen | [Native Automatik und Prüfstand](Optional_Effect_Automation.md) |
+| Geld- und Punktekarten als Effektziele | [Native Unterstützung und Startprüfungen](Basic_Card_Effect_Targets.md) |
 | Offizielle Kartenfreigaben für Effektziele | [Read-only-Adapter, Taifun-Lücke und Tests](Target_Card_Access.md) |
 | Bekannte Probleme und verbleibende Grenzen | [Aktueller Befundstatus](Known_Issues.md) |
 | Privates Spiel bleibt nach „Leer“ privat | [Löschpfad, Fix und Vergleichstests](Private_Game_Clear.md) |

@@ -1,4 +1,4 @@
-# Dominion Kingdom Effects Patch v0.1.2
+# Dominion Kingdom Effects Patch v0.1.3
 
 [English](#english) · [Deutsch](#deutsch)
 
@@ -28,11 +28,26 @@ In Kingdom selection, clear the previous card selection and paste the full code 
 
 Both piles start with **20 cards instead of 10**. To intentionally apply the same effect again, enable **Add another copy** in the target picker; two doubling effects on Village produce **40 cards**.
 
+For Gold, Platinum and Victory piles, switch target selection to **All cards**. These targets are already supported when officially available for your account. `start_add_card(gold)` or `start_add_card(platinum)` adds one copy to **every player’s starting deck**, not necessarily their opening hand. Pile multipliers affect an existing Supply pile; they do not create a missing Platinum/Colony pile. The native Province multiplier also doubles an existing Colony pile.
+
 Search by English or German name, effect ID, or description. Filters include effect type and when an effect triggers. The table shows what each effect does, its prerequisites and its test status. **Untested** effects remain selectable; repeated use may have a different test status from a single application.
 
 Card selection supports multiple targets, card previews, and expansion descriptions followed directly by scrollable rules. Reorder active effects or Typhoon targets by dragging, or use **Alt+Up/Down**; **Delete** removes the selected entry while its list has focus. **Cancel** discards your effect changes.
 
 Typhoon uses the same checkboxes as pile doubling: click a checkbox or press Space to select or deselect a pile. Clicking a card name only updates the preview; double-clicking the name adds it without removing an existing choice. The numbered list and checkmarks stay synchronized; deselecting removes the pile and selecting it again appends it at the end. The add button reads **Already selected** and is disabled for a selected pile. Checkboxes use white fill, a strong dark-brown outline and tick, and an opaque paper-colored outer edge. Single-target selection and expansion headings keep no checkboxes.
+
+### Garbage Heap: ask or skip
+
+Right-click the **Garbage Heap** effect banner during a local game. Its normal game view includes the native automatic-action setting: **Ask** shows the optional trash question; **Off** skips it. Off means “never trash through this effect”; it does not choose a card for you. The setting is separate for each local player, applies to all copies of Garbage Heap and resets to Ask when a game is started or loaded. It is not a saved profile default.
+
+### Automatic pile doubling
+
+The two independent options at the bottom of F8 apply to local play and pass-and-play:
+
+- **Double all Kingdom piles** doubles the ten main Kingdom piles.
+- **Double all Treasure and Victory piles** doubles the additional Basic piles actually present, such as Copper, Gold, Province, Platinum and Colony. Kingdom Treasures and Victory cards belong to the first option. Curses are excluded.
+
+A pile already explicitly doubled or tripled receives no additional automatic multiplier. Province and Colony form a native pair: an explicit multiplier on either leaves that pair unchanged by the automatic option. Missing piles are not added. These options last for the current game session and do not modify card access. Automatic doubling creates normal effect entries when the Kingdom is generated, so the 32-entry limit applies. To keep these generated rules in a named Set, save that Kingdom after starting the game. Saving a Set before generation does not store these session-only checkbox preferences. Their results are preserved when saving and loading a game. If the generated entries do not fit, automatic additions are skipped with a message; your existing effects remain intact. Available targets without a Supply pile have no effect and do not add a pile.
 
 ### Online play and bans
 
@@ -82,11 +97,26 @@ In der Königreich-Auswahl die bisherige Kartenauswahl leeren und den vollständ
 
 Beide Stapel beginnen mit **20 statt 10 Karten**. Für eine bewusste Wiederholung **Weitere Kopie hinzufügen** in der Zielauswahl aktivieren: Zwei Verdopplungen ergeben beim Dorf **40 Karten**.
 
+Für Gold, Platin und Punktestapel in der Zielauswahl auf **Alle Karten** wechseln. Diese Ziele sind bei offizieller Spielfreigabe bereits unterstützt. `start_add_card(gold)` oder `start_add_card(platinum)` legt eine zusätzliche Kopie ins **Startdeck jedes Spielers**, nicht zwingend in dessen erste Hand. Stapelvervielfachung verändert vorhandene Vorräte; sie erzeugt keinen fehlenden Platin-/Koloniestapel. Der native Provinz-Effekt verdoppelt zusätzlich vorhandene Kolonien.
+
 Die Suche findet deutsche und englische Namen, Effekt-IDs und Beschreibungstexte. Filter berücksichtigen Effektart und Auslösezeitpunkt. Die Tabelle zeigt Wirkung, Voraussetzungen und Teststand. **Ungetestete** Effekte bleiben auswählbar; einfache und mehrfache Anwendung können unterschiedlich weit geprüft sein.
 
 Die Kartenauswahl bietet mehrere Ziele, Kartenvorschauen sowie Erweiterungsbeschreibungen mit direkt anschließenden scrollbaren Regeln. Aktive Effekte und Taifun-Ziele lassen sich durch Ziehen oder **Alt+Pfeil hoch/runter** sortieren. **Entf** entfernt den gewählten Eintrag bei Fokus in seiner Liste. **Abbrechen** verwirft die Effektänderungen.
 
 Taifun verwendet dieselben Checkboxen wie die Stapelverdopplung: Klick auf das Kästchen oder Leertaste wählt einen Stapel an beziehungsweise ab. Ein Klick auf den Kartennamen ändert nur die Vorschau; ein Doppelklick fügt die Karte hinzu, ohne eine vorhandene Auswahl zu entfernen. Nummerierte Liste und Haken bleiben synchron; Abwählen entfernt den Stapel, erneutes Anwählen hängt ihn hinten an. Für bereits gewählte Stapel ist der Hinzufügen-Button mit **Bereits gewählt** beschriftet und deaktiviert. Die Kästchen erhalten weiße Füllung, kräftige dunkelbraune Kontur und Haken sowie einen deckenden papierfarbenen Außenrand. Einzelzielauswahl und Erweiterungsüberschriften bleiben ohne Checkboxen.
+
+### Müllhaufen: fragen oder überspringen
+
+Während einer lokalen Partie mit Rechtsklick die Effektanzeige **Müllhaufen** öffnen. Dort steht die native Automatik-Einstellung: **Fragen** zeigt die optionale Entsorgungsfrage; **Off** überspringt sie. Off bedeutet hier „durch diesen Effekt niemals entsorgen“; es wird keine Karte automatisch ausgewählt. Die Einstellung gilt getrennt pro lokalem Spieler für alle Müllhaufen-Kopien und wird beim Starten oder Laden einer Partie auf Fragen zurückgesetzt. Sie ist kein gespeicherter Profilstandard.
+
+### Stapel automatisch verdoppeln
+
+Unten in F8 stehen zwei unabhängige Optionen für Lokal spielen und Weitergeben:
+
+- **Alle Königreichstapel verdoppeln** erfasst die zehn Hauptstapel des Königreichs.
+- **Alle Geld- und Punktestapel verdoppeln** erfasst die zusätzlich vorhandenen Grundstapel, etwa Kupfer, Gold, Provinz, Platin und Kolonie. Königreichkarten mit Geld- oder Punktetyp gehören zur ersten Option. Flüche bleiben ausgenommen.
+
+Ein bereits ausdrücklich verdoppelter oder verdreifachter Stapel bekommt keinen weiteren automatischen Faktor. Provinz und Kolonie bilden ein natives Paar: Ein ausdrücklicher Faktor für eine der beiden Karten lässt das Paar von der Automatik unverändert. Fehlende Vorräte werden nicht hinzugefügt. Die Optionen gelten für die aktuelle Spielsitzung und ändern keine Kartenfreigaben. Die Automatik erzeugt beim Erzeugen des Königreichs normale Effekteinträge; dafür gilt die Grenze von 32 Einträgen. Um diese erzeugten Regeln in einem benannten Set zu behalten, das Königreich nach dem Spielstart als Set speichern. Ein vor der Erzeugung gespeichertes Set speichert diese nur für die Sitzung geltenden Checkbox-Einstellungen nicht. Ihre Ergebnisse bleiben beim Speichern und Laden erhalten. Passen die zusätzlichen Einträge nicht mehr hinein, unterbleiben automatische Ergänzungen mit einer Meldung; vorhandene Effekte bleiben erhalten. Freigegebene Ziele ohne Vorratsstapel haben keine Wirkung und fügen keinen Stapel hinzu.
 
 ### Online-Spiel und Banns
 

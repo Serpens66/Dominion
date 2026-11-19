@@ -172,6 +172,8 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
         SetDlgItemTextW(dialog, IDC_QUERY, L"");
         check(SendMessageW(list, LB_GETCOUNT, 0, 0) == 89, "Search reset mismatch.");
         auto& draft=*reinterpret_cast<kingdom::Draft*>(GetWindowLongPtrW(dialog,DWLP_USER));
+        check(IsWindowEnabled(GetDlgItem(dialog,IDC_AUTOMATIC_BASIC)) && IsDlgButtonChecked(dialog,IDC_AUTOMATIC_BASIC)==BST_CHECKED,"Basic-pile automatic checkbox missing or not initialized.");
+        CheckDlgButton(dialog,IDC_AUTOMATIC_BASIC,BST_UNCHECKED);
         save_dialog(dialog,L"f8-de.png");
         const auto saved_effects=draft.effects;const auto* saved_selection=draft.selected;
         SendDlgItemMessageW(dialog,IDC_LANGUAGE,CB_SETCURSEL,1,0);SendMessageW(dialog,WM_COMMAND,MAKEWPARAM(IDC_LANGUAGE,CBN_SELCHANGE),0);
@@ -210,6 +212,7 @@ BOOL CALLBACK inspect_online(HWND dialog, LPARAM) {
         wchar_t caption[256]{}; GetWindowTextW(dialog,caption,256);
         check(std::wstring_view(caption).find(L"Online – Wirkung serverabhängig") != std::wstring_view::npos, "Online context missing from title.");
         check(!IsWindowEnabled(GetDlgItem(dialog,IDC_AUTOMATIC)), "Online automation is enabled.");
+        check(!IsWindowEnabled(GetDlgItem(dialog,IDC_AUTOMATIC_BASIC)) && IsDlgButtonChecked(dialog,IDC_AUTOMATIC_BASIC)==BST_UNCHECKED,"Basic automatic option must be inactive online.");
         check(IsDlgButtonChecked(dialog,IDC_AUTOMATIC)==BST_UNCHECKED, "Local automation shown as active online.");
         auto& draft=*reinterpret_cast<kingdom::Draft*>(GetWindowLongPtrW(dialog,DWLP_USER));
         const kingdom::EffectCommands pair{"start_double_pile(village)","start_double_pile(market)"};
@@ -442,10 +445,12 @@ int main() {
     }
     timer = SetTimer(nullptr, 0, 150, inspect_dialog);
     bool automatic = false;
+    bool automatic_basic = true;
     bool applied = false;
     const kingdom::EffectCommands effects{"start_double_pile(village)"};
     const bool saved = kingdom::edit_effects(nullptr, "-k village, market", effects, automatic,
-        [&](const kingdom::EffectCommands&) { applied = true; return true; });
+        [&](const kingdom::EffectCommands&) { applied = true; return true; },kingdom::EditorContext::local,nullptr,&automatic_basic);
+    check(automatic_basic,"Cancel changed basic automatic setting.");
     KillTimer(nullptr, timer);
     // Each profile-backed online configuration supplies its own apply callback.
     std::array<kingdom::EffectCommands,3> configurations{effects,{}, {"twist_big_ideas"}};
@@ -455,12 +460,18 @@ int main() {
         online_checked=false; online_cancel=false; timer=SetTimer(nullptr,0,150,inspect_online_dialog);
         const auto other=configurations[3-target];
         check(kingdom::edit_effects(nullptr,"-k village, market",{},local_automatic,
-            [&](const kingdom::EffectCommands& value) { configurations[target]=value; return true; },kingdom::EditorContext::online), "Online accept failed.");
-        check(online_checked && local_automatic && configurations[target].size()==32 && configurations[3-target]==other && configurations[0]==local_before, "Online change affected another configuration or automation.");
+            [&](const kingdom::EffectCommands& value) { configurations[target]=value; return true; },kingdom::EditorContext::online,nullptr,&automatic_basic), "Online accept failed.");
+        check(online_checked && local_automatic && automatic_basic && configurations[target].size()==32 && configurations[3-target]==other && configurations[0]==local_before, "Online change affected another configuration or automation.");
     }
     online_cancel=true; online_checked=false; timer=SetTimer(nullptr,0,150,inspect_online_dialog);
     check(!kingdom::edit_effects(nullptr,"-k village, market",{},local_automatic,
         [&](const kingdom::EffectCommands&) { applied=true; return true; },kingdom::EditorContext::online) && online_checked && !applied && local_automatic, "Online cancel changed the saved selection.");
+    for(const auto* id:{"gold","platinum","estate","duchy","province","colony"}) {
+        const auto card=std::find_if(std::begin(kingdom::target_catalog),std::end(kingdom::target_catalog),[&](const auto& candidate){return std::string_view(candidate.id)==id;});
+        check(card!=std::end(kingdom::target_catalog) && (card->kinds&kingdom::kind_mask(kingdom::TargetKind::card)) &&
+              (card->kinds&kingdom::kind_mask(kingdom::TargetKind::pile)) && !(card->kinds&kingdom::kind_mask(kingdom::TargetKind::kingdom_pile)),
+              "Basic Treasure/Victory target must be available as card/pile and excluded from Kingdom-only effects.");
+    }
     const auto previous_access=kingdom::editor_card_access;
     kingdom::editor_card_access=[](std::string_view id) {
         for(const auto& card:kingdom::target_catalog)if(id==card.id) {

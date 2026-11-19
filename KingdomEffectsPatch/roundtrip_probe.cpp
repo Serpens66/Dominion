@@ -38,6 +38,7 @@ const char* target(TargetKind kind, bool second=false) {
 #include "native_target_access_probe.hpp"
 #include "online_access_hook_test.hpp"
 #include "import_setup_probe.hpp"
+#include "optional_automation_probe.hpp"
 
 DWORD run_roundtrip(void* argument) {
     const auto base=reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
@@ -48,6 +49,7 @@ DWORD run_roundtrip(void* argument) {
         reinterpret_cast<LPCWSTR>(&run_roundtrip),&self);
     wchar_t path[32768]{}; GetModuleFileNameW(self,path,32768);
     const auto phase=reinterpret_cast<std::uintptr_t>(argument);
+    if(phase>=61 && phase<=67)return run_optional_automation_checks(static_cast<DWORD>(phase));
     if(phase & 0x80000000u){
         auto* client=reinterpret_cast<std::byte*>(phase & 0x7FFFFFFFu);
         DWORD state=0;
@@ -74,6 +76,13 @@ DWORD run_roundtrip(void* argument) {
         return change_site(reinterpret_cast<std::byte*>(base),caption,true)?0:602;
     }
     if(phase==50 || phase==51 || phase==52 || phase==53 || phase==55) return run_import_setup_checks(phase);
+    if(phase==56 || phase==57) {
+        test_suppress_access_messages=true;
+        automatic_basic_enabled=true;
+        automatic_enabled=phase==57;
+        return 0;
+    }
+    if(phase==58) return automatic_basic_result;
     if(phase==42) {
         // Fixture preparation: imitate the native collection/Kingdom UI,
         // which publishes grants before the user can choose target cards.

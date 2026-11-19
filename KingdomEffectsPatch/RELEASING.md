@@ -1,4 +1,4 @@
-# Release v0.1.2
+# Testpaket v0.1.3
 
 Der Release-Starter ist vom bisherigen Test-Starter getrennt. Er startet die originale Steam-Installation mit dem normalen Profil. Keine Spielkopie und keine Profilordner-Umschaltung. Der Test-Starter bleibt für Diagnosezwecke erhalten. Ein begonnenes altes Profil-Swapping muss zuerst über diesen Test-Starter abgeschlossen werden.
 
@@ -6,9 +6,13 @@ Der Release-Starter ist vom bisherigen Test-Starter getrennt. Er startet die ori
 
 Der Nutzer hat die sichtbare Importkorrektur bestätigt und am 19. November 2026 die Veröffentlichung von **v0.1.2** beauftragt. Das aktuelle Paket wird mit sauberem Quellcommit, geprüften fertigen Binärdateien, ZIP und SHA-256-Prüfsumme als Vorabversion veröffentlicht. v0.1.1 bleibt als vorherige Version erhalten. Die späteren historischen Vorgaben zu einem damals gesperrten v0.1.1-Entwurf gelten nicht für diesen bestätigten Veröffentlichungsauftrag. Der Release-Text beschreibt den aktuellen Funktionsumfang in Deutsch und Englisch.
 
+## Lokales Testpaket v0.1.3
+
+Der aktuelle Entwicklungsstand wird als lokales Testpaket gebaut. Das veröffentlichte v0.1.2 bleibt erhalten. Keine Veröffentlichung von v0.1.3 ohne gesonderten Auftrag; die sichtbare Abnahme bleibt beim Nutzer. Historische Veröffentlichungsaufträge weiter unten gelten ausschließlich für die genannten früheren Versionen.
+
 ## Bauen und prüfen
 
-`Build-Release.ps1` baut mit `build.cmd staging`, führt die Effektprüfungen aus und erzeugt unter `out/releases/<Zeitpunkt>` das Paketverzeichnis `KingdomEffectsPatch-v0.1.2` und das ZIP `KingdomEffectsPatch-v0.1.2-windows.zip` mit Prüfsumme. `-SkipBuild` verwendet den vorhandenen Staging-Build. Entwicklungsabhängigkeiten bleiben ausschließlich beim Ersteller: Visual Studio C++ x86, Python und Pillow sowie die lokal installierten Spielressourcen. `DOMINION_PYTHON` und `DOMINION_GAME_DIRECTORY` überschreiben die lokalen Build-Vorgaben.
+`Build-Release.ps1` baut mit `build.cmd staging`, führt die Effektprüfungen aus und erzeugt unter `out/releases/<Zeitpunkt>` das Paketverzeichnis `KingdomEffectsPatch-v0.1.3` und das ZIP `KingdomEffectsPatch-v0.1.3-windows.zip` mit Prüfsumme. `-SkipBuild` verwendet den vorhandenen Staging-Build. Entwicklungsabhängigkeiten bleiben ausschließlich beim Ersteller: Visual Studio C++ x86, Python und Pillow sowie die lokal installierten Spielressourcen. `DOMINION_PYTHON` und `DOMINION_GAME_DIRECTORY` überschreiben die lokalen Build-Vorgaben.
 
 Das Paket enthält eine explizite Dateiauswahl: Release-Skripte, Anleitung, Versionshinweise, fertigen Injector, Patch-DLL. Es enthält keine Grafikdateien oder eingebetteten Spielbilder. Der Build erzeugt nur Ressourcenpfade und Katalog-/Layoutmetadaten; der Patch liest Xpack, QOI-Texturen und Atlas-Ausschnitte zur Laufzeit. Keine Spiel-EXE, Xpack-Datei, Profile, Testprogramme, Logs oder Compiler-Zwischendateien. `package.json` verzeichnet Version, unterstützte EXE, Quellcommit, uncommittete Änderungen und SHA-256 der Nutzdateien. Beim Start werden die beiden Binärdateien geprüft. Einzelne fehlende Bilder dürfen auf Textdarstellung zurückfallen.
 

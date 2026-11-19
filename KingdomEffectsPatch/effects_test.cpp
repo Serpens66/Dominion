@@ -1,6 +1,7 @@
 #include "effects.hpp"
 #include "effect_editor.hpp"
 #include "import_option_checks.hpp"
+#include "basic_pile_automatic_checks.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -226,5 +227,6 @@ int main() {
     assert(kingdom::count(kingdom::read_effects(active.data())) == 0);
     assert(active[kingdom::typhoon_offset + 4] == std::byte{});
     run_import_option_checks();
+    run_basic_pile_automatic_checks();
     std::cout << "Effect merge, shared targets and input limits passed.\n";
 }
