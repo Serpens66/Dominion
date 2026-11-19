@@ -1,4 +1,4 @@
-# Dominion Kingdom Effects Patch v0.1.1
+# Dominion Kingdom Effects Patch v0.1.2
 
 [English](#english) · [Deutsch](#deutsch)
 
@@ -15,6 +15,10 @@ An unofficial mod for **Dominion on Windows/Steam, game build 3315**. Choose fro
 4. Use **Language: Deutsch / English** at the bottom to choose the editor language. The label **Language:** stays English in both languages.
 
 Steam and your internet connection can stay on. No Python or Visual Studio is needed. The launcher uses your normal Steam installation and normal profile, with no separate game copy or test profile.
+
+### Import a Kingdom code
+
+In Kingdom selection, clear the previous card selection and paste the full code into the card search field or use the game's clipboard import. Explicit Platinum/Colony, Shelter and landscape-count settings are preserved. For example, `colonies` requests Platinum and Colonies; `NoShelters` requests Estates in starting decks; `Landscapes(0,0)` requests no random landscapes. Unspecified options keep your existing settings. All imported cards must be officially available for your account. Fixed cards do not require changing your expansion randomizer pool.
 
 ### Example: double Village and Market
 
@@ -50,7 +54,7 @@ To play without the mod, close the game and start it normally through Steam. To 
 
 [Effect guide and test status](https://github.com/Serpens66/Dominion/blob/main/Documentation/Steam_Spielanleitung.md) · [Known limitations](https://github.com/Serpens66/Dominion/blob/main/Documentation/Known_Issues.md) · [Technical documentation](https://github.com/Serpens66/Dominion/blob/main/Documentation/README.md)
 
-Only cards currently authorized by Dominion for your account are offered as effect targets, including official temporary access. Unavailable cards and empty expansion groups are hidden. All 89 effects remain selectable: Typhoon works with Base-game targets even without the expansion referenced by the effect. Existing invalid targets remain visible so you can remove or replace them; importing, applying or starting a set with unavailable targets is rejected without silently shortening the list. If authorization is not ready, reopen the normal Collection/Kingdom selection and retry. The mod reads the game's published access cache and does not initialize or change your licenses.
+Only cards currently authorized by Dominion for your account are offered as effect targets, including official temporary access. Unavailable cards and empty expansion groups are hidden. All 89 effects are selectable. Suitable target cards can come from any expansion officially authorized for your account; effect descriptions explain any mechanic prerequisites. Existing invalid targets remain visible so you can remove or replace them; importing, applying or starting a set with unavailable targets is rejected without silently shortening the list. If authorization is not ready, reopen the normal Collection/Kingdom selection and retry. The mod reads the game's published access cache and does not initialize or change your licenses.
 
 ## Deutsch
 
@@ -65,6 +69,10 @@ Ein inoffizieller Mod für **Dominion unter Windows/Steam, Spielbuild 3315**. Im
 4. Unten mit **Language: Deutsch / English** die Menüsprache wählen. Die Beschriftung **Language:** bleibt in beiden Sprachen englisch.
 
 Steam und Internet können eingeschaltet bleiben. Python und Visual Studio werden nicht benötigt. Verwendet werden die normale Steam-Installation und dein normales Profil, ohne Spielkopie oder Testprofil.
+
+### Königreich-Code einfügen
+
+In der Königreich-Auswahl die bisherige Kartenauswahl leeren und den vollständigen Code ins Kartensuchfeld einfügen oder die Zwischenablage-Funktion des Spiels verwenden. Ausdrückliche Vorgaben für Platin/Kolonien, Unterschlüpfe und Landschaftszahl bleiben erhalten. Beispielsweise fordert `colonies` Platin und Kolonien an, `NoShelters` Startanwesen und `Landscapes(0,0)` keine zufälligen Landschaften. Nicht angegebene Optionen bleiben wie eingestellt. Alle importierten Karten müssen für dein Konto offiziell freigegeben sein. Für fest vorgegebene Karten muss der Erweiterungs-Zufallspool nicht umgestellt werden.
 
 ### Beispiel: Dorf und Markt verdoppeln
 
@@ -104,4 +112,4 @@ Für eine Partie ohne Mod Dominion schließen und normal über Steam starten. Zu
 
 Als Effektziele stehen nur Karten zur Auswahl, die Dominion für dein Konto aktuell offiziell zum Spielen freigibt, einschließlich zeitweiliger kostenloser Freigaben. Andere Karten und leere Erweiterungsgruppen sind ausgeblendet. Die für Zufallsauswahl aktivierten Erweiterungen schränken diese Zielauswahl nicht zusätzlich ein.
 
-Alle 89 Effekte bleiben wählbar. Taifun mit Basisspielkarten benötigt keinen Kauf der beim Effekt genannten Erweiterung. Bestehende unzulässige Ziele bleiben zum Entfernen oder Ersetzen sichtbar; Import, Übernahme und Start betroffener Sets werden mit verständlicher Meldung verhindert. Es werden keine Karten oder nachfolgenden Effekte still gelöscht. Bei noch unbekannter Freigabe die normale Sammlung/Königreich-Auswahl erneut öffnen und anschließend F8 erneut versuchen. Der Patch liest den offiziellen Freigabe-Cache; Freischaltungen werden nicht geändert.
+Alle 89 Effekte sind wählbar. Passende Zielkarten können aus jeder für dein Konto offiziell freigegebenen Erweiterung stammen; die Effektbeschreibungen erklären nötige Mechaniken. Bestehende unzulässige Ziele bleiben zum Entfernen oder Ersetzen sichtbar; Import, Übernahme und Start betroffener Sets werden mit verständlicher Meldung verhindert. Es werden keine Karten oder nachfolgenden Effekte still gelöscht. Bei noch unbekannter Freigabe die normale Sammlung/Königreich-Auswahl erneut öffnen und anschließend F8 erneut versuchen. Der Patch liest den offiziellen Freigabe-Cache; Freischaltungen werden nicht geändert.
