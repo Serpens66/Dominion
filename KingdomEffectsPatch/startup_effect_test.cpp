@@ -187,6 +187,168 @@ int check_garbage_automation(const fs::path& exe,const fs::path& dll) {
  std::wprintf(L"Scratch: %ls\n",root.c_str());return 0;
 }
 
+int check_independent_order(const fs::path& exe,const fs::path& dll) {
+ struct OrderCase {const char* effects;unsigned actions,buys;bool automatic;};
+ const OrderCase cases[]{
+  {"twist_busy_busy,twist_shoppers",2,2,true},
+  {"twist_busy_busy,twist_busy_busy,twist_shoppers,twist_shoppers",3,3,true},
+  {"twist_busy_busy,twist_busy_busy",3,1,true},
+  {"twist_shoppers,twist_shoppers",1,3,true},
+  {"twist_busy_busy,twist_big_ideas,twist_garbage_heap",0,0,false},
+  {"twist_shoppers,twist_big_ideas,twist_garbage_heap",0,0,false},
+  {"twist_extra_oomph,twist_big_ideas,twist_garbage_heap",0,0,false},
+  {"twist_typhoon(village,market),twist_big_ideas,twist_garbage_heap",0,0,false},
+ };
+ auto name=L"DominionIndependentOrder_"+std::to_wstring(GetCurrentProcessId());HiddenDesktop desktop(name);
+ const auto root=fs::temp_directory_path()/name;require(fs::create_directory(root),"Scratch exists.");unsigned serial=0;
+ for(unsigned c=0;c<std::size(cases);++c) {
+  const auto& test=cases[c];std::array<DWORD,6> automatic_state{};
+  for(unsigned mode=0;mode<(test.automatic?3u:1u);++mode) {
+   const auto folder=root/std::to_wstring(++serial);require(fs::create_directory(folder),"Scratch exists.");
+   const Probe probe{test.effects,0,{},Metric::hand,0,0,1,base_kingdom};write_profile(folder,probe,1,"setupData");
+   Child child(exe,name);const auto base=child.image_base();redirect_save_folder(child,base,folder);child.resume();
+   const auto client=wait_for_client(child,base,folder);require(load_patch(child,dll)==0,"Patch initialization failed.");
+   require(load_patch(child,dll,42)==0,"Native collection grant preparation failed.");
+   require(load_patch(child,dll,0x80000000u|static_cast<DWORD>(client))==0,"Client fixture binding failed.");
+   start_local_game(child,base,client,folder);const auto state=base+game_state;
+   require(load_patch(child,dll,75)==0,"Cannot snapshot Smartplay settings.");
+   if(!test.automatic) {
+    const auto result=load_patch(child,dll,72);
+    std::printf("independent order case=%u manual-required result=%lu %s\n",c,result,result?"FAIL":"PASS");std::fflush(stdout);
+    require(!result,"An order-relevant trigger choice disappeared or was declined.");
+    require(load_patch(child,dll,76)==0,"Order inspection changed Smartplay settings.");continue;
+   }
+   {
+    const auto preflight=load_patch(child,dll,73);
+    std::printf("independent order case=%u predicate result=%lu\n",c,preflight);std::fflush(stdout);
+    require(!preflight,"Native ability-commutation checks failed.");
+   }
+   unsigned replayed=0;
+   if(mode) {
+    for(unsigned step=0;step<8;++step) {
+     const auto result=load_patch(child,dll,mode==1?69:70);
+     if(result==1)break;
+     require(!result,"The manual order replay failed.");++replayed;Sleep(100);
+    }
+   }
+   Sleep(200);const auto cards=child.read(state+0x1520);
+   const std::array<DWORD,6> measured{child.read(state+0x174F8),child.read(state+0x174FC),child.read(state+0x174F4),
+      hand_count(child,state,cards,0),child.read(state+0x17558),child.read(state+0x19CC)};
+   const bool ok=measured[0]==test.actions && measured[1]==test.buys && measured[2]==0 && measured[3]==5 &&
+      (!mode || measured==automatic_state);
+   if(!mode)automatic_state=measured;
+   std::printf("native order case=%u mode=%u actions=%lu buys=%lu manual-responses=%u %s\n",c,mode,measured[0],measured[1],replayed,ok?"PASS":"FAIL");std::fflush(stdout);
+   if(!ok) {
+    const auto events=child.read(state+0x19B8);
+    std::printf("pending kind=%lX options=%lu events=%lu\n",child.read(state+0x24),child.read(state+0x8C),events);
+    for(unsigned i=0;i<std::min<DWORD>(events,8);++i){const auto event=state+0x3B568+i*0xA8;
+      std::printf("event%u source=%lX callback=%lX kind=%lX/%lX flags=%lX final=%lX extra=%lX,%lX,%lX,%lX\n",i,
+       child.read(event+0x24),child.read(event+0x54)-static_cast<DWORD>(base),child.read(event+0x4C),child.read(event+0x50),child.read(event+0x60),child.read(event+0x84),
+       child.read(event+0x58),child.read(event+0x70),child.read(event+0x74),child.read(event+0x7C));}
+    std::fflush(stdout);
+   }
+   require(ok,"Native automatic and conditional manual-order outcomes differ.");
+   require(load_patch(child,dll,76)==0,"Native order audit changed Smartplay settings.");
+  }
+ }
+ std::wprintf(L"Scratch: %ls\n",root.c_str());return 0;
+}
+
+int check_campaign_order(const fs::path& exe,const fs::path& dll) {
+ struct OrderCase {const char* effects;bool enabled,question;unsigned actions,buys;};
+ const OrderCase cases[]{
+  {"twist_typhoon(festival,laboratory),twist_big_ideas,twist_garbage_heap",false,false,0,0},
+  {"twist_typhoon(festival,laboratory),twist_big_ideas",true,false,1,1},
+  {"twist_typhoon(festival,laboratory),twist_big_ideas,twist_busy_busy,twist_shoppers",true,false,2,2},
+  {"twist_typhoon(festival,laboratory),twist_big_ideas,twist_garbage_heap",true,true,0,0},
+ };
+ auto name=L"DominionCampaignOrder_"+std::to_wstring(GetCurrentProcessId());HiddenDesktop desktop(name);
+ const auto root=fs::temp_directory_path()/name;require(fs::create_directory(root),"Scratch exists.");
+ for(unsigned c=0;c<std::size(cases);++c) {
+  const auto& test=cases[c];const auto folder=root/std::to_wstring(c);require(fs::create_directory(folder),"Scratch exists.");
+  const Probe probe{test.effects,0,{},Metric::hand,0,0,1,base_kingdom};write_profile(folder,probe,1,"setupData");
+  Child child(exe,name);const auto base=child.image_base();redirect_save_folder(child,base,folder);child.resume();
+  const auto client=wait_for_client(child,base,folder);require(load_patch(child,dll)==0,"Patch initialization failed.");
+  require(load_patch(child,dll,42)==0,"Native collection grant preparation failed.");
+  require(load_patch(child,dll,0x80000000u|static_cast<DWORD>(client))==0,"Client fixture binding failed.");
+  if(test.enabled)require(load_patch(child,dll,68)==0,"Cannot enable order preference.");
+  start_local_game(child,base,client,folder);const auto state=base+game_state;
+  require(load_patch(child,dll,65)==0,"Cannot render isolated test window.");
+  Sleep(500);
+  require(load_patch(child,dll,77)==DWORD(test.enabled),"Loading a game changed the order preference.");
+  require(load_patch(child,dll,75)==0,"Cannot snapshot Smartplay settings.");
+  if(!test.enabled) {
+   const auto table=load_patch(child,dll,78),guards=load_patch(child,dll,79),manual=load_patch(child,dll,72);
+   std::printf("campaign order default-off table=%lu guards=%lu manual=%lu\n",table,guards,manual);std::fflush(stdout);
+   require(!table && !guards && !manual,"Campaign order identity/negative/default checks failed.");
+  } else if(test.question) {
+   const auto result=load_patch(child,dll,74),automatic=load_patch(child,dll,71);
+   std::printf("campaign order Garbage Heap question=%lu ordered=%lu\n",result,automatic);std::fflush(stdout);
+   require(!result && automatic>0,"Order automation answered or failed to reach the optional hand decision.");
+  } else {
+   const auto cards=child.read(state+0x1520);const auto typhoon=load_patch(child,dll,82);
+   const bool ok=hand_count(child,state,cards,0)==6 && child.read(state+0x174F8)==test.actions &&
+       child.read(state+0x174FC)==test.buys && child.read(state+0x24)!=6 && !typhoon;
+   std::printf("campaign order case=%u hand=%u actions=%lu buys=%lu typhoon=%lu ordered=%lu %s\n",c,
+      hand_count(child,state,cards,0),child.read(state+0x174F8),child.read(state+0x174FC),typhoon,load_patch(child,dll,71),ok?"PASS":"FAIL");std::fflush(stdout);
+   if(!ok)require(load_patch(child,dll,81)==0,"Cannot dump ordering diagnostics.");
+   require(ok,"Automatic drawing or Typhoon failed to complete without a decision.");
+  }
+  require(load_patch(child,dll,76)==0,"Campaign order changed Smartplay settings.");
+  if(c==2) {
+   const DWORD restart=9;child.write(client+0x5044,&restart,sizeof restart);
+   const auto until=GetTickCount64()+10000;
+   while(GetTickCount64()<until && child.alive() && (child.read(client+0x5044)!=0 || child.read(state+0x19E0)!=1))Sleep(50);
+   require(child.alive() && child.read(client+0x5044)==0 && load_patch(child,dll,77)==1,"A native restart lost the order preference.");
+  }
+ }
+ std::wprintf(L"Scratch: %ls\n",root.c_str());return 0;
+}
+
+int check_zoom_crash(const fs::path& exe,const fs::path& dll) {
+ auto name=L"DominionZoomCrash_"+std::to_wstring(GetCurrentProcessId());HiddenDesktop desktop(name);
+ const auto root=fs::temp_directory_path()/name;require(fs::create_directory(root),"Scratch exists.");
+ std::wprintf(L"Zoom scratch: %ls\n",root.c_str());std::fflush(stdout);
+ unsigned failures=0;
+ for(unsigned mode=0;mode<6;++mode){
+  const auto folder=root/std::to_wstring(mode);require(fs::create_directory(folder),"Scratch exists.");
+  const char* kingdom="-k cellar, market, merchant, militia, mine, moat, remodel, smithy, laboratory, workshop";
+  const Probe probe{mode&1?"stamp_discounted(laboratory)":"",0,{},Metric::hand,0,0,1,kingdom};write_profile(folder,probe,mode&1?1:0,"kingdomData");
+  if(mode>=4){
+   wchar_t appdata[32768]{};require(GetEnvironmentVariableW(L"APPDATA",appdata,32768)>0,"Missing save source.");
+   for(const auto* extension:{L".xml",L".bin"}){const auto filename=std::wstring(L"gamelocal_0_-99")+extension;
+    fs::copy_file(fs::path(appdata)/L"TempleGates"/L"Dominion"/filename,folder/filename);}
+  }
+  Child child(exe,name);const auto base=child.image_base();redirect_save_folder(child,base,folder);child.resume();
+  const auto client=wait_for_client(child,base,folder);if((mode<4 && (mode&2)) || mode==5)require(load_patch(child,dll)==0,"Patch initialization failed.");
+  if(mode<4)start_local_game(child,base,client,folder);
+  else {
+   const DWORD saved=static_cast<DWORD>(-99),resume=5;child.write(client+0x5058,&saved,4);child.write(client+0x5044,&resume,4);
+   const auto deadline=GetTickCount64()+10000;
+   while(child.alive() && GetTickCount64()<deadline && (child.read(client+0x5068)!=1 || !child.read(base+game_state+0x19E0)))Sleep(50);
+   require(child.alive() && child.read(client+0x5068)==1 && child.read(base+game_state+0x19E0),"Saved game did not resume.");
+  }
+  require(load_patch(child,dll,0x80000000u|static_cast<DWORD>(client))==0,"Zoom client binding failed.");Sleep(1000);
+  std::printf("Zoom mode=%u patched=%u discounted=%u opening\n",mode,(mode<4?((mode>>1)&1):(mode==5?1u:0u)),(mode>=4?1u:mode&1));std::fflush(stdout);
+  try {
+   for(unsigned repetition=0;repetition<(mode==5?3u:1u);++repetition){
+   const auto open=load_patch(child,dll,83);std::printf("open=%lu\n",open);std::fflush(stdout);
+   require(!open,"Laboratory zoom did not open.");
+   if(mode!=5 || repetition==1)Sleep(750);require(load_patch(child,dll,84)==0,"Cannot inspect zoom.");
+   if(mode>=4)require(load_patch(child,dll,87)>0,"Missing associated icon for saved-game regression.");
+   const auto close=load_patch(child,dll,85);std::printf("close=%lu alive=%u\n",close,child.alive()?1:0);std::fflush(stdout);
+   if(mode==4){require(close==204,"Unpatched saved-game control did not reach its expected fatal assertion.");break;}
+   require(!close,"Patched/native control zoom failed to close.");Sleep(1000);const auto clean=load_patch(child,dll,86);std::printf("cleanup=%lu repeat=%u\n",clean,repetition);std::fflush(stdout);require(!clean,"Zoom clone cleanup changed the source or retained the clone.");
+   }
+  } catch(const std::exception& e){++failures;std::printf("Zoom mode=%u child_alive=%u result=%s\n",mode,child.alive()?1:0,e.what());std::fflush(stdout);}
+  for(const auto& entry:fs::directory_iterator(folder))if(entry.path().filename()==L"log.txt"){
+   std::ifstream f(entry.path());std::string line;bool zoom_assert=false;while(std::getline(f,line)){if(line.find("DomZoomDismissAll")!=std::string::npos)zoom_assert=true;if(line.find("assertion")!=std::string::npos || line.find("DomZoom")!=std::string::npos)std::printf("%s\n",line.c_str());}
+   if(zoom_assert!=(mode==4))++failures;
+  }
+ }
+ std::printf("Zoom regression failures=%u\n",failures);return failures?1:0;
+}
+
 int wmain(int argc,wchar_t** argv) {
  try {
   require(argc==4 || argc==5 || argc==6,"Usage: startup_effect_test <copy exe> <probe dll> <setupData|kingdomData> <patched 0|1> [case], or --basic-targets");
@@ -196,9 +358,22 @@ int wmain(int argc,wchar_t** argv) {
   require(working.valid() && original.valid() && !same_file(identify(working.value),identify(original.value)),"Separate test copy required.");verify_executable(working.value);
   if(argc==4) {
    const std::wstring_view mode(argv[3]);
+   if(mode==L"--black-market-grammar") {
+    auto name=L"DominionBlackMarketGrammar_"+std::to_wstring(GetCurrentProcessId());HiddenDesktop desktop(name);
+    const auto folder=fs::temp_directory_path()/name;require(fs::create_directory(folder),"Scratch exists.");
+    const Probe probe{"",0,{},Metric::hand,0,0,1,base_kingdom};write_profile(folder,probe,0,"setupData");
+    Child child(exe,name);const auto base=child.image_base();redirect_save_folder(child,base,folder);child.resume();
+    wait_for_client(child,base,folder);
+    const auto result=load_patch(child,dll,80);
+    std::printf("Black Market grammar probe result=%lu (report: black-market-grammar.tsv)\n",result);
+    return result?1:0;
+   }
+   if(mode==L"--zoom-crash")return check_zoom_crash(exe,dll);
    if(mode==L"--basic-targets")return run_basic_target_checks(exe,dll);
    if(mode==L"--garbage-capture")return capture_garbage_state(exe,dll);
    if(mode==L"--garbage-automation")return check_garbage_automation(exe,dll);
+   if(mode==L"--independent-order")return check_independent_order(exe,dll);
+   if(mode==L"--campaign-order")return check_campaign_order(exe,dll);
    if(mode==L"--basic-automatic")return run_basic_automatic_checks(exe,dll);
    throw std::runtime_error("Unknown test mode.");
   }

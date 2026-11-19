@@ -1,6 +1,6 @@
 # Bekannte Probleme und Grenzen des Kingdom Effects Patch
 
-Prüfstand: 13. November 2026, Dominion 3315 / Steam-Build 17683350, EXE-SHA-256 `56e8d563320b7d6c0cf68ae11cdf2c0aa971dbff44bb296651b630815c548877`.
+Prüfstand: 19. November 2026, Dominion 3315 / Steam-Build 17683350, EXE-SHA-256 `56e8d563320b7d6c0cf68ae11cdf2c0aa971dbff44bb296651b630815c548877`.
 
 | Befund | Aktueller Umgang und Grenze |
 | --- | --- |
@@ -16,6 +16,8 @@ Prüfstand: 13. November 2026, Dominion 3315 / Steam-Build 17683350, EXE-SHA-256
 | Fehlende Checkboxen in der Taifun-Auswahl | Der gemeldete Screenshot zeigt Taifun; dieser Modus erzeugte absichtlich keine Checkboxen. Er belegt keinen Defekt des neuen Renderers. Taifun verwendet jetzt Checkboxen und eine mit der nummerierten Liste synchronisierte Auswahl; automatisierte Prüfungen bestanden, Darstellung vom Nutzer bestätigt. [Detailbefund](Checkbox_Visibility_Fix.md) |
 | Effektziele aus nicht besessenen Erweiterungen über Taifun erreichbar | Vom Nutzer gemeldete Zugriffslücke; v0.1.1-Testpaket prüft jetzt offizielle Kartenfreigaben in Auswahl, Import, Übernahme und Start. Alle 89 Effekte bleiben verfügbar. Automatisiert geprüft, sichtbare Nutzerabnahme offen. [Audit und Tests](Target_Card_Access.md) |
 | Kartenfreigabe noch nicht vorbereitet | Der Patch initialisiert den nativen Cache nicht selbst, da der native Getter bei kaltem Cache auch Konfigurationen verändert. Unbekannte Freigabe verhindert betroffene Ziele; normale Sammlung/Königreich-Auswahl erneut öffnen und F8 wiederholen. |
+| Zusätzliche Startkarte Schwarzmarkt ohne Schwarzmarkt-Deck | Vom Nutzer gemeldet und im Code bestätigt: `start_add_card` erzeugt Karten, aber keinen zugehörigen Zusatzaufbau. Schwarzmarkt benötigt derzeit zusätzlich den normalen Schwarzmarkt-Königreichstapel. Eine Korrektur allein beim Kartenanlegen würde die erforderlichen Deckdaten nicht korrekt speichern; [Aufbau- und Speicherbefund](Start_Card_Setup_Dependencies.md). Noch nicht korrigiert. |
+| Absturz beim Schließen der Laboratorium-Großansicht mit Rabatt | Mit kopierter Nutzerpartie auch ohne Produktionspatch reproduziert: begleitendes Symbol an `LOC_NONE`. Gezielte native Bereinigung der temporären Symbolkopie eingebaut; sechs Vergleichsfälle und drei Wiederholungen bestanden, anschließend vom Nutzer am 19. November bestätigt; [Crashbefund](Card_Zoom_Crash.md). |
 | Einzelne Kartenillustrationen fehlen | Text und Auswahl bleiben verfügbar; eine fertig zusammengesetzte Vorschau ist kein Nachweis dafür, dass jede Illustration vorhanden ist. Keine fremden Bilder werden mitgeliefert. |
 
 Offene Einzel-/Mehrfachprüfungen von Effekten sind keine nachgewiesenen Fehler und bleiben entsprechend markiert. Auch echte Windows-Skalierung bei 125/150 Prozent, Matchmaking und die volle Bannkapazität sind ausstehende Abnahmen, keine bestätigten Defekte. Die automatisierten Tests übernehmen keine physische Maus-/Tastatureingabe.

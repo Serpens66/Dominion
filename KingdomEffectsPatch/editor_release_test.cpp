@@ -19,6 +19,9 @@ kingdom::CardTargets expected_ordered_commit;
 bool missing_art=false;
 bool online_checked = false;
 bool online_cancel = false;
+bool online_order_initial = false;
+bool online_order_requested = false;
+bool reject_order_option = false;
 unsigned access_editors_checked=0, access_pickers_checked=0;
 kingdom::CardSelection access_expected_mode=kingdom::CardSelection::single;
 UINT_PTR timer = 0;
@@ -173,11 +176,14 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
         check(SendMessageW(list, LB_GETCOUNT, 0, 0) == 89, "Search reset mismatch.");
         auto& draft=*reinterpret_cast<kingdom::Draft*>(GetWindowLongPtrW(dialog,DWLP_USER));
         check(IsWindowEnabled(GetDlgItem(dialog,IDC_AUTOMATIC_BASIC)) && IsDlgButtonChecked(dialog,IDC_AUTOMATIC_BASIC)==BST_CHECKED,"Basic-pile automatic checkbox missing or not initialized.");
+        check(IsWindowEnabled(GetDlgItem(dialog,IDC_AUTOMATIC_ORDER)) && IsDlgButtonChecked(dialog,IDC_AUTOMATIC_ORDER)==BST_CHECKED,"Automatic-order checkbox missing or not initialized.");
         CheckDlgButton(dialog,IDC_AUTOMATIC_BASIC,BST_UNCHECKED);
+        CheckDlgButton(dialog,IDC_AUTOMATIC_ORDER,BST_UNCHECKED);
         save_dialog(dialog,L"f8-de.png");
         const auto saved_effects=draft.effects;const auto* saved_selection=draft.selected;
         SendDlgItemMessageW(dialog,IDC_LANGUAGE,CB_SETCURSEL,1,0);SendMessageW(dialog,WM_COMMAND,MAKEWPARAM(IDC_LANGUAGE,CBN_SELCHANGE),0);
         check(kingdom::ui::english() && draft.effects==saved_effects && draft.selected==saved_selection,"Language change lost draft or selection.");
+        check(IsDlgButtonChecked(dialog,IDC_AUTOMATIC_ORDER)==BST_UNCHECKED,"Language change reset automatic-order checkbox.");
         for(const auto& effect:kingdom::effect_catalog){check(*effect.title_en && *effect.description_en && *effect.timing_en && *effect.status_en && *effect.requirement_en,"Missing English effect data.");}
         check(kingdom::table_text(kingdom::effect_catalog[0])[1].find(L"Base game sufficient")!=std::wstring::npos,"English prerequisite missing.");
         for(const auto query:{L"Große Ideen",L"Big Ideas",L"twist_big_ideas"}){SetDlgItemTextW(dialog,IDC_QUERY,query);check(SendMessageW(list,LB_GETCOUNT,0,0)==1,"Bilingual search mismatch.");}
@@ -224,7 +230,7 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
             check(kingdom::input(dialog,IDC_QUERY)==L"twist_busy_busy" && draft.selected &&
                 std::string_view(draft.selected->id)=="twist_busy_busy" && draft.effects==lookup_effects,"Keyboard active lookup failed.");
         }
-        SendMessageW(active,LB_SETCURSEL,LB_ERR,0);
+        SendMessageW(active,LB_SETCURSEL,static_cast<WPARAM>(LB_ERR),0);
         SendMessageW(active,WM_CONTEXTMENU,reinterpret_cast<WPARAM>(active),LPARAM(-1));
         check(kingdom::input(dialog,IDC_QUERY)==L"twist_busy_busy","Lookup without a selection changed the query.");
         SendDlgItemMessageW(dialog,IDC_LANGUAGE,CB_SETCURSEL,0,0);
@@ -236,6 +242,28 @@ BOOL CALLBACK inspect(HWND dialog, LPARAM) {
     return FALSE;
 }
 void CALLBACK inspect_dialog(HWND, UINT, UINT_PTR, DWORD) { EnumThreadWindows(GetCurrentThreadId(), inspect, 0); }
+BOOL CALLBACK inspect_order_option(HWND dialog, LPARAM) {
+    if (!GetDlgItem(dialog,IDC_CATALOG)) return TRUE;
+    KillTimer(nullptr,timer);
+    try {
+        check(IsDlgButtonChecked(dialog,IDC_AUTOMATIC_ORDER)==BST_UNCHECKED,"Automatic order must default to off.");
+        CheckDlgButton(dialog,IDC_AUTOMATIC_ORDER,BST_CHECKED);
+        SendMessageW(dialog,WM_COMMAND,MAKEWPARAM(IDC_AUTOMATIC_ORDER,BN_CLICKED),0);
+        check(GetWindowTextLengthW(GetDlgItem(dialog,IDC_STATUS))>0,"Missing automatic-order explanation.");
+        RECT option{};GetWindowRect(GetDlgItem(dialog,IDC_AUTOMATIC_ORDER),&option);
+        for(const auto neighbor:{IDC_LANGUAGE,IDC_EFFECT_COUNT,IDOK,IDCANCEL}) {
+            RECT other{},overlap{};GetWindowRect(GetDlgItem(dialog,neighbor),&other);
+            check(!IntersectRect(&overlap,&option,&other),"Automatic-order checkbox overlaps footer controls.");
+        }
+        if(reject_order_option) {
+            SendMessageW(dialog,WM_COMMAND,IDOK,0);
+            check(IsWindow(dialog),"Rejected Apply closed the editor.");
+        }
+    } catch(const std::exception& error) {failure=error.what();}
+    PostMessageW(dialog,WM_COMMAND,reject_order_option || !failure.empty()?IDCANCEL:IDOK,0);
+    return FALSE;
+}
+void CALLBACK inspect_order_option_dialog(HWND,UINT,UINT_PTR,DWORD) {EnumThreadWindows(GetCurrentThreadId(),inspect_order_option,0);}
 BOOL CALLBACK inspect_online(HWND dialog, LPARAM) {
     if (!GetDlgItem(dialog, IDC_CATALOG)) return TRUE;
     KillTimer(nullptr, timer);
@@ -244,6 +272,9 @@ BOOL CALLBACK inspect_online(HWND dialog, LPARAM) {
         check(std::wstring_view(caption).find(L"Online – Wirkung serverabhängig") != std::wstring_view::npos, "Online context missing from title.");
         check(!IsWindowEnabled(GetDlgItem(dialog,IDC_AUTOMATIC)), "Online automation is enabled.");
         check(!IsWindowEnabled(GetDlgItem(dialog,IDC_AUTOMATIC_BASIC)) && IsDlgButtonChecked(dialog,IDC_AUTOMATIC_BASIC)==BST_UNCHECKED,"Basic automatic option must be inactive online.");
+        check(IsWindowEnabled(GetDlgItem(dialog,IDC_AUTOMATIC_ORDER)) &&
+            IsDlgButtonChecked(dialog,IDC_AUTOMATIC_ORDER)==static_cast<UINT>(online_order_initial?BST_CHECKED:BST_UNCHECKED),"Automatic order must remain available online.");
+        CheckDlgButton(dialog,IDC_AUTOMATIC_ORDER,online_order_requested?BST_CHECKED:BST_UNCHECKED);
         check(IsDlgButtonChecked(dialog,IDC_AUTOMATIC)==BST_UNCHECKED, "Local automation shown as active online.");
         auto& draft=*reinterpret_cast<kingdom::Draft*>(GetWindowLongPtrW(dialog,DWLP_USER));
         const kingdom::EffectCommands pair{"start_double_pile(village)","start_double_pile(market)"};
@@ -481,24 +512,36 @@ int main() {
     timer = SetTimer(nullptr, 0, 150, inspect_dialog);
     bool automatic = false;
     bool automatic_basic = true;
+    bool automatic_order = true;
     bool applied = false;
     const kingdom::EffectCommands effects{"start_double_pile(village)"};
     const bool saved = kingdom::edit_effects(nullptr, "-k village, market", effects, automatic,
-        [&](const kingdom::EffectCommands&) { applied = true; return true; },kingdom::EditorContext::local,nullptr,&automatic_basic);
+        [&](const kingdom::EffectCommands&) { applied = true; return true; },kingdom::EditorContext::local,nullptr,&automatic_basic,&automatic_order);
     check(automatic_basic,"Cancel changed basic automatic setting.");
+    check(automatic_order,"Cancel changed automatic-order setting.");
     KillTimer(nullptr, timer);
+    for(const bool rejected:{true,false}) {
+        reject_order_option=rejected;bool order=false,auto_option=false,called=false;
+        timer=SetTimer(nullptr,0,100,inspect_order_option_dialog);
+        const auto accepted=kingdom::edit_effects(nullptr,"-k village,market",{},auto_option,
+            [&](const kingdom::EffectCommands&){called=true;return !rejected;},kingdom::EditorContext::local,nullptr,nullptr,&order);
+        KillTimer(nullptr,timer);
+        check(called && accepted==!rejected && order==!rejected,"Automatic-order Apply/Cancel boundary failed.");
+    }
     // Each profile-backed online configuration supplies its own apply callback.
     std::array<kingdom::EffectCommands,3> configurations{effects,{}, {"twist_big_ideas"}};
     const auto local_before=configurations[0];
     bool local_automatic=true;
     for (std::size_t target=1;target<=2;++target) {
         online_checked=false; online_cancel=false; timer=SetTimer(nullptr,0,150,inspect_online_dialog);
+        online_order_initial=automatic_order;online_order_requested=!automatic_order;
         const auto other=configurations[3-target];
         check(kingdom::edit_effects(nullptr,"-k village, market",{},local_automatic,
-            [&](const kingdom::EffectCommands& value) { configurations[target]=value; return true; },kingdom::EditorContext::online,nullptr,&automatic_basic), "Online accept failed.");
-        check(online_checked && local_automatic && automatic_basic && configurations[target].size()==32 && configurations[3-target]==other && configurations[0]==local_before, "Online change affected another configuration or automation.");
+            [&](const kingdom::EffectCommands& value) { configurations[target]=value; return true; },kingdom::EditorContext::online,nullptr,&automatic_basic,&automatic_order), "Online accept failed.");
+        check(online_checked && local_automatic && automatic_basic && automatic_order==online_order_requested && configurations[target].size()==32 && configurations[3-target]==other && configurations[0]==local_before, "Online change affected another configuration or automation.");
     }
     online_cancel=true; online_checked=false; timer=SetTimer(nullptr,0,150,inspect_online_dialog);
+    online_order_initial=false;online_order_requested=true;
     check(!kingdom::edit_effects(nullptr,"-k village, market",{},local_automatic,
         [&](const kingdom::EffectCommands&) { applied=true; return true; },kingdom::EditorContext::online) && online_checked && !applied && local_automatic, "Online cancel changed the saved selection.");
     for(const auto* id:{"gold","platinum","estate","duchy","province","colony"}) {

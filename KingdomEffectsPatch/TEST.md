@@ -356,3 +356,33 @@ Die Checkbox-Einstellungen selbst bleiben Sitzungseinstellungen. Automatisch erz
 Abschließend bestanden: echte Checkboxdarstellung im isolierten Spielprozess sowie Paketprüfung außerhalb des Entwicklungsordners. Der tatsächlich verpackte Injector und die DLL starteten über den direkten Installationsmodus im temporären Testspiel; Große Ideen 2× ergab sieben Handkarten und zwei installierte Einträge. Bann- und Privatmodus-Patch sowie F8-Hook wurden dabei ebenfalls geprüft. Alle Testprozesse wurden beendet.
 
 Lokales Testpaket: `out/Test-v0.1.3/KingdomEffectsPatch-v0.1.3-windows.zip`, 556878 Bytes. SHA-256: `dffaabbe20994c4a987c9c3de5609d82bb4f61f3d1f5e44c3d66811b6060dfc8`. Der Doppelklick-Einstieg ist `Testversion-starten.cmd`. Keine GitHub-Veröffentlichung und keine Änderung bestehender Releases. Das Paket enthält keine Spielgrafiken, Spielinstallation, Profile oder Diagnoseprogramme. Sichtbare Nutzerabnahme offen.
+
+## Aktive Effekte per Rechtsklick nachschlagen
+
+Der bestehende isolierte Dialogtest bestand mit Deutsch/English: Rechtsklick auf die tatsächlich angeklickte Instanz eines wiederholten, kartengerichteten Effekts sucht dessen ID ohne Zielparameter und setzt einen inkompatiblen Kategorienfilter zurück. Wirkung/Teststand und genaue Katalogauswahl werden angezeigt; Effektliste und Reihenfolge bleiben unverändert. Leerraum und fehlende Auswahl ändern nichts. Die Tastatur-Kontextanforderung verwendet die markierte Zeile. Der Online-Editor ist ebenfalls abgedeckt. Kein Eingabegerät wurde bedient.
+
+Das aktualisierte lokale Testpaket liegt unter `out/Test-v0.1.3-active-details`; `Testversion-starten.cmd` verweist darauf. Build, Dialogtest und entpackte Paketprüfung bestanden. SHA-256 des ZIP: `1bd8a8506f32ee6103fcb9b509a522a508ae39da983d4839f842c3802b9530c3`. Es wurde kein GitHub-Release verändert.
+
+## Option zur automatischen Effektreihenfolge: Schlussprüfung
+
+Die neue F8-Option ist standardmäßig ausgeschaltet. Zwei unabhängige Codeprüfungen und der abschließende Build sind beendet; der Build enthält keine Warnungen oder Fehler. Der automatische Antwortpfad prüft den tatsächlichen nativen Reihenfolge-Aufrufer, sämtliche angebotenen Ereignisse, aktive Effektquellen und den zuständigen Spieler. Freiwillige Aktivierungen, unbekannte Quellen und Mischungen mit normalen Kartenfähigkeiten bleiben manuell. Zwei uneindeutige native Quellzuordnungen bleiben ausdrücklich ausgeschlossen.
+
+Vier tatsächliche Spielstartfälle mit der neuen Option bestanden: Kartenziehen und Taifun, zusätzlich Aktionen/Käufe, weiterhin erreichbare Müllhaufen-Entscheidung sowie ausgeschaltete Automatik. Beim ersten Taifun-Auslöser wurde die native Vorbereitung für den folgenden Zug geprüft; dies ist kein Nachweis einer sofortigen Stapelersetzung. Die ergänzende ältere 16-Fälle-Prüfung der nativen Reihenfolgeunabhängigkeit wurde nicht vollständig ausgeführt und gehört nicht zu diesen vier Fällen.
+
+Anschließend erneut bestanden: Müllhaufen-Automatik, 356 Parservergleiche, 468 F8-Speicherprüfungen, Kartenfreigabe-/Import-/Online-Vorprüfung ohne Versand sowie der lokale und Online-Dialog in beiden Sprachen. Die Dialogprüfung umfasst Übernehmen, abgelehnte Übernahme, Abbrechen, Sprachwechsel, unveränderte lokale Stapeloptionen und aktive Effekte per Rechtsklick. Die Option belegt keinen Effektplatz und bleibt eine Sitzungseinstellung.
+
+Die Schwarzmarkt-Untersuchung bestätigt eine native Zusatzdeck-/Speichergrenze; kein unvollständiger Aufbau-Fix wurde eingebaut. Ein normaler Schwarzmarkt-Königreichstapel bleibt der dokumentierte Ausweg. Siehe [Aufbauabhängigkeiten](../Documentation/Start_Card_Setup_Dependencies.md).
+
+Finales lokales Paket: `out/Test-v0.1.3-order-option/KingdomEffectsPatch-v0.1.3-windows.zip`, **561219 Bytes**, SHA-256 `d93550e468fa3664448928a3b6240cfb4cfec4f94f098d869a6b10b60b8814e5`. Entpackte Paketprüfung und tatsächlicher Start mit dem verpackten Injector/DLL bestanden: Große Ideen 2×, sieben Handkarten und zwei installierte Effekte. Der äußere `Testversion-starten.cmd` verweist auf dieses Paket. Automatisierte Tests ohne physische Eingabe und mit getrennten temporären Profildaten; sichtbare Nutzerabnahme offen. Keine GitHub-Veröffentlichung.
+
+## Karten-Großansicht: Crashkorrektur vom 19. November
+
+Mit der kopierten betroffenen Partie wurde der Laboratorium-Schließabbruch unabhängig vom Produktionspatch reproduziert. Die neue einzelne bedingte Verzweigung führt nur temporäre Symbolkopien mit ungeeigneter Quellposition zur vorhandenen nativen Bereinigung. Originalbyteprüfung, transaktionale Installation und Rücknahme gelten unverändert; Messmodus bleibt unverändert. Unabhängiger statischer Review bestanden.
+
+Sechs automatisierte Vergleichsfälle bestanden; der ungepatchte gespeicherte Lauf ist dabei die ausdrücklich erwartete Fehlerkontrolle. Drei wiederholte Schließ-/Öffnungsfolgen im korrigierten gespeicherten Lauf bestätigen aufgeräumte Symbolkopien, unveränderte Originalhandles/-standorte und zurückgesetzten Zoommodus. Vier frische Laboratorium-Fixtures vergleichen ohne/mit Rabatt sowie ohne/mit Produktionspatch. Die zusätzlichen ursprünglichen `DATAID_NULL`-Meldungen der stempellosen Kontroll-Fixtures werden separat dokumentiert, nicht als behoben behauptet. [Genaue Ursache, Prüfvorbereitung und Grenzen](../Documentation/Card_Zoom_Crash.md)
+
+Build ohne Warnungen/Fehler, Paketprüfung außerhalb des Entwicklungsordners und tatsächlicher Spielstart mit verpacktem Injector/DLL bestanden. Das lokale Paket liegt unter `out/Test-v0.1.3-zoom-fix/KingdomEffectsPatch-v0.1.3-windows.zip`; SHA-256 `c824a19a335b67f45ee7723f0fe2fd969a61dada6b86f8fe1a432b01e84aadef`. `Testversion-starten.cmd` verweist darauf. Kein GitHub-Release verändert. Sichtbare Abnahme offen; normales Profil und Originalinstallation wurden durch die automatisierten Tests nicht verändert.
+
+## Veröffentlichungsfreigabe v0.1.3
+
+Der Nutzer bestätigt am 19. November 2026 den behobenen Großansicht-Crash und beauftragt die Veröffentlichung des aktuellen Codes als neue Version. Die früheren Hinweise auf ein ausschließlich lokales v0.1.3-Testpaket sind damit historisch. Bereits bestandene Prüfungen und offene Grenzen bleiben wie dokumentiert; das finale Paket wird aus einem sauberen Quellcommit gebaut und vor Veröffentlichung nochmals geprüft. Frühere Releases und der Generator bleiben erhalten.

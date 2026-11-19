@@ -709,16 +709,19 @@ void __cdecl maybe_edit_effects(kingdom::Setup* current, std::byte* config) {
         refresh_target_access();
         bool automatic = automatic_enabled;
         bool automatic_basic = automatic_basic_enabled;
+        bool automatic_order = kingdom::optional_automation::order_enabled;
         std::wstring apply_error;
         const auto apply = [&](const kingdom::EffectCommands& edited) {
             return apply_editor_effects(current,config,effects,edited,apply_error);
         };
         log(context == kingdom::EditorContext::online ? "effect editor opened: online" : "effect editor opened: local");
         log_commands("editor opened",effects);
-        if (kingdom::edit_effects(owner, original.view(), effects, automatic, apply, context,&apply_error,&automatic_basic) &&
-            context == kingdom::EditorContext::local) {
-            automatic_enabled = automatic;
-            automatic_basic_enabled = automatic_basic;
+        if (kingdom::edit_effects(owner, original.view(), effects, automatic, apply, context,&apply_error,&automatic_basic,&automatic_order)) {
+            if (context == kingdom::EditorContext::local) {
+                automatic_enabled = automatic;
+                automatic_basic_enabled = automatic_basic;
+            }
+            kingdom::optional_automation::order_enabled = automatic_order;
         }
     } catch (...) {
         MessageBoxW(owner, kingdom::ui::tr(L"Dominion konnte diese Effektliste nicht übernehmen. Die bisherige Auswahl bleibt erhalten."),
@@ -1242,6 +1245,10 @@ constexpr unsigned local_modes = (1u << 2) | (1u << 3);
 constexpr unsigned online_mode = 1u << 4;
 
 const Site sites[] = {
+    // A Typhoon-replaced pile can leave a zoom-associated icon source at LOC_NONE.
+    // Discard only its temporary zoom clone via the existing stale-source fallback.
+    {0x214969,"\x0F\x85\xA6\x00\x00\x00",6,nullptr,false,local_modes|online_mode,
+               "\x0F\x85\x4C\x00\x00\x00"},
     {0x224070,"\x53\x8B\xDC\x83\xEC\x08",6,kingdom::optional_automation::load_hook,true,local_modes|online_mode},
     {0x21CE00,"\x55\x8B\xEC\x51\x53\x56\x57",7,reinterpret_cast<void(*)()>(kingdom::optional_automation::get_defs),true,local_modes|online_mode},
     {0x21CEE0,"\x56\xE8\xAA\xFF\xFF\xFF",6,kingdom::optional_automation::default_hook,true,local_modes|online_mode},

@@ -28,7 +28,7 @@ In Kingdom selection, clear the previous card selection and paste the full code 
 
 Both piles start with **20 cards instead of 10**. To intentionally apply the same effect again, enable **Add another copy** in the target picker; two doubling effects on Village produce **40 cards**.
 
-For Gold, Platinum and Victory piles, switch target selection to **All cards**. These targets are already supported when officially available for your account. `start_add_card(gold)` or `start_add_card(platinum)` adds one copy to **every player’s starting deck**, not necessarily their opening hand. Pile multipliers affect an existing Supply pile; they do not create a missing Platinum/Colony pile. The native Province multiplier also doubles an existing Colony pile.
+For Gold, Platinum and Victory piles, switch target selection to **All cards**. These targets are already supported when officially available for your account. `start_add_card(gold)` or `start_add_card(platinum)` adds one copy to **every player’s starting deck**, not necessarily their opening hand. Pile multipliers affect an existing Supply pile; they do not create a missing Platinum/Colony pile. The native Province multiplier also doubles an existing Colony pile. **Known setup limitation:** an extra starting Black Market card does not create its auxiliary deck; Black Market must currently also be a regular Kingdom pile.
 
 Search by English or German name, effect ID, or description. Filters include effect type and when an effect triggers. The table shows what each effect does, its prerequisites and its test status. **Untested** effects remain selectable; repeated use may have a different test status from a single application.
 
@@ -41,6 +41,10 @@ Typhoon uses the same checkboxes as pile doubling: click a checkbox or press Spa
 ### Garbage Heap: ask or skip
 
 Right-click the **Garbage Heap** effect banner during a local game. Its normal game view includes the native automatic-action setting: **Ask** shows the optional trash question; **Off** skips it. Off means “never trash through this effect”; it does not choose a card for you. The setting is separate for each local player, applies to all copies of Garbage Heap and resets to Ask when a game is started or loaded. It is not a saved profile default.
+
+### Automatic effect order
+
+In F8, **Automatic effect order** lets the game process supported pending campaign effects in its offered order, including card draws and Typhoon. It is **off by default**: choosing an order can affect gameplay. Actual card, target and yes/no choices remain yours. Queues mixed with ordinary card abilities, optional activations or unrecognized sources retain the game’s normal choice. Also Silver and Motivational currently use that fallback. This preference uses no effect slots; the game records the actual chosen order through its normal action log. The setting lasts for the current session and is not stored as a Set effect. It is also available in online Kingdom selection; online responses use the game's normal action path. Actual online use awaits server support for campaign effects and remains untested.
 
 ### Automatic pile doubling
 
@@ -99,7 +103,7 @@ In der Königreich-Auswahl die bisherige Kartenauswahl leeren und den vollständ
 
 Beide Stapel beginnen mit **20 statt 10 Karten**. Für eine bewusste Wiederholung **Weitere Kopie hinzufügen** in der Zielauswahl aktivieren: Zwei Verdopplungen ergeben beim Dorf **40 Karten**.
 
-Für Gold, Platin und Punktestapel in der Zielauswahl auf **Alle Karten** wechseln. Diese Ziele sind bei offizieller Spielfreigabe bereits unterstützt. `start_add_card(gold)` oder `start_add_card(platinum)` legt eine zusätzliche Kopie ins **Startdeck jedes Spielers**, nicht zwingend in dessen erste Hand. Stapelvervielfachung verändert vorhandene Vorräte; sie erzeugt keinen fehlenden Platin-/Koloniestapel. Der native Provinz-Effekt verdoppelt zusätzlich vorhandene Kolonien.
+Für Gold, Platin und Punktestapel in der Zielauswahl auf **Alle Karten** wechseln. Diese Ziele sind bei offizieller Spielfreigabe bereits unterstützt. `start_add_card(gold)` oder `start_add_card(platinum)` legt eine zusätzliche Kopie ins **Startdeck jedes Spielers**, nicht zwingend in dessen erste Hand. Stapelvervielfachung verändert vorhandene Vorräte; sie erzeugt keinen fehlenden Platin-/Koloniestapel. Der native Provinz-Effekt verdoppelt zusätzlich vorhandene Kolonien. **Bekannte Aufbaugrenze:** Eine zusätzliche Startkarte Schwarzmarkt erzeugt dessen Zusatzdeck nicht. Schwarzmarkt muss derzeit auch als regulärer Königreichstapel vorkommen.
 
 Die Suche findet deutsche und englische Namen, Effekt-IDs und Beschreibungstexte. Filter berücksichtigen Effektart und Auslösezeitpunkt. Die Tabelle zeigt Wirkung, Voraussetzungen und Teststand. **Ungetestete** Effekte bleiben auswählbar; einfache und mehrfache Anwendung können unterschiedlich weit geprüft sein.
 
@@ -112,6 +116,10 @@ Taifun verwendet dieselben Checkboxen wie die Stapelverdopplung: Klick auf das K
 ### Müllhaufen: fragen oder überspringen
 
 Während einer lokalen Partie mit Rechtsklick die Effektanzeige **Müllhaufen** öffnen. Dort steht die native Automatik-Einstellung: **Fragen** zeigt die optionale Entsorgungsfrage; **Off** überspringt sie. Off bedeutet hier „durch diesen Effekt niemals entsorgen“; es wird keine Karte automatisch ausgewählt. Die Einstellung gilt getrennt pro lokalem Spieler für alle Müllhaufen-Kopien und wird beim Starten oder Laden einer Partie auf Fragen zurückgesetzt. Sie ist kein gespeicherter Profilstandard.
+
+### Effektreihenfolge automatisch
+
+Die zusätzliche F8-Option **Effektreihenfolge automatisch** lässt unterstützte fällige Kampagneneffekte in der vom Spiel angebotenen Reihenfolge abwickeln, auch Kartenziehen und Taifun. Sie ist **standardmäßig aus**, denn die Reihenfolge kann spielerisch relevant sein. Konkrete Karten-, Ziel- und Ja/Nein-Auswahlen bleiben bei dir. Bei Mischungen mit normalen Kartenfähigkeiten, freiwilligen Aktivierungen oder unbekannten Quellen bleibt die normale Spielauswahl erhalten. Für Silber Dazu und Neue Impulse gilt vorerst ebenfalls dieser Rückfall. Die Bedienoption verbraucht keine Effektplätze; die tatsächlich gewählte Reihenfolge landet im normalen Spielprotokoll. Die Einstellung gilt für die aktuelle Sitzung und wird nicht als Set-Effekt gespeichert. Sie ist auch in der Online-Königreich-Auswahl verfügbar; Antworten nutzen dort den normalen Aktionsweg des Spiels. Die tatsächliche Online-Nutzung setzt Serverunterstützung für Kampagneneffekte voraus und ist noch nicht spielgeprüft.
 
 ### Stapel automatisch verdoppeln
 

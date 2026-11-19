@@ -60,6 +60,7 @@ struct Draft {
     EditorContext context;
     const std::wstring* apply_error = nullptr;
     bool automatic_basic = false;
+    bool automatic_order = false;
     const EffectDefinition* selected = nullptr;
     const CardTarget* first = nullptr;
     const CardTarget* second = nullptr;
@@ -506,6 +507,7 @@ void refresh_language(HWND dialog,Draft& draft) {
     SendDlgItemMessageW(dialog, IDC_CATEGORY, CB_SETCURSEL, (std::max)(LRESULT(0),previous_category), 0);
     SetDlgItemTextW(dialog,IDC_AUTOMATIC,ui::pick(L"Alle Königreichstapel verdoppeln",L"Double all Kingdom piles"));
     SetDlgItemTextW(dialog,IDC_AUTOMATIC_BASIC,ui::pick(L"Alle Geld- und Punktestapel verdoppeln",L"Double all Treasure and Victory piles"));
+    SetDlgItemTextW(dialog,IDC_AUTOMATIC_ORDER,ui::pick(L"Effektreihenfolge automatisch",L"Automatic effect order"));
     if(online) {
         SetDlgItemTextW(dialog,IDC_AUTOMATIC,ui::pick(L"Königreichstapel: Automatik nur lokal",L"Kingdom piles: automatic doubling is local-only"));
         SetDlgItemTextW(dialog,IDC_AUTOMATIC_BASIC,ui::pick(L"Geld- und Punktestapel: Automatik nur lokal",L"Treasure and Victory piles: automatic doubling is local-only"));
@@ -529,6 +531,7 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             EnableWindow(GetDlgItem(dialog, IDC_AUTOMATIC), !online);
             CheckDlgButton(dialog, IDC_AUTOMATIC_BASIC, !online && draft.automatic_basic ? BST_CHECKED : BST_UNCHECKED);
             EnableWindow(GetDlgItem(dialog, IDC_AUTOMATIC_BASIC), !online);
+            CheckDlgButton(dialog, IDC_AUTOMATIC_ORDER, draft.automatic_order ? BST_CHECKED : BST_UNCHECKED);
             return TRUE;
         }
         const auto state = GetWindowLongPtrW(dialog, DWLP_USER);
@@ -566,6 +569,10 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
             const auto language=SendDlgItemMessageW(dialog,IDC_LANGUAGE,CB_GETCURSEL,0,0)==1?ui::Language::en:ui::Language::de;
             const bool saved=ui::set_language(language);refresh_language(dialog,draft);
             if(!saved) SetDlgItemTextW(dialog,IDC_STATUS,ui::tr(L"Die Sprache konnte nicht gespeichert werden."));
+        } else if (control == IDC_AUTOMATIC_ORDER && event == BN_CLICKED) {
+            SetDlgItemTextW(dialog,IDC_STATUS,IsDlgButtonChecked(dialog,IDC_AUTOMATIC_ORDER)==BST_CHECKED
+                ? ui::pick(L"Die Reihenfolge kann die Wirkung beeinflussen; konkrete Entscheidungen bleiben manuell.",
+                           L"Order can affect outcomes; actual decisions remain manual.") : L"");
         } else if ((control == IDC_QUERY && event == EN_CHANGE) ||
             (control == IDC_CATEGORY && event == CBN_SELCHANGE)) {
             filter_catalog(dialog, draft);
@@ -603,6 +610,7 @@ INT_PTR CALLBACK dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lp
                 draft.automatic = IsDlgButtonChecked(dialog, IDC_AUTOMATIC) == BST_CHECKED;
                 draft.automatic_basic = IsDlgButtonChecked(dialog, IDC_AUTOMATIC_BASIC) == BST_CHECKED;
             }
+            draft.automatic_order = IsDlgButtonChecked(dialog, IDC_AUTOMATIC_ORDER) == BST_CHECKED;
             EndDialog(dialog, IDOK);
         } else if (control == IDCANCEL) {
             EndDialog(dialog, IDCANCEL);
@@ -633,7 +641,7 @@ std::wstring target_access_message(const TargetAccessFailure& failure) {
 }
 
 bool edit_effects(void* owner, std::string_view kingdom_text, const EffectCommands& effects, bool& automatic,
-                  const std::function<bool(const EffectCommands&)>& apply, EditorContext context, const std::wstring* apply_error, bool* automatic_basic) {
+                  const std::function<bool(const EffectCommands&)>& apply, EditorContext context, const std::wstring* apply_error, bool* automatic_basic, bool* automatic_order) {
     if (context == EditorContext::none) return false;
     HMODULE module{};
     if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
@@ -642,6 +650,7 @@ bool edit_effects(void* owner, std::string_view kingdom_text, const EffectComman
     ui::load_language();
     Draft draft{effects, automatic, apply, fixed_targets(kingdom_text), context, apply_error};
     draft.automatic_basic = automatic_basic && *automatic_basic;
+    draft.automatic_order = automatic_order && *automatic_order;
     const auto result = DialogBoxParamW(module, MAKEINTRESOURCEW(IDD_EFFECT_EDITOR),
                                        static_cast<HWND>(owner), dialog_proc, reinterpret_cast<LPARAM>(&draft));
     if (result == -1) {
@@ -651,6 +660,7 @@ bool edit_effects(void* owner, std::string_view kingdom_text, const EffectComman
     if (result != IDOK) return false;
     automatic = draft.automatic;
     if (automatic_basic) *automatic_basic = draft.automatic_basic;
+    if (automatic_order) *automatic_order = draft.automatic_order;
     return true;
 }
 

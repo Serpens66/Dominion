@@ -4,11 +4,9 @@ Der Release-Starter ist vom bisherigen Test-Starter getrennt. Er startet die ori
 
 ## Aktueller Veröffentlichungsstand
 
-Der Nutzer hat die sichtbare Importkorrektur bestätigt und am 19. November 2026 die Veröffentlichung von **v0.1.2** beauftragt. Das aktuelle Paket wird mit sauberem Quellcommit, geprüften fertigen Binärdateien, ZIP und SHA-256-Prüfsumme als Vorabversion veröffentlicht. v0.1.1 bleibt als vorherige Version erhalten. Die späteren historischen Vorgaben zu einem damals gesperrten v0.1.1-Entwurf gelten nicht für diesen bestätigten Veröffentlichungsauftrag. Der Release-Text beschreibt den aktuellen Funktionsumfang in Deutsch und Englisch.
+Der Nutzer hat am 19. November 2026 die sichtbare Korrektur des Karten-Großansicht-Absturzes bestätigt und die Veröffentlichung des aktuellen Codes als **v0.1.3** beauftragt. Das Paket wird aus einem sauberen Quellcommit mit fertigen Binärdateien, ZIP und SHA-256-Prüfsumme als Vorabversion veröffentlicht. v0.1.1, v0.1.2 und der Generator bleiben erhalten. Der Release-Text beschreibt den aktuellen Funktionsumfang in Deutsch und Englisch.
 
-## Lokales Testpaket v0.1.3
-
-Der aktuelle Entwicklungsstand wird als lokales Testpaket gebaut. Das veröffentlichte v0.1.2 bleibt erhalten. Keine Veröffentlichung von v0.1.3 ohne gesonderten Auftrag; die sichtbare Abnahme bleibt beim Nutzer. Historische Veröffentlichungsaufträge weiter unten gelten ausschließlich für die genannten früheren Versionen.
+Die nachfolgenden historischen Entwurfssperren gelten für die jeweils genannten früheren Zwischenstände. Offene Spielwirkungsprüfungen einzelner Effekte und Kombinationen bleiben ausdrücklich offen; die Veröffentlichung behauptet keine vollständige Prüfung aller 89 Effekte.
 
 ## Bauen und prüfen
 
